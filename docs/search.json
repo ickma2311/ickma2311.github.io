@@ -1,10 +1,52 @@
 [
   {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "About",
+    "objectID": "ML/kmeans.html",
+    "href": "ML/kmeans.html",
+    "title": "K-means Clustering",
     "section": "",
-    "text": "About this site"
+    "text": "Setup points and K\nwe will implement a KNN algorithm to cluster the points\n\n\nX=[[1,1],[2,2.1],[3,2.5],[6,7],[7,7.1],[9,7.5]]\nk=2\n\nmax_iter=3\n\n\n# Visualize the data\n\n\nimport matplotlib.pyplot as plt\n\nplt.scatter([x[0] for x in X],[x[1] for x in X])\nplt.show()\n\n\n\n\n\n\n\n\n\n# Pure python implementation of K-means clustering\ndef knn_iter(X,centroids):\n    # set up new clusters\n    new_clusters=[[] for _ in range(len(centroids))]\n    # k=len(centroids)\n    # assign each point to the nearest centroid\n    for x in X:\n        k,distance=0,(x[0]-centroids[0][0])**2+(x[1]-centroids[0][1])**2\n        for i,c in enumerate(centroids[1:],1):\n            if (x[0]-c[0])**2+(x[1]-c[1])**2&lt;distance:\n                k=i\n                distance=(x[0]-c[0])**2+(x[1]-c[1])**2\n        new_clusters[k].append(x)\n    \n    # calculate new centroids\n    new_centroids=[[\n        sum([x[0] for x in cluster])/len(cluster),\n        sum([x[1] for x in cluster])/len(cluster)\n    ] if cluster else centroids[i] for i,cluster in enumerate(new_clusters)]\n    return new_centroids\n\n\n\n\n\n\n\n\ndef iter_and_draw(X,k,max_iter):\n    centroids=X[:k]  # Randomly select 2 centroids\n    fig, axes = plt.subplots(max_iter//3+(1 if max_iter%3!=0 else 0),\n        3, figsize=(15, 10))\n    axes=axes.flatten()\n    for i in range(max_iter):\n        \n        # Plot points and centroids\n\n\n        # Assign each point to nearest centroid and plot with corresponding color\n        colors = ['blue', 'green', 'purple', 'orange', 'brown', 'pink', 'gray', 'olive', 'cyan']\n        for j, x in enumerate(X):\n            # Find nearest centroid\n            min_dist = float('inf')\n            nearest_centroid = 0\n            for k, c in enumerate(centroids):\n                dist = (x[0]-c[0])**2 + (x[1]-c[1])**2\n                if dist &lt; min_dist:\n                    min_dist = dist\n                    nearest_centroid = k\n            # Plot point with color corresponding to its cluster\n            axes[i].scatter(x[0], x[1], c=colors[nearest_centroid % len(colors)], label=f'Cluster {nearest_centroid+1}' if j==0 else \"\")\n        axes[i].scatter([c[0] for c in centroids], [c[1] for c in centroids], c='red', marker='*', s=200, label='Centroids')\n        axes[i].set_title(f'Iteration {i}')\n        centroids = knn_iter(X, centroids)\n\n    plt.tight_layout()\n    plt.show()\n\niter_and_draw(X,k,max_iter)\n# print(centroids)\n\n\n\n\n\n\n\n\n\n# A 3 clusters example\n\nX1=np.random.rand(20,2)+5 # Some points in the upper right corner\nX2=np.random.rand(20,2)+3 # Some points in the middle\nX3=np.random.rand(20,2) # Some points in the lower left corner\n\niter_and_draw(np.concatenate((X1,X2,X3)),3,5)\n\n\n\n\n\n\n\n\n\n\nA question?\n\nWhat to do if one cluster has no assigned points during iteration?\n\n\n\nFormula Derivation\nThe goal is to minimize the loss of inertia which is sum of the points to cluster centroids.\n\\[\nLoss= \\sum_{i=1}^n \\sum_{x \\in C_i} ||x-\\mu_i||^2\n\\]\nTo iter \\(\\mu\\) for each cluster, let us find the derivative of the following function. \\[\nf(\\mu)=\\sum_{i=1}^n ||x_i-\\mu||^2 =\n\\sum_{i=1}^n {x_i}^2+\\mu^2-2x_i\\mu\n\\]\nGiven a \\(\\nabla \\mu\\), \\[\nf(\\mu + \\nabla \\mu)=\\sum_{i=1}^n ||x_i+\\nabla \\mu -\\mu||^2 =\n\\sum_{i=1}^n  {x_i}^2+\\mu^2+{\\nabla \\mu}^2-2{x_i \\mu}-2{\\mu \\nabla \\mu}+2{x_i \\nabla \\mu}\n\\]\n\\[\nf(\\mu + \\nabla \\mu)-f(\\mu)=\n\\sum_{i=1}^n {\\nabla \\mu}^2-2{\\mu \\nabla \\mu}+2{x_i \\nabla \\mu}\n\\]\n\\[\n\\frac {f(\\mu + \\nabla \\mu)-f(\\mu)}{\\nabla \\mu}=\\sum_{i=1}^n {\\nabla \\mu} -2 \\mu +2{x_i} = 2\\sum_{i=1}^n x_i - 2n\\mu\n\\]\nNow we can see if \\(n\\mu = \\sum_{i=1}^n x_i\\), then the derivative is 0, this is why in each iteration, we need to set the center of the cluster as centroid."
+  },
+  {
+    "objectID": "ML/index.html",
+    "href": "ML/index.html",
+    "title": "Machine Learning Topics",
+    "section": "",
+    "text": "Understanding Axis(Dim) Operations"
+  },
+  {
+    "objectID": "ML/index.html#fundamentals",
+    "href": "ML/index.html#fundamentals",
+    "title": "Machine Learning Topics",
+    "section": "",
+    "text": "Understanding Axis(Dim) Operations"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "ickma.dev",
+    "section": "",
+    "text": "Hi, I’m Chao Ma, also known as ickma. This is my technical blog where I share insights and tutorials on:\n\nAlgorithms & Data Structures\nReinforcement Learning\nDeep Learning & Neural Networks\nMathematics & Theory\nSoftware Development & more\n\n\n\n\n\nDive into machine learning algorithms, implementations, and theoretical foundations.\n\n\n\nExplore my comprehensive collection of algorithm tutorials and problem-solving guides."
+  },
+  {
+    "objectID": "index.html#featured-content",
+    "href": "index.html#featured-content",
+    "title": "ickma.dev",
+    "section": "",
+    "text": "Dive into machine learning algorithms, implementations, and theoretical foundations.\n\n\n\nExplore my comprehensive collection of algorithm tutorials and problem-solving guides."
+  },
+  {
+    "objectID": "Algorithm/index.html",
+    "href": "Algorithm/index.html",
+    "title": "Algorithm Topics",
+    "section": "",
+    "text": "DP: Regular Expression Matching"
+  },
+  {
+    "objectID": "Algorithm/index.html#dynamic-programming",
+    "href": "Algorithm/index.html#dynamic-programming",
+    "title": "Algorithm Topics",
+    "section": "",
+    "text": "DP: Regular Expression Matching"
   },
   {
     "objectID": "Algorithm/dp_regex.html",
@@ -42,60 +84,11 @@
     "text": "3. Code Example\nPlease not that in the code, when we retrieve character from the string or pattern, we need to use s[i-1] and p[j-1] instead of s[i] and p[j] as the index of the string and pattern is 0-based.\nfrom collections import defaultdict\nclass Solution:\n    def isMatch(self,s, p):\n        m, n = len(s), len(p)\n        dp = [[False] * (n + 1) for _ in range(m + 1)]\n     # DP is a table with m+1 rows and n+1 columns\n     # we retrieve dp[i][k], i is the index of s, k is the index of p\n        dp[0][0] = True\n        for j in range(2,n+1):\n            if p[j-1]=='*':\n                dp[0][j]=dp[0][j-2]\n            \n        for i in range(1, m + 1):\n            for j in range(1, n + 1):\n                if p[j-1] == '*':\n                    dp[i][j] = dp[i][j-2] # zero occurrence\n                    if s[i-1]==p[j-2] or p[j-2]=='.':\n                        dp[i][j]|=dp[i-1][j] or dp[i-1][j-2] # one or more occurrence\n                else:\n                    dp[i][j] = dp[i-1][j-1] and (s[i-1] == p[j-1] or p[j-1] == '.')\n        return dp[m][n]"
   },
   {
-    "objectID": "Algorithm/index.html",
-    "href": "Algorithm/index.html",
-    "title": "Algorithm Topics",
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
     "section": "",
-    "text": "DP: Regular Expression Matching"
-  },
-  {
-    "objectID": "Algorithm/index.html#dynamic-programming",
-    "href": "Algorithm/index.html#dynamic-programming",
-    "title": "Algorithm Topics",
-    "section": "",
-    "text": "DP: Regular Expression Matching"
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "ickma.dev",
-    "section": "",
-    "text": "Hi, I’m Chao Ma, also known as ickma. This is my technical blog where I share insights and tutorials on:\n\nAlgorithms & Data Structures\nReinforcement Learning\nDeep Learning & Neural Networks\nMathematics & Theory\nSoftware Development & more\n\n\n\n\n\nDive into machine learning algorithms, implementations, and theoretical foundations.\n\n\n\nExplore my comprehensive collection of algorithm tutorials and problem-solving guides.\n\nMore content coming soon!"
-  },
-  {
-    "objectID": "index.html#featured-content",
-    "href": "index.html#featured-content",
-    "title": "ickma.dev",
-    "section": "",
-    "text": "Dive into machine learning algorithms, implementations, and theoretical foundations.\n\n\n\nExplore my comprehensive collection of algorithm tutorials and problem-solving guides.\n\nMore content coming soon!"
-  },
-  {
-    "objectID": "ML/kmeans.html",
-    "href": "ML/kmeans.html",
-    "title": "K-means Clustering",
-    "section": "",
-    "text": "Setup points and K\nwe will implement a KNN algorithm to cluster the points\n\n\nX=[[1,1],[2,2.1],[3,2.5],[6,7],[7,7.1],[9,7.5]]\nk=2\n\nmax_iter=3\n\n\n# Visualize the data\n\n\nimport matplotlib.pyplot as plt\n\nplt.scatter([x[0] for x in X],[x[1] for x in X])\nplt.show()\n\n\n\n\n\n\n\n\n\n# Pure python implementation of K-means clustering\ndef knn_iter(X,centroids):\n    # set up new clusters\n    new_clusters=[[] for _ in range(len(centroids))]\n    # k=len(centroids)\n    # assign each point to the nearest centroid\n    for x in X:\n        k,distance=0,(x[0]-centroids[0][0])**2+(x[1]-centroids[0][1])**2\n        for i,c in enumerate(centroids[1:],1):\n            if (x[0]-c[0])**2+(x[1]-c[1])**2&lt;distance:\n                k=i\n                distance=(x[0]-c[0])**2+(x[1]-c[1])**2\n        new_clusters[k].append(x)\n    \n    # calculate new centroids\n    new_centroids=[[\n        sum([x[0] for x in cluster])/len(cluster),\n        sum([x[1] for x in cluster])/len(cluster)\n    ] if cluster else centroids[i] for i,cluster in enumerate(new_clusters)]\n    return new_centroids\n\n\n\n\n\n\n\n\ndef iter_and_draw(X,k,max_iter):\n    centroids=X[:k]  # Randomly select 2 centroids\n    fig, axes = plt.subplots(max_iter//3+(1 if max_iter%3!=0 else 0),\n        3, figsize=(15, 10))\n    axes=axes.flatten()\n    for i in range(max_iter):\n        \n        # Plot points and centroids\n\n\n        # Assign each point to nearest centroid and plot with corresponding color\n        colors = ['blue', 'green', 'purple', 'orange', 'brown', 'pink', 'gray', 'olive', 'cyan']\n        for j, x in enumerate(X):\n            # Find nearest centroid\n            min_dist = float('inf')\n            nearest_centroid = 0\n            for k, c in enumerate(centroids):\n                dist = (x[0]-c[0])**2 + (x[1]-c[1])**2\n                if dist &lt; min_dist:\n                    min_dist = dist\n                    nearest_centroid = k\n            # Plot point with color corresponding to its cluster\n            axes[i].scatter(x[0], x[1], c=colors[nearest_centroid % len(colors)], label=f'Cluster {nearest_centroid+1}' if j==0 else \"\")\n        axes[i].scatter([c[0] for c in centroids], [c[1] for c in centroids], c='red', marker='*', s=200, label='Centroids')\n        axes[i].set_title(f'Iteration {i}')\n        centroids = knn_iter(X, centroids)\n\n    plt.tight_layout()\n    plt.show()\n\niter_and_draw(X,k,max_iter)\n# print(centroids)\n\n\n\n\n\n\n\n\n\n# A 3 clusters example\n\nX1=np.random.rand(20,2)+5 # Some points in the upper right corner\nX2=np.random.rand(20,2)+3 # Some points in the middle\nX3=np.random.rand(20,2) # Some points in the lower left corner\n\niter_and_draw(np.concatenate((X1,X2,X3)),3,5)\n\n\n\n\n\n\n\n\n\n\nA question?\n\nWhat to do if one cluster has no assigned points during iteration?\n\n\n\nFormula Derivation\nThe goal is to minimize the loss of inertia which is sum of the points to cluster centroids.\n\\[\nLoss= \\sum_{i=1}^n \\sum_{x \\in C_i} ||x-\\mu_i||^2\n\\]\nTo iter \\(\\mu\\) for each cluster, let us find the derivative of the following function. \\[\nf(\\mu)=\\sum_{i=1}^n ||x_i-\\mu||^2 =\n\\sum_{i=1}^n {x_i}^2+\\mu^2-2x_i\\mu\n\\]\nGiven a \\(\\nabla \\mu\\), \\[\nf(\\mu + \\nabla \\mu)=\\sum_{i=1}^n ||x_i+\\nabla \\mu -\\mu||^2 =\n\\sum_{i=1}^n  {x_i}^2+\\mu^2+{\\nabla \\mu}^2-2{x_i \\mu}-2{\\mu \\nabla \\mu}+2{x_i \\nabla \\mu}\n\\]\n\\[\nf(\\mu + \\nabla \\mu)-f(\\mu)=\n\\sum_{i=1}^n {\\nabla \\mu}^2-2{\\mu \\nabla \\mu}+2{x_i \\nabla \\mu}\n\\]\n\\[\n\\frac {f(\\mu + \\nabla \\mu)-f(\\mu)}{\\nabla \\mu}=\\sum_{i=1}^n {\\nabla \\mu} -2 \\mu +2{x_i} = 2\\sum_{i=1}^n x_i - 2n\\mu\n\\]\nNow we can see if \\(n\\mu = \\sum_{i=1}^n x_i\\), then the derivative is 0, this is why in each iteration, we need to set the center of the cluster as centroid."
-  },
-  {
-    "objectID": "ML/index.html",
-    "href": "ML/index.html",
-    "title": "Machine Learning Topics",
-    "section": "",
-    "text": "Understanding Axis(Dim) Operations"
-  },
-  {
-    "objectID": "ML/index.html#clustering-algorithms",
-    "href": "ML/index.html#clustering-algorithms",
-    "title": "Machine Learning Topics",
-    "section": "Clustering Algorithms",
-    "text": "Clustering Algorithms\n\nK-Means Clustering"
-  },
-  {
-    "objectID": "ML/index.html#numpy-fundamentals",
-    "href": "ML/index.html#numpy-fundamentals",
-    "title": "Machine Learning Topics",
-    "section": "",
-    "text": "Understanding NumPy Axis Operations"
+    "text": "About this site"
   },
   {
     "objectID": "ML/axis.html",
@@ -119,38 +112,10 @@
     "text": "A 3D example\nx_3d = np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]])\nThe 3D array looks like:\n\\[\nX = \\left[\\begin{array}{c|c}\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7 & 8 & 9 \\\\\n10 & 11 & 12\n\\end{bmatrix}\n\\end{array}\\right]\n\\]\n\nsum along axis 0\nprint(x_3d.sum(axis=0))\nThe result is:\narray([[8, 10, 12], [18, 20, 22]])\nThe result is the sum of two matrices.\n\\[\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix}\n+\n\\begin{bmatrix}\n7 & 8 & 9 \\\\\n10 & 11 & 12\n\\end{bmatrix}\n=\n\\begin{bmatrix}\n8 & 10 & 12 \\\\\n18 & 20 & 22\n\\end{bmatrix}\n\\]\nWhen axis(dim) is 0, given each element in this dimension is the matrix, so the sum is the sum of two matrices.\n\n\nsum along axis 1\nprint(x_3d.sum(axis=1))\nThe result is:\n\nWhen axis(dim) is 1, given each element in this dimension is the rows of the matrix, so the sum is the sum of all the rows in each matrix.\n\\[\n[\\begin{array}{c|c}\n\\begin{bmatrix}\n1 & 2 & 3\n\\end{bmatrix} +\n\\begin{bmatrix}\n4 & 5 & 6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7 & 8 & 9\n\\end{bmatrix} +\n\\begin{bmatrix}\n10 & 11 & 12\n\\end{bmatrix}\n\\end{array}]\n\\]\nso the result is:\narray([[5,7,9], [17, 19, 21]])\n\n\nsum along axis 2\nWhen axis(dim) is 2, given each element in this dimension is the elements of the matrix, so the sum is the sum of the elements.\n\\[\n\\begin{array}{c|c}\n\\begin{bmatrix}\n1+2+3,4+5+6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7+8+9,10+11+12\n\\end{bmatrix}\n\\end{array}\n\\]\nso the result is:\narray([[6, 15], [24, 33]])\nAso, when axis(dim) is -1, it means the operation is performed along the last dimension. So for 2d array, axis -1 is the same as axis 1."
   },
   {
-    "objectID": "ML/axis.html#sum-along-axis-0-1",
-    "href": "ML/axis.html#sum-along-axis-0-1",
-    "title": "Understanding Axis(dim) Operations Smartly",
-    "section": "sum along axis 0",
-    "text": "sum along axis 0\nprint(x_3d.sum(axis=0))\nThe result is:\narray([[8, 10, 12], [18, 20, 22]])\nThe result is the sum of two matrices.\n\\[\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix}\n+\n\\begin{bmatrix}\n7 & 8 & 9 \\\\\n10 & 11 & 12\n\\end{bmatrix}\n=\n\\begin{bmatrix}\n8 & 10 & 12 \\\\\n18 & 20 & 22\n\\end{bmatrix}\n\\]\nWhen axis(dim) is 0, given each element in this dimension is the matrix, so the sum is the sum of two matrices."
-  },
-  {
-    "objectID": "ML/axis.html#sum-along-axis-1-1",
-    "href": "ML/axis.html#sum-along-axis-1-1",
-    "title": "Understanding Axis(dim) Operations Smartly",
-    "section": "sum along axis 1",
-    "text": "sum along axis 1\nprint(x_3d.sum(axis=1))\nThe result is:\n\nWhen axis(dim) is 1, given each element in this dimension is the rows of the matrix, so the sum is the sum of all the rows in each matrix.\n\\[\n[\\begin{array}{c|c}\n\\begin{bmatrix}\n1 & 2 & 3\n\\end{bmatrix} +\n\\begin{bmatrix}\n4 & 5 & 6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7 & 8 & 9\n\\end{bmatrix} +\n\\begin{bmatrix}\n10 & 11 & 12\n\\end{bmatrix}\n\\end{array}]\n\\]\nso the result is:\narray([[5,7,9], [17, 19, 21]])"
-  },
-  {
     "objectID": "ML/axis.html#rules",
     "href": "ML/axis.html#rules",
     "title": "Understanding Axis(dim) Operations Smartly",
     "section": "Rules",
     "text": "Rules\n\nwhen operate on axis(dim) N, it means the operation is performed along the elements of dimension [0…N].\nfor 2d array, axis 0 is the sum of vectors, because each element of the array is a vector, computer sees m vectors at once for a (m,n) shape array.\nfor 3d array, axis 0 is the sum of matrices, because each element of the array is a matrix. Computer sees m matrices at once for a (m,n,p) shape array.\nfor 2d array, axis 1 is the sum of elements in each vector and merge back to (m,1) shape array. Computer sees 1 vector with n elements at once for m times.\nfor 3d array, axis 1 is the sum of all vectors in each matrix and merge back to (m,1,p) shape array. Computer sees n vectors at once for m times.\nfor 3d array, axis 2 is the sum of each vector in each matrix and merge back to (m,n,1) shape array. Computer sees p vectors for m*n times."
-  },
-  {
-    "objectID": "ML/axis.html#sum-along-axis-2",
-    "href": "ML/axis.html#sum-along-axis-2",
-    "title": "Understanding Axis(dim) Operations Smartly",
-    "section": "sum along axis 2",
-    "text": "sum along axis 2\nWhen axis(dim) is 2, given each element in this dimension is the elements of the matrix, so the sum is the sum of the elements.\n\\[\n\\begin{array}{c|c}\n\\begin{bmatrix}\n1+2+3,4+5+6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7+8+9,10+11+12\n\\end{bmatrix}\n\\end{array}\n\\]\nso the result is:\narray([[6, 15], [24, 33]])\nAso, when axis(dim) is -1, it means the operation is performed along the last dimension. So for 2d array, axis -1 is the same as axis 1."
-  },
-  {
-    "objectID": "ML/index.html#fundamentals",
-    "href": "ML/index.html#fundamentals",
-    "title": "Machine Learning Topics",
-    "section": "",
-    "text": "Understanding Axis(Dim) Operations"
   }
 ]
