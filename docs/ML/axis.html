@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>ickma.dev</title>
+<title>Understanding Axis(dim) Operations Smartly – ickma.dev</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,26 +20,61 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-c1fac2584b48ed01fb6e278e36375074.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-c1fac2584b48ed01fb6e278e36375074.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -68,8 +103,37 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
-<link rel="stylesheet" href="styles.css">
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
 </head>
 
 <body class="nav-fixed quarto-light">
@@ -79,7 +143,7 @@ ul.task-list li input[type="checkbox"] {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="./index.html">
+    <a class="navbar-brand" href="../index.html">
     <span class="navbar-title">ickma.dev</span>
     </a>
   </div>
@@ -90,7 +154,7 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -99,17 +163,13 @@ ul.task-list li input[type="checkbox"] {
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-ml">    
         <li>
-    <a class="dropdown-item" href="./ML/index.html">
+    <a class="dropdown-item" href="../ML/index.html">
  <span class="dropdown-text">Overview</span></a>
   </li>  
         <li><hr class="dropdown-divider"></li>
         <li>
-    <a class="dropdown-item" href="./ML/axis.html">
+    <a class="dropdown-item" href="../ML/axis.html">
  <span class="dropdown-text">Axis Operations</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="./ML/kmeans.html">
- <span class="dropdown-text">K-Means Clustering</span></a>
   </li>  
     </ul>
   </li>
@@ -119,18 +179,18 @@ ul.task-list li input[type="checkbox"] {
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-algorithm">    
         <li>
-    <a class="dropdown-item" href="./Algorithm/index.html">
+    <a class="dropdown-item" href="../Algorithm/index.html">
  <span class="dropdown-text">Overview</span></a>
   </li>  
         <li><hr class="dropdown-divider"></li>
         <li>
-    <a class="dropdown-item" href="./Algorithm/dp_regex.html">
+    <a class="dropdown-item" href="../Algorithm/dp_regex.html">
  <span class="dropdown-text">DP Regex</span></a>
   </li>  
     </ul>
   </li>
   <li class="nav-item">
-    <a class="nav-link" href="./about.html"> 
+    <a class="nav-link" href="../about.html"> 
 <span class="menu-text">About</span></a>
   </li>  
 </ul>
@@ -149,14 +209,18 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#welcome-to-ickma.dev" id="toc-welcome-to-ickma.dev" class="nav-link active" data-scroll-target="#welcome-to-ickma.dev">Welcome to ickma.dev</a>
+  <li><a href="#a-2d-example" id="toc-a-2d-example" class="nav-link active" data-scroll-target="#a-2d-example">A 2D example</a>
   <ul class="collapse">
-  <li><a href="#featured-content" id="toc-featured-content" class="nav-link" data-scroll-target="#featured-content">Featured Content</a>
+  <li><a href="#sum-along-axis-0" id="toc-sum-along-axis-0" class="nav-link" data-scroll-target="#sum-along-axis-0">sum along axis 0</a></li>
+  <li><a href="#sum-along-axis-1" id="toc-sum-along-axis-1" class="nav-link" data-scroll-target="#sum-along-axis-1">sum along axis 1</a></li>
+  </ul></li>
+  <li><a href="#a-3d-example" id="toc-a-3d-example" class="nav-link" data-scroll-target="#a-3d-example">A 3D example</a>
   <ul class="collapse">
-  <li><a href="#machine-learning-topics" id="toc-machine-learning-topics" class="nav-link" data-scroll-target="#machine-learning-topics">Machine Learning Topics</a></li>
-  <li><a href="#algorithm-topics" id="toc-algorithm-topics" class="nav-link" data-scroll-target="#algorithm-topics">Algorithm Topics</a></li>
+  <li><a href="#sum-along-axis-0-1" id="toc-sum-along-axis-0-1" class="nav-link" data-scroll-target="#sum-along-axis-0-1">sum along axis 0</a></li>
+  <li><a href="#sum-along-axis-1-1" id="toc-sum-along-axis-1-1" class="nav-link" data-scroll-target="#sum-along-axis-1-1">sum along axis 1</a></li>
+  <li><a href="#sum-along-axis-2" id="toc-sum-along-axis-2" class="nav-link" data-scroll-target="#sum-along-axis-2">sum along axis 2</a></li>
   </ul></li>
-  </ul></li>
+  <li><a href="#rules" id="toc-rules" class="nav-link" data-scroll-target="#rules">Rules</a></li>
   </ul>
 </nav>
     </div>
@@ -165,7 +229,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">ickma.dev</h1>
+<h1 class="title">Understanding Axis(dim) Operations Smartly</h1>
 </div>
 
 
@@ -182,31 +246,145 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="welcome-to-ickma.dev" class="level1">
-<h1>Welcome to ickma.dev</h1>
-<p>Hi, I’m <strong>Chao Ma</strong>, also known as <strong>ickma</strong>. This is my technical blog where I share insights and tutorials on:</p>
+<section id="a-2d-example" class="level2">
+<h2 class="anchored" data-anchor-id="a-2d-example">A 2D example</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2"></a></span>
+<span id="cb1-3"><a href="#cb1-3"></a>x <span class="op">=</span> np.array([[<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>], [<span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The 2D array is: <span class="math display">\[
+\begin{bmatrix}
+1 &amp; 2 &amp; 3 \\
+4 &amp; 5 &amp; 6
+\end{bmatrix}
+\]</span></p>
+<section id="sum-along-axis-0" class="level3">
+<h3 class="anchored" data-anchor-id="sum-along-axis-0">sum along axis 0</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1"></a><span class="bu">print</span>(x.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The result is:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1"></a>array([<span class="dv">5</span>, <span class="dv">7</span>, <span class="dv">9</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>When axis(dim) is 0, it means the operation is performed along 0 dimension. Items along 0 dimension are each sub-array. Then the result is just two vectors added together.</p>
+<p><span class="math display">\[
+\begin{bmatrix}
+1 &amp; 2 &amp; 3
+\end{bmatrix}
++
+\begin{bmatrix}
+4 &amp; 5 &amp; 6
+\end{bmatrix}
+\]</span></p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1"></a>x.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)<span class="op">==</span>x[<span class="dv">0</span>]<span class="op">+</span>x[<span class="dv">1</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Operations along axis 0 is just operate on all sub-arrays. For example,</p>
+<p>sum(x,axis=0) is just <span class="math inline">\(\vec{x[0]}+\vec{x[1]}+...+\vec{x[n]}\)</span></p>
+</section>
+<section id="sum-along-axis-1" class="level3">
+<h3 class="anchored" data-anchor-id="sum-along-axis-1">sum along axis 1</h3>
+<div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1"></a><span class="bu">print</span>(x.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The result is:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1"></a>array([<span class="dv">6</span>, <span class="dv">15</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>When axis(dim) is 1, it means the operation is performed along 1 dimension.</p>
+<p><span class="math display">\[
+\begin{bmatrix}
+1+2+3 \\
+4+5+6
+\end{bmatrix}
+\]</span></p>
+</section>
+</section>
+<section id="a-3d-example" class="level2">
+<h2 class="anchored" data-anchor-id="a-3d-example">A 3D example</h2>
+<div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1"></a>x_3d <span class="op">=</span> np.array([[[<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>], [<span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>]], [[<span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>], [<span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">12</span>]]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The 3D array looks like:</p>
+<p><span class="math display">\[
+X = \left[\begin{array}{c|c}
+\begin{bmatrix}
+1 &amp; 2 &amp; 3 \\
+4 &amp; 5 &amp; 6
+\end{bmatrix} &amp;
+\begin{bmatrix}
+7 &amp; 8 &amp; 9 \\
+10 &amp; 11 &amp; 12
+\end{bmatrix}
+\end{array}\right]
+\]</span></p>
+<section id="sum-along-axis-0-1" class="level3">
+<h3 class="anchored" data-anchor-id="sum-along-axis-0-1">sum along axis 0</h3>
+<div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1"></a><span class="bu">print</span>(x_3d.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The result is:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1"></a>array([[<span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">12</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">22</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The result is the sum of two matrices.</p>
+<p><span class="math display">\[
+\begin{bmatrix}
+1 &amp; 2 &amp; 3 \\
+4 &amp; 5 &amp; 6
+\end{bmatrix}
++
+\begin{bmatrix}
+7 &amp; 8 &amp; 9 \\
+10 &amp; 11 &amp; 12
+\end{bmatrix}
+=
+\begin{bmatrix}
+8 &amp; 10 &amp; 12 \\
+18 &amp; 20 &amp; 22
+\end{bmatrix}
+\]</span></p>
+<p>When axis(dim) is 0, given each element in this dimension is the matrix, so the sum is the sum of two matrices.</p>
+</section>
+<section id="sum-along-axis-1-1" class="level3">
+<h3 class="anchored" data-anchor-id="sum-along-axis-1-1">sum along axis 1</h3>
+<div class="sourceCode" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1"></a><span class="bu">print</span>(x_3d.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The result is:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>When axis(dim) is 1, given each element in this dimension is the rows of the matrix, so the sum is the sum of all the rows in each matrix.</p>
+<p><span class="math display">\[
+[\begin{array}{c|c}
+\begin{bmatrix}
+1 &amp; 2 &amp; 3
+\end{bmatrix} +
+\begin{bmatrix}
+4 &amp; 5 &amp; 6
+\end{bmatrix} &amp;
+\begin{bmatrix}
+7 &amp; 8 &amp; 9
+\end{bmatrix} +
+\begin{bmatrix}
+10 &amp; 11 &amp; 12
+\end{bmatrix}
+\end{array}]
+\]</span></p>
+<p>so the result is:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1"></a>array([[<span class="dv">5</span>,<span class="dv">7</span>,<span class="dv">9</span>], [<span class="dv">17</span>, <span class="dv">19</span>, <span class="dv">21</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="sum-along-axis-2" class="level3">
+<h3 class="anchored" data-anchor-id="sum-along-axis-2">sum along axis 2</h3>
+<p>When axis(dim) is 2, given each element in this dimension is the elements of the matrix, so the sum is the sum of the elements.</p>
+<p><span class="math display">\[
+\begin{array}{c|c}
+\begin{bmatrix}
+1+2+3,4+5+6
+\end{bmatrix} &amp;
+\begin{bmatrix}
+7+8+9,10+11+12
+\end{bmatrix}
+\end{array}
+\]</span></p>
+<p>so the result is:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1"></a>array([[<span class="dv">6</span>, <span class="dv">15</span>], [<span class="dv">24</span>, <span class="dv">33</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Aso, when axis(dim) is -1, it means the operation is performed along the last dimension. So for 2d array, axis -1 is the same as axis 1.</p>
+</section>
+</section>
+<section id="rules" class="level2">
+<h2 class="anchored" data-anchor-id="rules">Rules</h2>
 <ul>
-<li><strong>Algorithms</strong> &amp; Data Structures</li>
-<li><strong>Reinforcement Learning</strong></li>
-<li><strong>Deep Learning</strong> &amp; Neural Networks</li>
-<li><strong>Mathematics</strong> &amp; Theory</li>
-<li><strong>Software Development</strong> &amp; more</li>
+<li><p>when operate on axis(dim) N, it means the operation is performed along the elements of dimension [0…N].</p></li>
+<li><p>for 2d array, axis 0 is the sum of vectors, because each element of the array is a vector, computer sees m vectors at once for a (m,n) shape array.</p></li>
+<li><p>for 3d array, axis 0 is the sum of matrices, because each element of the array is a matrix. Computer sees m matrices at once for a (m,n,p) shape array.</p></li>
+<li><p>for 2d array, axis 1 is the sum of elements in each vector and merge back to (m,1) shape array. Computer sees 1 vector with n elements at once for m times.</p></li>
+<li><p>for 3d array, axis 1 is the sum of all vectors in each matrix and merge back to (m,1,p) shape array. Computer sees n vectors at once for m times.</p></li>
+<li><p>for 3d array, axis 2 is the sum of each vector in each matrix and merge back to (m,n,1) shape array. Computer sees p vectors for m*n times.</p></li>
 </ul>
-<section id="featured-content" class="level2">
-<h2 class="anchored" data-anchor-id="featured-content">Featured Content</h2>
-<section id="machine-learning-topics" class="level3">
-<h3 class="anchored" data-anchor-id="machine-learning-topics"><a href="./ML/index.html">Machine Learning Topics</a></h3>
-<p>Dive into machine learning algorithms, implementations, and theoretical foundations.</p>
-</section>
-<section id="algorithm-topics" class="level3">
-<h3 class="anchored" data-anchor-id="algorithm-topics"><a href="./Algorithm/index.html">Algorithm Topics</a></h3>
-<p>Explore my comprehensive collection of algorithm tutorials and problem-solving guides.</p>
-<hr>
-<p><em>More content coming soon!</em></p>
 
 
-</section>
-</section>
 </section>
 
 </main> <!-- /main -->

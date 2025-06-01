@@ -60,13 +60,97 @@
     "href": "index.html",
     "title": "ickma.dev",
     "section": "",
-    "text": "Hi, I’m Chao Ma, also known as ickma. This is my technical blog where I share insights and tutorials on:\n\nAlgorithms & Data Structures\nReinforcement Learning\nDeep Learning & Neural Networks\nMathematics & Theory\nSoftware Development & more\n\n\n\n\n\nExplore my comprehensive collection of algorithm tutorials and problem-solving guides.\n\nMore content coming soon!"
+    "text": "Hi, I’m Chao Ma, also known as ickma. This is my technical blog where I share insights and tutorials on:\n\nAlgorithms & Data Structures\nReinforcement Learning\nDeep Learning & Neural Networks\nMathematics & Theory\nSoftware Development & more\n\n\n\n\n\nDive into machine learning algorithms, implementations, and theoretical foundations.\n\n\n\nExplore my comprehensive collection of algorithm tutorials and problem-solving guides.\n\nMore content coming soon!"
   },
   {
     "objectID": "index.html#featured-content",
     "href": "index.html#featured-content",
     "title": "ickma.dev",
     "section": "",
-    "text": "Explore my comprehensive collection of algorithm tutorials and problem-solving guides.\n\nMore content coming soon!"
+    "text": "Dive into machine learning algorithms, implementations, and theoretical foundations.\n\n\n\nExplore my comprehensive collection of algorithm tutorials and problem-solving guides.\n\nMore content coming soon!"
+  },
+  {
+    "objectID": "ML/kmeans.html",
+    "href": "ML/kmeans.html",
+    "title": "ickma.dev",
+    "section": "",
+    "text": "def knn_iter(X,centroids):\n    labels = []\n    for x in X:\n        distances=[]\n\n\ninitial_indices\n\narray([0, 1])\n\n\n\nnp.linalg.norm(X[:,None]-centroids,axis=2)\n\narray([[12.80624847,  1.        ],\n       [12.72792206,  1.        ],\n       [10.63014581,  1.41421356],\n       [ 1.        , 11.3137085 ],\n       [ 1.        , 12.72792206],\n       [ 1.41421356, 12.20655562]])\n\n\n\n# Enable matplotlib inline display\n%matplotlib inline\n\nimport numpy as np\nimport matplotlib.pyplot as plt\n\n# 初始化数据\nX = np.array([\n    [1, 2], [2, 1], [3, 3],\n    [10, 10], [11, 11], [12, 9]\n])\nk = 2\nmax_iter = 5\n\n# 初始化质心\nnp.random.seed(42)\ninitial_indices = np.random.choice(len(X), k, replace=False)\ncentroids = X[initial_indices].copy()\n\nprint(\"K-Means Clustering Step by Step\")\nprint(\"=\" * 40)\n\ncolors = ['red', 'blue', 'green']\n\n# Create subplots for step-by-step visualization\nfig, axes = plt.subplots(2, 3, figsize=(15, 10))\naxes = axes.flatten()\n\nfor iteration in range(max_iter):\n    # Calculate distances and assign clusters\n    distances = np.linalg.norm(X[:, np.newaxis] - centroids, axis=2)\n    labels = np.argmin(distances, axis=1)\n    \n    # Plot current state\n    ax = axes[iteration]\n    \n    # Plot data points with cluster colors\n    for i in range(k):\n        cluster_points = X[labels == i]\n        if len(cluster_points) &gt; 0:\n            ax.scatter(cluster_points[:, 0], cluster_points[:, 1], \n                      c=colors[i], label=f'Cluster {i}', s=50, alpha=0.7)\n    \n    # Plot centroids\n    ax.scatter(centroids[:, 0], centroids[:, 1], \n              c='black', marker='x', s=200, linewidths=3, label='Centroids')\n    \n    ax.set_title(f\"Iteration {iteration + 1}\")\n    ax.legend()\n    ax.grid(True, alpha=0.3)\n    ax.set_xlim(-1, 14)\n    ax.set_ylim(-1, 13)\n    \n    # Update centroids for next iteration\n    new_centroids = np.array([X[labels == i].mean(axis=0) if np.sum(labels == i) &gt; 0 else centroids[i] for i in range(k)])\n    \n    # Check for convergence\n    if np.allclose(centroids, new_centroids):\n        print(f\"Converged at iteration {iteration + 1}\")\n        # Fill remaining subplots with the final result\n        for j in range(iteration + 1, len(axes)):\n            axes[j].scatter(X[labels == 0][:, 0], X[labels == 0][:, 1], \n                          c=colors[0], label='Cluster 0', s=50, alpha=0.7)\n            axes[j].scatter(X[labels == 1][:, 0], X[labels == 1][:, 1], \n                          c=colors[1], label='Cluster 1', s=50, alpha=0.7)\n            axes[j].scatter(new_centroids[:, 0], new_centroids[:, 1], \n                          c='black', marker='x', s=200, linewidths=3, label='Final Centroids')\n            axes[j].set_title(\"Final Result\")\n            axes[j].legend()\n            axes[j].grid(True, alpha=0.3)\n            axes[j].set_xlim(-1, 14)\n            axes[j].set_ylim(-1, 13)\n        break\n    \n    centroids = new_centroids\n\nplt.tight_layout()\nplt.show()\n\n# Print final results\nprint(f\"\\nFinal centroids:\")\nfor i, centroid in enumerate(centroids):\n    print(f\"Cluster {i}: ({centroid[0]:.2f}, {centroid[1]:.2f})\")\n\nK-Means Clustering Step by Step\n========================================\nConverged at iteration 3\n\n\n\n\n\n\n\n\n\n\nFinal centroids:\nCluster 0: (11.00, 10.00)\nCluster 1: (2.00, 2.00)\n\n\n\n# Detailed explanation of np.linalg.norm and np.newaxis\nimport numpy as np\n\nprint(\"=== Understanding np.newaxis and np.linalg.norm ===\\n\")\n\n# Sample data\nX = np.array([[1, 2], [2, 1], [3, 3]])  # 3 points, 2 features each\ncentroids = np.array([[1.5, 1.5], [2.5, 2.5]])  # 2 centroids\n\nprint(\"Data points X:\")\nprint(f\"Shape: {X.shape}\")\nprint(X)\n\nprint(f\"\\nCentroids:\")\nprint(f\"Shape: {centroids.shape}\")\nprint(centroids)\n\n# Step 1: Add new axis to X\nX_expanded = X[:, np.newaxis]  # Shape becomes (3, 1, 2)\nprint(f\"\\nX[:, np.newaxis] shape: {X_expanded.shape}\")\nprint(\"This creates a new dimension for broadcasting\")\n\n# Step 2: Broadcasting subtraction\ndiff = X_expanded - centroids  # Broadcasting: (3, 1, 2) - (2, 2) = (3, 2, 2)\nprint(f\"\\nDifference array shape: {diff.shape}\")\nprint(\"Each element diff[i, j] is the vector from centroid j to point i\")\n\n# Step 3: Calculate distances using norm\ndistances = np.linalg.norm(diff, axis=2)  # Shape: (3, 2)\nprint(f\"\\nDistances shape: {distances.shape}\")\nprint(\"distances[i, j] = distance from point i to centroid j\")\nprint(\"Distances matrix:\")\nprint(distances)\n\n# Verify with manual calculation\nprint(\"\\n=== Manual verification ===\")\nfor i, point in enumerate(X):\n    for j, centroid in enumerate(centroids):\n        manual_dist = np.sqrt(np.sum((point - centroid)**2))\n        auto_dist = distances[i, j]\n        print(f\"Point {i} to Centroid {j}: Manual={manual_dist:.3f}, Auto={auto_dist:.3f}\")\n\n# Step 4: Find closest centroid for each point\nlabels = np.argmin(distances, axis=1)\nprint(f\"\\nClosest centroid for each point: {labels}\")\n\nprint(\"\\n\" + \"=\"*50)\nprint(\"Key insights:\")\nprint(\"• np.newaxis adds a dimension for broadcasting\")\nprint(\"• np.linalg.norm(array, axis=2) computes L2 norm along axis 2\") \nprint(\"• Broadcasting allows vectorized distance calculation\")\nprint(\"• Result: distances[i,j] = distance from point i to centroid j\")"
+  },
+  {
+    "objectID": "ML/index.html",
+    "href": "ML/index.html",
+    "title": "Machine Learning Topics",
+    "section": "",
+    "text": "Understanding Axis(Dim) Operations"
+  },
+  {
+    "objectID": "ML/index.html#clustering-algorithms",
+    "href": "ML/index.html#clustering-algorithms",
+    "title": "Machine Learning Topics",
+    "section": "Clustering Algorithms",
+    "text": "Clustering Algorithms\n\nK-Means Clustering"
+  },
+  {
+    "objectID": "ML/index.html#numpy-fundamentals",
+    "href": "ML/index.html#numpy-fundamentals",
+    "title": "Machine Learning Topics",
+    "section": "",
+    "text": "Understanding NumPy Axis Operations"
+  },
+  {
+    "objectID": "ML/axis.html",
+    "href": "ML/axis.html",
+    "title": "Understanding Axis(dim) Operations Smartly",
+    "section": "",
+    "text": "import numpy as np\n\nx = np.array([[1, 2, 3], [4, 5, 6]])\nThe 2D array is: \\[\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix}\n\\]\n\n\nprint(x.sum(axis=0))\nThe result is:\narray([5, 7, 9])\nWhen axis(dim) is 0, it means the operation is performed along 0 dimension. Items along 0 dimension are each sub-array. Then the result is just two vectors added together.\n\\[\n\\begin{bmatrix}\n1 & 2 & 3\n\\end{bmatrix}\n+\n\\begin{bmatrix}\n4 & 5 & 6\n\\end{bmatrix}\n\\]\nx.sum(axis=1)==x[0]+x[1]\nOperations along axis 0 is just operate on all sub-arrays. For example,\nsum(x,axis=0) is just \\(\\vec{x[0]}+\\vec{x[1]}+...+\\vec{x[n]}\\)\n\n\n\nprint(x.sum(axis=1))\nThe result is:\narray([6, 15])\nWhen axis(dim) is 1, it means the operation is performed along 1 dimension.\n\\[\n\\begin{bmatrix}\n1+2+3 \\\\\n4+5+6\n\\end{bmatrix}\n\\]"
+  },
+  {
+    "objectID": "ML/axis.html#a-2d-example",
+    "href": "ML/axis.html#a-2d-example",
+    "title": "Understanding Axis(dim) Operations Smartly",
+    "section": "",
+    "text": "import numpy as np\n\nx = np.array([[1, 2, 3], [4, 5, 6]])\nThe 2D array is: \\[\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix}\n\\]\n\n\nprint(x.sum(axis=0))\nThe result is:\narray([5, 7, 9])\nWhen axis(dim) is 0, it means the operation is performed along 0 dimension. Items along 0 dimension are each sub-array. Then the result is just two vectors added together.\n\\[\n\\begin{bmatrix}\n1 & 2 & 3\n\\end{bmatrix}\n+\n\\begin{bmatrix}\n4 & 5 & 6\n\\end{bmatrix}\n\\]\nx.sum(axis=1)==x[0]+x[1]\nOperations along axis 0 is just operate on all sub-arrays. For example,\nsum(x,axis=0) is just \\(\\vec{x[0]}+\\vec{x[1]}+...+\\vec{x[n]}\\)\n\n\n\nprint(x.sum(axis=1))\nThe result is:\narray([6, 15])\nWhen axis(dim) is 1, it means the operation is performed along 1 dimension.\n\\[\n\\begin{bmatrix}\n1+2+3 \\\\\n4+5+6\n\\end{bmatrix}\n\\]"
+  },
+  {
+    "objectID": "ML/axis.html#a-3d-example",
+    "href": "ML/axis.html#a-3d-example",
+    "title": "Understanding Axis(dim) Operations Smartly",
+    "section": "A 3D example",
+    "text": "A 3D example\nx_3d = np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]])\nThe 3D array looks like:\n\\[\nX = \\left[\\begin{array}{c|c}\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7 & 8 & 9 \\\\\n10 & 11 & 12\n\\end{bmatrix}\n\\end{array}\\right]\n\\]\n\nsum along axis 0\nprint(x_3d.sum(axis=0))\nThe result is:\narray([[8, 10, 12], [18, 20, 22]])\nThe result is the sum of two matrices.\n\\[\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix}\n+\n\\begin{bmatrix}\n7 & 8 & 9 \\\\\n10 & 11 & 12\n\\end{bmatrix}\n=\n\\begin{bmatrix}\n8 & 10 & 12 \\\\\n18 & 20 & 22\n\\end{bmatrix}\n\\]\nWhen axis(dim) is 0, given each element in this dimension is the matrix, so the sum is the sum of two matrices.\n\n\nsum along axis 1\nprint(x_3d.sum(axis=1))\nThe result is:\n\nWhen axis(dim) is 1, given each element in this dimension is the rows of the matrix, so the sum is the sum of all the rows in each matrix.\n\\[\n[\\begin{array}{c|c}\n\\begin{bmatrix}\n1 & 2 & 3\n\\end{bmatrix} +\n\\begin{bmatrix}\n4 & 5 & 6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7 & 8 & 9\n\\end{bmatrix} +\n\\begin{bmatrix}\n10 & 11 & 12\n\\end{bmatrix}\n\\end{array}]\n\\]\nso the result is:\narray([[5,7,9], [17, 19, 21]])\n\n\nsum along axis 2\nWhen axis(dim) is 2, given each element in this dimension is the elements of the matrix, so the sum is the sum of the elements.\n\\[\n\\begin{array}{c|c}\n\\begin{bmatrix}\n1+2+3,4+5+6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7+8+9,10+11+12\n\\end{bmatrix}\n\\end{array}\n\\]\nso the result is:\narray([[6, 15], [24, 33]])\nAso, when axis(dim) is -1, it means the operation is performed along the last dimension. So for 2d array, axis -1 is the same as axis 1."
+  },
+  {
+    "objectID": "ML/axis.html#sum-along-axis-0-1",
+    "href": "ML/axis.html#sum-along-axis-0-1",
+    "title": "Understanding Axis(dim) Operations Smartly",
+    "section": "sum along axis 0",
+    "text": "sum along axis 0\nprint(x_3d.sum(axis=0))\nThe result is:\narray([[8, 10, 12], [18, 20, 22]])\nThe result is the sum of two matrices.\n\\[\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix}\n+\n\\begin{bmatrix}\n7 & 8 & 9 \\\\\n10 & 11 & 12\n\\end{bmatrix}\n=\n\\begin{bmatrix}\n8 & 10 & 12 \\\\\n18 & 20 & 22\n\\end{bmatrix}\n\\]\nWhen axis(dim) is 0, given each element in this dimension is the matrix, so the sum is the sum of two matrices."
+  },
+  {
+    "objectID": "ML/axis.html#sum-along-axis-1-1",
+    "href": "ML/axis.html#sum-along-axis-1-1",
+    "title": "Understanding Axis(dim) Operations Smartly",
+    "section": "sum along axis 1",
+    "text": "sum along axis 1\nprint(x_3d.sum(axis=1))\nThe result is:\n\nWhen axis(dim) is 1, given each element in this dimension is the rows of the matrix, so the sum is the sum of all the rows in each matrix.\n\\[\n[\\begin{array}{c|c}\n\\begin{bmatrix}\n1 & 2 & 3\n\\end{bmatrix} +\n\\begin{bmatrix}\n4 & 5 & 6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7 & 8 & 9\n\\end{bmatrix} +\n\\begin{bmatrix}\n10 & 11 & 12\n\\end{bmatrix}\n\\end{array}]\n\\]\nso the result is:\narray([[5,7,9], [17, 19, 21]])"
+  },
+  {
+    "objectID": "ML/axis.html#rules",
+    "href": "ML/axis.html#rules",
+    "title": "Understanding Axis(dim) Operations Smartly",
+    "section": "Rules",
+    "text": "Rules\n\nwhen operate on axis(dim) N, it means the operation is performed along the elements of dimension [0…N].\nfor 2d array, axis 0 is the sum of vectors, because each element of the array is a vector, computer sees m vectors at once for a (m,n) shape array.\nfor 3d array, axis 0 is the sum of matrices, because each element of the array is a matrix. Computer sees m matrices at once for a (m,n,p) shape array.\nfor 2d array, axis 1 is the sum of elements in each vector and merge back to (m,1) shape array. Computer sees 1 vector with n elements at once for m times.\nfor 3d array, axis 1 is the sum of all vectors in each matrix and merge back to (m,1,p) shape array. Computer sees n vectors at once for m times.\nfor 3d array, axis 2 is the sum of each vector in each matrix and merge back to (m,n,1) shape array. Computer sees p vectors for m*n times."
+  },
+  {
+    "objectID": "ML/axis.html#sum-along-axis-2",
+    "href": "ML/axis.html#sum-along-axis-2",
+    "title": "Understanding Axis(dim) Operations Smartly",
+    "section": "sum along axis 2",
+    "text": "sum along axis 2\nWhen axis(dim) is 2, given each element in this dimension is the elements of the matrix, so the sum is the sum of the elements.\n\\[\n\\begin{array}{c|c}\n\\begin{bmatrix}\n1+2+3,4+5+6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7+8+9,10+11+12\n\\end{bmatrix}\n\\end{array}\n\\]\nso the result is:\narray([[6, 15], [24, 33]])\nAso, when axis(dim) is -1, it means the operation is performed along the last dimension. So for 2d array, axis -1 is the same as axis 1."
+  },
+  {
+    "objectID": "ML/index.html#fundamentals",
+    "href": "ML/index.html#fundamentals",
+    "title": "Machine Learning Topics",
+    "section": "",
+    "text": "Understanding Axis(Dim) Operations"
   }
 ]

@@ -1,0 +1,202 @@
+---
+title: "Understanding  Axis(dim) Operations Smartly"
+format: 
+    html:
+        code-fold: true
+        code-line-numbers: true
+jupyter: python3
+---
+
+## A 2D example
+
+```python
+import numpy as np
+
+x = np.array([[1, 2, 3], [4, 5, 6]])
+
+```
+The 2D array is:
+$$
+\begin{bmatrix}
+1 & 2 & 3 \\
+4 & 5 & 6
+\end{bmatrix}
+$$
+
+### sum along axis 0
+```python
+print(x.sum(axis=0))
+```
+
+The result is:
+
+```python
+array([5, 7, 9])
+```
+
+When axis(dim) is 0, it means the operation is performed along 0 dimension.
+Items along 0 dimension are each sub-array.
+Then the result is just two vectors added together.
+
+$$
+\begin{bmatrix}
+1 & 2 & 3
+\end{bmatrix}
++
+\begin{bmatrix}
+4 & 5 & 6
+\end{bmatrix}
+$$
+
+```python
+x.sum(axis=1)==x[0]+x[1]
+```
+Operations along axis 0 is just operate on all sub-arrays.
+For example,
+
+sum(x,axis=0) is just $\vec{x[0]}+\vec{x[1]}+...+\vec{x[n]}$
+
+### sum along axis 1
+
+```python
+print(x.sum(axis=1))
+```
+
+The result is:
+
+```python
+array([6, 15])
+```
+
+When axis(dim) is 1, it means the operation is performed along 1 dimension.
+
+$$
+\begin{bmatrix}
+1+2+3 \\
+4+5+6
+\end{bmatrix}
+$$
+
+## A 3D example
+
+```python
+x_3d = np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]])
+
+```
+
+The 3D array looks like:
+
+$$
+X = \left[\begin{array}{c|c}
+\begin{bmatrix}
+1 & 2 & 3 \\
+4 & 5 & 6
+\end{bmatrix} & 
+\begin{bmatrix}
+7 & 8 & 9 \\
+10 & 11 & 12
+\end{bmatrix}
+\end{array}\right]
+$$
+
+### sum along axis 0
+
+```python
+print(x_3d.sum(axis=0))
+```
+
+The result is:
+
+```python
+array([[8, 10, 12], [18, 20, 22]])
+```
+
+The result is the sum of two matrices.
+
+$$
+\begin{bmatrix}
+1 & 2 & 3 \\
+4 & 5 & 6
+\end{bmatrix}
++
+\begin{bmatrix}
+7 & 8 & 9 \\
+10 & 11 & 12
+\end{bmatrix}
+=
+\begin{bmatrix}
+8 & 10 & 12 \\
+18 & 20 & 22
+\end{bmatrix}
+$$
+
+When axis(dim) is 0, given each element in this dimension is the matrix, so the sum is the sum of two matrices.
+
+### sum along axis 1
+
+```python
+print(x_3d.sum(axis=1))
+```
+
+The result is:
+
+```python
+```
+
+When axis(dim) is 1, given each element in this dimension is the rows of the matrix, so the sum is the sum of all the rows in each matrix.
+
+$$
+[\begin{array}{c|c}
+\begin{bmatrix}
+1 & 2 & 3 
+\end{bmatrix} +
+\begin{bmatrix}
+4 & 5 & 6
+\end{bmatrix} &
+\begin{bmatrix}
+7 & 8 & 9
+\end{bmatrix} +
+\begin{bmatrix}
+10 & 11 & 12
+\end{bmatrix}
+\end{array}]
+$$
+
+so the result is:
+```python
+array([[5,7,9], [17, 19, 21]])
+```
+
+### sum along axis 2
+When axis(dim) is 2, given each element in this dimension is the elements of the matrix, so the sum is the sum of the elements.
+
+$$
+\begin{array}{c|c}
+\begin{bmatrix}
+1+2+3,4+5+6
+\end{bmatrix} & 
+\begin{bmatrix}
+7+8+9,10+11+12
+\end{bmatrix}
+\end{array}
+$$
+
+so the result is:
+```python
+array([[6, 15], [24, 33]])
+```
+
+Aso, when axis(dim) is -1, it means the operation is performed along the last dimension. 
+So for 2d array, axis -1 is the same as axis 1.
+
+
+
+## Rules
++ when operate on axis(dim) N, it means the operation is performed along the elements of dimension [0...N].
++ for 2d array, axis 0 is the sum of vectors, because each element of the array is a vector, computer sees m vectors at once for a (m,n) shape array.
++ for 3d array, axis 0 is the sum of matrices, because each element of the array is a matrix. Computer sees m matrices at once for a (m,n,p) shape array.
+
++ for 2d array, axis 1 is the sum of elements in each vector and merge back to (m,1) shape array. Computer sees 1 vector with n elements at once for m times.
++ for 3d array, axis 1 is the sum of all vectors in each matrix and merge back to (m,1,p) shape array. Computer sees n vectors  at once for m times.
+
++ for 3d array, axis 2 is the sum of each vector  in each matrix and merge back to (m,n,1) shape array. Computer sees p vectors  for m*n times.
