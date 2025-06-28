@@ -1,0 +1,73 @@
+---
+title: "Logistic Regression"
+author: "Chao Ma"
+date: "2024-05-17"
+categories: [ML, classification]
+format:
+  html:
+    toc: true
+    code-fold: true
+---
+
+## Model Formulation
+
+The core idea of logistic regression is to model the probability of a binary outcome.
+
+### Hypothesis
+
+We model the probability that the target variable \(y\) is 1, given the features \(x\), using the sigmoid (or logistic) function, denoted by \(\sigma\).
+
+$$
+P(y_i=1 \mid x_i) = \hat{y}_i = \sigma(w^T x_i + b)
+$$
+
+The sigmoid function is defined as:
+$$
+\sigma(z) = \frac{1}{1 + e^{-z}}
+$$
+
+Since the outcome is binary, the probability of \(y\) being 0 is simply:
+$$
+P(y_i=0 \mid x_i) = 1 - \hat{y}_i
+$$
+
+These two cases can be written compactly as a single equation, which is the probability mass function of a Bernoulli distribution:
+$$
+P(y_i \mid x_i) = \hat{y}_i^{y_i} (1 - \hat{y}_i)^{1 - y_i}
+$$
+
+## Loss Function (Binary Cross-Entropy)
+
+To find the optimal parameters \(w\) and \(b\), we use Maximum Likelihood Estimation (MLE). We want to find the parameters that maximize the probability of observing our given dataset.
+
+### 1. Likelihood
+
+The likelihood is the joint probability of observing all \(n\) data points, assuming they are independent and identically distributed (i.i.d.):
+$$
+\mathcal{L}(w, b) = \prod_{i=1}^n P(y_i \mid x_i) = \prod_{i=1}^n \hat{y}_i^{y_i} (1 - \hat{y}_i)^{1 - y_i}
+$$
+
+### 2. Log-Likelihood
+
+Working with products is difficult, so we take the logarithm of the likelihood. Maximizing the log-likelihood is equivalent to maximizing the likelihood.
+
+$$
+\log \mathcal{L}(w, b) = \sum_{i=1}^n \left[ y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right]
+$$
+
+### 3. Cost Function
+
+In machine learning, we frame problems as minimizing a cost function. The standard convention is to minimize the **negative** log-likelihood. This gives us the **Binary Cross-Entropy** loss, \(J(w, b)\).
+
+$$
+J(w, b) = - \frac{1}{n} \sum_{i=1}^n \left[ y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right]
+$$
+The $\frac{1}{n}$ term is an average over the training examples and doesn't change the minimum, but it helps in stabilizing the training process.
+
+## refernce: Bernoulli Distribution
+Formular
+$$
+P(y) = p^y (1 - p)^{1 - y}, \quad y \in \{0, 1\}
+$$
+* when y = 1：$P(y=1) = p^1 (1 - p)^0 = p$
+* when y=0: $P(y=0) = p^0 (1 - p)^1 = 1 - p $
