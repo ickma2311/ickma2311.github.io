@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Chao Ma">
+<meta name="dcterms.date" content="2025-09-22">
+
+<title>How ReLU Activation Functions Solve Problems That Linear Models Cannot – ickma.dev</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../🤔" rel="icon">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">ickma.dev</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-ml" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">ML</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-ml">    
+        <li>
+    <a class="dropdown-item" href="../ML/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../ML/axis.html">
+ <span class="dropdown-text">Axis Operations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../ML/kmeans.html">
+ <span class="dropdown-text">K-Means Clustering</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../ML/xor-deep-learning.html">
+ <span class="dropdown-text">XOR Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../ML/logistic_regression.html">
+ <span class="dropdown-text">Logistic Regression</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-algorithm" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Algorithm</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-algorithm">    
+        <li>
+    <a class="dropdown-item" href="../Algorithm/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../Algorithm/dp_regex.html">
+ <span class="dropdown-text">DP Regex</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#how-relu-activation-functions-solve-problems-that-linear-models-cannot" id="toc-how-relu-activation-functions-solve-problems-that-linear-models-cannot" class="nav-link active" data-scroll-target="#how-relu-activation-functions-solve-problems-that-linear-models-cannot">How ReLU Activation Functions Solve Problems That Linear Models Cannot</a>
+  <ul class="collapse">
+  <li><a href="#the-xor-problem-a-challenge-for-linear-models" id="toc-the-xor-problem-a-challenge-for-linear-models" class="nav-link" data-scroll-target="#the-xor-problem-a-challenge-for-linear-models">The XOR Problem: A Challenge for Linear Models</a></li>
+  <li><a href="#limitation-1-single-layer-linear-model" id="toc-limitation-1-single-layer-linear-model" class="nav-link" data-scroll-target="#limitation-1-single-layer-linear-model">Limitation 1: Single Layer Linear Model</a></li>
+  <li><a href="#limitation-2-multiple-layer-linear-model-without-activation" id="toc-limitation-2-multiple-layer-linear-model-without-activation" class="nav-link" data-scroll-target="#limitation-2-multiple-layer-linear-model-without-activation">Limitation 2: Multiple Layer Linear Model (Without Activation)</a></li>
+  <li><a href="#the-solution-relu-activation-function" id="toc-the-solution-relu-activation-function" class="nav-link" data-scroll-target="#the-solution-relu-activation-function">The Solution: ReLU Activation Function</a>
+  <ul class="collapse">
+  <li><a href="#transformation-table-how-relu-solves-xor" id="toc-transformation-table-how-relu-solves-xor" class="nav-link" data-scroll-target="#transformation-table-how-relu-solves-xor">Transformation Table: How ReLU Solves XOR</a></li>
+  <li><a href="#step-1-original-input-space" id="toc-step-1-original-input-space" class="nav-link" data-scroll-target="#step-1-original-input-space">Step 1: Original Input Space</a></li>
+  <li><a href="#step-2-linear-transformation-before-relu" id="toc-step-2-linear-transformation-before-relu" class="nav-link" data-scroll-target="#step-2-linear-transformation-before-relu">Step 2: Linear Transformation (Before ReLU)</a></li>
+  <li><a href="#step-3-relu-transformation" id="toc-step-3-relu-transformation" class="nav-link" data-scroll-target="#step-3-relu-transformation">Step 3: ReLU Transformation</a></li>
+  <li><a href="#step-4-final-classification" id="toc-step-4-final-classification" class="nav-link" data-scroll-target="#step-4-final-classification">Step 4: Final Classification</a></li>
+  </ul></li>
+  <li><a href="#constructive-proof-hand-crafted-xor-solution" id="toc-constructive-proof-hand-crafted-xor-solution" class="nav-link" data-scroll-target="#constructive-proof-hand-crafted-xor-solution">Constructive Proof: Hand-crafted XOR Solution</a></li>
+  <li><a href="#relu-transformation-summary" id="toc-relu-transformation-summary" class="nav-link" data-scroll-target="#relu-transformation-summary">ReLU Transformation Summary</a></li>
+  <li><a href="#empirical-validation-learned-solutions" id="toc-empirical-validation-learned-solutions" class="nav-link" data-scroll-target="#empirical-validation-learned-solutions">Empirical Validation: Learned Solutions</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">How ReLU Activation Functions Solve Problems That Linear Models Cannot</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">Deep Learning</div>
+    <div class="quarto-category">Neural Networks</div>
+    <div class="quarto-category">Nonlinearity</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Chao Ma </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 22, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="how-relu-activation-functions-solve-problems-that-linear-models-cannot" class="level1">
+<h1>How ReLU Activation Functions Solve Problems That Linear Models Cannot</h1>
+<p><em>This is a reading recap from Chapter 6.1 of the Deep Learning book, demonstrating how ReLU activation functions enable neural networks to solve the XOR problem that linear models fundamentally cannot handle.</em></p>
+<p>The XOR (exclusive OR) problem serves as the perfect example to understand why nonlinear activation functions are essential in neural networks. This analysis shows the limitations of linear models and demonstrates how ReLU activation functions provide the solution.</p>
+<section id="the-xor-problem-a-challenge-for-linear-models" class="level2">
+<h2 class="anchored" data-anchor-id="the-xor-problem-a-challenge-for-linear-models">The XOR Problem: A Challenge for Linear Models</h2>
+<p>The XOR function is defined as: - XOR(0,0) = 0 - XOR(0,1) = 1<br>
+- XOR(1,0) = 1 - XOR(1,1) = 0</p>
+<p>This creates a fundamental challenge: <strong>no single straight line can separate the classes</strong>.</p>
+<div id="cell-3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:30.598379Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:30.598193Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.470747Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.470471Z&quot;}}" data-execution_count="1">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.patches <span class="im">import</span> Rectangle</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.linear_model <span class="im">import</span> LogisticRegression</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.neural_network <span class="im">import</span> MLPClassifier</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">'ignore'</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Define XOR dataset</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> np.array([[<span class="dv">0</span>, <span class="dv">0</span>], [<span class="dv">0</span>, <span class="dv">1</span>], [<span class="dv">1</span>, <span class="dv">0</span>], [<span class="dv">1</span>, <span class="dv">1</span>]])</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> np.array([<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>])</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"XOR Truth Table:"</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Input (x₁, x₂) | Output"</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"---------------|--------"</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>):</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   (</span><span class="sc">{</span>X[i,<span class="dv">0</span>]<span class="sc">}</span><span class="ss">, </span><span class="sc">{</span>X[i,<span class="dv">1</span>]<span class="sc">}</span><span class="ss">)    |   </span><span class="sc">{</span>y[i]<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>XOR Truth Table:
+Input (x₁, x₂) | Output
+---------------|--------
+   (0, 0)    |   0
+   (0, 1)    |   1
+   (1, 0)    |   1
+   (1, 1)    |   0</code></pre>
+</div>
+</div>
+</section>
+<section id="limitation-1-single-layer-linear-model" class="level2">
+<h2 class="anchored" data-anchor-id="limitation-1-single-layer-linear-model">Limitation 1: Single Layer Linear Model</h2>
+<p>A single layer perceptron can only create linear decision boundaries. Let’s see what happens when we try to solve XOR with logistic regression:</p>
+<div id="cell-5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.484460Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.484333Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.602964Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.602728Z&quot;}}" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demonstrate single layer linear model failure</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>fig, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">'red'</span>, <span class="st">'blue'</span>]</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Left plot: Show the XOR problem</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2</span>):</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    mask <span class="op">=</span> y <span class="op">==</span> i</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    ax1.scatter(X[mask, <span class="dv">0</span>], X[mask, <span class="dv">1</span>], c<span class="op">=</span>colors[i], s<span class="op">=</span><span class="dv">200</span>, </span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>               label<span class="op">=</span><span class="ss">f'Class </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">'</span>, edgecolors<span class="op">=</span><span class="st">'black'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Try multiple linear separators to show they all fail</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>x_line <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>, <span class="dv">100</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>ax1.plot(x_line, <span class="fl">0.5</span> <span class="op">*</span> np.ones_like(x_line), <span class="st">'--'</span>, color<span class="op">=</span><span class="st">'gray'</span>, alpha<span class="op">=</span><span class="fl">0.7</span>, label<span class="op">=</span><span class="st">'Attempts at'</span>)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>ax1.plot(<span class="fl">0.5</span> <span class="op">*</span> np.ones_like(x_line), x_line, <span class="st">'--'</span>, color<span class="op">=</span><span class="st">'orange'</span>, alpha<span class="op">=</span><span class="fl">0.7</span>, label<span class="op">=</span><span class="st">'linear separation'</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>ax1.plot(x_line, x_line, <span class="st">'--'</span>, color<span class="op">=</span><span class="st">'green'</span>, alpha<span class="op">=</span><span class="fl">0.7</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>ax1.plot(x_line, <span class="dv">1</span><span class="op">-</span>x_line, <span class="st">'--'</span>, color<span class="op">=</span><span class="st">'purple'</span>, alpha<span class="op">=</span><span class="fl">0.7</span>)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>ax1.set_xlim(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>ax1.set_ylim(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>ax1.set_xlabel(<span class="st">'x₁'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>ax1.set_ylabel(<span class="st">'x₂'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>ax1.set_title(<span class="st">'XOR Problem: No Linear Solution'</span>, fontsize<span class="op">=</span><span class="dv">14</span>, fontweight<span class="op">=</span><span class="st">'bold'</span>)</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>ax1.legend()</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>ax1.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Right plot: Logistic regression attempt</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>log_reg <span class="op">=</span> LogisticRegression()</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>log_reg.fit(X, y)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>accuracy <span class="op">=</span> log_reg.score(X, y)</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>xx, yy <span class="op">=</span> np.meshgrid(np.linspace(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>, <span class="dv">100</span>), np.linspace(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>, <span class="dv">100</span>))</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>grid_points <span class="op">=</span> np.c_[xx.ravel(), yy.ravel()]</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>Z <span class="op">=</span> log_reg.predict_proba(grid_points)[:, <span class="dv">1</span>].reshape(xx.shape)</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>ax2.contourf(xx, yy, Z, levels<span class="op">=</span><span class="dv">50</span>, alpha<span class="op">=</span><span class="fl">0.6</span>, cmap<span class="op">=</span><span class="st">'RdYlBu'</span>)</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>ax2.contour(xx, yy, Z, levels<span class="op">=</span>[<span class="fl">0.5</span>], colors<span class="op">=</span><span class="st">'black'</span>, linewidths<span class="op">=</span><span class="dv">2</span>, linestyles<span class="op">=</span><span class="st">'--'</span>)</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2</span>):</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    mask <span class="op">=</span> y <span class="op">==</span> i</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    ax2.scatter(X[mask, <span class="dv">0</span>], X[mask, <span class="dv">1</span>], c<span class="op">=</span>colors[i], s<span class="op">=</span><span class="dv">200</span>, </span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>               label<span class="op">=</span><span class="ss">f'Class </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">'</span>, edgecolors<span class="op">=</span><span class="st">'black'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>ax2.set_xlim(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>ax2.set_ylim(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>ax2.set_xlabel(<span class="st">'x₁'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>ax2.set_ylabel(<span class="st">'x₂'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>ax2.set_title(<span class="ss">f'Logistic Regression: </span><span class="sc">{</span>accuracy<span class="sc">:.0%}</span><span class="ss"> Accuracy'</span>, fontsize<span class="op">=</span><span class="dv">14</span>, fontweight<span class="op">=</span><span class="st">'bold'</span>)</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>ax2.legend()</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>ax2.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Single layer model accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.1%}</span><span class="ss"> - Cannot solve XOR!"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="xor-deep-learning_files/figure-html/cell-3-output-1.png" width="1142" height="470" class="figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Single layer model accuracy: 50.0% - Cannot solve XOR!</code></pre>
+</div>
+</div>
+</section>
+<section id="limitation-2-multiple-layer-linear-model-without-activation" class="level2">
+<h2 class="anchored" data-anchor-id="limitation-2-multiple-layer-linear-model-without-activation">Limitation 2: Multiple Layer Linear Model (Without Activation)</h2>
+<p>Even stacking multiple linear layers doesn’t help! Multiple linear transformations are mathematically equivalent to a single linear transformation.</p>
+<div id="cell-7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.604041Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.603945Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.605795Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.605568Z&quot;}}" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demonstrate that multiple linear layers = single linear layer</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mathematical proof: Multiple linear layers collapse to one layer"</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"================================================================"</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Layer 1: h₁ = W₁x + b₁"</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Layer 2: h₂ = W₂h₁ + b₂ = W₂(W₁x + b₁) + b₂ = (W₂W₁)x + (W₂b₁ + b₂)"</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Result: Still just Wx + b (a single linear transformation)"</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Conclusion: Stacking linear layers without activation functions"</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"            doesn't increase the model's expressive power!"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Mathematical proof: Multiple linear layers collapse to one layer
+================================================================
+
+Layer 1: h₁ = W₁x + b₁
+Layer 2: h₂ = W₂h₁ + b₂ = W₂(W₁x + b₁) + b₂ = (W₂W₁)x + (W₂b₁ + b₂)
+
+Result: Still just Wx + b (a single linear transformation)
+
+Conclusion: Stacking linear layers without activation functions
+            doesn't increase the model's expressive power!</code></pre>
+</div>
+</div>
+</section>
+<section id="the-solution-relu-activation-function" class="level2">
+<h2 class="anchored" data-anchor-id="the-solution-relu-activation-function">The Solution: ReLU Activation Function</h2>
+<p>ReLU (Rectified Linear Unit) provides the nonlinearity needed to solve XOR: - <strong>ReLU(z) = max(0, z)</strong> - Clips negative values to zero, keeping positive values unchanged</p>
+<p>Let’s see how ReLU transforms the XOR problem to make it solvable.</p>
+<div id="cell-9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.606766Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.606684Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.609430Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.609252Z&quot;}}" data-execution_count="4">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define ReLU and sigmoid functions</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> relu(z):</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.maximum(<span class="dv">0</span>, z)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sigmoid(z):</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>np.clip(z, <span class="op">-</span><span class="dv">500</span>, <span class="dv">500</span>)))</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Hand-crafted network weights and biases that solve XOR</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Network Architecture for XOR Solution:"</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"===================================="</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Hidden layer weights and biases</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>W1 <span class="op">=</span> np.array([[<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>], [<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>]])</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>b1 <span class="op">=</span> np.array([<span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Output layer weights and bias  </span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>w2 <span class="op">=</span> np.array([<span class="dv">1</span>, <span class="dv">1</span>])</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>b2 <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Hidden Layer:"</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"W₁ = </span><span class="sc">{</span>W1<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"b₁ = </span><span class="sc">{</span>b1<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Output Layer:"</span>)</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"w₂ = </span><span class="sc">{</span>w2<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"b₂ = </span><span class="sc">{</span>b2<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Forward pass function</span></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward_pass(X, W1, b1, w2, b2):</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Hidden layer (linear transformation)</span></span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>    z1 <span class="op">=</span> X <span class="op">@</span> W1.T <span class="op">+</span> b1</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ReLU activation</span></span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>    h1 <span class="op">=</span> relu(z1)</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Output layer</span></span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>    z2 <span class="op">=</span> h1 <span class="op">@</span> w2 <span class="op">+</span> b2</span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>    output <span class="op">=</span> sigmoid(z2)</span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> output, h1, z1</span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply network to XOR data</span></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>outputs, hidden_activations, pre_activations <span class="op">=</span> forward_pass(X, W1, b1, w2, b2)</span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> (outputs <span class="op">&gt;</span> <span class="fl">0.5</span>).astype(<span class="bu">int</span>)</span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>accuracy <span class="op">=</span> (predictions <span class="op">==</span> y).mean()</span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Network Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.0%}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Network Architecture for XOR Solution:
+====================================
+
+Hidden Layer:
+W₁ = [[ 1 -1]
+ [-1  1]]
+b₁ = [0 0]
+
+Output Layer:
+w₂ = [1 1]
+b₂ = -0.5
+
+Network Accuracy: 100%</code></pre>
+</div>
+</div>
+<section id="transformation-table-how-relu-solves-xor" class="level3">
+<h3 class="anchored" data-anchor-id="transformation-table-how-relu-solves-xor">Transformation Table: How ReLU Solves XOR</h3>
+<p>Let’s trace through exactly what happens to each input:</p>
+<div id="cell-11" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.610474Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.610406Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.612839Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.612631Z&quot;}}" data-execution_count="5">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create detailed transformation table</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Complete Transformation Table:"</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"============================="</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Input   | Pre-ReLU  | Post-ReLU | Output | Prediction | Target | Correct?"</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"(x₁,x₂) | (z₁, z₂)  | (h₁, h₂)  | prob   | class      | y      |"</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"--------|-----------|-----------|--------|------------|--------|----------"</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>):</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    input_str <span class="op">=</span> <span class="ss">f"(</span><span class="sc">{</span>X[i,<span class="dv">0</span>]<span class="sc">}</span><span class="ss">,</span><span class="sc">{</span>X[i,<span class="dv">1</span>]<span class="sc">}</span><span class="ss">)"</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    pre_relu_str <span class="op">=</span> <span class="ss">f"(</span><span class="sc">{</span>pre_activations[i,<span class="dv">0</span>]<span class="sc">:2.0f}</span><span class="ss">,</span><span class="sc">{</span>pre_activations[i,<span class="dv">1</span>]<span class="sc">:2.0f}</span><span class="ss">)"</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    post_relu_str <span class="op">=</span> <span class="ss">f"(</span><span class="sc">{</span>hidden_activations[i,<span class="dv">0</span>]<span class="sc">:.0f}</span><span class="ss">,</span><span class="sc">{</span>hidden_activations[i,<span class="dv">1</span>]<span class="sc">:.0f}</span><span class="ss">)"</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    output_str <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>outputs[i]<span class="sc">:.3f}</span><span class="ss">"</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    pred_str <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>predictions[i]<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    target_str <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>y[i]<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    correct_str <span class="op">=</span> <span class="st">"✓"</span> <span class="cf">if</span> predictions[i] <span class="op">==</span> y[i] <span class="cf">else</span> <span class="st">"✗"</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>input_str<span class="sc">:7}</span><span class="ss"> | </span><span class="sc">{</span>pre_relu_str<span class="sc">:9}</span><span class="ss"> | </span><span class="sc">{</span>post_relu_str<span class="sc">:9}</span><span class="ss"> | </span><span class="sc">{</span>output_str<span class="sc">:6}</span><span class="ss"> | </span><span class="sc">{</span>pred_str<span class="sc">:10}</span><span class="ss"> | </span><span class="sc">{</span>target_str<span class="sc">:6}</span><span class="ss"> | </span><span class="sc">{</span>correct_str<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Key Insight: ReLU transforms (-1,1) → (0,1) and (1,-1) → (1,0)"</span>)</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"This makes the XOR classes linearly separable in the hidden space!"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Complete Transformation Table:
+=============================
+
+Input   | Pre-ReLU  | Post-ReLU | Output | Prediction | Target | Correct?
+(x₁,x₂) | (z₁, z₂)  | (h₁, h₂)  | prob   | class      | y      |
+--------|-----------|-----------|--------|------------|--------|----------
+(0,0)   | ( 0, 0)   | (0,0)     | 0.378  | 0          | 0      | ✓
+(0,1)   | (-1, 1)   | (0,1)     | 0.622  | 1          | 1      | ✓
+(1,0)   | ( 1,-1)   | (1,0)     | 0.622  | 1          | 1      | ✓
+(1,1)   | ( 0, 0)   | (0,0)     | 0.378  | 0          | 0      | ✓
+
+Key Insight: ReLU transforms (-1,1) → (0,1) and (1,-1) → (1,0)
+This makes the XOR classes linearly separable in the hidden space!</code></pre>
+</div>
+</div>
+</section>
+<section id="step-1-original-input-space" class="level3">
+<h3 class="anchored" data-anchor-id="step-1-original-input-space">Step 1: Original Input Space</h3>
+<p>The XOR problem in its raw form - notice how no single line can separate the classes:</p>
+<div id="cell-13" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.613767Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.613694Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.662273Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.662060Z&quot;}}" data-execution_count="6">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1 visualization: Original Input Space</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">6</span>))</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2</span>):</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    mask <span class="op">=</span> y <span class="op">==</span> i</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    ax.scatter(X[mask, <span class="dv">0</span>], X[mask, <span class="dv">1</span>], c<span class="op">=</span>colors[i], s<span class="op">=</span><span class="dv">200</span>, </span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>               label<span class="op">=</span><span class="ss">f'XOR = </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">'</span>, edgecolors<span class="op">=</span><span class="st">'black'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Annotate each point</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>):</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    ax.annotate(<span class="ss">f'(</span><span class="sc">{</span>X[i,<span class="dv">0</span>]<span class="sc">}</span><span class="ss">,</span><span class="sc">{</span>X[i,<span class="dv">1</span>]<span class="sc">}</span><span class="ss">)'</span>, X[i], xytext<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">10</span>), </span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>                textcoords<span class="op">=</span><span class="st">'offset points'</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'x₁'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'x₂'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Step 1: Original Input Space'</span>, fontsize<span class="op">=</span><span class="dv">14</span>, fontweight<span class="op">=</span><span class="st">'bold'</span>)</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="xor-deep-learning_files/figure-html/cell-7-output-1.png" width="566" height="566" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="step-2-linear-transformation-before-relu" class="level3">
+<h3 class="anchored" data-anchor-id="step-2-linear-transformation-before-relu">Step 2: Linear Transformation (Before ReLU)</h3>
+<p>The network applies weights W₁ and biases b₁ to transform the input space:</p>
+<div id="cell-15" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.663340Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.663277Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.708246Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.708002Z&quot;}}" data-execution_count="7">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 2 visualization: Pre-activation space</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">6</span>))</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>):</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    ax.scatter(pre_activations[i, <span class="dv">0</span>], pre_activations[i, <span class="dv">1</span>], </span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>               c<span class="op">=</span>colors[y[i]], s<span class="op">=</span><span class="dv">200</span>, edgecolors<span class="op">=</span><span class="st">'black'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Draw ReLU boundaries</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">'gray'</span>, linestyle<span class="op">=</span><span class="st">'-'</span>, alpha<span class="op">=</span><span class="fl">0.8</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">'gray'</span>, linestyle<span class="op">=</span><span class="st">'-'</span>, alpha<span class="op">=</span><span class="fl">0.8</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Shade all regions where coordinates turn negative (and thus get clipped by ReLU)</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>ax.axvspan(<span class="op">-</span><span class="fl">1.2</span>, <span class="dv">0</span>, alpha<span class="op">=</span><span class="fl">0.15</span>, color<span class="op">=</span><span class="st">'red'</span>)</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>ax.axhspan(<span class="op">-</span><span class="fl">1.2</span>, <span class="dv">0</span>, alpha<span class="op">=</span><span class="fl">0.15</span>, color<span class="op">=</span><span class="st">'red'</span>)</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="op">-</span><span class="fl">0.75</span>, <span class="fl">0.85</span>, <span class="st">'Negative z₁ → ReLU sets to 0'</span>, ha<span class="op">=</span><span class="st">'left'</span>, fontsize<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        bbox<span class="op">=</span><span class="bu">dict</span>(boxstyle<span class="op">=</span><span class="st">'round'</span>, facecolor<span class="op">=</span><span class="st">'red'</span>, alpha<span class="op">=</span><span class="fl">0.25</span>))</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">0.95</span>, <span class="op">-</span><span class="fl">0.75</span>, <span class="st">'Negative z₂ → ReLU sets to 0'</span>, ha<span class="op">=</span><span class="st">'right'</span>, fontsize<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>        bbox<span class="op">=</span><span class="bu">dict</span>(boxstyle<span class="op">=</span><span class="st">'round'</span>, facecolor<span class="op">=</span><span class="st">'red'</span>, alpha<span class="op">=</span><span class="fl">0.25</span>))</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Annotate points with input labels</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>labels <span class="op">=</span> [<span class="st">'(0,0)'</span>, <span class="st">'(0,1)'</span>, <span class="st">'(1,0)'</span>, <span class="st">'(1,1)'</span>]</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, label <span class="kw">in</span> <span class="bu">enumerate</span>(labels):</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    pre_coord <span class="op">=</span> <span class="ss">f'(</span><span class="sc">{</span>pre_activations[i,<span class="dv">0</span>]<span class="sc">:.0f}</span><span class="ss">,</span><span class="sc">{</span>pre_activations[i,<span class="dv">1</span>]<span class="sc">:.0f}</span><span class="ss">)'</span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    ax.annotate(<span class="ss">f'</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">→</span><span class="sc">{</span>pre_coord<span class="sc">}</span><span class="ss">'</span>, pre_activations[i], xytext<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">10</span>), </span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>                textcoords<span class="op">=</span><span class="st">'offset points'</span>, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="op">-</span><span class="fl">1.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="op">-</span><span class="fl">1.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'z₁ (Pre-activation)'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'z₂ (Pre-activation)'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Step 2: Before ReLU (Linear Transform)'</span>, fontsize<span class="op">=</span><span class="dv">14</span>, fontweight<span class="op">=</span><span class="st">'bold'</span>)</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="xor-deep-learning_files/figure-html/cell-8-output-1.png" width="568" height="566" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="step-3-relu-transformation" class="level3">
+<h3 class="anchored" data-anchor-id="step-3-relu-transformation">Step 3: ReLU Transformation</h3>
+<p>ReLU clips negative values to zero, transforming the space to make it linearly separable:</p>
+<div id="cell-17" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.709347Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.709277Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.779335Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.779115Z&quot;}}" data-execution_count="8">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 3 visualization: ReLU transformation with arrows</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">6</span>))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>):</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Pre-ReLU positions (X marks)</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    ax.scatter(pre_activations[i, <span class="dv">0</span>], pre_activations[i, <span class="dv">1</span>], </span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>               marker<span class="op">=</span><span class="st">'x'</span>, s<span class="op">=</span><span class="dv">150</span>, c<span class="op">=</span>colors[y[i]], alpha<span class="op">=</span><span class="fl">0.5</span>, linewidth<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Post-ReLU positions (circles) </span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    ax.scatter(hidden_activations[i, <span class="dv">0</span>], hidden_activations[i, <span class="dv">1</span>], </span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>               marker<span class="op">=</span><span class="st">'o'</span>, s<span class="op">=</span><span class="dv">200</span>, c<span class="op">=</span>colors[y[i]], edgecolors<span class="op">=</span><span class="st">'black'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Draw transformation arrows</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    start <span class="op">=</span> pre_activations[i]</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    end <span class="op">=</span> hidden_activations[i]</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> np.array_equal(start, end):</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>        ax.annotate(<span class="st">''</span>, xy<span class="op">=</span>end, xytext<span class="op">=</span>start,</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>                    arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">'-&gt;'</span>, lw<span class="op">=</span><span class="dv">2</span>, color<span class="op">=</span>colors[y[i]], alpha<span class="op">=</span><span class="fl">0.8</span>))</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Add text box explaining the key transformation</span></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">0.5</span>, <span class="fl">0.8</span>, <span class="st">'ReLU clips negative coordinates to zero</span><span class="ch">\n</span><span class="st">(-1,1) → (0,1) and (1,-1) → (1,0)'</span>, </span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>        ha<span class="op">=</span><span class="st">'center'</span>, va<span class="op">=</span><span class="st">'center'</span>, fontsize<span class="op">=</span><span class="dv">11</span>, </span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>        bbox<span class="op">=</span><span class="bu">dict</span>(boxstyle<span class="op">=</span><span class="st">'round'</span>, facecolor<span class="op">=</span><span class="st">'yellow'</span>, alpha<span class="op">=</span><span class="fl">0.7</span>))</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="op">-</span><span class="fl">1.2</span>, <span class="fl">1.1</span>)</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="op">-</span><span class="fl">1.2</span>, <span class="fl">1.1</span>)</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Hidden dimension 1'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Hidden dimension 2'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Step 3: ReLU Mapping (Before → After)'</span>, fontsize<span class="op">=</span><span class="dv">14</span>, fontweight<span class="op">=</span><span class="st">'bold'</span>)</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="xor-deep-learning_files/figure-html/cell-9-output-1.png" width="759" height="566" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="step-4-final-classification" class="level3">
+<h3 class="anchored" data-anchor-id="step-4-final-classification">Step 4: Final Classification</h3>
+<p>With the transformed hidden representation, the network can now perfectly classify XOR:</p>
+<div id="cell-19" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.780394Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.780330Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.835543Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.835279Z&quot;}}" data-execution_count="9">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 4 visualization: Final classification results</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">6</span>))</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Create decision boundary</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>xx, yy <span class="op">=</span> np.meshgrid(np.linspace(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>, <span class="dv">100</span>), np.linspace(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>, <span class="dv">100</span>))</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>grid_points <span class="op">=</span> np.c_[xx.ravel(), yy.ravel()]</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>grid_outputs, _, _ <span class="op">=</span> forward_pass(grid_points, W1, b1, w2, b2)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>grid_preds <span class="op">=</span> (grid_outputs <span class="op">&gt;</span> <span class="fl">0.5</span>).astype(<span class="bu">int</span>).reshape(xx.shape)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>ax.contourf(xx, yy, grid_preds, levels<span class="op">=</span>[<span class="op">-</span><span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="fl">1.5</span>], </span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>            colors<span class="op">=</span>[<span class="st">'#ffcccc'</span>, <span class="st">'#ccccff'</span>], alpha<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>ax.contour(xx, yy, grid_outputs.reshape(xx.shape), levels<span class="op">=</span>[<span class="fl">0.5</span>], </span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>           colors<span class="op">=</span><span class="st">'black'</span>, linewidths<span class="op">=</span><span class="dv">2</span>, linestyles<span class="op">=</span><span class="st">'--'</span>)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2</span>):</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    mask <span class="op">=</span> y <span class="op">==</span> i</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    ax.scatter(X[mask, <span class="dv">0</span>], X[mask, <span class="dv">1</span>], c<span class="op">=</span>colors[i], s<span class="op">=</span><span class="dv">200</span>, </span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>               label<span class="op">=</span><span class="ss">f'XOR = </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">'</span>, edgecolors<span class="op">=</span><span class="st">'black'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Annotate final predictions</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>):</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    pred_text <span class="op">=</span> <span class="ss">f'Pred: </span><span class="sc">{</span>predictions[i]<span class="sc">}</span><span class="ss">'</span></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    ax.annotate(pred_text, X[i], xytext<span class="op">=</span>(<span class="dv">10</span>, <span class="op">-</span><span class="dv">15</span>), </span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>                textcoords<span class="op">=</span><span class="st">'offset points'</span>, fontsize<span class="op">=</span><span class="dv">9</span>,</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>                bbox<span class="op">=</span><span class="bu">dict</span>(boxstyle<span class="op">=</span><span class="st">'round,pad=0.2'</span>, facecolor<span class="op">=</span><span class="st">'lightgreen'</span>, alpha<span class="op">=</span><span class="fl">0.7</span>))</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'x₁'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'x₂'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Step 4: Perfect Classification (100% Accuracy)'</span>, fontsize<span class="op">=</span><span class="dv">14</span>, fontweight<span class="op">=</span><span class="st">'bold'</span>)</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"🎯 Final Result: </span><span class="sc">{</span>accuracy<span class="sc">:.0%}</span><span class="ss"> accuracy!"</span>)</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"📝 Summary: ReLU activation enables neural networks to solve"</span>)</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"   problems that linear models fundamentally cannot handle."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="xor-deep-learning_files/figure-html/cell-10-output-1.png" width="566" height="566" class="figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>🎯 Final Result: 100% accuracy!
+📝 Summary: ReLU activation enables neural networks to solve
+   problems that linear models fundamentally cannot handle.</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="constructive-proof-hand-crafted-xor-solution" class="level2">
+<h2 class="anchored" data-anchor-id="constructive-proof-hand-crafted-xor-solution">Constructive Proof: Hand-crafted XOR Solution</h2>
+<p>We can construct an explicit solution using ReLU activations. Consider the hidden layer transformation:</p>
+<p><span class="math display">\[\mathbf{h} = \text{ReLU}(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1)\]</span></p>
+<p>with: <span class="math display">\[\mathbf{W}_1 = \begin{pmatrix} 1 &amp; -1 \\ -1 &amp; 1 \end{pmatrix}, \quad \mathbf{b}_1 = \begin{pmatrix} 0 \\ 0 \end{pmatrix}\]</span></p>
+<p>This transforms the input space such that the XOR function becomes linearly separable in the hidden representation.</p>
+<div id="cell-21" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.836779Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.836684Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.839896Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.839714Z&quot;}}" data-execution_count="10">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> relu(z):</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.maximum(<span class="dv">0</span>, z)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sigmoid(z):</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>np.clip(z, <span class="op">-</span><span class="dv">500</span>, <span class="dv">500</span>)))</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Hand-crafted weights for XOR solution</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>W1 <span class="op">=</span> np.array([[<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>], [<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>]])</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>b1 <span class="op">=</span> np.array([<span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>w2 <span class="op">=</span> np.array([<span class="dv">1</span>, <span class="dv">1</span>])</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>b2 <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Hand-crafted XOR Network Architecture:"</span>)</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"W₁ = </span><span class="sc">{</span>W1<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"b₁ = </span><span class="sc">{</span>b1<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"w₂ = </span><span class="sc">{</span>w2<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"b₂ = </span><span class="sc">{</span>b2<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Forward pass through the network</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward_pass(X, W1, b1, w2, b2):</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Hidden layer</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>    z1 <span class="op">=</span> X <span class="op">@</span> W1.T <span class="op">+</span> b1</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>    h1 <span class="op">=</span> relu(z1)</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Output layer</span></span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>    z2 <span class="op">=</span> h1 <span class="op">@</span> w2 <span class="op">+</span> b2</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>    output <span class="op">=</span> sigmoid(z2)</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> output, h1, z1</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>outputs, hidden_activations, pre_activations <span class="op">=</span> forward_pass(X, W1, b1, w2, b2)</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> (outputs <span class="op">&gt;</span> <span class="fl">0.5</span>).astype(<span class="bu">int</span>)</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>accuracy <span class="op">=</span> (predictions <span class="op">==</span> y).mean()</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Transformation Analysis:"</span>)</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Input → Pre-activation → Hidden → Output → Prediction"</span>)</span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>):</span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>X[i]<span class="sc">}</span><span class="ss"> → </span><span class="sc">{</span>pre_activations[i]<span class="sc">}</span><span class="ss"> → </span><span class="sc">{</span>hidden_activations[i]<span class="sc">}</span><span class="ss"> → </span><span class="sc">{</span>outputs[i]<span class="sc">:.3f}</span><span class="ss"> → </span><span class="sc">{</span>predictions[i]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.1%}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Hand-crafted XOR Network Architecture:
+W₁ = [[ 1 -1]
+ [-1  1]]
+b₁ = [0 0]
+w₂ = [1 1]
+b₂ = -0.5
+
+Transformation Analysis:
+Input → Pre-activation → Hidden → Output → Prediction
+[0 0] → [0 0] → [0 0] → 0.378 → 0
+[0 1] → [-1  1] → [0 1] → 0.622 → 1
+[1 0] → [ 1 -1] → [1 0] → 0.622 → 1
+[1 1] → [0 0] → [0 0] → 0.378 → 0
+
+Accuracy: 100.0%</code></pre>
+</div>
+</div>
+</section>
+<section id="relu-transformation-summary" class="level2">
+<h2 class="anchored" data-anchor-id="relu-transformation-summary">ReLU Transformation Summary</h2>
+<p>The four-step walkthrough above shows how each XOR input moves through the hidden layer. The table below collects the key numbers for quick reference.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Input <span class="math inline">\((x_1,x_2)\)</span></th>
+<th>XOR label</th>
+<th>Linear transform <span class="math inline">\((z_1, z_2)\)</span></th>
+<th>After ReLU <span class="math inline">\((h_1, h_2)\)</span></th>
+<th>Final prediction</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>(0, 0)</td>
+<td>0</td>
+<td>(0, 0)</td>
+<td>(0, 0)</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>(0, 1)</td>
+<td>1</td>
+<td>(-1, 1)</td>
+<td>(0, 1)</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>(1, 0)</td>
+<td>1</td>
+<td>(1, -1)</td>
+<td>(1, 0)</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>(1, 1)</td>
+<td>0</td>
+<td>(0, 0)</td>
+<td>(0, 0)</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>The constructive proof and empirical training sections that follow use the same weights, so all downstream outputs stay consistent with this summary.</p>
+</section>
+<section id="empirical-validation-learned-solutions" class="level2">
+<h2 class="anchored" data-anchor-id="empirical-validation-learned-solutions">Empirical Validation: Learned Solutions</h2>
+<p>We now train ReLU networks directly on the XOR data. Because ReLU units can go completely inactive when they start on the wrong side of zero, we try a few different random initialisations and keep the best run for each architecture. With enough hidden capacity (two neurons and up), the optimiser consistently finds a perfect solution.</p>
+<div id="cell-24" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.840887Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.840827Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:32.001689Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:32.001471Z&quot;}}" data-execution_count="11">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Train MLP with different architectures and pick the best run for each size</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>architectures <span class="op">=</span> [</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">2</span>, <span class="st">'Single hidden layer (2 neurons)'</span>),</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">4</span>, <span class="st">'Single hidden layer (4 neurons)'</span>),</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">8</span>, <span class="st">'Single hidden layer (8 neurons)'</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>seeds <span class="op">=</span> <span class="bu">range</span>(<span class="dv">10</span>)  <span class="co"># Multiple restarts to avoid unlucky dead-ReLU initialisations</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="bu">len</span>(architectures), figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">5</span>))</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> idx, (hidden_size, title) <span class="kw">in</span> <span class="bu">enumerate</span>(architectures):</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    best_model <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    best_score <span class="op">=</span> <span class="op">-</span><span class="dv">1</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> seed <span class="kw">in</span> seeds:</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>        mlp <span class="op">=</span> MLPClassifier(hidden_layer_sizes<span class="op">=</span>(hidden_size,), </span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>                           activation<span class="op">=</span><span class="st">'relu'</span>, </span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>                           solver<span class="op">=</span><span class="st">'lbfgs'</span>, </span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>                           max_iter<span class="op">=</span><span class="dv">5000</span>,</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>                           alpha<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>                           random_state<span class="op">=</span>seed)</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>        mlp.fit(X, y)</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>        score <span class="op">=</span> mlp.score(X, y)</span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> score <span class="op">&gt;</span> best_score:</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>            best_model <span class="op">=</span> mlp</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>            best_score <span class="op">=</span> score</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Early exit once we achieve perfect accuracy</span></span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> best_score <span class="op">==</span> <span class="fl">1.0</span>:</span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Use the best-performing model for visualisation</span></span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>    xx, yy <span class="op">=</span> np.meshgrid(np.linspace(<span class="op">-</span><span class="fl">0.5</span>, <span class="fl">1.5</span>, <span class="dv">100</span>), np.linspace(<span class="op">-</span><span class="fl">0.5</span>, <span class="fl">1.5</span>, <span class="dv">100</span>))</span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>    grid_points <span class="op">=</span> np.c_[xx.ravel(), yy.ravel()]</span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">=</span> best_model.predict_proba(grid_points)[:, <span class="dv">1</span>].reshape(xx.shape)</span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a>    axes[idx].contourf(xx, yy, Z, levels<span class="op">=</span><span class="dv">50</span>, alpha<span class="op">=</span><span class="fl">0.6</span>, cmap<span class="op">=</span><span class="st">'RdYlBu'</span>)</span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a>    axes[idx].contour(xx, yy, Z, levels<span class="op">=</span>[<span class="fl">0.5</span>], colors<span class="op">=</span><span class="st">'black'</span>, linewidths<span class="op">=</span><span class="dv">2</span>, linestyles<span class="op">=</span><span class="st">'--'</span>)</span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2</span>):</span>
+<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a>        mask <span class="op">=</span> y <span class="op">==</span> i</span>
+<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a>        axes[idx].scatter(X[mask, <span class="dv">0</span>], X[mask, <span class="dv">1</span>], c<span class="op">=</span>colors[i], s<span class="op">=</span><span class="dv">200</span>, </span>
+<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a>                         label<span class="op">=</span><span class="ss">f'Class </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">'</span>, edgecolors<span class="op">=</span><span class="st">'black'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a>    axes[idx].set_xlim(<span class="op">-</span><span class="fl">0.5</span>, <span class="fl">1.5</span>)</span>
+<span id="cb18-44"><a href="#cb18-44" aria-hidden="true" tabindex="-1"></a>    axes[idx].set_ylim(<span class="op">-</span><span class="fl">0.5</span>, <span class="fl">1.5</span>)</span>
+<span id="cb18-45"><a href="#cb18-45" aria-hidden="true" tabindex="-1"></a>    axes[idx].set_xlabel(<span class="st">'x₁'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb18-46"><a href="#cb18-46" aria-hidden="true" tabindex="-1"></a>    axes[idx].set_ylabel(<span class="st">'x₂'</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb18-47"><a href="#cb18-47" aria-hidden="true" tabindex="-1"></a>    axes[idx].set_title(<span class="ss">f'</span><span class="sc">{</span>title<span class="sc">}</span><span class="ch">\n</span><span class="ss">(Best accuracy: </span><span class="sc">{</span>best_score<span class="sc">:.1%}</span><span class="ss">)'</span>, fontsize<span class="op">=</span><span class="dv">12</span>, fontweight<span class="op">=</span><span class="st">'bold'</span>)</span>
+<span id="cb18-48"><a href="#cb18-48" aria-hidden="true" tabindex="-1"></a>    axes[idx].legend()</span>
+<span id="cb18-49"><a href="#cb18-49" aria-hidden="true" tabindex="-1"></a>    axes[idx].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb18-50"><a href="#cb18-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-51"><a href="#cb18-51" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb18-52"><a href="#cb18-52" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="xor-deep-learning_files/figure-html/cell-12-output-1.png" width="1719" height="471" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>The XOR problem demonstrates several fundamental principles in deep learning:</p>
+<ol type="1">
+<li><p><strong>Necessity of Nonlinearity</strong>: Linear models cannot solve XOR, establishing the critical role of nonlinear activation functions.</p></li>
+<li><p><strong>Feature Transformation</strong>: Hidden layers transform the input representation, making non-linearly separable problems linearly separable in higher-dimensional spaces.</p></li>
+<li><p><strong>Universal Approximation</strong>: Even simple architectures with sufficient nonlinearity can solve complex classification problems.</p></li>
+</ol>
+<p>This canonical example provides intuition for why deep networks, with their cascade of nonlinear transformations, can approximate arbitrarily complex functions and solve real-world problems that are far more intricate than XOR.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
