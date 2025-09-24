@@ -1,10 +1,80 @@
 [
   {
-    "objectID": "ML/kmeans.html",
-    "href": "ML/kmeans.html",
-    "title": "K-means Clustering",
+    "objectID": "CLAUDE.html",
+    "href": "CLAUDE.html",
+    "title": "",
     "section": "",
-    "text": "Setup points and K\nwe will implement a KNN algorithm to cluster the points\n\n\nX=[[1,1],[2,2.1],[3,2.5],[6,7],[7,7.1],[9,7.5]]\nk=2\n\nmax_iter=3\n\n\n# Visualize the data\n\n\nimport matplotlib.pyplot as plt\n\nplt.scatter([x[0] for x in X],[x[1] for x in X])\nplt.show()\n\n\n\n\n\n\n\n\n\n# Pure python implementation of K-means clustering\ndef knn_iter(X,centroids):\n    # set up new clusters\n    new_clusters=[[] for _ in range(len(centroids))]\n    # k=len(centroids)\n    # assign each point to the nearest centroid\n    for x in X:\n        k,distance=0,(x[0]-centroids[0][0])**2+(x[1]-centroids[0][1])**2\n        for i,c in enumerate(centroids[1:],1):\n            if (x[0]-c[0])**2+(x[1]-c[1])**2&lt;distance:\n                k=i\n                distance=(x[0]-c[0])**2+(x[1]-c[1])**2\n        new_clusters[k].append(x)\n    \n    # calculate new centroids\n    new_centroids=[[\n        sum([x[0] for x in cluster])/len(cluster),\n        sum([x[1] for x in cluster])/len(cluster)\n    ] if cluster else centroids[i] for i,cluster in enumerate(new_clusters)]\n    return new_centroids\n\n\n\n\n\n\n\n\ndef iter_and_draw(X,k,max_iter):\n    centroids=X[:k]  # Randomly select 2 centroids\n    fig, axes = plt.subplots(max_iter//3+(1 if max_iter%3!=0 else 0),\n        3, figsize=(15, 10))\n    axes=axes.flatten()\n    for i in range(max_iter):\n        \n        # Plot points and centroids\n\n\n        # Assign each point to nearest centroid and plot with corresponding color\n        colors = ['blue', 'green', 'purple', 'orange', 'brown', 'pink', 'gray', 'olive', 'cyan']\n        for j, x in enumerate(X):\n            # Find nearest centroid\n            min_dist = float('inf')\n            nearest_centroid = 0\n            for k, c in enumerate(centroids):\n                dist = (x[0]-c[0])**2 + (x[1]-c[1])**2\n                if dist &lt; min_dist:\n                    min_dist = dist\n                    nearest_centroid = k\n            # Plot point with color corresponding to its cluster\n            axes[i].scatter(x[0], x[1], c=colors[nearest_centroid % len(colors)], label=f'Cluster {nearest_centroid+1}' if j==0 else \"\")\n        axes[i].scatter([c[0] for c in centroids], [c[1] for c in centroids], c='red', marker='*', s=200, label='Centroids')\n        axes[i].set_title(f'Iteration {i}')\n        centroids = knn_iter(X, centroids)\n\n    plt.tight_layout()\n    plt.show()\n\niter_and_draw(X,k,max_iter)\n# print(centroids)\n\n\n\n\n\n\n\n\n\n# A 3 clusters example\n\nX1=np.random.rand(20,2)+5 # Some points in the upper right corner\nX2=np.random.rand(20,2)+3 # Some points in the middle\nX3=np.random.rand(20,2) # Some points in the lower left corner\n\niter_and_draw(np.concatenate((X1,X2,X3)),3,5)\n\n\n\n\n\n\n\n\n\n\nA question?\n\nWhat to do if one cluster has no assigned points during iteration?\n\n\n\nFormula Derivation\nThe goal is to minimize the loss of inertia which is sum of the points to cluster centroids.\n\\[\nLoss= \\sum_{i=1}^n \\sum_{x \\in C_i} ||x-\\mu_i||^2\n\\]\nTo iter \\(\\mu\\) for each cluster, let us find the derivative of the following function. \\[\nf(\\mu)=\\sum_{i=1}^n ||x_i-\\mu||^2 =\n\\sum_{i=1}^n {x_i}^2+\\mu^2-2x_i\\mu\n\\]\nGiven a \\(\\nabla \\mu\\), \\[\nf(\\mu + \\nabla \\mu)=\\sum_{i=1}^n ||x_i+\\nabla \\mu -\\mu||^2 =\n\\sum_{i=1}^n  {x_i}^2+\\mu^2+{\\nabla \\mu}^2-2{x_i \\mu}-2{\\mu \\nabla \\mu}+2{x_i \\nabla \\mu}\n\\]\n\\[\nf(\\mu + \\nabla \\mu)-f(\\mu)=\n\\sum_{i=1}^n {\\nabla \\mu}^2-2{\\mu \\nabla \\mu}+2{x_i \\nabla \\mu}\n\\]\n\\[\n\\frac {f(\\mu + \\nabla \\mu)-f(\\mu)}{\\nabla \\mu}=\\sum_{i=1}^n {\\nabla \\mu} -2 \\mu +2{x_i} = 2\\sum_{i=1}^n x_i - 2n\\mu\n\\]\nNow we can see if \\(n\\mu = \\sum_{i=1}^n x_i\\), then the derivative is 0, this is why in each iteration, we need to set the center of the cluster as centroid."
+    "text": "Code"
+  },
+  {
+    "objectID": "CLAUDE.html#project-overview",
+    "href": "CLAUDE.html#project-overview",
+    "title": "",
+    "section": "Project Overview",
+    "text": "Project Overview\nThis is a Quarto-based technical blog hosted on GitHub Pages (ickma2311.github.io). The site covers machine learning, algorithms, and technical tutorials with a focus on mathematical foundations and practical implementations."
+  },
+  {
+    "objectID": "CLAUDE.html#common-commands",
+    "href": "CLAUDE.html#common-commands",
+    "title": "",
+    "section": "Common Commands",
+    "text": "Common Commands\n\nDevelopment Workflow\n\nquarto render - Build the entire website (outputs to docs/ directory)\nquarto preview - Start local development server with live reload\nquarto render &lt;file.qmd&gt; - Render a specific document\nquarto check - Verify Quarto installation and project setup\n\n\n\nContent Management\n\nCreate new ML content in ML/ directory\nCreate new algorithm content in Algorithm/ directory\nUpdate navigation by editing _quarto.yml navbar section\nAdd new content to respective index.qmd files for discoverability"
+  },
+  {
+    "objectID": "CLAUDE.html#project-structure",
+    "href": "CLAUDE.html#project-structure",
+    "title": "",
+    "section": "Project Structure",
+    "text": "Project Structure\n├── _quarto.yml          # Main configuration file\n├── docs/                # Generated output (GitHub Pages source)\n├── index.qmd            # Homepage\n├── about.qmd            # About page\n├── ML/                  # Machine Learning content\n│   ├── index.qmd        # ML topics overview\n│   ├── *.qmd            # ML articles\n│   └── *.ipynb          # Jupyter notebooks\n├── Algorithm/           # Algorithm content\n│   ├── index.qmd        # Algorithm topics overview\n│   └── *.qmd            # Algorithm articles\n├── imgs/                # Image assets\n├── media/               # Media files\n└── styles.css           # Custom CSS styles"
+  },
+  {
+    "objectID": "CLAUDE.html#content-organization",
+    "href": "CLAUDE.html#content-organization",
+    "title": "",
+    "section": "Content Organization",
+    "text": "Content Organization\nThe site uses a hierarchical navigation structure defined in _quarto.yml: - Two main sections: “ML” and “Algorithm” - Each section has an index page that serves as a directory - Content is categorized by topic (e.g., “NumPy Fundamentals”, “Clustering Algorithms”)\n\nAdding New Content\n\nCreate the content file in the appropriate directory (ML/ or Algorithm/)\nUpdate the corresponding index.qmd file to include the new content\nAdd navigation entry to _quarto.yml if it should appear in the navbar dropdown\nUse consistent frontmatter with title field"
+  },
+  {
+    "objectID": "CLAUDE.html#configuration-notes",
+    "href": "CLAUDE.html#configuration-notes",
+    "title": "",
+    "section": "Configuration Notes",
+    "text": "Configuration Notes\n\nOutput directory is set to docs/ for GitHub Pages compatibility\nTheme: Cosmo with custom branding\nAll pages include table of contents (toc: true)\nSite uses custom CSS from styles.css\nJupyter notebooks are supported alongside Quarto markdown"
+  },
+  {
+    "objectID": "CLAUDE.html#github-pages-deployment",
+    "href": "CLAUDE.html#github-pages-deployment",
+    "title": "",
+    "section": "GitHub Pages Deployment",
+    "text": "GitHub Pages Deployment\nThe site is automatically deployed from the docs/ directory. After rendering, commit and push the docs/ folder to trigger GitHub Pages rebuild. - Author is Chao Ma"
+  },
+  {
+    "objectID": "ML/logistic_regression.html",
+    "href": "ML/logistic_regression.html",
+    "title": "Logistic Regression",
+    "section": "",
+    "text": "The core idea of logistic regression is to model the probability of a binary outcome.\n\n\nWe model the probability that the target variable (y) is 1, given the features (x), using the sigmoid (or logistic) function, denoted by ().\n\\[\nP(y_i=1 \\mid x_i) = \\hat{y}_i = \\sigma(w^T x_i + b)\n\\]\nThe sigmoid function is defined as: \\[\n\\sigma(z) = \\frac{1}{1 + e^{-z}}\n\\]\nSince the outcome is binary, the probability of (y) being 0 is simply: \\[\nP(y_i=0 \\mid x_i) = 1 - \\hat{y}_i\n\\]\nThese two cases can be written compactly as a single equation, which is the probability mass function of a Bernoulli distribution: \\[\nP(y_i \\mid x_i) = \\hat{y}_i^{y_i} (1 - \\hat{y}_i)^{1 - y_i}\n\\]"
+  },
+  {
+    "objectID": "ML/logistic_regression.html#model-formulation",
+    "href": "ML/logistic_regression.html#model-formulation",
+    "title": "Logistic Regression",
+    "section": "",
+    "text": "The core idea of logistic regression is to model the probability of a binary outcome.\n\n\nWe model the probability that the target variable (y) is 1, given the features (x), using the sigmoid (or logistic) function, denoted by ().\n\\[\nP(y_i=1 \\mid x_i) = \\hat{y}_i = \\sigma(w^T x_i + b)\n\\]\nThe sigmoid function is defined as: \\[\n\\sigma(z) = \\frac{1}{1 + e^{-z}}\n\\]\nSince the outcome is binary, the probability of (y) being 0 is simply: \\[\nP(y_i=0 \\mid x_i) = 1 - \\hat{y}_i\n\\]\nThese two cases can be written compactly as a single equation, which is the probability mass function of a Bernoulli distribution: \\[\nP(y_i \\mid x_i) = \\hat{y}_i^{y_i} (1 - \\hat{y}_i)^{1 - y_i}\n\\]"
+  },
+  {
+    "objectID": "ML/logistic_regression.html#loss-function-binary-cross-entropy",
+    "href": "ML/logistic_regression.html#loss-function-binary-cross-entropy",
+    "title": "Logistic Regression",
+    "section": "Loss Function (Binary Cross-Entropy)",
+    "text": "Loss Function (Binary Cross-Entropy)\nTo find the optimal parameters (w) and (b), we use Maximum Likelihood Estimation (MLE). We want to find the parameters that maximize the probability of observing our given dataset.\n\n1. Likelihood\nThe likelihood is the joint probability of observing all (n) data points, assuming they are independent and identically distributed (i.i.d.): \\[\n\\mathcal{L}(w, b) = \\prod_{i=1}^n P(y_i \\mid x_i) = \\prod_{i=1}^n \\hat{y}_i^{y_i} (1 - \\hat{y}_i)^{1 - y_i}\n\\]\n\n\n2. Log-Likelihood\nWorking with products is difficult, so we take the logarithm of the likelihood. Maximizing the log-likelihood is equivalent to maximizing the likelihood.\n\\[\n\\log \\mathcal{L}(w, b) = \\sum_{i=1}^n \\left[ y_i \\log(\\hat{y}_i) + (1 - y_i) \\log(1 - \\hat{y}_i) \\right]\n\\]\n\n\n3. Cost Function\nIn machine learning, we frame problems as minimizing a cost function. The standard convention is to minimize the negative log-likelihood. This gives us the Binary Cross-Entropy loss, (J(w, b)).\n\\[\nJ(w, b) = - \\frac{1}{n} \\sum_{i=1}^n \\left[ y_i \\log(\\hat{y}_i) + (1 - y_i) \\log(1 - \\hat{y}_i) \\right]\n\\] The \\(\\frac{1}{n}\\) term is an average over the training examples and doesn’t change the minimum, but it helps in stabilizing the training process."
+  },
+  {
+    "objectID": "ML/logistic_regression.html#refernce-bernoulli-distribution",
+    "href": "ML/logistic_regression.html#refernce-bernoulli-distribution",
+    "title": "Logistic Regression",
+    "section": "refernce: Bernoulli Distribution",
+    "text": "refernce: Bernoulli Distribution\nFormular \\[\nP(y) = p^y (1 - p)^{1 - y}, \\quad y \\in \\{0, 1\\}\n\\] * when y = 1：\\(P(y=1) = p^1 (1 - p)^0 = p\\) * when y=0: $P(y=0) = p^0 (1 - p)^1 = 1 - p $"
   },
   {
     "objectID": "ML/index.html",
@@ -14,39 +84,67 @@
     "text": "Understanding Axis(Dim) Operations"
   },
   {
-    "objectID": "ML/index.html#fundamentals",
-    "href": "ML/index.html#fundamentals",
+    "objectID": "ML/index.html#numpy-fundamentals",
+    "href": "ML/index.html#numpy-fundamentals",
     "title": "Machine Learning Topics",
     "section": "",
     "text": "Understanding Axis(Dim) Operations"
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "ickma.dev",
-    "section": "",
-    "text": "My learning notes and thoughts on math and machine learning.\nCurrently reading the Deep Learning book.\n\n\n\n\nHow ReLU solves problems that linear models cannot handle.\n\n\n\n\n\n\n\nK-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
+    "objectID": "ML/index.html#clustering-algorithms",
+    "href": "ML/index.html#clustering-algorithms",
+    "title": "Machine Learning Topics",
+    "section": "Clustering Algorithms",
+    "text": "Clustering Algorithms\n\nK-Means Clustering"
   },
   {
-    "objectID": "index.html#featured-content",
-    "href": "index.html#featured-content",
-    "title": "ickma.dev",
-    "section": "",
-    "text": "Dive into machine learning algorithms, implementations, and theoretical foundations.\n\n\n\nExplore my comprehensive collection of algorithm tutorials and problem-solving guides."
+    "objectID": "ML/index.html#deep-learning-fundamentals",
+    "href": "ML/index.html#deep-learning-fundamentals",
+    "title": "Machine Learning Topics",
+    "section": "Deep Learning Fundamentals",
+    "text": "Deep Learning Fundamentals\n\nThe XOR Problem: Nonlinearity in Deep Learning"
   },
   {
-    "objectID": "Algorithm/index.html",
-    "href": "Algorithm/index.html",
-    "title": "Algorithm Topics",
-    "section": "",
-    "text": "DP: Regular Expression Matching"
+    "objectID": "ML/index.html#classification-algorithms",
+    "href": "ML/index.html#classification-algorithms",
+    "title": "Machine Learning Topics",
+    "section": "Classification Algorithms",
+    "text": "Classification Algorithms\n\nLogistic Regression"
   },
   {
-    "objectID": "Algorithm/index.html#dynamic-programming",
-    "href": "Algorithm/index.html#dynamic-programming",
-    "title": "Algorithm Topics",
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
     "section": "",
-    "text": "DP: Regular Expression Matching"
+    "text": "Hi, I’m Chao Ma (aka ickma), a passionate developer and researcher focused on machine learning, algorithms, and problem-solving.\n\n\nI enjoy exploring the intersection of mathematics and computer science, with a particular interest in:\n\n🤖 Machine Learning & AI - From fundamental concepts to practical implementations\n🧮 Algorithms & Data Structures - Solving complex problems efficiently\n\n📊 Data Science - Extracting insights from data using Python and NumPy\n💻 Software Development - Building robust, scalable solutions\n\n\n\n\nThis site serves as my digital notebook where I share:\n\nAlgorithm explanations with visual examples and code implementations\nProblem-solving approaches for coding challenges and mathematical concepts\nTechnical insights from my learning journey\n\nI believe in learning by doing and explaining concepts clearly with code examples, visualizations, and mathematical foundations.\n\n\n\nMy content covers:\n\nAlgorithms - Dynamic programming, optimization, data structures, and algorithmic problem solving\nMathematics - Linear algebra, calculus, statistics, and mathematical foundations for CS\nReinforcement Learning & Deep Learning - Neural networks, policy optimization, and AI agents\nParallel Computation - Distributed systems, GPU computing, and performance optimization\n\n\n\n\nI’m always excited to discuss technology, collaborate on projects, or help fellow learners!\n\n📧 Email: ickma2311@gmail.com\n💻 GitHub: @ickma2311\n🐦 Twitter: @ickma2311\n\nFeel free to reach out if you have questions about any of my posts, want to collaborate, or just want to chat about machine learning and algorithms!\n\nThis blog is built with Quarto and hosted on GitHub Pages. All code examples are available in my repositories."
+  },
+  {
+    "objectID": "about.html#what-i-do",
+    "href": "about.html#what-i-do",
+    "title": "About",
+    "section": "",
+    "text": "I enjoy exploring the intersection of mathematics and computer science, with a particular interest in:\n\n🤖 Machine Learning & AI - From fundamental concepts to practical implementations\n🧮 Algorithms & Data Structures - Solving complex problems efficiently\n\n📊 Data Science - Extracting insights from data using Python and NumPy\n💻 Software Development - Building robust, scalable solutions"
+  },
+  {
+    "objectID": "about.html#about-this-blog",
+    "href": "about.html#about-this-blog",
+    "title": "About",
+    "section": "",
+    "text": "This site serves as my digital notebook where I share:\n\nAlgorithm explanations with visual examples and code implementations\nProblem-solving approaches for coding challenges and mathematical concepts\nTechnical insights from my learning journey\n\nI believe in learning by doing and explaining concepts clearly with code examples, visualizations, and mathematical foundations."
+  },
+  {
+    "objectID": "about.html#technical-focus",
+    "href": "about.html#technical-focus",
+    "title": "About",
+    "section": "",
+    "text": "My content covers:\n\nAlgorithms - Dynamic programming, optimization, data structures, and algorithmic problem solving\nMathematics - Linear algebra, calculus, statistics, and mathematical foundations for CS\nReinforcement Learning & Deep Learning - Neural networks, policy optimization, and AI agents\nParallel Computation - Distributed systems, GPU computing, and performance optimization"
+  },
+  {
+    "objectID": "about.html#connect-with-me",
+    "href": "about.html#connect-with-me",
+    "title": "About",
+    "section": "",
+    "text": "I’m always excited to discuss technology, collaborate on projects, or help fellow learners!\n\n📧 Email: ickma2311@gmail.com\n💻 GitHub: @ickma2311\n🐦 Twitter: @ickma2311\n\nFeel free to reach out if you have questions about any of my posts, want to collaborate, or just want to chat about machine learning and algorithms!\n\nThis blog is built with Quarto and hosted on GitHub Pages. All code examples are available in my repositories."
   },
   {
     "objectID": "Algorithm/dp_regex.html",
@@ -84,207 +182,39 @@
     "text": "3. Code Example\nPlease not that in the code, when we retrieve character from the string or pattern, we need to use s[i-1] and p[j-1] instead of s[i] and p[j] as the index of the string and pattern is 0-based.\nfrom collections import defaultdict\nclass Solution:\n    def isMatch(self,s, p):\n        m, n = len(s), len(p)\n        dp = [[False] * (n + 1) for _ in range(m + 1)]\n     # DP is a table with m+1 rows and n+1 columns\n     # we retrieve dp[i][k], i is the index of s, k is the index of p\n        dp[0][0] = True\n        for j in range(2,n+1):\n            if p[j-1]=='*':\n                dp[0][j]=dp[0][j-2]\n            \n        for i in range(1, m + 1):\n            for j in range(1, n + 1):\n                if p[j-1] == '*':\n                    dp[i][j] = dp[i][j-2] # zero occurrence\n                    if s[i-1]==p[j-2] or p[j-2]=='.':\n                        dp[i][j]|=dp[i-1][j] or dp[i-1][j-2] # one or more occurrence\n                else:\n                    dp[i][j] = dp[i-1][j-1] and (s[i-1] == p[j-1] or p[j-1] == '.')\n        return dp[m][n]"
   },
   {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "About",
+    "objectID": "Algorithm/index.html",
+    "href": "Algorithm/index.html",
+    "title": "Algorithm Topics",
     "section": "",
-    "text": "Hi, I’m Chao Ma (aka ickma), a passionate developer and researcher focused on machine learning, algorithms, and problem-solving.\n\n\nI enjoy exploring the intersection of mathematics and computer science, with a particular interest in:\n\n🤖 Machine Learning & AI - From fundamental concepts to practical implementations\n🧮 Algorithms & Data Structures - Solving complex problems efficiently\n\n📊 Data Science - Extracting insights from data using Python and NumPy\n💻 Software Development - Building robust, scalable solutions\n\n\n\n\nThis site serves as my digital notebook where I share:\n\nAlgorithm explanations with visual examples and code implementations\nProblem-solving approaches for coding challenges and mathematical concepts\nTechnical insights from my learning journey\n\nI believe in learning by doing and explaining concepts clearly with code examples, visualizations, and mathematical foundations.\n\n\n\nMy content covers:\n\nAlgorithms - Dynamic programming, optimization, data structures, and algorithmic problem solving\nMathematics - Linear algebra, calculus, statistics, and mathematical foundations for CS\nReinforcement Learning & Deep Learning - Neural networks, policy optimization, and AI agents\nParallel Computation - Distributed systems, GPU computing, and performance optimization\n\n\n\n\nI’m always excited to discuss technology, collaborate on projects, or help fellow learners!\n\n📧 Email: ickma2311@gmail.com\n💻 GitHub: @ickma2311\n🐦 Twitter: @ickma2311\n\nFeel free to reach out if you have questions about any of my posts, want to collaborate, or just want to chat about machine learning and algorithms!\n\nThis blog is built with Quarto and hosted on GitHub Pages. All code examples are available in my repositories."
+    "text": "DP: Regular Expression Matching"
   },
   {
-    "objectID": "ML/axis.html",
-    "href": "ML/axis.html",
-    "title": "Understanding Axis(dim) Operations Smartly",
+    "objectID": "Algorithm/index.html#dynamic-programming",
+    "href": "Algorithm/index.html#dynamic-programming",
+    "title": "Algorithm Topics",
     "section": "",
-    "text": "import numpy as np\n\nx = np.array([[1, 2, 3], [4, 5, 6]])\nThe 2D array is: \\[\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix}\n\\]\n\n\nprint(x.sum(axis=0))\nThe result is:\narray([5, 7, 9])\nWhen axis(dim) is 0, it means the operation is performed along 0 dimension. Items along 0 dimension are each sub-array. Then the result is just two vectors added together.\n\\[\n\\begin{bmatrix}\n1 & 2 & 3\n\\end{bmatrix}\n+\n\\begin{bmatrix}\n4 & 5 & 6\n\\end{bmatrix}\n\\]\nx.sum(axis=1)==x[0]+x[1]\nOperations along axis 0 is just operate on all sub-arrays. For example,\nsum(x,axis=0) is just \\(\\vec{x[0]}+\\vec{x[1]}+...+\\vec{x[n]}\\)\n\n\n\nprint(x.sum(axis=1))\nThe result is:\narray([6, 15])\nWhen axis(dim) is 1, it means the operation is performed along 1 dimension.\n\\[\n\\begin{bmatrix}\n1+2+3 \\\\\n4+5+6\n\\end{bmatrix}\n\\]"
+    "text": "DP: Regular Expression Matching"
   },
   {
-    "objectID": "ML/axis.html#a-2d-example",
-    "href": "ML/axis.html#a-2d-example",
-    "title": "Understanding Axis(dim) Operations Smartly",
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "ickma.dev",
     "section": "",
-    "text": "import numpy as np\n\nx = np.array([[1, 2, 3], [4, 5, 6]])\nThe 2D array is: \\[\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix}\n\\]\n\n\nprint(x.sum(axis=0))\nThe result is:\narray([5, 7, 9])\nWhen axis(dim) is 0, it means the operation is performed along 0 dimension. Items along 0 dimension are each sub-array. Then the result is just two vectors added together.\n\\[\n\\begin{bmatrix}\n1 & 2 & 3\n\\end{bmatrix}\n+\n\\begin{bmatrix}\n4 & 5 & 6\n\\end{bmatrix}\n\\]\nx.sum(axis=1)==x[0]+x[1]\nOperations along axis 0 is just operate on all sub-arrays. For example,\nsum(x,axis=0) is just \\(\\vec{x[0]}+\\vec{x[1]}+...+\\vec{x[n]}\\)\n\n\n\nprint(x.sum(axis=1))\nThe result is:\narray([6, 15])\nWhen axis(dim) is 1, it means the operation is performed along 1 dimension.\n\\[\n\\begin{bmatrix}\n1+2+3 \\\\\n4+5+6\n\\end{bmatrix}\n\\]"
+    "text": "My learning notes and thoughts on math and machine learning.\nCurrently reading the Deep Learning book.\n\n\n\n\nHow ReLU solves problems that linear models cannot handle.\n\n\n\n\n\n\n\nK-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
   },
   {
-    "objectID": "ML/axis.html#a-3d-example",
-    "href": "ML/axis.html#a-3d-example",
-    "title": "Understanding Axis(dim) Operations Smartly",
-    "section": "A 3D example",
-    "text": "A 3D example\nx_3d = np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]])\nThe 3D array looks like:\n\\[\nX = \\left[\\begin{array}{c|c}\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7 & 8 & 9 \\\\\n10 & 11 & 12\n\\end{bmatrix}\n\\end{array}\\right]\n\\]\n\nsum along axis 0\nprint(x_3d.sum(axis=0))\nThe result is:\narray([[8, 10, 12], [18, 20, 22]])\nThe result is the sum of two matrices.\n\\[\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix}\n+\n\\begin{bmatrix}\n7 & 8 & 9 \\\\\n10 & 11 & 12\n\\end{bmatrix}\n=\n\\begin{bmatrix}\n8 & 10 & 12 \\\\\n18 & 20 & 22\n\\end{bmatrix}\n\\]\nWhen axis(dim) is 0, given each element in this dimension is the matrix, so the sum is the sum of two matrices.\n\n\nsum along axis 1\nprint(x_3d.sum(axis=1))\nThe result is:\n\nWhen axis(dim) is 1, given each element in this dimension is the rows of the matrix, so the sum is the sum of all the rows in each matrix.\n\\[\n[\\begin{array}{c|c}\n\\begin{bmatrix}\n1 & 2 & 3\n\\end{bmatrix} +\n\\begin{bmatrix}\n4 & 5 & 6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7 & 8 & 9\n\\end{bmatrix} +\n\\begin{bmatrix}\n10 & 11 & 12\n\\end{bmatrix}\n\\end{array}]\n\\]\nso the result is:\narray([[5,7,9], [17, 19, 21]])\n\n\nsum along axis 2\nWhen axis(dim) is 2, given each element in this dimension is the elements of the matrix, so the sum is the sum of the elements.\n\\[\n\\begin{array}{c|c}\n\\begin{bmatrix}\n1+2+3,4+5+6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7+8+9,10+11+12\n\\end{bmatrix}\n\\end{array}\n\\]\nso the result is:\narray([[6, 15], [24, 33]])\nAso, when axis(dim) is -1, it means the operation is performed along the last dimension. So for 2d array, axis -1 is the same as axis 1."
-  },
-  {
-    "objectID": "ML/axis.html#rules",
-    "href": "ML/axis.html#rules",
-    "title": "Understanding Axis(dim) Operations Smartly",
-    "section": "Rules",
-    "text": "Rules\n\nwhen operate on axis(dim) N, it means the operation is performed along the elements of dimension [0…N].\nfor 2d array, axis 0 is the sum of vectors, because each element of the array is a vector, computer sees m vectors at once for a (m,n) shape array.\nfor 3d array, axis 0 is the sum of matrices, because each element of the array is a matrix. Computer sees m matrices at once for a (m,n,p) shape array.\nfor 2d array, axis 1 is the sum of elements in each vector and merge back to (m,1) shape array. Computer sees 1 vector with n elements at once for m times.\nfor 3d array, axis 1 is the sum of all vectors in each matrix and merge back to (m,1,p) shape array. Computer sees n vectors at once for m times.\nfor 3d array, axis 2 is the sum of each vector in each matrix and merge back to (m,n,1) shape array. Computer sees p vectors for m*n times."
-  },
-  {
-    "objectID": "ML/index.html#numpy-fundamentals",
-    "href": "ML/index.html#numpy-fundamentals",
-    "title": "Machine Learning Topics",
+    "objectID": "index.html#deep-learning-book",
+    "href": "index.html#deep-learning-book",
+    "title": "ickma.dev",
     "section": "",
-    "text": "Understanding Axis(Dim) Operations"
+    "text": "How ReLU solves problems that linear models cannot handle."
   },
   {
-    "objectID": "ML/index.html#clustering-algorithms",
-    "href": "ML/index.html#clustering-algorithms",
-    "title": "Machine Learning Topics",
-    "section": "Clustering Algorithms",
-    "text": "Clustering Algorithms\n\nK-Means Clustering"
-  },
-  {
-    "objectID": "about.html#what-i-do",
-    "href": "about.html#what-i-do",
-    "title": "About",
+    "objectID": "index.html#more",
+    "href": "index.html#more",
+    "title": "ickma.dev",
     "section": "",
-    "text": "I enjoy exploring the intersection of mathematics and computer science, with a particular interest in:\n\n🤖 Machine Learning & AI - From fundamental concepts to practical implementations\n🧮 Algorithms & Data Structures - Solving complex problems efficiently\n\n📊 Data Science - Extracting insights from data using Python and NumPy\n💻 Software Development - Building robust, scalable solutions"
-  },
-  {
-    "objectID": "about.html#about-this-blog",
-    "href": "about.html#about-this-blog",
-    "title": "About",
-    "section": "",
-    "text": "This site serves as my digital notebook where I share:\n\nAlgorithm explanations with visual examples and code implementations\nProblem-solving approaches for coding challenges and mathematical concepts\nTechnical insights from my learning journey\n\nI believe in learning by doing and explaining concepts clearly with code examples, visualizations, and mathematical foundations."
-  },
-  {
-    "objectID": "about.html#technical-focus",
-    "href": "about.html#technical-focus",
-    "title": "About",
-    "section": "",
-    "text": "My content covers:\n\nAlgorithms - Dynamic programming, optimization, data structures, and algorithmic problem solving\nMathematics - Linear algebra, calculus, statistics, and mathematical foundations for CS\nReinforcement Learning & Deep Learning - Neural networks, policy optimization, and AI agents\nParallel Computation - Distributed systems, GPU computing, and performance optimization"
-  },
-  {
-    "objectID": "about.html#connect-with-me",
-    "href": "about.html#connect-with-me",
-    "title": "About",
-    "section": "",
-    "text": "I’m always excited to discuss technology, collaborate on projects, or help fellow learners!\n\n📧 Email: ickma2311@gmail.com\n💻 GitHub: @ickma2311\n🐦 Twitter: @ickma2311\n\nFeel free to reach out if you have questions about any of my posts, want to collaborate, or just want to chat about machine learning and algorithms!\n\nThis blog is built with Quarto and hosted on GitHub Pages. All code examples are available in my repositories."
-  },
-  {
-    "objectID": "ML/index.html#classification-algorithms",
-    "href": "ML/index.html#classification-algorithms",
-    "title": "Machine Learning Topics",
-    "section": "Classification Algorithms",
-    "text": "Classification Algorithms\n\nLogistic Regression"
-  },
-  {
-    "objectID": "ML/logistic_regression.html",
-    "href": "ML/logistic_regression.html",
-    "title": "Logistic Regression",
-    "section": "",
-    "text": "The core idea of logistic regression is to model the probability of a binary outcome.\n\n\nWe model the probability that the target variable (y) is 1, given the features (x), using the sigmoid (or logistic) function, denoted by ().\n\\[\nP(y_i=1 \\mid x_i) = \\hat{y}_i = \\sigma(w^T x_i + b)\n\\]\nThe sigmoid function is defined as: \\[\n\\sigma(z) = \\frac{1}{1 + e^{-z}}\n\\]\nSince the outcome is binary, the probability of (y) being 0 is simply: \\[\nP(y_i=0 \\mid x_i) = 1 - \\hat{y}_i\n\\]\nThese two cases can be written compactly as a single equation, which is the probability mass function of a Bernoulli distribution: \\[\nP(y_i \\mid x_i) = \\hat{y}_i^{y_i} (1 - \\hat{y}_i)^{1 - y_i}\n\\]"
-  },
-  {
-    "objectID": "ML/logistic_regression.html#assumtion",
-    "href": "ML/logistic_regression.html#assumtion",
-    "title": "Logistic Regression",
-    "section": "",
-    "text": "\\[\nP(y_i=1 \\mid x_i)=\\hat y=\\sigma(w^Tx+b)\n\\] \\[\nP(y_i=0 \\mid x_i)=1-\\hat y\n\\]"
-  },
-  {
-    "objectID": "ML/logistic_regression.html#formular",
-    "href": "ML/logistic_regression.html#formular",
-    "title": "Logistic Regression",
-    "section": "Formular",
-    "text": "Formular\n\\[\n\\hat{y}_i=σ(z_i)=\\frac{1}{1+e^{-zi}}, z_i=w^Tx+b\n\\]"
-  },
-  {
-    "objectID": "ML/logistic_regression.html#loss-binary-cross-entropy",
-    "href": "ML/logistic_regression.html#loss-binary-cross-entropy",
-    "title": "Logistic Regression",
-    "section": "Loss (Binary cross-entropy)",
-    "text": "Loss (Binary cross-entropy)\n\nstep1: Likelihood(Joint Distribution Probability )\n\\[\n\\mathcal L(w,b)= \\prod_{i=1}^n P(y_i \\mid x_i)\n\\] as \\(y \\in {0,1}\\) \\[\nP(y_i \\mid x_i)=y_i^{\\hat y}(1- \\hat y)^{1-y_i}\n\\] ,so \\[\n\\mathcal L(w,b)=\\prod_{i=1}^n y_i^{\\hat y}(1- \\hat y)^{1-y_i}\n\\]"
-  },
-  {
-    "objectID": "ML/logistic_regression.html#step2",
-    "href": "ML/logistic_regression.html#step2",
-    "title": "Logistic Regression",
-    "section": "step2:",
-    "text": "step2:"
-  },
-  {
-    "objectID": "ML/logistic_regression.html#step2-log-likelihood",
-    "href": "ML/logistic_regression.html#step2-log-likelihood",
-    "title": "Logistic Regression",
-    "section": "step2: Log Likelihood",
-    "text": "step2: Log Likelihood\n\\[\n\\mathcal{L}(w, b) = \\prod_{i=1}^n P(y_i \\mid x_i)\n= \\prod_{i=1}^n \\hat{y}_i^{y_i} (1 - \\hat{y}_i)^{1 - y_i}\n=\\sum_{i=1}^n \\log \\left( \\hat{y}_i^{y_i} (1 - \\hat{y}_i)^{1 - y_i} \\right)\n\\]"
-  },
-  {
-    "objectID": "ML/logistic_regression.html#step3-loss-function",
-    "href": "ML/logistic_regression.html#step3-loss-function",
-    "title": "Logistic Regression",
-    "section": "step3: Loss Function",
-    "text": "step3: Loss Function\n\\[\n\\max_{w, b} \\log \\mathcal{L}(w, b) = \\min_{w, b} L = - \\log \\mathcal{L}(w, b)\n\\]"
-  },
-  {
-    "objectID": "ML/logistic_regression.html#refernce-bernoulli-distribution",
-    "href": "ML/logistic_regression.html#refernce-bernoulli-distribution",
-    "title": "Logistic Regression",
-    "section": "refernce: Bernoulli Distribution",
-    "text": "refernce: Bernoulli Distribution\nFormular \\[\nP(y) = p^y (1 - p)^{1 - y}, \\quad y \\in \\{0, 1\\}\n\\] * when y = 1：\\(P(y=1) = p^1 (1 - p)^0 = p\\) * when y=0: $P(y=0) = p^0 (1 - p)^1 = 1 - p $"
-  },
-  {
-    "objectID": "ML/logistic_regression.html#model-formulation",
-    "href": "ML/logistic_regression.html#model-formulation",
-    "title": "Logistic Regression",
-    "section": "",
-    "text": "The core idea of logistic regression is to model the probability of a binary outcome.\n\n\nWe model the probability that the target variable (y) is 1, given the features (x), using the sigmoid (or logistic) function, denoted by ().\n\\[\nP(y_i=1 \\mid x_i) = \\hat{y}_i = \\sigma(w^T x_i + b)\n\\]\nThe sigmoid function is defined as: \\[\n\\sigma(z) = \\frac{1}{1 + e^{-z}}\n\\]\nSince the outcome is binary, the probability of (y) being 0 is simply: \\[\nP(y_i=0 \\mid x_i) = 1 - \\hat{y}_i\n\\]\nThese two cases can be written compactly as a single equation, which is the probability mass function of a Bernoulli distribution: \\[\nP(y_i \\mid x_i) = \\hat{y}_i^{y_i} (1 - \\hat{y}_i)^{1 - y_i}\n\\]"
-  },
-  {
-    "objectID": "ML/logistic_regression.html#loss-function-binary-cross-entropy",
-    "href": "ML/logistic_regression.html#loss-function-binary-cross-entropy",
-    "title": "Logistic Regression",
-    "section": "Loss Function (Binary Cross-Entropy)",
-    "text": "Loss Function (Binary Cross-Entropy)\nTo find the optimal parameters (w) and (b), we use Maximum Likelihood Estimation (MLE). We want to find the parameters that maximize the probability of observing our given dataset.\n\n1. Likelihood\nThe likelihood is the joint probability of observing all (n) data points, assuming they are independent and identically distributed (i.i.d.): \\[\n\\mathcal{L}(w, b) = \\prod_{i=1}^n P(y_i \\mid x_i) = \\prod_{i=1}^n \\hat{y}_i^{y_i} (1 - \\hat{y}_i)^{1 - y_i}\n\\]\n\n\n2. Log-Likelihood\nWorking with products is difficult, so we take the logarithm of the likelihood. Maximizing the log-likelihood is equivalent to maximizing the likelihood.\n\\[\n\\log \\mathcal{L}(w, b) = \\sum_{i=1}^n \\left[ y_i \\log(\\hat{y}_i) + (1 - y_i) \\log(1 - \\hat{y}_i) \\right]\n\\]\n\n\n3. Cost Function\nIn machine learning, we frame problems as minimizing a cost function. The standard convention is to minimize the negative log-likelihood. This gives us the Binary Cross-Entropy loss, (J(w, b)).\n\\[\nJ(w, b) = - \\frac{1}{n} \\sum_{i=1}^n \\left[ y_i \\log(\\hat{y}_i) + (1 - y_i) \\log(1 - \\hat{y}_i) \\right]\n\\] The \\(\\frac{1}{n}\\) term is an average over the training examples and doesn’t change the minimum, but it helps in stabilizing the training process."
-  },
-  {
-    "objectID": "CLAUDE.html",
-    "href": "CLAUDE.html",
-    "title": "CLAUDE.md",
-    "section": "",
-    "text": "This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n\nThis is a Quarto-based technical blog hosted on GitHub Pages (ickma2311.github.io). The site covers machine learning, algorithms, and technical tutorials with a focus on mathematical foundations and practical implementations.\n\n\n\n\n\n\nquarto render - Build the entire website (outputs to docs/ directory)\nquarto preview - Start local development server with live reload\nquarto render &lt;file.qmd&gt; - Render a specific document\nquarto check - Verify Quarto installation and project setup\n\n\n\n\n\nCreate new ML content in ML/ directory\nCreate new algorithm content in Algorithm/ directory\nUpdate navigation by editing _quarto.yml navbar section\nAdd new content to respective index.qmd files for discoverability\n\n\n\n\n\n├── _quarto.yml          # Main configuration file\n├── docs/                # Generated output (GitHub Pages source)\n├── index.qmd            # Homepage\n├── about.qmd            # About page\n├── ML/                  # Machine Learning content\n│   ├── index.qmd        # ML topics overview\n│   ├── *.qmd            # ML articles\n│   └── *.ipynb          # Jupyter notebooks\n├── Algorithm/           # Algorithm content\n│   ├── index.qmd        # Algorithm topics overview\n│   └── *.qmd            # Algorithm articles\n├── imgs/                # Image assets\n├── media/               # Media files\n└── styles.css           # Custom CSS styles\n\n\n\nThe site uses a hierarchical navigation structure defined in _quarto.yml: - Two main sections: “ML” and “Algorithm” - Each section has an index page that serves as a directory - Content is categorized by topic (e.g., “NumPy Fundamentals”, “Clustering Algorithms”)\n\n\n\nCreate the content file in the appropriate directory (ML/ or Algorithm/)\nUpdate the corresponding index.qmd file to include the new content\nAdd navigation entry to _quarto.yml if it should appear in the navbar dropdown\nUse consistent frontmatter with title field\n\n\n\n\n\n\nOutput directory is set to docs/ for GitHub Pages compatibility\nTheme: Cosmo with custom branding\nAll pages include table of contents (toc: true)\nSite uses custom CSS from styles.css\nJupyter notebooks are supported alongside Quarto markdown\n\n\n\n\nThe site is automatically deployed from the docs/ directory. After rendering, commit and push the docs/ folder to trigger GitHub Pages rebuild. - Author is Chao Ma"
-  },
-  {
-    "objectID": "CLAUDE.html#project-overview",
-    "href": "CLAUDE.html#project-overview",
-    "title": "CLAUDE.md",
-    "section": "",
-    "text": "This is a Quarto-based technical blog hosted on GitHub Pages (ickma2311.github.io). The site covers machine learning, algorithms, and technical tutorials with a focus on mathematical foundations and practical implementations."
-  },
-  {
-    "objectID": "CLAUDE.html#common-commands",
-    "href": "CLAUDE.html#common-commands",
-    "title": "CLAUDE.md",
-    "section": "",
-    "text": "quarto render - Build the entire website (outputs to docs/ directory)\nquarto preview - Start local development server with live reload\nquarto render &lt;file.qmd&gt; - Render a specific document\nquarto check - Verify Quarto installation and project setup\n\n\n\n\n\nCreate new ML content in ML/ directory\nCreate new algorithm content in Algorithm/ directory\nUpdate navigation by editing _quarto.yml navbar section\nAdd new content to respective index.qmd files for discoverability"
-  },
-  {
-    "objectID": "CLAUDE.html#project-structure",
-    "href": "CLAUDE.html#project-structure",
-    "title": "CLAUDE.md",
-    "section": "",
-    "text": "├── _quarto.yml          # Main configuration file\n├── docs/                # Generated output (GitHub Pages source)\n├── index.qmd            # Homepage\n├── about.qmd            # About page\n├── ML/                  # Machine Learning content\n│   ├── index.qmd        # ML topics overview\n│   ├── *.qmd            # ML articles\n│   └── *.ipynb          # Jupyter notebooks\n├── Algorithm/           # Algorithm content\n│   ├── index.qmd        # Algorithm topics overview\n│   └── *.qmd            # Algorithm articles\n├── imgs/                # Image assets\n├── media/               # Media files\n└── styles.css           # Custom CSS styles"
-  },
-  {
-    "objectID": "CLAUDE.html#content-organization",
-    "href": "CLAUDE.html#content-organization",
-    "title": "CLAUDE.md",
-    "section": "",
-    "text": "The site uses a hierarchical navigation structure defined in _quarto.yml: - Two main sections: “ML” and “Algorithm” - Each section has an index page that serves as a directory - Content is categorized by topic (e.g., “NumPy Fundamentals”, “Clustering Algorithms”)\n\n\n\nCreate the content file in the appropriate directory (ML/ or Algorithm/)\nUpdate the corresponding index.qmd file to include the new content\nAdd navigation entry to _quarto.yml if it should appear in the navbar dropdown\nUse consistent frontmatter with title field"
-  },
-  {
-    "objectID": "CLAUDE.html#configuration-notes",
-    "href": "CLAUDE.html#configuration-notes",
-    "title": "CLAUDE.md",
-    "section": "",
-    "text": "Output directory is set to docs/ for GitHub Pages compatibility\nTheme: Cosmo with custom branding\nAll pages include table of contents (toc: true)\nSite uses custom CSS from styles.css\nJupyter notebooks are supported alongside Quarto markdown"
-  },
-  {
-    "objectID": "CLAUDE.html#github-pages-deployment",
-    "href": "CLAUDE.html#github-pages-deployment",
-    "title": "CLAUDE.md",
-    "section": "",
-    "text": "The site is automatically deployed from the docs/ directory. After rendering, commit and push the docs/ folder to trigger GitHub Pages rebuild. - Author is Chao Ma"
+    "text": "K-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
   },
   {
     "objectID": "ML/xor-deep-learning.html",
@@ -292,69 +222,6 @@
     "title": "Deep Learning Book 6.1: XOR Problem & ReLU Networks",
     "section": "",
     "text": "This recap of Deep Learning Chapter 6.1 shows how ReLU activations let neural networks solve the XOR problem that defeats any linear model.\n📓 For a deeper dive with additional exercises and analysis, see the complete notebook on GitHub."
-  },
-  {
-    "objectID": "ML/xor-deep-learning.html#mathematical-formulation",
-    "href": "ML/xor-deep-learning.html#mathematical-formulation",
-    "title": "How ReLU Activation Functions Solve Problems That Linear Models Cannot",
-    "section": "",
-    "text": "The XOR function \\(f: \\{0,1\\}^2 \\to \\{0,1\\}\\) is defined as:\n\\[f(x_1, x_2) = x_1 \\oplus x_2 = \\begin{cases}\n1 & \\text{if } x_1 \\neq x_2 \\\\\n0 & \\text{if } x_1 = x_2\n\\end{cases}\\]\nThis mapping creates a non-convex decision region that cannot be separated by any hyperplane in \\(\\mathbb{R}^2\\). The fundamental limitation stems from the fact that the positive class points \\((0,1)\\) and \\((1,0)\\) are diagonally opposite to the negative class points \\((0,0)\\) and \\((1,1)\\) in the unit square.\n\n\nShow code\nimport numpy as np\nimport matplotlib.pyplot as plt\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.neural_network import MLPClassifier\nimport warnings\nwarnings.filterwarnings('ignore')\n\n# Define XOR dataset\nX = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])\ny = np.array([0, 1, 1, 0])\n\nprint(\"XOR Truth Table:\")\nprint(\"x₁ | x₂ | y\")\nprint(\"---|----|-\")\nfor i in range(4):\n    print(f\" {X[i,0]} |  {X[i,1]} | {y[i]}\")\n\n\nXOR Truth Table:\nx₁ | x₂ | y\n---|----|-\n 0 |  0 | 0\n 0 |  1 | 1\n 1 |  0 | 1\n 1 |  1 | 0"
-  },
-  {
-    "objectID": "ML/xor-deep-learning.html#linear-separability-analysis",
-    "href": "ML/xor-deep-learning.html#linear-separability-analysis",
-    "title": "How ReLU Activation Functions Solve Problems That Linear Models Cannot",
-    "section": "",
-    "text": "A dataset is linearly separable if there exists a hyperplane \\(\\mathbf{w}^T\\mathbf{x} + b = 0\\) such that all points of one class lie on one side and all points of the other class lie on the opposite side. For XOR, we require:\n\\[\\begin{align}\nw_1 \\cdot 0 + w_2 \\cdot 0 + b &&lt; 0 \\quad \\text{(for } (0,0) \\text{)} \\\\\nw_1 \\cdot 0 + w_2 \\cdot 1 + b &&gt; 0 \\quad \\text{(for } (0,1) \\text{)} \\\\\nw_1 \\cdot 1 + w_2 \\cdot 0 + b &&gt; 0 \\quad \\text{(for } (1,0) \\text{)} \\\\\nw_1 \\cdot 1 + w_2 \\cdot 1 + b &&lt; 0 \\quad \\text{(for } (1,1) \\text{)}\n\\end{align}\\]\nThis system of inequalities has no solution, proving that XOR is not linearly separable.\n\n\nShow code\n# Demonstrate linear model failure\nfig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))\n\n# Visualize the XOR problem\ncolors = ['red', 'blue']\nfor i in range(2):\n    mask = y == i\n    ax1.scatter(X[mask, 0], X[mask, 1], c=colors[i], s=200, \n               label=f'Class {i}', edgecolors='black', linewidth=2)\n\n# Attempt linear separation with multiple hyperplanes\nx_line = np.linspace(-0.2, 1.2, 100)\nax1.plot(x_line, 0.5 * np.ones_like(x_line), '--', color='gray', alpha=0.7, label='Horizontal')\nax1.plot(0.5 * np.ones_like(x_line), x_line, '--', color='orange', alpha=0.7, label='Vertical')\nax1.plot(x_line, x_line, '--', color='green', alpha=0.7, label='Diagonal')\nax1.plot(x_line, 1-x_line, '--', color='purple', alpha=0.7, label='Anti-diagonal')\n\nax1.set_xlim(-0.2, 1.2)\nax1.set_ylim(-0.2, 1.2)\nax1.set_xlabel('x₁', fontsize=12)\nax1.set_ylabel('x₂', fontsize=12)\nax1.set_title('XOR: Non-linearly Separable', fontsize=14, fontweight='bold')\nax1.legend()\nax1.grid(True, alpha=0.3)\n\n# Train logistic regression and show decision boundary\nlog_reg = LogisticRegression()\nlog_reg.fit(X, y)\naccuracy = log_reg.score(X, y)\n\n# Create decision boundary\nxx, yy = np.meshgrid(np.linspace(-0.2, 1.2, 100), np.linspace(-0.2, 1.2, 100))\ngrid_points = np.c_[xx.ravel(), yy.ravel()]\nZ = log_reg.predict_proba(grid_points)[:, 1].reshape(xx.shape)\n\nax2.contourf(xx, yy, Z, levels=50, alpha=0.6, cmap='RdYlBu')\nax2.contour(xx, yy, Z, levels=[0.5], colors='black', linewidths=2, linestyles='--')\n\nfor i in range(2):\n    mask = y == i\n    ax2.scatter(X[mask, 0], X[mask, 1], c=colors[i], s=200, \n               label=f'Class {i}', edgecolors='black', linewidth=2)\n\nax2.set_xlim(-0.2, 1.2)\nax2.set_ylim(-0.2, 1.2)\nax2.set_xlabel('x₁', fontsize=12)\nax2.set_ylabel('x₂', fontsize=12)\nax2.set_title(f'Logistic Regression (Accuracy: {accuracy:.1%})', fontsize=14, fontweight='bold')\nax2.legend()\nax2.grid(True, alpha=0.3)\n\nplt.tight_layout()\nplt.show()\n\nprint(f\"Linear model accuracy: {accuracy:.1%}\")\nprint(\"Observation: Linear models fundamentally cannot solve XOR\")\n\n\n\n\n\n\n\n\n\nLinear model accuracy: 50.0%\nObservation: Linear models fundamentally cannot solve XOR"
-  },
-  {
-    "objectID": "ML/xor-deep-learning.html#theoretical-foundation-universal-approximation",
-    "href": "ML/xor-deep-learning.html#theoretical-foundation-universal-approximation",
-    "title": "How ReLU Activation Functions Solve Problems That Linear Models Cannot",
-    "section": "Theoretical Foundation: Universal Approximation",
-    "text": "Theoretical Foundation: Universal Approximation\nThe solution lies in the universal approximation theorem. A feedforward network with a single hidden layer containing finitely many neurons can approximate any continuous function on compact subsets of \\(\\mathbb{R}^n\\) to arbitrary accuracy, provided the activation function is non-constant, bounded, and monotonically-increasing.\nFor XOR, we need a network of the form: \\[\\hat{y} = \\sigma(\\mathbf{w}_2^T \\sigma(\\mathbf{W}_1 \\mathbf{x} + \\mathbf{b}_1) + b_2)\\]\nwhere \\(\\sigma\\) is a nonlinear activation function, \\(\\mathbf{W}_1 \\in \\mathbb{R}^{h \\times 2}\\) is the input-to-hidden weight matrix, and \\(\\mathbf{w}_2 \\in \\mathbb{R}^h\\) is the hidden-to-output weight vector."
-  },
-  {
-    "objectID": "ML/xor-deep-learning.html#constructive-proof-hand-crafted-xor-solution",
-    "href": "ML/xor-deep-learning.html#constructive-proof-hand-crafted-xor-solution",
-    "title": "Solving XOR with ReLU Networks",
-    "section": "Constructive Proof: Hand-crafted XOR Solution",
-    "text": "Constructive Proof: Hand-crafted XOR Solution\nWe can construct an explicit solution using ReLU activations. Consider the hidden layer transformation:\n\\[\\mathbf{h} = \\text{ReLU}(\\mathbf{W}_1 \\mathbf{x} + \\mathbf{b}_1)\\]\nwith: \\[\\mathbf{W}_1 = \\begin{pmatrix} 1 & -1 \\\\ -1 & 1 \\end{pmatrix}, \\quad \\mathbf{b}_1 = \\begin{pmatrix} 0 \\\\ 0 \\end{pmatrix}\\]\nThis transforms the input space such that the XOR function becomes linearly separable in the hidden representation.\n\n\nShow code\n# Recap the hand-crafted solution in plain numbers\nprint(\"Hand-crafted XOR Network Architecture:\")\nprint(f\"W₁ = {W1}\")\nprint(f\"b₁ = {b1}\")\nprint(f\"w₂ = {w2}\")\nprint(f\"b₂ = {b2}\")\n\nprint(\"\\nTransformation Analysis:\")\nprint(\"Input → Pre-activation → Hidden → Logit → Prediction\")\nfor i in range(4):\n    print(f\"{X[i]} → {pre_activations[i]} → {hidden_activations[i]} → {logits[i]:.2f} → {predictions[i]}\")\n\nprint(f\"\\nAccuracy: {(predictions == y).mean():.1%}\")\n\n\nHand-crafted XOR Network Architecture:\nW₁ = [[ 1 -1]\n [-1  1]]\nb₁ = [0 0]\nw₂ = [1 1]\nb₂ = -0.5\n\nTransformation Analysis:\nInput → Pre-activation → Hidden → Logit → Prediction\n[0 0] → [0 0] → [0 0] → -0.50 → 0\n[0 1] → [-1  1] → [0 1] → 0.50 → 1\n[1 0] → [ 1 -1] → [1 0] → 0.50 → 1\n[1 1] → [0 0] → [0 0] → -0.50 → 0\n\nAccuracy: 100.0%"
-  },
-  {
-    "objectID": "ML/xor-deep-learning.html#empirical-validation-learned-solutions",
-    "href": "ML/xor-deep-learning.html#empirical-validation-learned-solutions",
-    "title": "Solving XOR with ReLU Networks",
-    "section": "Empirical Validation: Learned Solutions",
-    "text": "Empirical Validation: Learned Solutions\nWe now train ReLU networks directly on the XOR data. Because ReLU units can go completely inactive when they start on the wrong side of zero, we try a few different random initialisations and keep the best run for each architecture. With enough hidden capacity (two neurons and up), the optimiser consistently finds a perfect solution.\n\n\nShow code\n# Train MLP with different architectures and pick the best run for each size\narchitectures = [\n    (2, 'Single hidden layer (2 neurons)'),\n    (4, 'Single hidden layer (4 neurons)'),\n    (8, 'Single hidden layer (8 neurons)')\n]\nseeds = range(10)  # Multiple restarts to avoid unlucky dead-ReLU initialisations\n\nfig, axes = plt.subplots(1, len(architectures), figsize=(18, 5))\n\nfor idx, (hidden_size, title) in enumerate(architectures):\n    best_model = None\n    best_score = -1\n    for seed in seeds:\n        mlp = MLPClassifier(hidden_layer_sizes=(hidden_size,), \n                           activation='relu', \n                           solver='lbfgs', \n                           max_iter=5000,\n                           alpha=0.0,\n                           random_state=seed)\n        mlp.fit(X, y)\n        score = mlp.score(X, y)\n        if score &gt; best_score:\n            best_model = mlp\n            best_score = score\n        # Early exit once we achieve perfect accuracy\n        if best_score == 1.0:\n            break\n\n    # Use the best-performing model for visualisation\n    xx, yy = np.meshgrid(np.linspace(-0.5, 1.5, 100), np.linspace(-0.5, 1.5, 100))\n    grid_points = np.c_[xx.ravel(), yy.ravel()]\n    Z = best_model.predict_proba(grid_points)[:, 1].reshape(xx.shape)\n\n    axes[idx].contourf(xx, yy, Z, levels=50, alpha=0.6, cmap='RdYlBu')\n    axes[idx].contour(xx, yy, Z, levels=[0.5], colors='black', linewidths=2, linestyles='--')\n\n    for i in range(2):\n        mask = y == i\n        axes[idx].scatter(X[mask, 0], X[mask, 1], c=colors[i], s=200, \n                         label=f'Class {i}', edgecolors='black', linewidth=2)\n\n    axes[idx].set_xlim(-0.5, 1.5)\n    axes[idx].set_ylim(-0.5, 1.5)\n    axes[idx].set_xlabel('x₁', fontsize=12)\n    axes[idx].set_ylabel('x₂', fontsize=12)\n    axes[idx].set_title(f'{title}\\n(Best accuracy: {best_score:.1%})', fontsize=12, fontweight='bold')\n    axes[idx].legend()\n    axes[idx].grid(True, alpha=0.3)\n\nplt.tight_layout()\nplt.show()"
-  },
-  {
-    "objectID": "ML/xor-deep-learning.html#computational-complexity-analysis",
-    "href": "ML/xor-deep-learning.html#computational-complexity-analysis",
-    "title": "The XOR Problem: A Fundamental Demonstration of Nonlinearity in Deep Learning",
-    "section": "",
-    "text": "The minimum number of hidden units required to solve XOR with ReLU activations is 2. This can be proven by considering the VC dimension of piecewise linear functions and the number of linear regions needed to separate the XOR pattern.\n\n# Analyze convergence with different hidden layer sizes\nhidden_sizes = [1, 2, 3, 4, 5, 8, 10]\nconvergence_results = []\n\nfor hidden_size in hidden_sizes:\n    accuracies = []\n    for seed in range(10):  # Multiple random initializations\n        mlp = MLPClassifier(hidden_layer_sizes=(hidden_size,),\n                           activation='relu',\n                           solver='lbfgs',\n                           max_iter=1000,\n                           random_state=seed)\n        mlp.fit(X, y)\n        accuracies.append(mlp.score(X, y))\n    \n    convergence_results.append({\n        'hidden_size': hidden_size,\n        'mean_accuracy': np.mean(accuracies),\n        'std_accuracy': np.std(accuracies),\n        'success_rate': np.mean(np.array(accuracies) == 1.0)\n    })\n\n# Plot convergence analysis\nfig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))\n\nhidden_sizes_plot = [r['hidden_size'] for r in convergence_results]\nmean_accs = [r['mean_accuracy'] for r in convergence_results]\nstd_accs = [r['std_accuracy'] for r in convergence_results]\nsuccess_rates = [r['success_rate'] for r in convergence_results]\n\nax1.errorbar(hidden_sizes_plot, mean_accs, yerr=std_accs, \n            marker='o', capsize=5, capthick=2, linewidth=2)\nax1.axhline(1.0, color='red', linestyle='--', alpha=0.7, label='Perfect accuracy')\nax1.set_xlabel('Hidden Layer Size', fontsize=12)\nax1.set_ylabel('Mean Accuracy', fontsize=12)\nax1.set_title('Accuracy vs Hidden Layer Size', fontsize=14, fontweight='bold')\nax1.legend()\nax1.grid(True, alpha=0.3)\nax1.set_ylim(0.4, 1.05)\n\nax2.bar(hidden_sizes_plot, success_rates, alpha=0.7, color='skyblue', edgecolor='black')\nax2.set_xlabel('Hidden Layer Size', fontsize=12)\nax2.set_ylabel('Success Rate (Perfect Accuracy)', fontsize=12)\nax2.set_title('Success Rate vs Hidden Layer Size', fontsize=14, fontweight='bold')\nax2.grid(True, alpha=0.3)\nax2.set_ylim(0, 1.05)\n\nplt.tight_layout()\nplt.show()\n\nprint(\"Convergence Analysis Results:\")\nprint(\"Hidden Size | Mean Accuracy | Std Accuracy | Success Rate\")\nprint(\"-\" * 55)\nfor r in convergence_results:\n    print(f\"{r['hidden_size']:11d} | {r['mean_accuracy']:13.3f} | {r['std_accuracy']:12.3f} | {r['success_rate']:12.1%}\")\n\n\n\n\n\n\n\n\nConvergence Analysis Results:\nHidden Size | Mean Accuracy | Std Accuracy | Success Rate\n-------------------------------------------------------\n          1 |         0.575 |        0.160 |         0.0%\n          2 |         0.725 |        0.208 |        30.0%\n          3 |         0.700 |        0.150 |        10.0%\n          4 |         0.800 |        0.187 |        40.0%\n          5 |         0.825 |        0.251 |        60.0%\n          8 |         1.000 |        0.000 |       100.0%\n         10 |         1.000 |        0.000 |       100.0%"
-  },
-  {
-    "objectID": "ML/xor-deep-learning.html#conclusion",
-    "href": "ML/xor-deep-learning.html#conclusion",
-    "title": "Deep Learning Book 6.1: XOR Problem & ReLU Networks",
-    "section": "Conclusion",
-    "text": "Conclusion\nThe XOR problem demonstrates several fundamental principles in deep learning:\n\nNecessity of Nonlinearity: Linear models cannot solve XOR, establishing the critical role of nonlinear activation functions.\nUniversal Approximation: Even simple architectures with sufficient nonlinearity can solve complex classification problems."
-  },
-  {
-    "objectID": "ML/xor-deep-learning.html#references",
-    "href": "ML/xor-deep-learning.html#references",
-    "title": "The XOR Problem: A Fundamental Demonstration of Nonlinearity in Deep Learning",
-    "section": "",
-    "text": "Minsky, M., & Papert, S. (1969). Perceptrons: An Introduction to Computational Geometry. MIT Press.\nRumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). Learning representations by back-propagating errors. Nature, 323(6088), 533-536.\nCybenko, G. (1989). Approximation by superpositions of a sigmoidal function. Mathematics of Control, Signals and Systems, 2(4), 303-314.\nHornik, K., Stinchcombe, M., & White, H. (1989). Multilayer feedforward networks are universal approximators. Neural Networks, 2(5), 359-366."
-  },
-  {
-    "objectID": "ML/index.html#deep-learning-fundamentals",
-    "href": "ML/index.html#deep-learning-fundamentals",
-    "title": "Machine Learning Topics",
-    "section": "Deep Learning Fundamentals",
-    "text": "Deep Learning Fundamentals\n\nThe XOR Problem: Nonlinearity in Deep Learning"
   },
   {
     "objectID": "ML/xor-deep-learning.html#the-xor-problem-a-challenge-for-linear-models",
@@ -385,31 +252,45 @@
     "text": "The Solution: ReLU Activation Function\nReLU (Rectified Linear Unit) provides the nonlinearity needed to solve XOR: - ReLU(z) = max(0, z) - Clips negative values to zero, keeping positive values unchanged\nUsing the hand-crafted network from the next code cell, the forward pass can be written compactly in matrix form:\n\\[\nX = \\begin{bmatrix} 0 & 0 \\\\ 0 & 1 \\\\ 1 & 0 \\\\ 1 & 1 \\end{bmatrix},\n\\quad\nW_1 = \\begin{bmatrix} 1 & -1 \\\\ -1 & 1 \\end{bmatrix},\n\\quad\nb_1 = \\begin{bmatrix} 0 & 0 \\end{bmatrix}\n\\]\n\\[\nZ = X W_1^{\\top} + b_1 = \\begin{bmatrix} 0 & 0 \\\\ -1 & 1 \\\\ 1 & -1 \\\\ 0 & 0 \\end{bmatrix},\n\\qquad\nH = \\text{ReLU}(Z) = \\begin{bmatrix} 0 & 0 \\\\ 0 & 1 \\\\ 1 & 0 \\\\ 0 & 0 \\end{bmatrix}\n\\]\nWith output parameters \\[\nw_2 = \\begin{bmatrix} 1 & 1 \\end{bmatrix},\n\\quad\nb_2 = -0.5\n\\] the final linear scores are \\[\na = H w_2^{\\top} + b_2 = \\begin{bmatrix} -0.5 \\\\ 0.5 \\\\ 0.5 \\\\ -0.5 \\end{bmatrix}\n\\Rightarrow\n\\text{sign}_+(a) = \\begin{bmatrix} 0 \\\\ 1 \\\\ 1 \\\\ 0 \\end{bmatrix}\n\\]\nHere \\(\\text{sign}_+(a)\\) maps non-negative entries to 1 and negative entries to 0. Let’s see how ReLU transforms the XOR problem to make it solvable.\n\n\nShow code\n# Hand-crafted network weights and biases that solve XOR\nfrom IPython.display import display, Math\n\ndef relu(z):\n    return np.maximum(0, z)\n\nW1 = np.array([[1, -1],\n               [-1, 1]])\nb1 = np.array([0, 0])\nw2 = np.array([1, 1])\nb2 = -0.5\n\ndisplay(Math(r\"\\text{Hidden layer: } W_1 = \\begin{bmatrix} 1 & -1 \\\\ -1 & 1 \\end{bmatrix}\"))\ndisplay(Math(r\"b_1 = \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix}\"))\ndisplay(Math(r\"\\text{Output layer: } w_2 = \\begin{bmatrix} 1 & 1 \\end{bmatrix}\"))\ndisplay(Math(r\"b_2 = -0.5\"))\n\ndef forward_pass(X, W1, b1, w2, b2):\n    z1 = X @ W1.T + b1\n    h1 = relu(z1)\n    logits = h1 @ w2 + b2\n    return logits, h1, z1\n\nlogits, hidden_activations, pre_activations = forward_pass(X, W1, b1, w2, b2)\npredictions = (logits &gt;= 0).astype(int)\n\nprint(\"Step-by-step Forward Pass Results:\")\nprint(\"=\" * 80)\nprint()\nprint(\"┌─────────┬──────────────────┬──────────────────┬─────────┬──────────┐\")\nprint(\"│ Input   │  Before ReLU     │  After ReLU      │  Logit  │   Pred   │\")\nprint(\"│ (x₁,x₂) │    (z₁, z₂)      │    (h₁, h₂)      │  score  │  class   │\")\nprint(\"├─────────┼──────────────────┼──────────────────┼─────────┼──────────┤\")\nfor i in range(len(X)):\n    x1, x2 = X[i]\n    z1_vals = pre_activations[i]\n    h1_vals = hidden_activations[i]\n    logit = logits[i]\n    pred = predictions[i]\n    \n    input_str = f\"({x1:.0f}, {x2:.0f})\"\n    pre_relu_str = f\"({z1_vals[0]:4.1f}, {z1_vals[1]:4.1f})\"\n    post_relu_str = f\"({h1_vals[0]:4.1f}, {h1_vals[1]:4.1f})\"\n    logit_str = f\"{logit:6.2f}\"\n    pred_str = f\"{pred:4d}\"\n    \n    print(f\"│ {input_str:7} │ {pre_relu_str:16} │ {post_relu_str:16} │ {logit_str:7} │ {pred_str:8} │\")\nprint(\"└─────────┴──────────────────┴──────────────────┴─────────┴──────────┘\")\n\naccuracy = (predictions == y).mean()\nprint(f\"\\nNetwork Accuracy: {accuracy:.0%} ✅\")\nprint(\"\\nKey transformations:\")\nprint(\"• (-1, 1) → (0, 1) makes XOR(0,1) = 1 separable\")\nprint(\"• ( 1,-1) → (1, 0) makes XOR(1,0) = 1 separable\")\n\n\n\\(\\displaystyle \\text{Hidden layer: } W_1 = \\begin{bmatrix} 1 & -1 \\\\ -1 & 1 \\end{bmatrix}\\)\n\n\n\\(\\displaystyle b_1 = \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix}\\)\n\n\n\\(\\displaystyle \\text{Output layer: } w_2 = \\begin{bmatrix} 1 & 1 \\end{bmatrix}\\)\n\n\n\\(\\displaystyle b_2 = -0.5\\)\n\n\nStep-by-step Forward Pass Results:\n================================================================================\n\n┌─────────┬──────────────────┬──────────────────┬─────────┬──────────┐\n│ Input   │  Before ReLU     │  After ReLU      │  Logit  │   Pred   │\n│ (x₁,x₂) │    (z₁, z₂)      │    (h₁, h₂)      │  score  │  class   │\n├─────────┼──────────────────┼──────────────────┼─────────┼──────────┤\n│ (0, 0)  │ ( 0.0,  0.0)     │ ( 0.0,  0.0)     │  -0.50  │    0     │\n│ (0, 1)  │ (-1.0,  1.0)     │ ( 0.0,  1.0)     │   0.50  │    1     │\n│ (1, 0)  │ ( 1.0, -1.0)     │ ( 1.0,  0.0)     │   0.50  │    1     │\n│ (1, 1)  │ ( 0.0,  0.0)     │ ( 0.0,  0.0)     │  -0.50  │    0     │\n└─────────┴──────────────────┴──────────────────┴─────────┴──────────┘\n\nNetwork Accuracy: 100% ✅\n\nKey transformations:\n• (-1, 1) → (0, 1) makes XOR(0,1) = 1 separable\n• ( 1,-1) → (1, 0) makes XOR(1,0) = 1 separable\n\n\n\nTransformation Table: How ReLU Solves XOR\nLet’s trace through exactly what happens to each input:\n\n\nShow code\n\n# Create detailed transformation table\nprint(\"Complete Transformation Table:\")\nprint(\"=============================\")\nprint()\nprint(\"Input   | Pre-ReLU  | Post-ReLU | Logit | Prediction | Target | Correct?\")\nprint(\"(x₁,x₂) | (z₁, z₂)  | (h₁, h₂)  | score | class      | y      |\")\nprint(\"--------|-----------|-----------|-------|------------|--------|----------\")\n\nfor i in range(4):\n    input_str = f\"({X[i,0]},{X[i,1]})\"\n    pre_relu_str = f\"({pre_activations[i,0]:2.0f},{pre_activations[i,1]:2.0f})\"\n    post_relu_str = f\"({hidden_activations[i,0]:.0f},{hidden_activations[i,1]:.0f})\"\n    logit_str = f\"{logits[i]:.2f}\"\n    pred_str = f\"{predictions[i]}\"\n    target_str = f\"{y[i]}\"\n    correct_str = \"✓\" if predictions[i] == y[i] else \"✗\"\n\n    print(f\"{input_str:7} | {pre_relu_str:9} | {post_relu_str:9} | {logit_str:5} | {pred_str:10} | {target_str:6} | {correct_str}\")\n\nprint()\nprint(\"Key Insight: ReLU transforms (-1,1) → (0,1) and (1,-1) → (1,0)\")\nprint(\"This makes the XOR classes linearly separable in the hidden space!\")\n\n\nComplete Transformation Table:\n=============================\n\nInput   | Pre-ReLU  | Post-ReLU | Logit | Prediction | Target | Correct?\n(x₁,x₂) | (z₁, z₂)  | (h₁, h₂)  | score | class      | y      |\n--------|-----------|-----------|-------|------------|--------|----------\n(0,0)   | ( 0, 0)   | (0,0)     | -0.50 | 0          | 0      | ✓\n(0,1)   | (-1, 1)   | (0,1)     | 0.50  | 1          | 1      | ✓\n(1,0)   | ( 1,-1)   | (1,0)     | 0.50  | 1          | 1      | ✓\n(1,1)   | ( 0, 0)   | (0,0)     | -0.50 | 0          | 0      | ✓\n\nKey Insight: ReLU transforms (-1,1) → (0,1) and (1,-1) → (1,0)\nThis makes the XOR classes linearly separable in the hidden space!\n\n\n\n\nStep 1: Original Input Space\nThe XOR problem in its raw form - notice how no single line can separate the classes:\n\n\nShow code\n# Step 1 visualization: Original Input Space\nfig, ax = plt.subplots(1, 1, figsize=(6, 6))\n\nfor i in range(2):\n    mask = y == i\n    ax.scatter(X[mask, 0], X[mask, 1], c=colors[i], s=200, \n               label=f'XOR = {i}', edgecolors='black', linewidth=2)\n\n# Annotate each point\nfor i in range(4):\n    ax.annotate(f'({X[i,0]},{X[i,1]})', X[i], xytext=(10, 10), \n                textcoords='offset points', fontsize=10)\n\nax.set_xlim(-0.2, 1.2)\nax.set_ylim(-0.2, 1.2)\nax.set_xlabel('x₁', fontsize=12)\nax.set_ylabel('x₂', fontsize=12)\nax.set_title('Step 1: Original Input Space', fontsize=14, fontweight='bold')\nax.legend()\nax.grid(True, alpha=0.3)\n\nplt.tight_layout()\nplt.show()\n\n\n\n\n\n\n\n\n\n\n\nStep 2: Linear Transformation (Before ReLU)\nThe network applies weights W₁ and biases b₁ to transform the input space:\n\n\nShow code\n# Step 2 visualization: Pre-activation space\nfig, ax = plt.subplots(1, 1, figsize=(6, 6))\n\nfor i in range(4):\n    ax.scatter(pre_activations[i, 0], pre_activations[i, 1], \n               c=colors[y[i]], s=200, edgecolors='black', linewidth=2)\n\n# Draw ReLU boundaries\nax.axhline(0, color='gray', linestyle='-', alpha=0.8, linewidth=2)\nax.axvline(0, color='gray', linestyle='-', alpha=0.8, linewidth=2)\n\n# Shade all regions where coordinates turn negative (and thus get clipped by ReLU)\nax.axvspan(-1.2, 0, alpha=0.15, color='red')\nax.axhspan(-1.2, 0, alpha=0.15, color='red')\nax.text(-0.75, 0.85, 'Negative z₁ → ReLU sets to 0', ha='left', fontsize=10,\n        bbox=dict(boxstyle='round', facecolor='red', alpha=0.25))\nax.text(0.95, -0.75, 'Negative z₂ → ReLU sets to 0', ha='right', fontsize=10,\n        bbox=dict(boxstyle='round', facecolor='red', alpha=0.25))\n\n# Annotate points with input labels\nlabels = ['(0,0)', '(0,1)', '(1,0)', '(1,1)']\nfor i, label in enumerate(labels):\n    pre_coord = f'({pre_activations[i,0]:.0f},{pre_activations[i,1]:.0f})'\n    ax.annotate(f'{label}→{pre_coord}', pre_activations[i], xytext=(10, 10), \n                textcoords='offset points', fontsize=9)\n\nax.set_xlim(-1.2, 1.2)\nax.set_ylim(-1.2, 1.2)\nax.set_xlabel('z₁ (Pre-activation)', fontsize=12)\nax.set_ylabel('z₂ (Pre-activation)', fontsize=12)\nax.set_title('Step 2: Before ReLU (Linear Transform)', fontsize=14, fontweight='bold')\nax.grid(True, alpha=0.3)\n\nplt.tight_layout()\nplt.show()\n\n\n\n\n\n\n\n\n\n\n\nStep 3: ReLU Transformation\nReLU clips negative values to zero, transforming the space to make it linearly separable:\n\n\nShow code\n# Step 3 visualization: ReLU transformation with arrows\nfig, ax = plt.subplots(1, 1, figsize=(8, 6))\n\nfor i in range(4):\n    # Pre-ReLU positions (X marks)\n    ax.scatter(pre_activations[i, 0], pre_activations[i, 1], \n               marker='x', s=150, c=colors[y[i]], alpha=0.5, linewidth=3)\n    # Post-ReLU positions (circles) \n    ax.scatter(hidden_activations[i, 0], hidden_activations[i, 1], \n               marker='o', s=200, c=colors[y[i]], edgecolors='black', linewidth=2)\n    \n    # Draw transformation arrows\n    start = pre_activations[i]\n    end = hidden_activations[i]\n    if not np.array_equal(start, end):\n        ax.annotate('', xy=end, xytext=start,\n                    arrowprops=dict(arrowstyle='-&gt;', lw=2, color=colors[y[i]], alpha=0.8))\n\n\n# Add text box explaining the key transformation\nax.text(0.5, 0.8, 'ReLU clips negative coordinates to zero\\n(-1,1) → (0,1) and (1,-1) → (1,0)', \n        ha='center', va='center', fontsize=11, \n        bbox=dict(boxstyle='round', facecolor='yellow', alpha=0.7))\n\nax.set_xlim(-1.2, 1.1)\nax.set_ylim(-1.2, 1.1)\nax.set_xlabel('Hidden dimension 1', fontsize=12)\nax.set_ylabel('Hidden dimension 2', fontsize=12)\nax.set_title('Step 3: ReLU Mapping (Before → After)', fontsize=14, fontweight='bold')\nax.grid(True, alpha=0.3)\n\nplt.tight_layout()\nplt.show()\n\n\n\n\n\n\n\n\n\n\n\nStep 4: Final Classification\nWith the transformed hidden representation, the network can now perfectly classify XOR:\n\n\nShow code\n\n\n# Step 4 visualization: Final classification results\nfig, ax = plt.subplots(1, 1, figsize=(6, 6))\n\n# Create decision boundary\nxx, yy = np.meshgrid(np.linspace(-0.2, 1.2, 100), np.linspace(-0.2, 1.2, 100))\ngrid_points = np.c_[xx.ravel(), yy.ravel()]\ngrid_logits, _, _ = forward_pass(grid_points, W1, b1, w2, b2)\ngrid_preds = (grid_logits &gt;= 0).astype(int).reshape(xx.shape)\n\nax.contourf(xx, yy, grid_preds, levels=[-0.5, 0.5, 1.5], \n            colors=['#ffcccc', '#ccccff'], alpha=0.6)\nax.contour(xx, yy, grid_logits.reshape(xx.shape), levels=[0], \n           colors='black', linewidths=2, linestyles='--')\n\nfor i in range(2):\n    mask = y == i\n    ax.scatter(X[mask, 0], X[mask, 1], c=colors[i], s=200, \n               label=f'XOR = {i}', edgecolors='black', linewidth=2)\n\nax.set_xlim(-0.2, 1.2)\nax.set_ylim(-0.2, 1.2)\nax.set_xlabel('x₁', fontsize=12)\nax.set_ylabel('x₂', fontsize=12)\nax.set_title('Step 4: Final Classification (100% Accuracy)', fontsize=14, fontweight='bold')\nax.legend()\nax.grid(True, alpha=0.3)\n\nsample_logits, _, _ = forward_pass(X, W1, b1, w2, b2)\nsample_preds = (sample_logits &gt;= 0).astype(int)\nfor i in range(4):\n    pred_text = f'Pred: {sample_preds[i]}'\n    ax.annotate(pred_text, X[i], xytext=(10, -15), \n                textcoords='offset points', fontsize=9,\n                bbox=dict(boxstyle='round,pad=0.2', facecolor='lightgreen', alpha=0.7))\n\nplt.tight_layout()\nplt.show()"
   },
   {
-    "objectID": "ML/xor-deep-learning.html#relu-transformation-summary",
-    "href": "ML/xor-deep-learning.html#relu-transformation-summary",
-    "title": "Solving XOR with ReLU Networks",
-    "section": "ReLU Transformation Summary",
-    "text": "ReLU Transformation Summary\nThe four-step walkthrough above shows how each XOR input moves through the hidden layer. The table below collects the key numbers for quick reference.\n\n\n\n\n\n\n\n\n\n\nInput \\((x_1,x_2)\\)\nXOR label\nLinear transform \\((z_1, z_2)\\)\nAfter ReLU \\((h_1, h_2)\\)\nFinal prediction\n\n\n\n\n(0, 0)\n0\n(0, 0)\n(0, 0)\n0\n\n\n(0, 1)\n1\n(-1, 1)\n(0, 1)\n1\n\n\n(1, 0)\n1\n(1, -1)\n(1, 0)\n1\n\n\n(1, 1)\n0\n(0, 0)\n(0, 0)\n0\n\n\n\nThe constructive proof and empirical training sections that follow use the same weights, so all downstream outputs stay consistent with this summary.\n\n\nShow code\n# Train MLP with different architectures and pick the best run for each size\narchitectures = [\n    (2, 'Single hidden layer (2 neurons)'),\n    (4, 'Single hidden layer (4 neurons)'),\n    (8, 'Single hidden layer (8 neurons)')\n]\nseeds = range(10)  # Multiple restarts to avoid unlucky dead-ReLU initialisations\n\nfig, axes = plt.subplots(1, len(architectures), figsize=(18, 5))\n\nfor idx, (hidden_size, title) in enumerate(architectures):\n    best_model = None\n    best_score = -1\n    for seed in seeds:\n        mlp = MLPClassifier(hidden_layer_sizes=(hidden_size,), \n                           activation='relu', \n                           solver='lbfgs', \n                           max_iter=5000,\n                           alpha=0.0,\n                           random_state=seed)\n        mlp.fit(X, y)\n        score = mlp.score(X, y)\n        if score &gt; best_score:\n            best_model = mlp\n            best_score = score\n        # Early exit once we achieve perfect accuracy\n        if best_score == 1.0:\n            break\n\n    # Use the best-performing model for visualisation\n    xx, yy = np.meshgrid(np.linspace(-0.5, 1.5, 100), np.linspace(-0.5, 1.5, 100))\n    grid_points = np.c_[xx.ravel(), yy.ravel()]\n    Z = best_model.predict_proba(grid_points)[:, 1].reshape(xx.shape)\n\n    axes[idx].contourf(xx, yy, Z, levels=50, alpha=0.6, cmap='RdYlBu')\n    axes[idx].contour(xx, yy, Z, levels=[0.5], colors='black', linewidths=2, linestyles='--')\n\n    for i in range(2):\n        mask = y == i\n        axes[idx].scatter(X[mask, 0], X[mask, 1], c=colors[i], s=200, \n                         label=f'Class {i}', edgecolors='black', linewidth=2)\n\n    axes[idx].set_xlim(-0.5, 1.5)\n    axes[idx].set_ylim(-0.5, 1.5)\n    axes[idx].set_xlabel('x₁', fontsize=12)\n    axes[idx].set_ylabel('x₂', fontsize=12)\n    axes[idx].set_title(f'{title}\\n(Best accuracy: {best_score:.1%})', fontsize=12, fontweight='bold')\n    axes[idx].legend()\n    axes[idx].grid(True, alpha=0.3)\n\nplt.tight_layout()\nplt.show()"
+    "objectID": "ML/xor-deep-learning.html#conclusion",
+    "href": "ML/xor-deep-learning.html#conclusion",
+    "title": "Deep Learning Book 6.1: XOR Problem & ReLU Networks",
+    "section": "Conclusion",
+    "text": "Conclusion\nThe XOR problem demonstrates several fundamental principles in deep learning:\n\nNecessity of Nonlinearity: Linear models cannot solve XOR, establishing the critical role of nonlinear activation functions.\nUniversal Approximation: Even simple architectures with sufficient nonlinearity can solve complex classification problems."
   },
   {
-    "objectID": "index.html#deep-learning-book",
-    "href": "index.html#deep-learning-book",
-    "title": "ickma.dev",
+    "objectID": "ML/axis.html",
+    "href": "ML/axis.html",
+    "title": "Understanding Axis(dim) Operations Smartly",
     "section": "",
-    "text": "How ReLU solves problems that linear models cannot handle."
+    "text": "import numpy as np\n\nx = np.array([[1, 2, 3], [4, 5, 6]])\nThe 2D array is: \\[\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix}\n\\]\n\n\nprint(x.sum(axis=0))\nThe result is:\narray([5, 7, 9])\nWhen axis(dim) is 0, it means the operation is performed along 0 dimension. Items along 0 dimension are each sub-array. Then the result is just two vectors added together.\n\\[\n\\begin{bmatrix}\n1 & 2 & 3\n\\end{bmatrix}\n+\n\\begin{bmatrix}\n4 & 5 & 6\n\\end{bmatrix}\n\\]\nx.sum(axis=1)==x[0]+x[1]\nOperations along axis 0 is just operate on all sub-arrays. For example,\nsum(x,axis=0) is just \\(\\vec{x[0]}+\\vec{x[1]}+...+\\vec{x[n]}\\)\n\n\n\nprint(x.sum(axis=1))\nThe result is:\narray([6, 15])\nWhen axis(dim) is 1, it means the operation is performed along 1 dimension.\n\\[\n\\begin{bmatrix}\n1+2+3 \\\\\n4+5+6\n\\end{bmatrix}\n\\]"
   },
   {
-    "objectID": "index.html#other-notebooks",
-    "href": "index.html#other-notebooks",
-    "title": "ickma.dev",
+    "objectID": "ML/axis.html#a-2d-example",
+    "href": "ML/axis.html#a-2d-example",
+    "title": "Understanding Axis(dim) Operations Smartly",
     "section": "",
-    "text": "K-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
+    "text": "import numpy as np\n\nx = np.array([[1, 2, 3], [4, 5, 6]])\nThe 2D array is: \\[\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix}\n\\]\n\n\nprint(x.sum(axis=0))\nThe result is:\narray([5, 7, 9])\nWhen axis(dim) is 0, it means the operation is performed along 0 dimension. Items along 0 dimension are each sub-array. Then the result is just two vectors added together.\n\\[\n\\begin{bmatrix}\n1 & 2 & 3\n\\end{bmatrix}\n+\n\\begin{bmatrix}\n4 & 5 & 6\n\\end{bmatrix}\n\\]\nx.sum(axis=1)==x[0]+x[1]\nOperations along axis 0 is just operate on all sub-arrays. For example,\nsum(x,axis=0) is just \\(\\vec{x[0]}+\\vec{x[1]}+...+\\vec{x[n]}\\)\n\n\n\nprint(x.sum(axis=1))\nThe result is:\narray([6, 15])\nWhen axis(dim) is 1, it means the operation is performed along 1 dimension.\n\\[\n\\begin{bmatrix}\n1+2+3 \\\\\n4+5+6\n\\end{bmatrix}\n\\]"
   },
   {
-    "objectID": "index.html#more",
-    "href": "index.html#more",
-    "title": "ickma.dev",
+    "objectID": "ML/axis.html#a-3d-example",
+    "href": "ML/axis.html#a-3d-example",
+    "title": "Understanding Axis(dim) Operations Smartly",
+    "section": "A 3D example",
+    "text": "A 3D example\nx_3d = np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]])\nThe 3D array looks like:\n\\[\nX = \\left[\\begin{array}{c|c}\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7 & 8 & 9 \\\\\n10 & 11 & 12\n\\end{bmatrix}\n\\end{array}\\right]\n\\]\n\nsum along axis 0\nprint(x_3d.sum(axis=0))\nThe result is:\narray([[8, 10, 12], [18, 20, 22]])\nThe result is the sum of two matrices.\n\\[\n\\begin{bmatrix}\n1 & 2 & 3 \\\\\n4 & 5 & 6\n\\end{bmatrix}\n+\n\\begin{bmatrix}\n7 & 8 & 9 \\\\\n10 & 11 & 12\n\\end{bmatrix}\n=\n\\begin{bmatrix}\n8 & 10 & 12 \\\\\n18 & 20 & 22\n\\end{bmatrix}\n\\]\nWhen axis(dim) is 0, given each element in this dimension is the matrix, so the sum is the sum of two matrices.\n\n\nsum along axis 1\nprint(x_3d.sum(axis=1))\nThe result is:\n\nWhen axis(dim) is 1, given each element in this dimension is the rows of the matrix, so the sum is the sum of all the rows in each matrix.\n\\[\n[\\begin{array}{c|c}\n\\begin{bmatrix}\n1 & 2 & 3\n\\end{bmatrix} +\n\\begin{bmatrix}\n4 & 5 & 6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7 & 8 & 9\n\\end{bmatrix} +\n\\begin{bmatrix}\n10 & 11 & 12\n\\end{bmatrix}\n\\end{array}]\n\\]\nso the result is:\narray([[5,7,9], [17, 19, 21]])\n\n\nsum along axis 2\nWhen axis(dim) is 2, given each element in this dimension is the elements of the matrix, so the sum is the sum of the elements.\n\\[\n\\begin{array}{c|c}\n\\begin{bmatrix}\n1+2+3,4+5+6\n\\end{bmatrix} &\n\\begin{bmatrix}\n7+8+9,10+11+12\n\\end{bmatrix}\n\\end{array}\n\\]\nso the result is:\narray([[6, 15], [24, 33]])\nAso, when axis(dim) is -1, it means the operation is performed along the last dimension. So for 2d array, axis -1 is the same as axis 1."
+  },
+  {
+    "objectID": "ML/axis.html#rules",
+    "href": "ML/axis.html#rules",
+    "title": "Understanding Axis(dim) Operations Smartly",
+    "section": "Rules",
+    "text": "Rules\n\nwhen operate on axis(dim) N, it means the operation is performed along the elements of dimension [0…N].\nfor 2d array, axis 0 is the sum of vectors, because each element of the array is a vector, computer sees m vectors at once for a (m,n) shape array.\nfor 3d array, axis 0 is the sum of matrices, because each element of the array is a matrix. Computer sees m matrices at once for a (m,n,p) shape array.\nfor 2d array, axis 1 is the sum of elements in each vector and merge back to (m,1) shape array. Computer sees 1 vector with n elements at once for m times.\nfor 3d array, axis 1 is the sum of all vectors in each matrix and merge back to (m,1,p) shape array. Computer sees n vectors at once for m times.\nfor 3d array, axis 2 is the sum of each vector in each matrix and merge back to (m,n,1) shape array. Computer sees p vectors for m*n times."
+  },
+  {
+    "objectID": "ML/kmeans.html",
+    "href": "ML/kmeans.html",
+    "title": "K-means Clustering",
     "section": "",
-    "text": "K-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
+    "text": "Setup points and K\nwe will implement a KNN algorithm to cluster the points\n\n\nX=[[1,1],[2,2.1],[3,2.5],[6,7],[7,7.1],[9,7.5]]\nk=2\n\nmax_iter=3\n\n\n# Visualize the data\n\n\nimport matplotlib.pyplot as plt\n\nplt.scatter([x[0] for x in X],[x[1] for x in X])\nplt.show()\n\n\n\n\n\n\n\n\n\n# Pure python implementation of K-means clustering\ndef knn_iter(X,centroids):\n    # set up new clusters\n    new_clusters=[[] for _ in range(len(centroids))]\n    # k=len(centroids)\n    # assign each point to the nearest centroid\n    for x in X:\n        k,distance=0,(x[0]-centroids[0][0])**2+(x[1]-centroids[0][1])**2\n        for i,c in enumerate(centroids[1:],1):\n            if (x[0]-c[0])**2+(x[1]-c[1])**2&lt;distance:\n                k=i\n                distance=(x[0]-c[0])**2+(x[1]-c[1])**2\n        new_clusters[k].append(x)\n    \n    # calculate new centroids\n    new_centroids=[[\n        sum([x[0] for x in cluster])/len(cluster),\n        sum([x[1] for x in cluster])/len(cluster)\n    ] if cluster else centroids[i] for i,cluster in enumerate(new_clusters)]\n    return new_centroids\n\n\n\n\n\n\n\n\ndef iter_and_draw(X,k,max_iter):\n    centroids=X[:k]  # Randomly select 2 centroids\n    fig, axes = plt.subplots(max_iter//3+(1 if max_iter%3!=0 else 0),\n        3, figsize=(15, 10))\n    axes=axes.flatten()\n    for i in range(max_iter):\n        \n        # Plot points and centroids\n\n\n        # Assign each point to nearest centroid and plot with corresponding color\n        colors = ['blue', 'green', 'purple', 'orange', 'brown', 'pink', 'gray', 'olive', 'cyan']\n        for j, x in enumerate(X):\n            # Find nearest centroid\n            min_dist = float('inf')\n            nearest_centroid = 0\n            for k, c in enumerate(centroids):\n                dist = (x[0]-c[0])**2 + (x[1]-c[1])**2\n                if dist &lt; min_dist:\n                    min_dist = dist\n                    nearest_centroid = k\n            # Plot point with color corresponding to its cluster\n            axes[i].scatter(x[0], x[1], c=colors[nearest_centroid % len(colors)], label=f'Cluster {nearest_centroid+1}' if j==0 else \"\")\n        axes[i].scatter([c[0] for c in centroids], [c[1] for c in centroids], c='red', marker='*', s=200, label='Centroids')\n        axes[i].set_title(f'Iteration {i}')\n        centroids = knn_iter(X, centroids)\n\n    plt.tight_layout()\n    plt.show()\n\niter_and_draw(X,k,max_iter)\n# print(centroids)\n\n\n\n\n\n\n\n\n\n# A 3 clusters example\n\nimport numpy as np\n\nX1=np.random.rand(20,2)+5 # Some points in the upper right corner\nX2=np.random.rand(20,2)+3 # Some points in the middle\nX3=np.random.rand(20,2) # Some points in the lower left corner\n\niter_and_draw(np.concatenate((X1,X2,X3)),3,5)\n\n\n\n\n\n\n\n\n\n\nA question?\n\nWhat to do if one cluster has no assigned points during iteration?\n\n\n\nFormula Derivation\nThe goal is to minimize the loss of inertia which is sum of the points to cluster centroids.\n\\[\nLoss= \\sum_{i=1}^n \\sum_{x \\in C_i} ||x-\\mu_i||^2\n\\]\nTo iter \\(\\mu\\) for each cluster, let us find the derivative of the following function. \\[\nf(\\mu)=\\sum_{i=1}^n ||x_i-\\mu||^2 =\n\\sum_{i=1}^n {x_i}^2+\\mu^2-2x_i\\mu\n\\]\nGiven a \\(\\nabla \\mu\\), \\[\nf(\\mu + \\nabla \\mu)=\\sum_{i=1}^n ||x_i+\\nabla \\mu -\\mu||^2 =\n\\sum_{i=1}^n  {x_i}^2+\\mu^2+{\\nabla \\mu}^2-2{x_i \\mu}-2{\\mu \\nabla \\mu}+2{x_i \\nabla \\mu}\n\\]\n\\[\nf(\\mu + \\nabla \\mu)-f(\\mu)=\n\\sum_{i=1}^n {\\nabla \\mu}^2-2{\\mu \\nabla \\mu}+2{x_i \\nabla \\mu}\n\\]\n\\[\n\\frac {f(\\mu + \\nabla \\mu)-f(\\mu)}{\\nabla \\mu}=\\sum_{i=1}^n {\\nabla \\mu} -2 \\mu +2{x_i} = 2\\sum_{i=1}^n x_i - 2n\\mu\n\\]\nNow we can see if \\(n\\mu = \\sum_{i=1}^n x_i\\), then the derivative is 0, this is why in each iteration, we need to set the center of the cluster as centroid."
   }
 ]
