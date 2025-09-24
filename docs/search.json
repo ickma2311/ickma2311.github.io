@@ -25,7 +25,7 @@
     "href": "index.html",
     "title": "ickma.dev",
     "section": "",
-    "text": "Hi, I’m Chao Ma, also known as ickma. This is my technical blog where I share insights and tutorials on:\n\nAlgorithms & Data Structures\nReinforcement Learning\nDeep Learning & Neural Networks\nMathematics & Theory\nSoftware Development & more\n\n\n\n\n\nDive into machine learning algorithms, implementations, and theoretical foundations.\n\n\n\nExplore my comprehensive collection of algorithm tutorials and problem-solving guides."
+    "text": "My learning notes and thoughts on math and machine learning.\nCurrently reading the Deep Learning book.\n\n\n\n\nHow ReLU solves problems that linear models cannot handle.\n\n\n\n\n\n\n\nK-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
   },
   {
     "objectID": "index.html#featured-content",
@@ -390,5 +390,26 @@
     "title": "Solving XOR with ReLU Networks",
     "section": "ReLU Transformation Summary",
     "text": "ReLU Transformation Summary\nThe four-step walkthrough above shows how each XOR input moves through the hidden layer. The table below collects the key numbers for quick reference.\n\n\n\n\n\n\n\n\n\n\nInput \\((x_1,x_2)\\)\nXOR label\nLinear transform \\((z_1, z_2)\\)\nAfter ReLU \\((h_1, h_2)\\)\nFinal prediction\n\n\n\n\n(0, 0)\n0\n(0, 0)\n(0, 0)\n0\n\n\n(0, 1)\n1\n(-1, 1)\n(0, 1)\n1\n\n\n(1, 0)\n1\n(1, -1)\n(1, 0)\n1\n\n\n(1, 1)\n0\n(0, 0)\n(0, 0)\n0\n\n\n\nThe constructive proof and empirical training sections that follow use the same weights, so all downstream outputs stay consistent with this summary.\n\n\nShow code\n# Train MLP with different architectures and pick the best run for each size\narchitectures = [\n    (2, 'Single hidden layer (2 neurons)'),\n    (4, 'Single hidden layer (4 neurons)'),\n    (8, 'Single hidden layer (8 neurons)')\n]\nseeds = range(10)  # Multiple restarts to avoid unlucky dead-ReLU initialisations\n\nfig, axes = plt.subplots(1, len(architectures), figsize=(18, 5))\n\nfor idx, (hidden_size, title) in enumerate(architectures):\n    best_model = None\n    best_score = -1\n    for seed in seeds:\n        mlp = MLPClassifier(hidden_layer_sizes=(hidden_size,), \n                           activation='relu', \n                           solver='lbfgs', \n                           max_iter=5000,\n                           alpha=0.0,\n                           random_state=seed)\n        mlp.fit(X, y)\n        score = mlp.score(X, y)\n        if score &gt; best_score:\n            best_model = mlp\n            best_score = score\n        # Early exit once we achieve perfect accuracy\n        if best_score == 1.0:\n            break\n\n    # Use the best-performing model for visualisation\n    xx, yy = np.meshgrid(np.linspace(-0.5, 1.5, 100), np.linspace(-0.5, 1.5, 100))\n    grid_points = np.c_[xx.ravel(), yy.ravel()]\n    Z = best_model.predict_proba(grid_points)[:, 1].reshape(xx.shape)\n\n    axes[idx].contourf(xx, yy, Z, levels=50, alpha=0.6, cmap='RdYlBu')\n    axes[idx].contour(xx, yy, Z, levels=[0.5], colors='black', linewidths=2, linestyles='--')\n\n    for i in range(2):\n        mask = y == i\n        axes[idx].scatter(X[mask, 0], X[mask, 1], c=colors[i], s=200, \n                         label=f'Class {i}', edgecolors='black', linewidth=2)\n\n    axes[idx].set_xlim(-0.5, 1.5)\n    axes[idx].set_ylim(-0.5, 1.5)\n    axes[idx].set_xlabel('x₁', fontsize=12)\n    axes[idx].set_ylabel('x₂', fontsize=12)\n    axes[idx].set_title(f'{title}\\n(Best accuracy: {best_score:.1%})', fontsize=12, fontweight='bold')\n    axes[idx].legend()\n    axes[idx].grid(True, alpha=0.3)\n\nplt.tight_layout()\nplt.show()"
+  },
+  {
+    "objectID": "index.html#deep-learning-book",
+    "href": "index.html#deep-learning-book",
+    "title": "ickma.dev",
+    "section": "",
+    "text": "How ReLU solves problems that linear models cannot handle."
+  },
+  {
+    "objectID": "index.html#other-notebooks",
+    "href": "index.html#other-notebooks",
+    "title": "ickma.dev",
+    "section": "",
+    "text": "K-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
+  },
+  {
+    "objectID": "index.html#more",
+    "href": "index.html#more",
+    "title": "ickma.dev",
+    "section": "",
+    "text": "K-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
   }
 ]
