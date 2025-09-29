@@ -40,5 +40,61 @@
     "title": "Deep Learning Book 6.1: XOR Problem & ReLU Networks",
     "section": "Conclusion",
     "text": "Conclusion\nThe XOR problem demonstrates several fundamental principles in deep learning:\n\nNecessity of Nonlinearity: Linear models cannot solve XOR, establishing the critical role of nonlinear activation functions.\nUniversal Approximation: Even simple architectures with sufficient nonlinearity can solve complex classification problems."
+  },
+  {
+    "objectID": "ML/likelihood-loss-functions.html",
+    "href": "ML/likelihood-loss-functions.html",
+    "title": "Deep Learning Book 6.2: Likelihood-Based Loss Functions",
+    "section": "",
+    "text": "This recap of Deep Learning Chapter 6.2 reveals the fundamental connection between probabilistic assumptions and the loss functions we use to train neural networks.\n📓 For a deeper dive with additional exercises and analysis, see the complete notebook on GitHub."
+  },
+  {
+    "objectID": "ML/likelihood-loss-functions.html#the-hidden-connection-why-these-loss-functions",
+    "href": "ML/likelihood-loss-functions.html#the-hidden-connection-why-these-loss-functions",
+    "title": "Deep Learning Book 6.2: Likelihood-Based Loss Functions",
+    "section": "The Hidden Connection: Why These Loss Functions?",
+    "text": "The Hidden Connection: Why These Loss Functions?\nEver wondered why we use mean squared error for regression, cross-entropy for classification, and other specific loss functions? The answer lies in maximum likelihood estimation - each common loss function corresponds to the negative log-likelihood of a specific probabilistic model.\n\n\n\n\n\n\n\n\nProbabilistic Model\nLoss Function\nUse Case\n\n\n\n\nGaussian likelihood\nMean Squared Error\nRegression\n\n\nBernoulli likelihood\nBinary Cross-Entropy\nBinary Classification\n\n\nCategorical likelihood\nSoftmax Cross-Entropy\nMulticlass Classification"
+  },
+  {
+    "objectID": "ML/likelihood-loss-functions.html#exploring-the-connection-probabilistic-models-loss-functions",
+    "href": "ML/likelihood-loss-functions.html#exploring-the-connection-probabilistic-models-loss-functions",
+    "title": "Deep Learning Book 6.2: Likelihood-Based Loss Functions",
+    "section": "🎯 Exploring the Connection: Probabilistic Models → Loss Functions",
+    "text": "🎯 Exploring the Connection: Probabilistic Models → Loss Functions\n\n\nShow code\nimport numpy as np\nimport torch\nimport torch.nn.functional as F\nimport matplotlib.pyplot as plt\nimport warnings\nwarnings.filterwarnings('ignore')"
+  },
+  {
+    "objectID": "ML/likelihood-loss-functions.html#connection-1-gaussian-likelihood-mean-squared-error",
+    "href": "ML/likelihood-loss-functions.html#connection-1-gaussian-likelihood-mean-squared-error",
+    "title": "Deep Learning Book 6.2: Likelihood-Based Loss Functions",
+    "section": "Connection 1: Gaussian Likelihood → Mean Squared Error",
+    "text": "Connection 1: Gaussian Likelihood → Mean Squared Error\nThe Setup: When we assume our targets have Gaussian noise around our predictions:\n\\[p(y|x) = \\mathcal{N}(y; \\hat{y}, \\sigma^2) = \\frac{1}{\\sqrt{2\\pi\\sigma^2}} \\exp\\left(-\\frac{(y-\\hat{y})^2}{2\\sigma^2}\\right)\\]\nThe Derivation: Taking negative log-likelihood:\n\\[-\\log p(y|x) = \\frac{(y-\\hat{y})^2}{2\\sigma^2} + \\frac{1}{2}\\log(2\\pi\\sigma^2)\\]\nThe Result: Minimizing this is equivalent to minimizing MSE (the constant term doesn’t affect optimization)!\n\n\nShow code\n# Demonstrate Gaussian likelihood = MSE connection\nnp.random.seed(0)\nx = np.linspace(-1, 1, 20)\ny_true = 2 * x + 1\ny = y_true + np.random.normal(0, 0.1, size=x.shape)  # Gaussian noise\n\n# Simple linear model predictions\nw, b = 1.0, 0.0\ny_pred = w * x + b\n\n# Compute MSE\nmse = np.mean((y - y_pred)**2)\n\n# Compute Gaussian negative log-likelihood\nsigma_squared = 0.1**2\nquadratic_term = 0.5 * np.mean((y - y_pred)**2) / sigma_squared\nconst_term = 0.5 * np.log(2 * np.pi * sigma_squared)\nnll_gaussian = quadratic_term + const_term\n\nprint(\"📊 Gaussian Likelihood ↔ MSE Connection\")\nprint(\"=\" * 45)\nprint(f\"📈 Mean Squared Error:     {mse:.6f}\")\nprint(f\"📊 Gaussian NLL:           {nll_gaussian:.6f}\")\nprint(f\"   ├─ Quadratic term:      {quadratic_term:.6f}\")\nprint(f\"   └─ Constant term:       {const_term:.6f}\")\n\nscaling_factor = 1 / (2 * sigma_squared)\nprint(f\"\\n🔗 Mathematical Connection:\")\nprint(f\"   Quadratic term = {scaling_factor:.1f} × MSE\")\nprint(f\"   {quadratic_term:.6f} = {scaling_factor:.1f} × {mse:.6f}\")\nprint(f\"\\n✅ Minimizing MSE ≡ Maximizing Gaussian likelihood\")\n\n\n📊 Gaussian Likelihood ↔ MSE Connection\n=============================================\n📈 Mean Squared Error:     1.450860\n📊 Gaussian NLL:           71.159339\n   ├─ Quadratic term:      72.542985\n   └─ Constant term:       -1.383647\n\n🔗 Mathematical Connection:\n   Quadratic term = 50.0 × MSE\n   72.542985 = 50.0 × 1.450860\n\n✅ Minimizing MSE ≡ Maximizing Gaussian likelihood"
+  },
+  {
+    "objectID": "ML/likelihood-loss-functions.html#connection-2-bernoulli-likelihood-binary-cross-entropy",
+    "href": "ML/likelihood-loss-functions.html#connection-2-bernoulli-likelihood-binary-cross-entropy",
+    "title": "Deep Learning Book 6.2: Likelihood-Based Loss Functions",
+    "section": "Connection 2: Bernoulli Likelihood → Binary Cross-Entropy",
+    "text": "Connection 2: Bernoulli Likelihood → Binary Cross-Entropy\nThe Setup: For binary classification, we assume Bernoulli-distributed targets:\n\\[p(y|x) = \\sigma(z)^y (1-\\sigma(z))^{1-y}\\]\nwhere \\(\\sigma(z) = \\frac{1}{1+e^{-z}}\\) is the sigmoid function.\nThe Derivation: Taking negative log-likelihood:\n\\[-\\log p(y|x) = -y\\log\\sigma(z) - (1-y)\\log(1-\\sigma(z))\\]\nThe Result: This is exactly binary cross-entropy loss!\n\n\nShow code\n# Demonstrate Bernoulli likelihood = Binary cross-entropy connection\nz = torch.tensor([-0.5, -0.8, 0.0, 0.8, 0.5])  # Model logits\ny = torch.tensor([0.0, 0.0, 1.0, 1.0, 1.0])     # Binary labels\np = torch.sigmoid(z)  # Convert to probabilities\n\nprint(\"🎲 Bernoulli Likelihood ↔ Binary Cross-Entropy\")\nprint(\"=\" * 50)\nprint(\"Input Data:\")\nprint(f\"   Logits:        {z.numpy()}\")\nprint(f\"   Labels:        {y.numpy()}\")\nprint(f\"   Probabilities: {p.numpy()}\")\n\n# Manual Bernoulli NLL computation\nbernoulli_nll = torch.mean(-(y * torch.log(p) + (1 - y) * torch.log(1 - p)))\n\n# PyTorch binary cross-entropy\nbce_loss = F.binary_cross_entropy(p, y)\n\nprint(f\"\\n📊 Loss Function Comparison:\")\nprint(f\"   Manual Bernoulli NLL:  {bernoulli_nll:.6f}\")\nprint(f\"   PyTorch BCE Loss:      {bce_loss:.6f}\")\n\n# Verify they're identical\ndifference = torch.abs(bernoulli_nll - bce_loss)\nprint(f\"\\n🔗 Verification:\")\nprint(f\"   Absolute difference:   {difference:.10f}\")\nprint(f\"\\n✅ Binary cross-entropy IS Bernoulli negative log-likelihood!\")\n\n\n🎲 Bernoulli Likelihood ↔ Binary Cross-Entropy\n==================================================\nInput Data:\n   Logits:        [-0.5 -0.8  0.   0.8  0.5]\n   Labels:        [0. 0. 1. 1. 1.]\n   Probabilities: [0.37754068 0.3100255  0.5        0.6899745  0.62245935]\n\n📊 Loss Function Comparison:\n   Manual Bernoulli NLL:  0.476700\n   PyTorch BCE Loss:      0.476700\n\n🔗 Verification:\n   Absolute difference:   0.0000000000\n\n✅ Binary cross-entropy IS Bernoulli negative log-likelihood!"
+  },
+  {
+    "objectID": "ML/likelihood-loss-functions.html#connection-3-categorical-likelihood-softmax-cross-entropy",
+    "href": "ML/likelihood-loss-functions.html#connection-3-categorical-likelihood-softmax-cross-entropy",
+    "title": "Deep Learning Book 6.2: Likelihood-Based Loss Functions",
+    "section": "Connection 3: Categorical Likelihood → Softmax Cross-Entropy",
+    "text": "Connection 3: Categorical Likelihood → Softmax Cross-Entropy\nThe Setup: For multiclass classification, we use the categorical distribution:\n\\[p(y=i|x) = \\frac{e^{z_i}}{\\sum_j e^{z_j}} = \\text{softmax}(z)_i\\]\nThe Derivation: Taking negative log-likelihood:\n\\[-\\log p(y|x) = -\\log \\frac{e^{z_y}}{\\sum_j e^{z_j}} = -z_y + \\log\\sum_j e^{z_j}\\]\nThe Result: This is exactly softmax cross-entropy loss!\n\n\nShow code\n# Demonstrate Categorical likelihood = Softmax cross-entropy connection\nz = torch.tensor([[0.1, 0.2, 0.7],    # Sample 1: class 2 highest\n                  [0.1, 0.7, 0.2],    # Sample 2: class 1 highest  \n                  [0.7, 0.1, 0.2]])   # Sample 3: class 0 highest\n\ny = torch.tensor([2, 1, 0])           # True class indices\n\nprint(\"🎯 Categorical Likelihood ↔ Softmax Cross-Entropy\")\nprint(\"=\" * 55)\nprint(\"Input Data:\")\nprint(f\"   Logits shape:    {z.shape}\")\nprint(f\"   True classes:    {y.numpy()}\")\n\n# Convert to probabilities\nsoftmax_probs = F.softmax(z, dim=1)\nprint(f\"\\nSoftmax Probabilities:\")\nfor i, (logit_row, prob_row, true_class) in enumerate(zip(z, softmax_probs, y)):\n    print(f\"   Sample {i+1}: {prob_row.numpy()} → Class {true_class}\")\n\n# Manual categorical NLL (using log-softmax for numerical stability)\nlog_softmax = F.log_softmax(z, dim=1)\ncategorical_nll = -torch.mean(log_softmax[range(len(y)), y])\n\n# PyTorch cross-entropy\nce_loss = F.cross_entropy(z, y)\n\nprint(f\"\\n📊 Loss Function Comparison:\")\nprint(f\"   Manual Categorical NLL: {categorical_nll:.6f}\")\nprint(f\"   PyTorch Cross-Entropy:  {ce_loss:.6f}\")\n\n# Verify they're identical\ndifference = torch.abs(categorical_nll - ce_loss)\nprint(f\"\\n🔗 Verification:\")\nprint(f\"   Absolute difference:    {difference:.10f}\")\nprint(f\"\\n✅ Cross-entropy IS categorical negative log-likelihood!\")\n\n\n🎯 Categorical Likelihood ↔ Softmax Cross-Entropy\n=======================================================\nInput Data:\n   Logits shape:    torch.Size([3, 3])\n   True classes:    [2 1 0]\n\nSoftmax Probabilities:\n   Sample 1: [0.25462854 0.28140804 0.46396342] → Class 2\n   Sample 2: [0.25462854 0.46396342 0.28140804] → Class 1\n   Sample 3: [0.46396342 0.25462854 0.28140804] → Class 0\n\n📊 Loss Function Comparison:\n   Manual Categorical NLL: 0.767950\n   PyTorch Cross-Entropy:  0.767950\n\n🔗 Verification:\n   Absolute difference:    0.0000000000\n\n✅ Cross-entropy IS categorical negative log-likelihood!"
+  },
+  {
+    "objectID": "ML/likelihood-loss-functions.html#why-this-matters-bce-vs-mse-for-classification",
+    "href": "ML/likelihood-loss-functions.html#why-this-matters-bce-vs-mse-for-classification",
+    "title": "Deep Learning Book 6.2: Likelihood-Based Loss Functions",
+    "section": "Why This Matters: BCE vs MSE for Classification",
+    "text": "Why This Matters: BCE vs MSE for Classification\nUnderstanding the probabilistic foundation explains why binary cross-entropy works better than MSE for classification, even though both can theoretically solve binary problems.\nKey Differences: - BCE gradient: \\(\\sigma(z) - y\\) (simple, well-behaved) - MSE gradient: \\(2(\\sigma(z) - y) \\times \\sigma(z) \\times (1 - \\sigma(z))\\) (can vanish!)\nLet’s see this in practice:"
+  },
+  {
+    "objectID": "ML/likelihood-loss-functions.html#key-takeaways",
+    "href": "ML/likelihood-loss-functions.html#key-takeaways",
+    "title": "Deep Learning Book 6.2: Likelihood-Based Loss Functions",
+    "section": "Key Takeaways",
+    "text": "Key Takeaways\nUnderstanding the probabilistic foundation of loss functions reveals:\n\nMSE = Gaussian NLL: Mean squared error emerges from assuming Gaussian noise\nBCE = Bernoulli NLL: Binary cross-entropy is exactly Bernoulli negative log-likelihood\n\nCross-entropy = Categorical NLL: Softmax cross-entropy corresponds to categorical distributions\nBetter gradients: Probabilistically-motivated loss functions provide better optimization dynamics\n\nThis connection between probability theory and optimization is fundamental to understanding why certain loss functions work well for specific tasks.\n\nThis mathematical foundation helps explain not just which loss function to use, but why it works so effectively for the given problem type."
   }
 ]
