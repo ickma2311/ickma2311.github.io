@@ -147,74 +147,81 @@
     "text": "Conclusion\nThe XOR problem demonstrates several fundamental principles in deep learning:\n\nNecessity of Nonlinearity: Linear models cannot solve XOR, establishing the critical role of nonlinear activation functions.\nUniversal Approximation: Even simple architectures with sufficient nonlinearity can solve complex classification problems."
   },
   {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "About",
+    "objectID": "ML/architecture-design.html",
+    "href": "ML/architecture-design.html",
+    "title": "Deep Learning Book 6.4: Architecture Design - Depth vs Width",
     "section": "",
-    "text": "Hi, I’m Chao Ma (aka ickma), a passionate developer and researcher focused on machine learning, algorithms, and problem-solving.\n\n\nI enjoy exploring the intersection of mathematics and computer science, with a particular interest in:\n\n🤖 Machine Learning & AI - From fundamental concepts to practical implementations\n🧮 Algorithms & Data Structures - Solving complex problems efficiently\n\n📊 Data Science - Extracting insights from data using Python and NumPy\n💻 Software Development - Building robust, scalable solutions\n\n\n\n\nThis site serves as my digital notebook where I share:\n\nAlgorithm explanations with visual examples and code implementations\nProblem-solving approaches for coding challenges and mathematical concepts\nTechnical insights from my learning journey\n\nI believe in learning by doing and explaining concepts clearly with code examples, visualizations, and mathematical foundations.\n\n\n\nMy content covers:\n\nAlgorithms - Dynamic programming, optimization, data structures, and algorithmic problem solving\nMathematics - Linear algebra, calculus, statistics, and mathematical foundations for CS\nReinforcement Learning & Deep Learning - Neural networks, policy optimization, and AI agents\nParallel Computation - Distributed systems, GPU computing, and performance optimization\n\n\n\n\nI’m always excited to discuss technology, collaborate on projects, or help fellow learners!\n\n📧 Email: ickma2311@gmail.com\n💻 GitHub: @ickma2311\n🐦 Twitter: @ickma2311\n\nFeel free to reach out if you have questions about any of my posts, want to collaborate, or just want to chat about machine learning and algorithms!\n\nThis blog is built with Quarto and hosted on GitHub Pages. All code examples are available in my repositories."
+    "text": "This recap of Deep Learning Chapter 6.4 explores how network architecture—depth versus width—fundamentally shapes what neural networks can learn and how efficiently they learn it.\n📓 For a deeper dive with additional exercises and analysis, see the complete notebook on GitHub."
   },
   {
-    "objectID": "about.html#what-i-do",
-    "href": "about.html#what-i-do",
-    "title": "About",
+    "objectID": "ML/architecture-design.html#the-architecture-question-deep-or-wide",
+    "href": "ML/architecture-design.html#the-architecture-question-deep-or-wide",
+    "title": "Deep Learning Book 6.4: Architecture Design - Depth vs Width",
+    "section": "The Architecture Question: Deep or Wide?",
+    "text": "The Architecture Question: Deep or Wide?\nWhen designing a neural network, one of the most fundamental decisions is choosing between depth (many layers) and width (many units per layer). Should you build a shallow network with many units, or a deep network with fewer units per layer?\nThe answer reveals something profound about how neural networks represent functions: deep networks can achieve exponentially greater expressiveness than shallow networks with the same number of parameters. This isn’t just theoretical—it has practical implications for model efficiency and performance.\n\nQuick Reference: Understanding Depth vs Width\nFor context on the fundamental concepts of network architecture, see the Architecture Design summary.\nKey insight: A deep ReLU network with \\(n\\) units per layer and depth \\(L\\) can create \\(\\mathcal{O}(n^L)\\) distinct linear regions in the input space. A shallow network would need exponentially many units (\\(\\mathcal{O}(n^L)\\) units in a single layer) to achieve the same expressiveness.\n\n\n\n\n\n\n\n\n\nArchitecture\nCharacteristic\nAdvantage\nChallenge\n\n\n\n\nDeep (many layers)\nHierarchical feature reuse\nExponential expressiveness with fewer parameters\nHarder to optimize (vanishing/exploding gradients)\n\n\nWide (many units per layer)\nIncreased capacity per layer\nEasier optimization\nParameter inefficient; requires exponentially more units"
+  },
+  {
+    "objectID": "ML/architecture-design.html#experiment-shallow-vs-deep-network-comparison",
+    "href": "ML/architecture-design.html#experiment-shallow-vs-deep-network-comparison",
+    "title": "Deep Learning Book 6.4: Architecture Design - Depth vs Width",
+    "section": "🔬 Experiment: Shallow vs Deep Network Comparison",
+    "text": "🔬 Experiment: Shallow vs Deep Network Comparison\nLet’s explore whether depth provides an advantage in practice by comparing two networks: - Shallow Network: 1 hidden layer with 128 units - Deep Network: 3 hidden layers (16 → 8 → output)\nBoth networks are trained on the same regression task: \\(y = \\sin^2(x) + x^3\\)\n\n\nShow code\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport torch\nimport torch.nn as nn\n\n# Set random seed for reproducibility\nnp.random.seed(42)\ntorch.manual_seed(42)\n\n# Configure plotting\nplt.rcParams['figure.facecolor'] = 'white'\nplt.rcParams['axes.facecolor'] = 'white'\nplt.rcParams['axes.grid'] = True\nplt.rcParams['grid.alpha'] = 0.3\n\nprint(\"✓ Setup complete\")\n\n\n✓ Setup complete\n\n\n\nStep 1: Generate Training and Test Data\n\n\nShow code\n# Training data\nx_train = np.random.rand(200, 1)\ny_train = np.square(np.sin(x_train)) + np.power(x_train, 3)\n\n# Test data\nx_test = np.random.rand(100, 1)\ny_test = np.square(np.sin(x_test)) + np.power(x_test, 3)\n\n# Convert to PyTorch tensors\nx_train_tensor = torch.FloatTensor(x_train)\ny_train_tensor = torch.FloatTensor(y_train)\nx_test_tensor = torch.FloatTensor(x_test)\ny_test_tensor = torch.FloatTensor(y_test)\n\nprint(f\"Training samples: {len(x_train)}\")\nprint(f\"Test samples: {len(x_test)}\")\nprint(f\"Input range: [{x_train.min():.2f}, {x_train.max():.2f}]\")\nprint(f\"Target range: [{y_train.min():.2f}, {y_train.max():.2f}]\")\n\n\nTraining samples: 200\nTest samples: 100\nInput range: [0.01, 0.99]\nTarget range: [0.00, 1.66]\n\n\n\n\nStep 2: Define Model Architectures\n\n\nShow code\n# Shallow model: 1 hidden layer with 128 units\nshallow_model = nn.Sequential(\n    nn.Linear(1, 128),\n    nn.ReLU(),\n    nn.Linear(128, 1)\n)\n\n# Deep model: 3 hidden layers (16 → 8 → output)\ndeep_model = nn.Sequential(\n    nn.Linear(1, 16),\n    nn.ReLU(),\n    nn.Linear(16, 8),\n    nn.ReLU(),\n    nn.Linear(8, 1)\n)\n\nprint(\"✓ Models created\")\nprint(f\"\\nShallow model architecture:\")\nprint(shallow_model)\nprint(f\"\\nDeep model architecture:\")\nprint(deep_model)\n\n\n✓ Models created\n\nShallow model architecture:\nSequential(\n  (0): Linear(in_features=1, out_features=128, bias=True)\n  (1): ReLU()\n  (2): Linear(in_features=128, out_features=1, bias=True)\n)\n\nDeep model architecture:\nSequential(\n  (0): Linear(in_features=1, out_features=16, bias=True)\n  (1): ReLU()\n  (2): Linear(in_features=16, out_features=8, bias=True)\n  (3): ReLU()\n  (4): Linear(in_features=8, out_features=1, bias=True)\n)\n\n\n\n\nStep 3: Count Parameters\nHow many trainable parameters does each architecture use?\n\n\nShow code\ndef count_parameters(model):\n    \"\"\"Count total trainable parameters in a model\"\"\"\n    return sum(p.numel() for p in model.parameters() if p.requires_grad)\n\nshallow_params = count_parameters(shallow_model)\ndeep_params = count_parameters(deep_model)\n\nprint(\"Parameter Counts:\")\nprint(\"-\" * 50)\nprint(f\"Shallow model (1 layer × 128 units): {shallow_params:,} parameters\")\nprint(f\"Deep model (3 layers):                {deep_params:,} parameters\")\nprint(\"-\" * 50)\nprint(f\"Ratio (shallow/deep): {shallow_params/deep_params:.2f}x\")\n\n# Visualize parameter counts\nfig, ax = plt.subplots(figsize=(8, 5))\nmodels = ['Shallow\\n(1×128)', 'Deep\\n(3 layers)']\nparams = [shallow_params, deep_params]\ncolors = ['#ff7f0e', '#1f77b4']\n\nbars = ax.bar(models, params, color=colors, alpha=0.7, edgecolor='black')\nax.set_ylabel('Number of Parameters', fontsize=12)\nax.set_title('Model Parameter Comparison', fontsize=14, fontweight='bold')\nax.grid(axis='y', alpha=0.3)\n\n# Add value labels on bars\nfor bar, param in zip(bars, params):\n    height = bar.get_height()\n    ax.text(bar.get_x() + bar.get_width()/2., height,\n            f'{param:,}',\n            ha='center', va='bottom', fontsize=11, fontweight='bold')\n\nplt.tight_layout()\nplt.show()\n\n\nParameter Counts:\n--------------------------------------------------\nShallow model (1 layer × 128 units): 385 parameters\nDeep model (3 layers):                177 parameters\n--------------------------------------------------\nRatio (shallow/deep): 2.18x\n\n\n\n\n\n\n\n\n\n\n\nStep 4: Train Both Models\n\n\nShow code\n# Training configuration\nn_epochs = 500\nlearning_rate = 0.01\nloss_fn = nn.MSELoss()\n\n# Track training history\nhistory = {\n    'Shallow': {'train_loss': [], 'test_loss': []},\n    'Deep': {'train_loss': [], 'test_loss': []}\n}\n\nmodels = {\n    'Shallow': shallow_model,\n    'Deep': deep_model\n}\n\n# Train each model\nfor name, model in models.items():\n    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)\n\n    for epoch in range(n_epochs):\n        # Training\n        model.train()\n        y_pred = model(x_train_tensor)\n        loss = loss_fn(y_pred, y_train_tensor)\n\n        optimizer.zero_grad()\n        loss.backward()\n        optimizer.step()\n\n        history[name]['train_loss'].append(loss.item())\n\n        # Evaluation on test set\n        model.eval()\n        with torch.no_grad():\n            y_test_pred = model(x_test_tensor)\n            test_loss = loss_fn(y_test_pred, y_test_tensor).item()\n            history[name]['test_loss'].append(test_loss)\n\n    print(f\"✓ {name} model trained\")\n\nprint(\"\\n✓ Training complete\")\n\n\n✓ Shallow model trained\n✓ Deep model trained\n\n✓ Training complete\n\n\n\n\nStep 5: Compare Model Performance\n\n\nShow code\nfig, axes = plt.subplots(1, 2, figsize=(14, 5))\ncolors = {'Shallow': '#ff7f0e', 'Deep': '#1f77b4'}\n\n# Plot training loss\nfor name, data in history.items():\n    axes[0].plot(data['train_loss'], label=name, linewidth=2, color=colors[name])\n\naxes[0].set_xlabel('Epoch', fontsize=12)\naxes[0].set_ylabel('Training Loss (MSE)', fontsize=12)\naxes[0].set_title('Training Loss Comparison', fontsize=14, fontweight='bold')\naxes[0].legend(fontsize=11)\naxes[0].grid(True, alpha=0.3)\naxes[0].set_yscale('log')\n\n# Plot test loss\nfor name, data in history.items():\n    axes[1].plot(data['test_loss'], label=name, linewidth=2, color=colors[name])\n\naxes[1].set_xlabel('Epoch', fontsize=12)\naxes[1].set_ylabel('Test Loss (MSE)', fontsize=12)\naxes[1].set_title('Test Loss Comparison', fontsize=14, fontweight='bold')\naxes[1].legend(fontsize=11)\naxes[1].grid(True, alpha=0.3)\naxes[1].set_yscale('log')\n\nplt.tight_layout()\nplt.show()\n\n# Print final metrics\nprint(\"\\nFinal Performance (after {} epochs):\".format(n_epochs))\nprint(\"-\" * 70)\nprint(f\"{'Model':&lt;15} {'Parameters':&lt;15} {'Train Loss':&lt;15} {'Test Loss':&lt;15}\")\nprint(\"-\" * 70)\nfor name in models.keys():\n    params = count_parameters(models[name])\n    train_loss = history[name]['train_loss'][-1]\n    test_loss = history[name]['test_loss'][-1]\n    print(f\"{name:&lt;15} {params:&lt;15,} {train_loss:&lt;15.6f} {test_loss:&lt;15.6f}\")\n\n\n\n\n\n\n\n\n\n\nFinal Performance (after 500 epochs):\n----------------------------------------------------------------------\nModel           Parameters      Train Loss      Test Loss      \n----------------------------------------------------------------------\nShallow         385             0.000017        0.000022       \nDeep            177             0.000012        0.000013       \n\n\n\nThis experiment demonstrates the practical implications of depth versus width in neural network architecture design, showing how deeper networks can achieve competitive performance with fewer parameters."
+  },
+  {
+    "objectID": "Math/index.html",
+    "href": "Math/index.html",
+    "title": "Math",
     "section": "",
-    "text": "I enjoy exploring the intersection of mathematics and computer science, with a particular interest in:\n\n🤖 Machine Learning & AI - From fundamental concepts to practical implementations\n🧮 Algorithms & Data Structures - Solving complex problems efficiently\n\n📊 Data Science - Extracting insights from data using Python and NumPy\n💻 Software Development - Building robust, scalable solutions"
+    "text": "Mathematical foundations and explorations.\n\n\n\nMIT 18.06SC Lecture 1: Geometry of Linear Equations"
   },
   {
-    "objectID": "about.html#about-this-blog",
-    "href": "about.html#about-this-blog",
-    "title": "About",
+    "objectID": "Math/index.html#linear-algebra",
+    "href": "Math/index.html#linear-algebra",
+    "title": "Math",
     "section": "",
-    "text": "This site serves as my digital notebook where I share:\n\nAlgorithm explanations with visual examples and code implementations\nProblem-solving approaches for coding challenges and mathematical concepts\nTechnical insights from my learning journey\n\nI believe in learning by doing and explaining concepts clearly with code examples, visualizations, and mathematical foundations."
+    "text": "MIT 18.06SC Lecture 1: Geometry of Linear Equations"
   },
   {
-    "objectID": "about.html#technical-focus",
-    "href": "about.html#technical-focus",
-    "title": "About",
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "ickma.dev",
     "section": "",
-    "text": "My content covers:\n\nAlgorithms - Dynamic programming, optimization, data structures, and algorithmic problem solving\nMathematics - Linear algebra, calculus, statistics, and mathematical foundations for CS\nReinforcement Learning & Deep Learning - Neural networks, policy optimization, and AI agents\nParallel Computation - Distributed systems, GPU computing, and performance optimization"
+    "text": "My learning notes and thoughts on math and machine learning.\nCurrently reading the Deep Learning book.\n\n\n\n\nHow ReLU solves problems that linear models cannot handle.\n\n\n\nThe mathematical connection between probabilistic models and loss functions.\n\n\n\nExploring activation functions and their impact on neural network learning.\n\n\n\nHow depth enables hierarchical feature reuse and exponential expressiveness with fewer parameters.\n\n\n\n\n\n\nTwo powerful perspectives that reveal the hidden beauty of linear systems: row picture vs column picture.\n\n\n\n\n\n\n\nK-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
   },
   {
-    "objectID": "about.html#connect-with-me",
-    "href": "about.html#connect-with-me",
-    "title": "About",
+    "objectID": "index.html#deep-learning-book",
+    "href": "index.html#deep-learning-book",
+    "title": "ickma.dev",
     "section": "",
-    "text": "I’m always excited to discuss technology, collaborate on projects, or help fellow learners!\n\n📧 Email: ickma2311@gmail.com\n💻 GitHub: @ickma2311\n🐦 Twitter: @ickma2311\n\nFeel free to reach out if you have questions about any of my posts, want to collaborate, or just want to chat about machine learning and algorithms!\n\nThis blog is built with Quarto and hosted on GitHub Pages. All code examples are available in my repositories."
+    "text": "How ReLU solves problems that linear models cannot handle.\n\n\n\nThe mathematical connection between probabilistic models and loss functions.\n\n\n\nExploring activation functions and their impact on neural network learning.\n\n\n\nHow depth enables hierarchical feature reuse and exponential expressiveness with fewer parameters."
   },
   {
-    "objectID": "Math/mit1806-lecture1-geometry.html",
-    "href": "Math/mit1806-lecture1-geometry.html",
-    "title": "MIT 18.06SC Lecture 1: The Geometry of Linear Equations",
+    "objectID": "index.html#mathematics",
+    "href": "index.html#mathematics",
+    "title": "ickma.dev",
     "section": "",
-    "text": "This is for MIT 18.06SC Lecture 1, covering how to understand linear systems from two perspectives: geometry (row picture) and algebra (column picture)."
+    "text": "Two powerful perspectives that reveal the hidden beauty of linear systems: row picture vs column picture."
   },
   {
-    "objectID": "Math/mit1806-lecture1-geometry.html#the-example-system",
-    "href": "Math/mit1806-lecture1-geometry.html#the-example-system",
-    "title": "MIT 18.06SC Lecture 1: The Geometry of Linear Equations",
-    "section": "The Example System",
-    "text": "The Example System\nLet’s work with this concrete example:\n\\[\\begin{align}\nx + 2y &= 5 \\\\\n3x + 4y &= 6\n\\end{align}\\]\nIn matrix form: \\[\\begin{bmatrix}1 & 2 \\\\ 3 & 4\\end{bmatrix} \\begin{bmatrix}x \\\\ y\\end{bmatrix} = \\begin{bmatrix}5 \\\\ 6\\end{bmatrix}\\]\nWe can interpret this system in two completely different ways."
+    "objectID": "index.html#more",
+    "href": "index.html#more",
+    "title": "ickma.dev",
+    "section": "",
+    "text": "K-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
   },
   {
-    "objectID": "Math/mit1806-lecture1-geometry.html#row-picture-geometry",
-    "href": "Math/mit1806-lecture1-geometry.html#row-picture-geometry",
-    "title": "MIT 18.06SC Lecture 1: The Geometry of Linear Equations",
-    "section": "Row Picture (Geometry)",
-    "text": "Row Picture (Geometry)\nIn the row picture, each equation represents a geometric object: - In 2D: each equation is a line - In 3D: each equation is a plane\n- In higher dimensions: each equation is a hyperplane\nThe solution is where all these objects intersect.\n\n\nCode\nimport numpy as np\nimport matplotlib.pyplot as plt\n\n# Define the equations in the form y = mx + c\n# Line 1: x + 2y = 5  =&gt;  y = -1/2*x + 5/2\n# Line 2: 3x + 4y = 6  =&gt;  y = -3/4*x + 3/2\nx = np.linspace(-10, 10, 100)\ny1 = -1/2 * x + 5/2\ny2 = -3/4 * x + 3/2\n\n# Solve for intersection point\nA = np.array([[1, 2], [3, 4]])\nb = np.array([5, 6])\nsolution = np.linalg.solve(A, b)\n\n# Plot both lines and intersection\nplt.figure(figsize=(8, 6))\nplt.plot(x, y1, 'b-', label='Line 1: x + 2y = 5', linewidth=2)\nplt.plot(x, y2, 'r-', label='Line 2: 3x + 4y = 6', linewidth=2)\nplt.scatter(solution[0], solution[1], color='green', s=100, zorder=5, \n           label=f'Solution: ({solution[0]:.1f}, {solution[1]:.1f})', edgecolor='white', linewidth=2)\n\nplt.xlim(-8, 8)\nplt.ylim(-1, 8)\nplt.xlabel('x')\nplt.ylabel('y')\nplt.title('Row Picture: Where Lines Meet')\nplt.legend()\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()\n\nprint(f\"Solution: x = {solution[0]:.3f}, y = {solution[1]:.3f}\")\nprint(f\"Verification: {A @ solution} equals {b}\")\n\n\n\n\n\n\n\n\n\nSolution: x = -4.000, y = 4.500\nVerification: [5. 6.] equals [5 6]"
+    "objectID": "Algorithm/index.html",
+    "href": "Algorithm/index.html",
+    "title": "Algorithm Topics",
+    "section": "",
+    "text": "DP: Regular Expression Matching"
   },
   {
-    "objectID": "Math/mit1806-lecture1-geometry.html#column-picture-algebra",
-    "href": "Math/mit1806-lecture1-geometry.html#column-picture-algebra",
-    "title": "MIT 18.06SC Lecture 1: The Geometry of Linear Equations",
-    "section": "Column Picture (Algebra)",
-    "text": "Column Picture (Algebra)\nThe column picture reframes the same system as a question about vector combinations:\n\\[x \\begin{bmatrix}1 \\\\ 3\\end{bmatrix} + y \\begin{bmatrix}2 \\\\ 4\\end{bmatrix} = \\begin{bmatrix}5 \\\\ 6\\end{bmatrix}\\]\nInstead of asking “where do lines intersect?”, we ask: “Can we combine these vectors to reach our target?”\n\n\nCode\n# Define column vectors and target vector\na1 = np.array([1, 3])\na2 = np.array([2, 4])\nb = np.array([5, 6])\n\n# Solve for coefficients\nA = np.column_stack([a1, a2])\nsolution = np.linalg.solve(A, b)\nx, y = solution[0], solution[1]\n\nprint(f\"Question: Can we write b as a linear combination of a₁ and a₂?\")\nprint(f\"Answer: {x:.3f} × a₁ + {y:.3f} × a₂ = b\")\nprint(f\"Verification: {x*a1} + {y*a2} = {x*a1 + y*a2}\")\n\n# Visualize the vector construction\nplt.figure(figsize=(8, 6))\n\n# Step 1: Draw x*a1 (scaled version)\nplt.arrow(0, 0, x*a1[0], x*a1[1], head_width=0.2, head_length=0.2, \n         fc='blue', ec='blue', linewidth=3,\n         label=f'{x:.2f} × a₁')\n\n# Step 2: Draw y*a2 starting from the tip of x*a1\nplt.arrow(x*a1[0], x*a1[1], y*a2[0], y*a2[1], head_width=0.2, head_length=0.2, \n         fc='green', ec='green', linewidth=3,\n         label=f'{y:.2f} × a₂')\n\n# Show final result vector b\nplt.arrow(0, 0, b[0], b[1], head_width=0.25, head_length=0.25, \n         fc='red', ec='red', linewidth=4, alpha=0.8,\n         label=f'b = [{b[0]}, {b[1]}]')\n\nplt.grid(True, alpha=0.3)\nplt.axis('equal')\nplt.xlim(-1, 6)\nplt.ylim(-12, 7)\nplt.xlabel('x-component')\nplt.ylabel('y-component')\nplt.title('Column Picture: Vector Combination')\nplt.legend()\nplt.tight_layout()\nplt.show()\n\n\nIgnoring fixed x limits to fulfill fixed data aspect with adjustable data limits.\nIgnoring fixed x limits to fulfill fixed data aspect with adjustable data limits.\n\n\nQuestion: Can we write b as a linear combination of a₁ and a₂?\nAnswer: -4.000 × a₁ + 4.500 × a₂ = b\nVerification: [ -4. -12.] + [ 9. 18.] = [5. 6.]"
-  },
-  {
-    "objectID": "Math/mit1806-lecture1-geometry.html#three-types-of-linear-systems",
-    "href": "Math/mit1806-lecture1-geometry.html#three-types-of-linear-systems",
-    "title": "MIT 18.06SC Lecture 1: The Geometry of Linear Equations",
-    "section": "Three Types of Linear Systems",
-    "text": "Three Types of Linear Systems\nLinear systems can have three possible outcomes:\n\nUnique solution - Lines intersect at one point\nNo solution - Lines are parallel (don’t intersect)\nInfinitely many solutions - Lines are the same (overlap completely)\n\n\n\nCode\n# Case (a): Unique solution - non-parallel vectors\nprint(\"🎯 Case (a) - Unique Solution:\")\nA_a = np.array([[1, 2], [3, 4]])\nb_a = np.array([5, 6])\nsolution_a = np.linalg.solve(A_a, b_a)\ndet_a = np.linalg.det(A_a)\nprint(f\"   Solution: {solution_a}\")\nprint(f\"   Matrix determinant: {det_a:.3f} ≠ 0 → linearly independent columns\")\nprint(f\"   Column space: ENTIRE 2D plane (any point reachable)\")\n\n# Case (b): No solution - parallel vectors, b not in span\nprint(f\"\\n❌ Case (b) - No Solution:\")\nA_b = np.array([[1, 2], [2, 4]])  # Columns are parallel\nb_b = np.array([5, 6])            # b not in span\ndet_b = np.linalg.det(A_b)\nprint(f\"   Matrix determinant: {det_b:.3f} = 0 → linearly dependent columns\")\nprint(f\"   Column space: 1D line only (most points unreachable)\")\nprint(f\"   Target b = {b_b} is NOT on the line → No solution exists\")\n\n# Case (c): Infinitely many solutions - parallel vectors, b in span\nprint(f\"\\n♾️  Case (c) - Infinitely Many Solutions:\")\nA_c = np.array([[1, 2], [2, 4]])  # Same parallel columns\nb_c = np.array([3, 6])            # b = 3 * [1, 2], so b is in span\ndet_c = np.linalg.det(A_c)\nprint(f\"   Matrix determinant: {det_c:.3f} = 0 → linearly dependent columns\")\nprint(f\"   Column space: 1D line only\")\nprint(f\"   Target b = {b_c} IS on the line → Infinite solutions exist\")\n\n# Find one particular solution using pseudoinverse\nsolution_c = np.linalg.pinv(A_c) @ b_c\nprint(f\"   One particular solution: {solution_c}\")\nprint(f\"   Other solutions: {solution_c} + t×[2, -1] for any real number t\")\n\n\n🎯 Case (a) - Unique Solution:\n   Solution: [-4.   4.5]\n   Matrix determinant: -2.000 ≠ 0 → linearly independent columns\n   Column space: ENTIRE 2D plane (any point reachable)\n\n❌ Case (b) - No Solution:\n   Matrix determinant: 0.000 = 0 → linearly dependent columns\n   Column space: 1D line only (most points unreachable)\n   Target b = [5 6] is NOT on the line → No solution exists\n\n♾️  Case (c) - Infinitely Many Solutions:\n   Matrix determinant: 0.000 = 0 → linearly dependent columns\n   Column space: 1D line only\n   Target b = [3 6] IS on the line → Infinite solutions exist\n   One particular solution: [0.6 1.2]\n   Other solutions: [0.6 1.2] + t×[2, -1] for any real number t\n\n\n\n\nCode\n# Visualize all three cases\nfig, axes = plt.subplots(1, 3, figsize=(15, 5))\n\n# Case (a): Unique solution\nax = axes[0]\nax.fill_between([-1, 6], [-1, -1], [7, 7], color='lightblue', alpha=0.2, \n                label='Column space = ENTIRE plane')\n\n# Draw vectors\nax.arrow(0, 0, A_a[0,0], A_a[1,0], head_width=0.15, head_length=0.15,\n         fc='blue', ec='blue', linewidth=2, label='a₁ = [1,3]')\nax.arrow(0, 0, A_a[0,1], A_a[1,1], head_width=0.15, head_length=0.15,\n         fc='green', ec='green', linewidth=2, label='a₂ = [2,4]')\nax.arrow(0, 0, b_a[0], b_a[1], head_width=0.2, head_length=0.2,\n         fc='red', ec='red', linewidth=3, label='b = [5,6]')\n\nax.set_title('Unique Solution')\nax.legend(fontsize=8)\nax.grid(True, alpha=0.3)\nax.set_xlim(-1, 6)\nax.set_ylim(-1, 7)\n\n# Case (b): No solution\nax = axes[1]\nt = np.linspace(-2, 5, 100)\nspan_x, span_y = t * A_b[0,0], t * A_b[1,0]\nax.plot(span_x, span_y, 'lightblue', linewidth=6, alpha=0.6, \n        label='Column space (1D line)')\n\nax.arrow(0, 0, A_b[0,0], A_b[1,0], head_width=0.15, head_length=0.15, \n         fc='blue', ec='blue', linewidth=2, label='a₁ = [1,2]')\nax.arrow(0, 0, A_b[0,1], A_b[1,1], head_width=0.15, head_length=0.15, \n         fc='green', ec='green', linewidth=2, label='a₂ = [2,4] = 2×a₁')\nax.arrow(0, 0, b_b[0], b_b[1], head_width=0.2, head_length=0.2, \n         fc='red', ec='red', linewidth=3, label='b = [5,6] (off line)')\n\nax.set_title('No Solution')\nax.legend(fontsize=8)\nax.grid(True, alpha=0.3)\nax.set_xlim(-1, 6)\nax.set_ylim(-1, 7)\n\n# Case (c): Infinitely many solutions\nax = axes[2]\nt = np.linspace(-1, 4, 100)\nspan_x, span_y = t * A_c[0,0], t * A_c[1,0]\nax.plot(span_x, span_y, 'lightblue', linewidth=6, alpha=0.6,\n        label='Column space (1D line)')\n\nax.arrow(0, 0, A_c[0,0], A_c[1,0], head_width=0.15, head_length=0.15, \n         fc='blue', ec='blue', linewidth=2, label='a₁ = [1,2]')\nax.arrow(0, 0, A_c[0,1], A_c[1,1], head_width=0.15, head_length=0.15, \n         fc='green', ec='green', linewidth=2, label='a₂ = [2,4] = 2×a₁')\nax.arrow(0, 0, b_c[0], b_c[1], head_width=0.2, head_length=0.2, \n         fc='red', ec='red', linewidth=3, label='b = [3,6] (on line)')\n\nax.set_title('Infinite Solutions')\nax.legend(fontsize=8)\nax.grid(True, alpha=0.3)\nax.set_xlim(-1, 6)\nax.set_ylim(-1, 7)\n\nplt.tight_layout()\nplt.show()\n\nprint(\"Key insight: Solution depends on whether target vector b lies in the column space\")\n\n\n\n\n\n\n\n\n\nKey insight: Solution depends on whether target vector b lies in the column space\n\n\n\nThis covers the core geometric foundations from MIT 18.06SC Lecture 1: understanding linear systems through both row and column perspectives."
+    "objectID": "Algorithm/index.html#dynamic-programming",
+    "href": "Algorithm/index.html#dynamic-programming",
+    "title": "Algorithm Topics",
+    "section": "",
+    "text": "DP: Regular Expression Matching"
   },
   {
     "objectID": "Algorithm/dp_regex.html",
@@ -252,60 +259,74 @@
     "text": "3. Code Example\nPlease not that in the code, when we retrieve character from the string or pattern, we need to use s[i-1] and p[j-1] instead of s[i] and p[j] as the index of the string and pattern is 0-based.\nfrom collections import defaultdict\nclass Solution:\n    def isMatch(self,s, p):\n        m, n = len(s), len(p)\n        dp = [[False] * (n + 1) for _ in range(m + 1)]\n     # DP is a table with m+1 rows and n+1 columns\n     # we retrieve dp[i][k], i is the index of s, k is the index of p\n        dp[0][0] = True\n        for j in range(2,n+1):\n            if p[j-1]=='*':\n                dp[0][j]=dp[0][j-2]\n            \n        for i in range(1, m + 1):\n            for j in range(1, n + 1):\n                if p[j-1] == '*':\n                    dp[i][j] = dp[i][j-2] # zero occurrence\n                    if s[i-1]==p[j-2] or p[j-2]=='.':\n                        dp[i][j]|=dp[i-1][j] or dp[i-1][j-2] # one or more occurrence\n                else:\n                    dp[i][j] = dp[i-1][j-1] and (s[i-1] == p[j-1] or p[j-1] == '.')\n        return dp[m][n]"
   },
   {
-    "objectID": "Algorithm/index.html",
-    "href": "Algorithm/index.html",
-    "title": "Algorithm Topics",
+    "objectID": "Math/mit1806-lecture1-geometry.html",
+    "href": "Math/mit1806-lecture1-geometry.html",
+    "title": "MIT 18.06SC Lecture 1: The Geometry of Linear Equations",
     "section": "",
-    "text": "DP: Regular Expression Matching"
+    "text": "This is for MIT 18.06SC Lecture 1, covering how to understand linear systems from two perspectives: geometry (row picture) and algebra (column picture)."
   },
   {
-    "objectID": "Algorithm/index.html#dynamic-programming",
-    "href": "Algorithm/index.html#dynamic-programming",
-    "title": "Algorithm Topics",
-    "section": "",
-    "text": "DP: Regular Expression Matching"
+    "objectID": "Math/mit1806-lecture1-geometry.html#the-example-system",
+    "href": "Math/mit1806-lecture1-geometry.html#the-example-system",
+    "title": "MIT 18.06SC Lecture 1: The Geometry of Linear Equations",
+    "section": "The Example System",
+    "text": "The Example System\nLet’s work with this concrete example:\n\\[\\begin{align}\nx + 2y &= 5 \\\\\n3x + 4y &= 6\n\\end{align}\\]\nIn matrix form: \\[\\begin{bmatrix}1 & 2 \\\\ 3 & 4\\end{bmatrix} \\begin{bmatrix}x \\\\ y\\end{bmatrix} = \\begin{bmatrix}5 \\\\ 6\\end{bmatrix}\\]\nWe can interpret this system in two completely different ways."
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "ickma.dev",
-    "section": "",
-    "text": "My learning notes and thoughts on math and machine learning.\nCurrently reading the Deep Learning book.\n\n\n\n\nHow ReLU solves problems that linear models cannot handle.\n\n\n\nThe mathematical connection between probabilistic models and loss functions.\n\n\n\nExploring activation functions and their impact on neural network learning.\n\n\n\n\n\n\nTwo powerful perspectives that reveal the hidden beauty of linear systems: row picture vs column picture.\n\n\n\n\n\n\n\nK-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
+    "objectID": "Math/mit1806-lecture1-geometry.html#row-picture-geometry",
+    "href": "Math/mit1806-lecture1-geometry.html#row-picture-geometry",
+    "title": "MIT 18.06SC Lecture 1: The Geometry of Linear Equations",
+    "section": "Row Picture (Geometry)",
+    "text": "Row Picture (Geometry)\nIn the row picture, each equation represents a geometric object: - In 2D: each equation is a line - In 3D: each equation is a plane\n- In higher dimensions: each equation is a hyperplane\nThe solution is where all these objects intersect.\n\n\nCode\nimport numpy as np\nimport matplotlib.pyplot as plt\n\n# Define the equations in the form y = mx + c\n# Line 1: x + 2y = 5  =&gt;  y = -1/2*x + 5/2\n# Line 2: 3x + 4y = 6  =&gt;  y = -3/4*x + 3/2\nx = np.linspace(-10, 10, 100)\ny1 = -1/2 * x + 5/2\ny2 = -3/4 * x + 3/2\n\n# Solve for intersection point\nA = np.array([[1, 2], [3, 4]])\nb = np.array([5, 6])\nsolution = np.linalg.solve(A, b)\n\n# Plot both lines and intersection\nplt.figure(figsize=(8, 6))\nplt.plot(x, y1, 'b-', label='Line 1: x + 2y = 5', linewidth=2)\nplt.plot(x, y2, 'r-', label='Line 2: 3x + 4y = 6', linewidth=2)\nplt.scatter(solution[0], solution[1], color='green', s=100, zorder=5, \n           label=f'Solution: ({solution[0]:.1f}, {solution[1]:.1f})', edgecolor='white', linewidth=2)\n\nplt.xlim(-8, 8)\nplt.ylim(-1, 8)\nplt.xlabel('x')\nplt.ylabel('y')\nplt.title('Row Picture: Where Lines Meet')\nplt.legend()\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()\n\nprint(f\"Solution: x = {solution[0]:.3f}, y = {solution[1]:.3f}\")\nprint(f\"Verification: {A @ solution} equals {b}\")\n\n\n\n\n\n\n\n\n\nSolution: x = -4.000, y = 4.500\nVerification: [5. 6.] equals [5 6]"
   },
   {
-    "objectID": "index.html#deep-learning-book",
-    "href": "index.html#deep-learning-book",
-    "title": "ickma.dev",
-    "section": "",
-    "text": "How ReLU solves problems that linear models cannot handle.\n\n\n\nThe mathematical connection between probabilistic models and loss functions.\n\n\n\nExploring activation functions and their impact on neural network learning."
+    "objectID": "Math/mit1806-lecture1-geometry.html#column-picture-algebra",
+    "href": "Math/mit1806-lecture1-geometry.html#column-picture-algebra",
+    "title": "MIT 18.06SC Lecture 1: The Geometry of Linear Equations",
+    "section": "Column Picture (Algebra)",
+    "text": "Column Picture (Algebra)\nThe column picture reframes the same system as a question about vector combinations:\n\\[x \\begin{bmatrix}1 \\\\ 3\\end{bmatrix} + y \\begin{bmatrix}2 \\\\ 4\\end{bmatrix} = \\begin{bmatrix}5 \\\\ 6\\end{bmatrix}\\]\nInstead of asking “where do lines intersect?”, we ask: “Can we combine these vectors to reach our target?”\n\n\nCode\n# Define column vectors and target vector\na1 = np.array([1, 3])\na2 = np.array([2, 4])\nb = np.array([5, 6])\n\n# Solve for coefficients\nA = np.column_stack([a1, a2])\nsolution = np.linalg.solve(A, b)\nx, y = solution[0], solution[1]\n\nprint(f\"Question: Can we write b as a linear combination of a₁ and a₂?\")\nprint(f\"Answer: {x:.3f} × a₁ + {y:.3f} × a₂ = b\")\nprint(f\"Verification: {x*a1} + {y*a2} = {x*a1 + y*a2}\")\n\n# Visualize the vector construction\nplt.figure(figsize=(8, 6))\n\n# Step 1: Draw x*a1 (scaled version)\nplt.arrow(0, 0, x*a1[0], x*a1[1], head_width=0.2, head_length=0.2, \n         fc='blue', ec='blue', linewidth=3,\n         label=f'{x:.2f} × a₁')\n\n# Step 2: Draw y*a2 starting from the tip of x*a1\nplt.arrow(x*a1[0], x*a1[1], y*a2[0], y*a2[1], head_width=0.2, head_length=0.2, \n         fc='green', ec='green', linewidth=3,\n         label=f'{y:.2f} × a₂')\n\n# Show final result vector b\nplt.arrow(0, 0, b[0], b[1], head_width=0.25, head_length=0.25, \n         fc='red', ec='red', linewidth=4, alpha=0.8,\n         label=f'b = [{b[0]}, {b[1]}]')\n\nplt.grid(True, alpha=0.3)\nplt.axis('equal')\nplt.xlim(-1, 6)\nplt.ylim(-12, 7)\nplt.xlabel('x-component')\nplt.ylabel('y-component')\nplt.title('Column Picture: Vector Combination')\nplt.legend()\nplt.tight_layout()\nplt.show()\n\n\nIgnoring fixed x limits to fulfill fixed data aspect with adjustable data limits.\nIgnoring fixed x limits to fulfill fixed data aspect with adjustable data limits.\n\n\nQuestion: Can we write b as a linear combination of a₁ and a₂?\nAnswer: -4.000 × a₁ + 4.500 × a₂ = b\nVerification: [ -4. -12.] + [ 9. 18.] = [5. 6.]"
   },
   {
-    "objectID": "index.html#mathematics",
-    "href": "index.html#mathematics",
-    "title": "ickma.dev",
-    "section": "",
-    "text": "Two powerful perspectives that reveal the hidden beauty of linear systems: row picture vs column picture."
+    "objectID": "Math/mit1806-lecture1-geometry.html#three-types-of-linear-systems",
+    "href": "Math/mit1806-lecture1-geometry.html#three-types-of-linear-systems",
+    "title": "MIT 18.06SC Lecture 1: The Geometry of Linear Equations",
+    "section": "Three Types of Linear Systems",
+    "text": "Three Types of Linear Systems\nLinear systems can have three possible outcomes:\n\nUnique solution - Lines intersect at one point\nNo solution - Lines are parallel (don’t intersect)\nInfinitely many solutions - Lines are the same (overlap completely)\n\n\n\nCode\n# Case (a): Unique solution - non-parallel vectors\nprint(\"🎯 Case (a) - Unique Solution:\")\nA_a = np.array([[1, 2], [3, 4]])\nb_a = np.array([5, 6])\nsolution_a = np.linalg.solve(A_a, b_a)\ndet_a = np.linalg.det(A_a)\nprint(f\"   Solution: {solution_a}\")\nprint(f\"   Matrix determinant: {det_a:.3f} ≠ 0 → linearly independent columns\")\nprint(f\"   Column space: ENTIRE 2D plane (any point reachable)\")\n\n# Case (b): No solution - parallel vectors, b not in span\nprint(f\"\\n❌ Case (b) - No Solution:\")\nA_b = np.array([[1, 2], [2, 4]])  # Columns are parallel\nb_b = np.array([5, 6])            # b not in span\ndet_b = np.linalg.det(A_b)\nprint(f\"   Matrix determinant: {det_b:.3f} = 0 → linearly dependent columns\")\nprint(f\"   Column space: 1D line only (most points unreachable)\")\nprint(f\"   Target b = {b_b} is NOT on the line → No solution exists\")\n\n# Case (c): Infinitely many solutions - parallel vectors, b in span\nprint(f\"\\n♾️  Case (c) - Infinitely Many Solutions:\")\nA_c = np.array([[1, 2], [2, 4]])  # Same parallel columns\nb_c = np.array([3, 6])            # b = 3 * [1, 2], so b is in span\ndet_c = np.linalg.det(A_c)\nprint(f\"   Matrix determinant: {det_c:.3f} = 0 → linearly dependent columns\")\nprint(f\"   Column space: 1D line only\")\nprint(f\"   Target b = {b_c} IS on the line → Infinite solutions exist\")\n\n# Find one particular solution using pseudoinverse\nsolution_c = np.linalg.pinv(A_c) @ b_c\nprint(f\"   One particular solution: {solution_c}\")\nprint(f\"   Other solutions: {solution_c} + t×[2, -1] for any real number t\")\n\n\n🎯 Case (a) - Unique Solution:\n   Solution: [-4.   4.5]\n   Matrix determinant: -2.000 ≠ 0 → linearly independent columns\n   Column space: ENTIRE 2D plane (any point reachable)\n\n❌ Case (b) - No Solution:\n   Matrix determinant: 0.000 = 0 → linearly dependent columns\n   Column space: 1D line only (most points unreachable)\n   Target b = [5 6] is NOT on the line → No solution exists\n\n♾️  Case (c) - Infinitely Many Solutions:\n   Matrix determinant: 0.000 = 0 → linearly dependent columns\n   Column space: 1D line only\n   Target b = [3 6] IS on the line → Infinite solutions exist\n   One particular solution: [0.6 1.2]\n   Other solutions: [0.6 1.2] + t×[2, -1] for any real number t\n\n\n\n\nCode\n# Visualize all three cases\nfig, axes = plt.subplots(1, 3, figsize=(15, 5))\n\n# Case (a): Unique solution\nax = axes[0]\nax.fill_between([-1, 6], [-1, -1], [7, 7], color='lightblue', alpha=0.2, \n                label='Column space = ENTIRE plane')\n\n# Draw vectors\nax.arrow(0, 0, A_a[0,0], A_a[1,0], head_width=0.15, head_length=0.15,\n         fc='blue', ec='blue', linewidth=2, label='a₁ = [1,3]')\nax.arrow(0, 0, A_a[0,1], A_a[1,1], head_width=0.15, head_length=0.15,\n         fc='green', ec='green', linewidth=2, label='a₂ = [2,4]')\nax.arrow(0, 0, b_a[0], b_a[1], head_width=0.2, head_length=0.2,\n         fc='red', ec='red', linewidth=3, label='b = [5,6]')\n\nax.set_title('Unique Solution')\nax.legend(fontsize=8)\nax.grid(True, alpha=0.3)\nax.set_xlim(-1, 6)\nax.set_ylim(-1, 7)\n\n# Case (b): No solution\nax = axes[1]\nt = np.linspace(-2, 5, 100)\nspan_x, span_y = t * A_b[0,0], t * A_b[1,0]\nax.plot(span_x, span_y, 'lightblue', linewidth=6, alpha=0.6, \n        label='Column space (1D line)')\n\nax.arrow(0, 0, A_b[0,0], A_b[1,0], head_width=0.15, head_length=0.15, \n         fc='blue', ec='blue', linewidth=2, label='a₁ = [1,2]')\nax.arrow(0, 0, A_b[0,1], A_b[1,1], head_width=0.15, head_length=0.15, \n         fc='green', ec='green', linewidth=2, label='a₂ = [2,4] = 2×a₁')\nax.arrow(0, 0, b_b[0], b_b[1], head_width=0.2, head_length=0.2, \n         fc='red', ec='red', linewidth=3, label='b = [5,6] (off line)')\n\nax.set_title('No Solution')\nax.legend(fontsize=8)\nax.grid(True, alpha=0.3)\nax.set_xlim(-1, 6)\nax.set_ylim(-1, 7)\n\n# Case (c): Infinitely many solutions\nax = axes[2]\nt = np.linspace(-1, 4, 100)\nspan_x, span_y = t * A_c[0,0], t * A_c[1,0]\nax.plot(span_x, span_y, 'lightblue', linewidth=6, alpha=0.6,\n        label='Column space (1D line)')\n\nax.arrow(0, 0, A_c[0,0], A_c[1,0], head_width=0.15, head_length=0.15, \n         fc='blue', ec='blue', linewidth=2, label='a₁ = [1,2]')\nax.arrow(0, 0, A_c[0,1], A_c[1,1], head_width=0.15, head_length=0.15, \n         fc='green', ec='green', linewidth=2, label='a₂ = [2,4] = 2×a₁')\nax.arrow(0, 0, b_c[0], b_c[1], head_width=0.2, head_length=0.2, \n         fc='red', ec='red', linewidth=3, label='b = [3,6] (on line)')\n\nax.set_title('Infinite Solutions')\nax.legend(fontsize=8)\nax.grid(True, alpha=0.3)\nax.set_xlim(-1, 6)\nax.set_ylim(-1, 7)\n\nplt.tight_layout()\nplt.show()\n\nprint(\"Key insight: Solution depends on whether target vector b lies in the column space\")\n\n\n\n\n\n\n\n\n\nKey insight: Solution depends on whether target vector b lies in the column space\n\n\n\nThis covers the core geometric foundations from MIT 18.06SC Lecture 1: understanding linear systems through both row and column perspectives."
   },
   {
-    "objectID": "index.html#more",
-    "href": "index.html#more",
-    "title": "ickma.dev",
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
     "section": "",
-    "text": "K-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
+    "text": "Hi, I’m Chao Ma (aka ickma), a passionate developer and researcher focused on machine learning, algorithms, and problem-solving.\n\n\nI enjoy exploring the intersection of mathematics and computer science, with a particular interest in:\n\n🤖 Machine Learning & AI - From fundamental concepts to practical implementations\n🧮 Algorithms & Data Structures - Solving complex problems efficiently\n\n📊 Data Science - Extracting insights from data using Python and NumPy\n💻 Software Development - Building robust, scalable solutions\n\n\n\n\nThis site serves as my digital notebook where I share:\n\nAlgorithm explanations with visual examples and code implementations\nProblem-solving approaches for coding challenges and mathematical concepts\nTechnical insights from my learning journey\n\nI believe in learning by doing and explaining concepts clearly with code examples, visualizations, and mathematical foundations.\n\n\n\nMy content covers:\n\nAlgorithms - Dynamic programming, optimization, data structures, and algorithmic problem solving\nMathematics - Linear algebra, calculus, statistics, and mathematical foundations for CS\nReinforcement Learning & Deep Learning - Neural networks, policy optimization, and AI agents\nParallel Computation - Distributed systems, GPU computing, and performance optimization\n\n\n\n\nI’m always excited to discuss technology, collaborate on projects, or help fellow learners!\n\n📧 Email: ickma2311@gmail.com\n💻 GitHub: @ickma2311\n🐦 Twitter: @ickma2311\n\nFeel free to reach out if you have questions about any of my posts, want to collaborate, or just want to chat about machine learning and algorithms!\n\nThis blog is built with Quarto and hosted on GitHub Pages. All code examples are available in my repositories."
   },
   {
-    "objectID": "Math/index.html",
-    "href": "Math/index.html",
-    "title": "Math",
+    "objectID": "about.html#what-i-do",
+    "href": "about.html#what-i-do",
+    "title": "About",
     "section": "",
-    "text": "Mathematical foundations and explorations.\n\n\n\nMIT 18.06SC Lecture 1: Geometry of Linear Equations"
+    "text": "I enjoy exploring the intersection of mathematics and computer science, with a particular interest in:\n\n🤖 Machine Learning & AI - From fundamental concepts to practical implementations\n🧮 Algorithms & Data Structures - Solving complex problems efficiently\n\n📊 Data Science - Extracting insights from data using Python and NumPy\n💻 Software Development - Building robust, scalable solutions"
   },
   {
-    "objectID": "Math/index.html#linear-algebra",
-    "href": "Math/index.html#linear-algebra",
-    "title": "Math",
+    "objectID": "about.html#about-this-blog",
+    "href": "about.html#about-this-blog",
+    "title": "About",
     "section": "",
-    "text": "MIT 18.06SC Lecture 1: Geometry of Linear Equations"
+    "text": "This site serves as my digital notebook where I share:\n\nAlgorithm explanations with visual examples and code implementations\nProblem-solving approaches for coding challenges and mathematical concepts\nTechnical insights from my learning journey\n\nI believe in learning by doing and explaining concepts clearly with code examples, visualizations, and mathematical foundations."
+  },
+  {
+    "objectID": "about.html#technical-focus",
+    "href": "about.html#technical-focus",
+    "title": "About",
+    "section": "",
+    "text": "My content covers:\n\nAlgorithms - Dynamic programming, optimization, data structures, and algorithmic problem solving\nMathematics - Linear algebra, calculus, statistics, and mathematical foundations for CS\nReinforcement Learning & Deep Learning - Neural networks, policy optimization, and AI agents\nParallel Computation - Distributed systems, GPU computing, and performance optimization"
+  },
+  {
+    "objectID": "about.html#connect-with-me",
+    "href": "about.html#connect-with-me",
+    "title": "About",
+    "section": "",
+    "text": "I’m always excited to discuss technology, collaborate on projects, or help fellow learners!\n\n📧 Email: ickma2311@gmail.com\n💻 GitHub: @ickma2311\n🐦 Twitter: @ickma2311\n\nFeel free to reach out if you have questions about any of my posts, want to collaborate, or just want to chat about machine learning and algorithms!\n\nThis blog is built with Quarto and hosted on GitHub Pages. All code examples are available in my repositories."
   },
   {
     "objectID": "ML/activation-functions.html",
@@ -368,7 +389,7 @@
     "href": "ML/index.html#deep-learning-fundamentals",
     "title": "Machine Learning Topics",
     "section": "Deep Learning Fundamentals",
-    "text": "Deep Learning Fundamentals\n\nThe XOR Problem: Nonlinearity in Deep Learning\nLikelihood-Based Loss Functions\nHidden Units and Activation Functions"
+    "text": "Deep Learning Fundamentals\n\nThe XOR Problem: Nonlinearity in Deep Learning\nLikelihood-Based Loss Functions\nHidden Units and Activation Functions\nArchitecture Design: Depth vs Width"
   },
   {
     "objectID": "ML/index.html#classification-algorithms",
