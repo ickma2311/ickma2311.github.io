@@ -1,0 +1,218 @@
+---
+title: "MIT 18.06SC Lecture 2: Elimination with Matrices"
+author: "Chao Ma"
+date: "2025-10-01"
+categories: ["Linear Algebra", "MIT 18.06SC", "Gaussian Elimination"]
+code-fold: true
+code-summary: "Show code"
+---
+
+*This recap of MIT 18.06SC Lecture 2 explores Gaussian elimination—the systematic algorithm that transforms any linear system into an easily solvable upper triangular form.*
+
+📓 **For a deeper dive with additional exercises and analysis**, see the [complete notebook on GitHub](https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture02/exercises.ipynb).
+
+## From Linear Systems to Upper Triangular Form
+
+How do we actually solve a system of linear equations like this?
+
+$$\begin{cases}
+2u + v + w = 5 \\
+4u - 6v = -2 \\
+-2u + 7v + 2w = 9
+\end{cases}$$
+
+The answer is **Gaussian elimination**—a systematic process that transforms the coefficient matrix into an upper triangular form, where solutions can be read off directly through back substitution. This fundamental algorithm underpins much of numerical linear algebra and is essential for understanding how computers solve linear systems.
+
+### Quick Reference: Understanding Elimination
+
+For context on the mathematical foundations of Gaussian elimination, see the [Lecture 2 summary](https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture02/lecture02_elimination.md).
+
+**The Two-Step Process**:
+
+1. **Forward Elimination**: Transform $A$ into upper triangular $U$ using row operations
+   - For each pivot position, eliminate all entries below it
+   - Row operation: $\text{Row}_i \leftarrow \text{Row}_i - m_{ij} \cdot \text{Row}_j$ where $m_{ij} = a_{ij}/\text{pivot}$
+
+2. **Back Substitution**: Solve $Ux = c$ from bottom to top
+   - Start with the last equation (only one unknown)
+   - Work upward, substituting known values
+
+**Key insight**: Each elimination step can be represented as multiplication by an **elimination matrix** $E_{ij}$, connecting row operations to matrix multiplication.
+
+## 🔬 Exercise: Implement Gaussian Elimination from Scratch
+
+Let's implement the complete Gaussian elimination algorithm and verify it works correctly.
+
+```{python}
+import numpy as np
+from IPython.display import display, Markdown
+
+# Set random seed for reproducibility
+np.random.seed(42)
+
+def matrix_to_latex(matrix, precision=2):
+    """Convert numpy matrix to LaTeX format."""
+    if len(matrix.shape) == 1:
+        # Vector
+        elements = " \\\\ ".join([f"{x:.{precision}f}" for x in matrix])
+        return f"$$\\begin{{bmatrix}}{elements}\\end{{bmatrix}}$$"
+    else:
+        # Matrix
+        rows = []
+        for row in matrix:
+            row_str = " & ".join([f"{x:.{precision}f}" for x in row])
+            rows.append(row_str)
+        matrix_str = " \\\\ ".join(rows)
+        return f"$$\\begin{{bmatrix}}{matrix_str}\\end{{bmatrix}}$$"
+
+print("✓ Setup complete")
+```
+
+### Algorithm Overview
+
+The algorithm consists of two phases:
+
+1. **Forward Elimination**: Transform $A$ into upper triangular form $U$
+   - For each column $j$ from 0 to $n-1$:
+     - Pivot = $A[j, j]$
+     - For each row $i$ below pivot ($i > j$):
+       - Compute multiplier: $m_{ij} = A[i, j] / \text{pivot}$
+       - Row operation: $A[i, :] = A[i, :] - m_{ij} \cdot A[j, :]$
+       - Update RHS: $b[i] = b[i] - m_{ij} \cdot b[j]$
+
+2. **Back Substitution**: Solve $Ux = c$ from bottom to top
+   - Start from last row: $x[n-1] = c[n-1] / U[n-1, n-1]$
+   - For each row $i$ from $n-2$ down to $0$:
+     - $x[i] = (c[i] - \sum_{j=i+1}^{n-1} U[i,j] \cdot x[j]) / U[i,i]$
+
+### Implementation
+
+```{python}
+def gaussian_elimination(A, b):
+    """
+    Solve the linear system Ax = b using Gaussian elimination.
+
+    Parameters:
+    -----------
+    A : numpy.ndarray, shape (n, n)
+        Coefficient matrix
+    b : numpy.ndarray, shape (n,)
+        Right-hand side vector
+
+    Returns:
+    --------
+    x : numpy.ndarray, shape (n,)
+        Solution vector
+    """
+    A_copy = A.copy()
+    b_copy = b.copy()
+
+    rows, cols = A.shape
+    assert rows == cols, "Matrix must be square"
+
+    for i in range(rows - 1):
+        multiplier = A_copy[i + 1:, i] / A_copy[i, i]
+        for index, m in enumerate(multiplier):
+            A_copy[i + 1 + index] = A_copy[i + 1 + index] - m * A_copy[i]
+            assert abs(A_copy[i + 1 + index, i]) < 1e-10, "Upper triangular matrix expected"
+            b_copy[i + 1 + index] = b_copy[i + 1 + index] - m * b_copy[i]
+
+    U = A_copy
+    print("Upper triangular matrix U:")
+    display(Markdown(matrix_to_latex(U)))
+
+    # Now our matrix is upper triangular
+    # Solve for x from bottom to top
+    x = np.zeros(rows)
+    for i in range(rows - 1, -1, -1):
+        x[i] = (b_copy[i] - np.dot(A_copy[i][i + 1:], x[i + 1:])) / A_copy[i][i]
+
+    return x
+
+print("✓ Function defined")
+```
+
+### Test on Lecture Example
+
+Test on the system from the lecture:
+
+$$\begin{cases}
+2u + v + w = 5 \\
+4u - 6v = -2 \\
+-2u + 7v + 2w = 9
+\end{cases}$$
+
+Expected solution: $u = 1, v = 1, w = 2$
+
+```{python}
+# Define the system from lecture
+A = np.array([
+    [2, 1, 1],
+    [4, -6, 0],
+    [-2, 7, 2]
+], dtype=float)
+
+b = np.array([5, -2, 9], dtype=float)
+
+print("System to solve:")
+print("A =")
+print(A)
+print("\nb =")
+print(b)
+
+# Solve using our implementation
+x_our = gaussian_elimination(A, b)
+
+# Solve using NumPy
+x_numpy = np.linalg.solve(A, b)
+
+# Compare results
+print("\n" + "=" * 60)
+print("Results:")
+print("=" * 60)
+print(f"Our implementation:      x = {x_our}")
+print(f"NumPy (np.linalg.solve): x = {x_numpy}")
+print("=" * 60)
+
+# Verify solution
+residual_our = np.linalg.norm(A @ x_our - b)
+residual_numpy = np.linalg.norm(A @ x_numpy - b)
+
+print(f"\nResidual (our):   ||Ax - b|| = {residual_our:.2e}")
+print(f"Residual (NumPy): ||Ax - b|| = {residual_numpy:.2e}")
+
+# Check difference
+difference = np.linalg.norm(x_our - x_numpy)
+print(f"\nDifference: ||x_our - x_numpy|| = {difference:.2e}")
+
+if difference < 1e-10:
+    print("\n✅ Solutions match! Implementation is correct.")
+else:
+    print("\n❌ Solutions differ. Check implementation.")
+```
+
+### Visualize Upper Triangular Matrix
+
+Let's test on a larger 10×10 system to see the upper triangular structure more clearly.
+
+```{python}
+# Create a 10x10 random system
+np.random.seed(123)
+A_large = np.random.randn(10, 10)
+b_large = np.random.randn(10)
+
+print("Original 10×10 matrix A:")
+display(Markdown(matrix_to_latex(A_large)))
+
+print("\n" + "=" * 70)
+
+# Solve using our implementation
+x_large = gaussian_elimination(A_large, b_large)
+
+print("=" * 70)
+print("\n✓ Upper triangular structure achieved!")
+```
+
+---
+
+*This implementation demonstrates the fundamental algorithm for solving linear systems, connecting the geometric view from Lecture 1 with the algebraic machinery of row operations and matrix elimination.*
