@@ -1,0 +1,330 @@
+---
+title: "MIT 18.06SC Lecture 3: Matrix Multiplication and Inverse"
+author: "Chao Ma"
+date: "2025-10-05"
+categories: ["Linear Algebra", "MIT 18.06", "Matrix Operations"]
+code-fold: true
+code-summary: "Show code"
+---
+
+## Context
+
+[My lecture notes](https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture03/lecture03_multiplication_and_inverse.md) | [Exercises notebook](https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture03/exercises.ipynb)
+
+**Gilbert Strang's third lecture reveals a profound insight:** matrix multiplication isn't just one operation—it's **five different perspectives** on the same computation, each revealing different structural properties. Then we explore matrix inverses and why some matrices fundamentally cannot be inverted.
+
+---
+
+## The Five Ways of Matrix Multiplication
+
+Given $C = AB$ where $A$ is $m \times n$ and $B$ is $n \times p$:
+
+### 1. Element-by-Element View (Row × Column)
+
+The standard definition: each entry $C_{ij}$ is the dot product of row $i$ of $A$ with column $j$ of $B$:
+
+$$
+C_{ij} = \sum_{k=1}^n A_{ik} B_{kj}
+$$
+
+**Example:**
+$$
+\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}
+\begin{bmatrix} 5 & 6 \\ 7 & 8 \end{bmatrix}
+=
+\begin{bmatrix} 1 \cdot 5+2 \cdot 7 & 1 \cdot 6+2 \cdot 8 \\ 3 \cdot 5+4 \cdot 7 & 3 \cdot 6+4 \cdot 8 \end{bmatrix}
+=
+\begin{bmatrix} 19 & 22 \\ 43 & 50 \end{bmatrix}
+$$
+
+### 2. Column View
+
+**Key insight:** Each column of $C$ is a linear combination of the columns of $A$.
+
+$$
+C = A \begin{bmatrix} | & | & & | \\ b_1 & b_2 & \cdots & b_p \\ | & | & & | \end{bmatrix}
+= \begin{bmatrix} | & | & & | \\ Ab_1 & Ab_2 & \cdots & Ab_p \\ | & | & & | \end{bmatrix}
+$$
+
+**Interpretation:** Multiply $A$ by each column of $B$ to get each column of $C$.
+
+This perspective is crucial for understanding:
+- The column space of $C$ lies in the column space of $A$
+- Matrix-vector multiplication $Ax$ as a linear combination of $A$'s columns
+
+### 3. Row View
+
+**Key insight:** Each row of $C$ is a linear combination of the rows of $B$.
+
+$$
+C = \begin{bmatrix} — & a_1 & — \\ — & a_2 & — \\ & \vdots & \\ — & a_m & — \end{bmatrix} B
+= \begin{bmatrix} — & a_1B & — \\ — & a_2B & — \\ & \vdots & \\ — & a_mB & — \end{bmatrix}
+$$
+
+**Interpretation:** Each row of $A$ multiplies the entire matrix $B$ to produce a row of $C$.
+
+This shows that the row space of $C$ lies in the row space of $B$.
+
+### 4. Column × Row View (Sum of Rank-1 Matrices)
+
+**The most powerful perspective:**
+
+$$
+AB = \sum_{k=1}^n (\text{column } k \text{ of } A) \times (\text{row } k \text{ of } B)
+$$
+
+Each term is a **rank-1 matrix** (outer product of a column vector with a row vector).
+
+**Example:**
+$$
+\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}
+\begin{bmatrix} 5 & 6 \\ 7 & 8 \end{bmatrix}
+=
+\begin{bmatrix} 1 \\ 3 \end{bmatrix}
+\begin{bmatrix} 5 & 6 \end{bmatrix}
++
+\begin{bmatrix} 2 \\ 4 \end{bmatrix}
+\begin{bmatrix} 7 & 8 \end{bmatrix}
+$$
+
+$$
+=
+\begin{bmatrix} 5 & 6 \\ 15 & 18 \end{bmatrix}
++
+\begin{bmatrix} 14 & 16 \\ 28 & 32 \end{bmatrix}
+=
+\begin{bmatrix} 19 & 22 \\ 43 & 50 \end{bmatrix}
+$$
+
+**Why this matters:**
+- Each rank-1 matrix has all rows as multiples of each other
+- Matrix multiplication is a sum of simple, structured pieces
+- Foundation for understanding matrix rank and decompositions (SVD, eigendecomposition)
+
+### 5. Block Multiplication
+
+Matrices can be partitioned into blocks and multiplied block-wise:
+
+$$
+\begin{bmatrix} A_1 & A_2 \\ A_3 & A_4 \end{bmatrix}
+\begin{bmatrix} B_1 & B_2 \\ B_3 & B_4 \end{bmatrix}
+=
+\begin{bmatrix} A_1B_1 + A_2B_3 & A_1B_2 + A_2B_4 \\ A_3B_1 + A_4B_3 & A_3B_2 + A_4B_4 \end{bmatrix}
+$$
+
+**Condition:** Block dimensions must be compatible for multiplication.
+
+**Applications:**
+- Efficient computation for sparse or structured matrices
+- Recursive algorithms for large matrices
+- Parallel computing strategies
+
+---
+
+## Matrix Inverse
+
+### Definition
+
+For a **square** matrix $A$, if there exists a matrix $A^{-1}$ such that:
+
+$$
+A^{-1}A = I \quad \text{and} \quad AA^{-1} = I
+$$
+
+then $A$ is **invertible** (or **non-singular**).
+
+### When Does an Inverse NOT Exist?
+
+A matrix $A$ has **no inverse** if any of these equivalent conditions hold:
+
+1. **Zero determinant:** $\det(A) = 0$
+2. **Dependent columns:** Some column is a linear combination of others
+3. **Non-trivial null space:** $Ax = 0$ for some non-zero $x$
+
+### Why Singular Matrices Have No Inverse: A Proof
+
+Consider the singular matrix:
+
+$$
+A = \begin{bmatrix} 1 & 2 \\ 2 & 4 \end{bmatrix}
+$$
+
+**Observation:** The second column is 2× the first (columns are dependent).
+
+We can find $x = \begin{bmatrix} 2 \\ -1 \end{bmatrix} \neq 0$ such that:
+
+$$
+Ax = \begin{bmatrix} 1 & 2 \\ 2 & 4 \end{bmatrix} \begin{bmatrix} 2 \\ -1 \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix}
+$$
+
+**Proof by contradiction:**
+
+Suppose $A^{-1}$ exists. Then:
+
+1. We have $Ax = 0$ where $x \neq 0$
+2. Multiply both sides by $A^{-1}$: $A^{-1}(Ax) = A^{-1} \cdot 0$
+3. Left side simplifies: $A^{-1}(Ax) = (A^{-1}A)x = Ix = x$
+4. Right side: $A^{-1} \cdot 0 = 0$
+5. Therefore: $x = 0$
+
+**Contradiction!** We started with $x = \begin{bmatrix} 2 \\ -1 \end{bmatrix} \neq 0$, but our logic says $x = 0$.
+
+This proves $A^{-1}$ cannot exist. **The fundamental issue:** if $A$ maps different inputs to the same output (like both $x$ and $0$ to $\begin{bmatrix} 0 \\ 0 \end{bmatrix}$), we cannot uniquely reverse the operation.
+
+### Computing the Inverse
+
+**For 2×2 matrices:**
+
+$$
+A = \begin{bmatrix} a & b \\ c & d \end{bmatrix}
+\quad \Rightarrow \quad
+A^{-1} = \frac{1}{ad-bc} \begin{bmatrix} d & -b \\ -c & a \end{bmatrix}
+$$
+
+Note: $ad - bc$ is the determinant. If $\det(A) = 0$, no inverse exists.
+
+**For larger matrices, use Gauss-Jordan elimination:**
+
+$$
+[A | I] \xrightarrow{\text{row operations}} [I | A^{-1}]
+$$
+
+Start with $A$ augmented with the identity matrix, then use row operations to transform $A$ into $I$. The same operations transform $I$ into $A^{-1}$.
+
+---
+
+## Key Takeaways
+
+1. **Matrix multiplication has five perspectives:**
+   - Element-by-element (computational)
+   - Column view (output columns from input columns)
+   - Row view (output rows from input rows)
+   - **Sum of rank-1 matrices (most insightful)**
+   - Block multiplication (practical for large matrices)
+
+2. **Matrix inverse exists if and only if:**
+   - Determinant is non-zero
+   - Columns are independent
+   - $Ax = 0$ only when $x = 0$
+
+3. **Why this matters:**
+   - Solving $Ax = b$: if $A^{-1}$ exists, then $x = A^{-1}b$
+   - However, Gaussian elimination is usually more efficient than computing $A^{-1}$
+   - Understanding when inverses don't exist reveals the structure of linear transformations
+
+The rank-1 decomposition (view 4) is particularly powerful—it's the foundation for understanding matrix rank, the Four Fundamental Subspaces, and advanced topics like Singular Value Decomposition.
+
+---
+
+## Exercises
+
+### Example 1: Matrix Multiplication (All Five Perspectives)
+
+```{python}
+import numpy as np
+from IPython.display import display, Markdown, Latex
+
+def matrix_to_latex(M, name=""):
+    """Convert numpy matrix to LaTeX bmatrix format"""
+    if len(M.shape) == 1:
+        M = M.reshape(-1, 1)
+    rows = [" & ".join([f"{x:.0f}" if x == int(x) else f"{x:.2f}" for x in row]) for row in M]
+    latex_str = r"\begin{bmatrix}" + r" \\ ".join(rows) + r"\end{bmatrix}"
+    if name:
+        latex_str = f"{name} = " + latex_str
+    return latex_str
+
+A = np.array([[1, 2], [3, 4]])
+B = np.array([[5, 6], [7, 8]])
+C = A @ B
+
+display(Markdown("**Given matrices:**"))
+display(Latex(f"$${matrix_to_latex(A, 'A')}$$"))
+display(Latex(f"$${matrix_to_latex(B, 'B')}$$"))
+```
+
+**Method 1: Element-by-element**
+```{python}
+display(Latex(f"$${matrix_to_latex(C, 'C = AB')}$$"))
+display(Latex(f"$$C_{{11}} = (1)(5) + (2)(7) = {C[0,0]}$$"))
+display(Latex(f"$$C_{{12}} = (1)(6) + (2)(8) = {C[0,1]}$$"))
+display(Latex(f"$$C_{{21}} = (3)(5) + (4)(7) = {C[1,0]}$$"))
+display(Latex(f"$$C_{{22}} = (3)(6) + (4)(8) = {C[1,1]}$$"))
+```
+
+**Method 2: Column view**
+```{python}
+col1 = A @ B[:, 0]
+col2 = A @ B[:, 1]
+
+display(Markdown("Column 1 of C is a linear combination of A's columns:"))
+display(Latex(f"$$A \\begin{{bmatrix}} 5 \\\\ 7 \\end{{bmatrix}} = {matrix_to_latex(col1)}$$"))
+
+display(Markdown("Column 2 of C is a linear combination of A's columns:"))
+display(Latex(f"$$A \\begin{{bmatrix}} 6 \\\\ 8 \\end{{bmatrix}} = {matrix_to_latex(col2)}$$"))
+```
+
+**Method 3: Row view**
+```{python}
+row1 = A[0, :] @ B
+row2 = A[1, :] @ B
+
+display(Markdown("Row 1 of C is a linear combination of B's rows:"))
+display(Latex(f"$$\\begin{{bmatrix}} 1 & 2 \\end{{bmatrix}} B = {matrix_to_latex(row1.reshape(1, -1))}$$"))
+
+display(Markdown("Row 2 of C is a linear combination of B's rows:"))
+display(Latex(f"$$\\begin{{bmatrix}} 3 & 4 \\end{{bmatrix}} B = {matrix_to_latex(row2.reshape(1, -1))}$$"))
+```
+
+**Method 4: Sum of rank-1 matrices (most powerful!)**
+```{python}
+rank1_1 = np.outer(A[:, 0], B[0, :])
+rank1_2 = np.outer(A[:, 1], B[1, :])
+
+display(Markdown("**Rank-1 term 1:**"))
+display(Latex(f"$$\\begin{{bmatrix}} 1 \\\\ 3 \\end{{bmatrix}} \\begin{{bmatrix}} 5 & 6 \\end{{bmatrix}} = {matrix_to_latex(rank1_1)}$$"))
+
+display(Markdown("**Rank-1 term 2:**"))
+display(Latex(f"$$\\begin{{bmatrix}} 2 \\\\ 4 \\end{{bmatrix}} \\begin{{bmatrix}} 7 & 8 \\end{{bmatrix}} = {matrix_to_latex(rank1_2)}$$"))
+
+display(Markdown("**Sum of rank-1 matrices:**"))
+display(Latex(f"$${matrix_to_latex(rank1_1)} + {matrix_to_latex(rank1_2)} = {matrix_to_latex(rank1_1 + rank1_2)}$$"))
+
+display(Markdown("✓ **All methods give the same result!**"))
+```
+
+### Example 2: Matrix Inverse
+
+**Invertible matrix:**
+```{python}
+A_inv = np.array([[2, 1], [5, 3]])
+A_inv_inverse = np.linalg.inv(A_inv)
+det_A = np.linalg.det(A_inv)
+
+display(Latex(f"$${matrix_to_latex(A_inv, 'A')}$$"))
+display(Latex(f"$$\\det(A) = {det_A:.0f} \\neq 0 \\quad \\checkmark \\text{{ Invertible!}}$$"))
+display(Latex(f"$${matrix_to_latex(A_inv_inverse, 'A^{-1}')}$$"))
+
+display(Markdown("**Verification:**"))
+identity = A_inv @ A_inv_inverse
+display(Latex(f"$$A A^{{-1}} = {matrix_to_latex(np.round(identity, 10), '')} = I$$"))
+```
+
+**Singular matrix (no inverse):**
+```{python}
+A_singular = np.array([[1, 2], [2, 4]])
+det_singular = np.linalg.det(A_singular)
+
+display(Latex(f"$${matrix_to_latex(A_singular, 'A')}$$"))
+display(Latex(f"$$\\det(A) = 0 \\quad \\times \\text{{ Singular!}}$$"))
+
+display(Markdown("**Observation:** Column 2 = 2 × Column 1 (linearly dependent)"))
+display(Latex(f"$${matrix_to_latex(A_singular[:, 1])} = 2 \\times {matrix_to_latex(A_singular[:, 0])}$$"))
+
+x = np.array([2, -1])
+Ax = A_singular @ x
+
+display(Markdown(f"**Non-zero vector satisfying $Ax = 0$:**"))
+display(Latex(f"$$A {matrix_to_latex(x, 'x')} = {matrix_to_latex(Ax)} = 0$$"))
+display(Markdown("⟹ **No inverse exists** (proven by contradiction earlier)"))
+```
