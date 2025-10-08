@@ -65,3 +65,9 @@ The site uses a hierarchical navigation structure defined in `_quarto.yml`:
 
 The site is automatically deployed from the `docs/` directory. After rendering, commit and push the `docs/` folder to trigger GitHub Pages rebuild.
 - Author is Chao Ma
+
+## LinkedIn Post Guidelines
+
+When drafting LinkedIn posts for blog content, use these emojis:
+- **Deep Learning topics**: ∇ (delta/nabla symbol) - represents gradients and optimization
+- **Linear Algebra topics**: 📐 (triangle/ruler) - represents geometric and matrix concepts
