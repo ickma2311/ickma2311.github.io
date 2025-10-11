@@ -1,0 +1,243 @@
+---
+title: "MIT 18.06SC Lecture 5.1: Permutation Matrices"
+author: "Chao Ma"
+date: "2025-10-11"
+categories: ["Linear Algebra", "MIT 18.06", "Matrix Operations"]
+code-fold: true
+code-summary: "Show code"
+---
+
+## Context
+
+[My lecture notes](https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture05/5.1_permutation.md) | [Exercises notebook](https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture05/permutation.ipynb)
+
+Permutation matrices reorder rows and columns using a simple structure of 0s and 1s. This post covers the permutation matrices portion of Lecture 5.
+
+---
+
+## What is a Permutation Matrix?
+
+A matrix is a **permutation matrix** if:
+- Each row has exactly one 1, all other entries are 0
+- Each column has exactly one 1, all other entries are 0
+
+### Example: Row Swapping
+
+```{python}
+import numpy as np
+from IPython.display import display, Markdown
+
+def matrix_to_latex(mat, name=""):
+    """Convert numpy matrix to LaTeX bmatrix format"""
+    rows = []
+    for row in mat:
+        rows.append(" & ".join(map(str, row)))
+    latex = r"\begin{bmatrix}" + " \\\\ ".join(rows) + r"\end{bmatrix}"
+    if name:
+        latex = f"{name} = {latex}"
+    return f"$${latex}$$"
+
+# Create a random 3×4 matrix
+A = np.random.randint(0, 10, (3, 4))
+display(Markdown("**Matrix A:**"))
+display(Markdown(matrix_to_latex(A)))
+
+# Create a permutation matrix that swaps rows 0 and 1
+P = np.zeros((3, 3), dtype=int)
+P[0, 1] = 1
+P[1, 0] = 1
+P[2, 2] = 1
+display(Markdown("**Permutation matrix P:**"))
+display(Markdown(matrix_to_latex(P)))
+
+# Apply permutation: PA swaps rows 0 and 1 of A
+display(Markdown("**P @ A (rows 0 and 1 swapped):**"))
+display(Markdown(matrix_to_latex(P @ A)))
+```
+
+**Key insight:** Left multiplication by $P$ reorders the rows of $A$ according to the pattern encoded in $P$.
+
+---
+
+## Counting Permutation Matrices
+
+An $n \times n$ matrix has exactly **$n!$ permutation matrices**.
+
+**Examples:**
+- $n=3$: $3! = 6$ permutation matrices
+- $n=4$: $4! = 24$ permutation matrices
+- $n=5$: $5! = 120$ permutation matrices
+
+### Generating All Permutations
+
+```{python}
+from itertools import permutations
+
+# Generate all permutations for n=3
+n = 3
+perms = list(permutations(range(n)))
+display(Markdown(f"There are **{len(perms)}** permutation matrices for n={n}"))
+display(Markdown(""))
+
+# Display all 6 permutation matrices
+for i, perm in enumerate(perms):
+    display(Markdown(f"**Permutation {i+1}:** {perm}"))
+    P = np.zeros((n, n), dtype=int)
+    P[np.arange(n), perm] = 1
+    display(Markdown(matrix_to_latex(P)))
+    display(Markdown(""))
+```
+
+### Notable Permutation Matrices for $n=3$
+
+**Identity (no permutation):**
+$$
+I = \begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix}
+$$
+
+**Single swap (rows 0 and 1):**
+$$
+P = \begin{bmatrix} 0 & 1 & 0 \\ 1 & 0 & 0 \\ 0 & 0 & 1 \end{bmatrix}
+$$
+
+**Cyclic permutation:**
+$$
+P = \begin{bmatrix} 0 & 1 & 0 \\ 0 & 0 & 1 \\ 1 & 0 & 0 \end{bmatrix}
+$$
+
+---
+
+## Key Properties of Permutation Matrices
+
+Permutation matrices satisfy three properties:
+
+1. **$P^{-1} = P^T$** (inverse equals transpose)
+2. **$PP^T = P^TP = I$** (orthogonal matrix)
+3. **$\det(P) = \pm 1$** (determinant is $\pm 1$)
+
+---
+
+## Proof 1: $P^{-1} = P^T$
+
+### Strategy
+
+Since $PP^{-1} = I$ by definition of inverse, we only need to prove that $PP^T = I$. Then we can conclude $P^{-1} = P^T$.
+
+### Proof of $PP^T = I$
+
+```{python}
+# Example permutation matrix (swaps rows 0 and 1)
+P = np.array([[0, 1, 0],
+              [1, 0, 0],
+              [0, 0, 1]])
+
+# Compute transpose
+P_T = P.T
+
+# Verify PP^T = I
+result = P @ P_T
+display(Markdown("**P @ P^T =**"))
+display(Markdown(matrix_to_latex(result)))
+```
+
+**Intuition:**
+
+The $j$-th column of $P^T$ is the $j$-th row of $P$.
+
+When computing $(PP^T)_{ij}$ (the $(i,j)$ entry):
+- $(PP^T)_{ij} = \text{(row } i \text{ of } P) \cdot \text{(column } j \text{ of } P^T\text{)}$
+- $= \text{(row } i \text{ of } P) \cdot \text{(row } j \text{ of } P\text{)}$
+
+Two cases:
+- **When $i = j$:** Dot product of a row with itself = 1 (each row has exactly one 1)
+- **When $i \neq j$:** Dot product of different rows = 0 (the 1s are in different positions)
+
+Therefore, $PP^T = I$.
+
+### Verification by Row
+
+```{python}
+# Verify by computing each row of P times P^T
+for i in range(3):
+    result_row = P[i] @ P_T
+    display(Markdown(f"**Row {i} of P times P^T:** $[{' \\ '.join(map(str, result_row))}]$"))
+display(Markdown(""))
+display(Markdown("Each row gives one row of the identity matrix!"))
+```
+
+### Conclusion: $P^{-1} = P^T$
+
+**Proof:**
+
+$$
+\begin{align}
+PP^T &= I \quad \text{(proved above)} \\
+PP^{-1} &= I \quad \text{(definition of inverse)} \\
+\therefore P^{-1} &= P^T
+\end{align}
+$$
+
+**Practical implications:**
+- Computing $P^{-1}$ is as simple as transposing $P$
+- Transposition is $O(n^2)$, much faster than general matrix inversion $O(n^3)$
+- If $PA$ permutes rows, then $P^T(PA) = A$ undoes the permutation
+
+---
+
+## Proof 2: $\det(P) = \pm 1$
+
+### Properties of Determinants
+
+**Properties used:**
+1. $\det(AB) = \det(A)\det(B)$ (product property)
+2. $\det(A^T) = \det(A)$ (transpose property)
+
+### Proof
+
+$$
+\begin{align}
+\det(PP^T) &= \det(I) = 1 \\
+\det(PP^T) &= \det(P)\det(P^T) \quad \text{(product property)} \\
+&= \det(P)\det(P) \quad \text{(transpose property)} \\
+&= [\det(P)]^2 \\
+\therefore [\det(P)]^2 &= 1 \\
+\det(P) &= \pm 1
+\end{align}
+$$
+
+### Interpretation: Even vs. Odd Permutations
+
+- **$\det(P) = +1$:** Even permutation (even number of row swaps)
+- **$\det(P) = -1$:** Odd permutation (odd number of row swaps)
+
+**Examples:**
+
+```{python}
+# Identity matrix (0 swaps)
+I = np.eye(3, dtype=int)
+display(Markdown(f"$\\det(I) = {np.linalg.det(I):.0f}$ (even: 0 swaps)"))
+
+# Single swap (1 swap)
+P_swap = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+display(Markdown(f"$\\det(P_{{swap}}) = {np.linalg.det(P_swap):.0f}$ (odd: 1 swap)"))
+
+# Cyclic permutation (2 swaps)
+P_cycle = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
+display(Markdown(f"$\\det(P_{{cycle}}) = {np.linalg.det(P_cycle):.0f}$ (even: 2 swaps)"))
+```
+
+---
+
+## Summary
+
+**Permutation matrices:**
+
+- **Structure:** One 1 per row and column, rest are 0s
+- **Count:** $n!$ permutation matrices for $n \times n$ matrices
+- **Inverse:** $P^{-1} = P^T$ (orthogonal property)
+- **Determinant:** $\det(P) = \pm 1$ (sign indicates even/odd permutation)
+- **Applications:** Critical for LU decomposition, numerical stability, and efficient computation
+
+---
+
+*Source: MIT 18.06SC Linear Algebra, Lecture 5*
