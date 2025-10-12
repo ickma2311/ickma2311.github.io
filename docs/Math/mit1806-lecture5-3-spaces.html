@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Chao Ma">
-<meta name="dcterms.date" content="2024-05-17">
+<meta name="dcterms.date" content="2025-10-12">
 
-<title>Logistic Regression – ∇ ickma.dev</title>
+<title>MIT 18.06SC Lecture 5.3: Vector Spaces – ∇ ickma.dev</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -273,17 +273,17 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#model-formulation" id="toc-model-formulation" class="nav-link active" data-scroll-target="#model-formulation">Model Formulation</a>
+  <li><a href="#context" id="toc-context" class="nav-link active" data-scroll-target="#context">Context</a></li>
+  <li><a href="#definition" id="toc-definition" class="nav-link" data-scroll-target="#definition">Definition</a></li>
+  <li><a href="#subspaces" id="toc-subspaces" class="nav-link" data-scroll-target="#subspaces">Subspaces</a>
   <ul class="collapse">
-  <li><a href="#hypothesis" id="toc-hypothesis" class="nav-link" data-scroll-target="#hypothesis">Hypothesis</a></li>
+  <li><a href="#examples-of-subspaces" id="toc-examples-of-subspaces" class="nav-link" data-scroll-target="#examples-of-subspaces">Examples of Subspaces</a></li>
   </ul></li>
-  <li><a href="#loss-function-binary-cross-entropy" id="toc-loss-function-binary-cross-entropy" class="nav-link" data-scroll-target="#loss-function-binary-cross-entropy">Loss Function (Binary Cross-Entropy)</a>
+  <li><a href="#properties-of-subspaces" id="toc-properties-of-subspaces" class="nav-link" data-scroll-target="#properties-of-subspaces">Properties of Subspaces</a>
   <ul class="collapse">
-  <li><a href="#likelihood" id="toc-likelihood" class="nav-link" data-scroll-target="#likelihood">1. Likelihood</a></li>
-  <li><a href="#log-likelihood" id="toc-log-likelihood" class="nav-link" data-scroll-target="#log-likelihood">2. Log-Likelihood</a></li>
-  <li><a href="#cost-function" id="toc-cost-function" class="nav-link" data-scroll-target="#cost-function">3. Cost Function</a></li>
+  <li><a href="#closed-under-addition" id="toc-closed-under-addition" class="nav-link" data-scroll-target="#closed-under-addition">1. Closed Under Addition</a></li>
+  <li><a href="#closed-under-scalar-multiplication" id="toc-closed-under-scalar-multiplication" class="nav-link" data-scroll-target="#closed-under-scalar-multiplication">2. Closed Under Scalar Multiplication</a></li>
   </ul></li>
-  <li><a href="#refernce-bernoulli-distribution" id="toc-refernce-bernoulli-distribution" class="nav-link" data-scroll-target="#refernce-bernoulli-distribution">refernce: Bernoulli Distribution</a></li>
   </ul>
 </nav>
     </div>
@@ -292,10 +292,11 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Logistic Regression</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">MIT 18.06SC Lecture 5.3: Vector Spaces</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
   <div class="quarto-categories">
-    <div class="quarto-category">ML</div>
-    <div class="quarto-category">classification</div>
+    <div class="quarto-category">Linear Algebra</div>
+    <div class="quarto-category">MIT 18.06</div>
+    <div class="quarto-category">Vector Spaces</div>
   </div>
   </div>
 
@@ -313,7 +314,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">May 17, 2024</p>
+      <p class="date">October 12, 2025</p>
     </div>
   </div>
   
@@ -325,59 +326,48 @@ window.Quarto = {
 </header>
 
 
-<section id="model-formulation" class="level2">
-<h2 class="anchored" data-anchor-id="model-formulation">Model Formulation</h2>
-<p>The core idea of logistic regression is to model the probability of a binary outcome.</p>
-<section id="hypothesis" class="level3">
-<h3 class="anchored" data-anchor-id="hypothesis">Hypothesis</h3>
-<p>We model the probability that the target variable (y) is 1, given the features (x), using the sigmoid (or logistic) function, denoted by ().</p>
-<p><span class="math display">\[
-P(y_i=1 \mid x_i) = \hat{y}_i = \sigma(w^T x_i + b)
-\]</span></p>
-<p>The sigmoid function is defined as: <span class="math display">\[
-\sigma(z) = \frac{1}{1 + e^{-z}}
-\]</span></p>
-<p>Since the outcome is binary, the probability of (y) being 0 is simply: <span class="math display">\[
-P(y_i=0 \mid x_i) = 1 - \hat{y}_i
-\]</span></p>
-<p>These two cases can be written compactly as a single equation, which is the probability mass function of a Bernoulli distribution: <span class="math display">\[
-P(y_i \mid x_i) = \hat{y}_i^{y_i} (1 - \hat{y}_i)^{1 - y_i}
-\]</span></p>
+<section id="context" class="level2">
+<h2 class="anchored" data-anchor-id="context">Context</h2>
+<p><a href="https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture05/5.3_space.md">My lecture notes</a></p>
+<p>Vector spaces and subspaces are fundamental structures in linear algebra. This post covers the vector spaces portion of Lecture 5.</p>
+<hr>
+</section>
+<section id="definition" class="level2">
+<h2 class="anchored" data-anchor-id="definition">Definition</h2>
+<p>The space <span class="math inline">\(\mathbb{R}^n\)</span> has exactly <strong>n dimensions</strong>.</p>
+<p><strong>Example:</strong> <span class="math display">\[
+\begin{bmatrix} 1 &amp; 2 \\ 3 &amp; 4 \end{bmatrix}
+\]</span> is a matrix in <span class="math inline">\(\mathbb{R}^{2 \times 2}\)</span> (2×2 real matrices).</p>
+</section>
+<section id="subspaces" class="level2">
+<h2 class="anchored" data-anchor-id="subspaces">Subspaces</h2>
+<p>A <strong>subspace</strong> is a subset of <span class="math inline">\(\mathbb{R}^n\)</span> that is closed under addition and scalar multiplication.</p>
+<section id="examples-of-subspaces" class="level3">
+<h3 class="anchored" data-anchor-id="examples-of-subspaces">Examples of Subspaces</h3>
+<p><strong>In <span class="math inline">\(\mathbb{R}^2\)</span>:</strong> - A line through the origin creates a subspace</p>
+<p><strong>In <span class="math inline">\(\mathbb{R}^3\)</span>:</strong> - A line through the origin creates a line subspace - A plane through the origin creates a plane subspace</p>
+<p><strong>In <span class="math inline">\(\mathbb{R}^4\)</span>:</strong> - Think: How can we create subspaces in <span class="math inline">\(\mathbb{R}^4\)</span>?</p>
 </section>
 </section>
-<section id="loss-function-binary-cross-entropy" class="level2">
-<h2 class="anchored" data-anchor-id="loss-function-binary-cross-entropy">Loss Function (Binary Cross-Entropy)</h2>
-<p>To find the optimal parameters (w) and (b), we use Maximum Likelihood Estimation (MLE). We want to find the parameters that maximize the probability of observing our given dataset.</p>
-<section id="likelihood" class="level3">
-<h3 class="anchored" data-anchor-id="likelihood">1. Likelihood</h3>
-<p>The likelihood is the joint probability of observing all (n) data points, assuming they are independent and identically distributed (i.i.d.): <span class="math display">\[
-\mathcal{L}(w, b) = \prod_{i=1}^n P(y_i \mid x_i) = \prod_{i=1}^n \hat{y}_i^{y_i} (1 - \hat{y}_i)^{1 - y_i}
-\]</span></p>
+<section id="properties-of-subspaces" class="level2">
+<h2 class="anchored" data-anchor-id="properties-of-subspaces">Properties of Subspaces</h2>
+<p>A subspace must satisfy two properties:</p>
+<section id="closed-under-addition" class="level3">
+<h3 class="anchored" data-anchor-id="closed-under-addition">1. Closed Under Addition</h3>
+<p>If vectors <span class="math inline">\(\vec{v}\)</span> and <span class="math inline">\(\vec{w}\)</span> are in the subspace, then <span class="math inline">\(\vec{v} + \vec{w}\)</span> is also in the subspace.</p>
+<p><strong>Example:</strong> For <span class="math inline">\(\mathbb{R}^2\)</span> line <span class="math inline">\(y=2x\)</span>: - <span class="math inline">\([1,2]\)</span> and <span class="math inline">\([2,4]\)</span> are in the line - <span class="math inline">\([1,2] + [2,4] = [3,6]\)</span> is still in the line ✓</p>
 </section>
-<section id="log-likelihood" class="level3">
-<h3 class="anchored" data-anchor-id="log-likelihood">2. Log-Likelihood</h3>
-<p>Working with products is difficult, so we take the logarithm of the likelihood. Maximizing the log-likelihood is equivalent to maximizing the likelihood.</p>
-<p><span class="math display">\[
-\log \mathcal{L}(w, b) = \sum_{i=1}^n \left[ y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right]
-\]</span></p>
-</section>
-<section id="cost-function" class="level3">
-<h3 class="anchored" data-anchor-id="cost-function">3. Cost Function</h3>
-<p>In machine learning, we frame problems as minimizing a cost function. The standard convention is to minimize the <strong>negative</strong> log-likelihood. This gives us the <strong>Binary Cross-Entropy</strong> loss, (J(w, b)).</p>
-<p><span class="math display">\[
-J(w, b) = - \frac{1}{n} \sum_{i=1}^n \left[ y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right]
-\]</span> The <span class="math inline">\(\frac{1}{n}\)</span> term is an average over the training examples and doesn’t change the minimum, but it helps in stabilizing the training process.</p>
-</section>
-</section>
-<section id="refernce-bernoulli-distribution" class="level2">
-<h2 class="anchored" data-anchor-id="refernce-bernoulli-distribution">refernce: Bernoulli Distribution</h2>
-<p>Formular <span class="math display">\[
-P(y) = p^y (1 - p)^{1 - y}, \quad y \in \{0, 1\}
-\]</span> * when y = 1：<span class="math inline">\(P(y=1) = p^1 (1 - p)^0 = p\)</span> * when y=0: $P(y=0) = p^0 (1 - p)^1 = 1 - p $</p>
+<section id="closed-under-scalar-multiplication" class="level3">
+<h3 class="anchored" data-anchor-id="closed-under-scalar-multiplication">2. Closed Under Scalar Multiplication</h3>
+<p>If vector <span class="math inline">\(\vec{v}\)</span> is in the subspace and <span class="math inline">\(c\)</span> is any scalar, then <span class="math inline">\(c\vec{v}\)</span> is also in the subspace.</p>
+<p><strong>Example:</strong> For <span class="math inline">\(\mathbb{R}^2\)</span> line <span class="math inline">\(y=2x\)</span>: - <span class="math inline">\([1,2]\)</span> is in the line - <span class="math inline">\(1.5 \times [1,2] = [1.5, 3]\)</span> is still in the line ✓</p>
+<hr>
+<p><em>Source: MIT 18.06SC Linear Algebra, Lecture 5</em></p>
 
 
 <!-- -->
 
+</section>
 </section>
 
 </main> <!-- /main -->
@@ -833,78 +823,69 @@ P(y) = p^y (1 - p)^{1 - y}, \quad y \in \{0, 1\}
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Logistic Regression"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "MIT 18.06SC Lecture 5.3: Vector Spaces"</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2024-05-17"</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [ML, classification]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2025-10-12"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> ["Linear Algebra", "MIT 18.06", "Vector Spaces"]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## Context</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">My lecture notes</span><span class="co">](https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture05/5.3_space.md)</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## Model Formulation</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>Vector spaces and subspaces are fundamental structures in linear algebra. This post covers the vector spaces portion of Lecture 5.</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>The core idea of logistic regression is to model the probability of a binary outcome.</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">### Hypothesis</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">## Definition</span></span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>We model the probability that the target variable <span class="sc">\(</span>y<span class="sc">\)</span> is 1, given the features <span class="sc">\(</span>x<span class="sc">\)</span>, using the sigmoid (or logistic) function, denoted by <span class="sc">\(</span>\sigma<span class="sc">\)</span>.</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>The space $\mathbb{R}^n$ has exactly **n dimensions**.</span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>P(y_i=1 \mid x_i) = \hat{y}_i = \sigma(w^T x_i + b)</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>The sigmoid function is defined as:</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>\sigma(z) = \frac{1}{1 + e^{-z}}</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>Since the outcome is binary, the probability of <span class="sc">\(</span>y<span class="sc">\)</span> being 0 is simply:</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>P(y_i=0 \mid x_i) = 1 - \hat{y}_i</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>These two cases can be written compactly as a single equation, which is the probability mass function of a Bernoulli distribution:</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>P(y_i \mid x_i) = \hat{y}_i^{y_i} (1 - \hat{y}_i)^{1 - y_i}</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>**Example:**</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix} 1 &amp; 2 <span class="sc">\\</span> 3 &amp; 4 \end{bmatrix}</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>is a matrix in $\mathbb{R}^{2 \times 2}$ (2×2 real matrices).</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="fu">## Subspaces</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>A **subspace** is a subset of $\mathbb{R}^n$ that is closed under addition and scalar multiplication.</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="fu">### Examples of Subspaces</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>**In $\mathbb{R}^2$:**</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A line through the origin creates a subspace</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>**In $\mathbb{R}^3$:**</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A line through the origin creates a line subspace</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A plane through the origin creates a plane subspace</span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="fu">## Loss Function (Binary Cross-Entropy)</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>To find the optimal parameters <span class="sc">\(</span>w<span class="sc">\)</span> and <span class="sc">\(</span>b<span class="sc">\)</span>, we use Maximum Likelihood Estimation (MLE). We want to find the parameters that maximize the probability of observing our given dataset.</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1. Likelihood</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>The likelihood is the joint probability of observing all <span class="sc">\(</span>n<span class="sc">\)</span> data points, assuming they are independent and identically distributed (i.i.d.):</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>\mathcal{L}(w, b) = \prod_{i=1}^n P(y_i \mid x_i) = \prod_{i=1}^n \hat{y}_i^{y_i} (1 - \hat{y}_i)^{1 - y_i}</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>**In $\mathbb{R}^4$:**</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Think: How can we create subspaces in $\mathbb{R}^4$?</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="fu">## Properties of Subspaces</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>A subspace must satisfy two properties:</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1. Closed Under Addition</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>If vectors $\vec{v}$ and $\vec{w}$ are in the subspace, then $\vec{v} + \vec{w}$ is also in the subspace.</span>
 <span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2. Log-Likelihood</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>Working with products is difficult, so we take the logarithm of the likelihood. Maximizing the log-likelihood is equivalent to maximizing the likelihood.</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>**Example:** For $\mathbb{R}^2$ line $y=2x$:</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$<span class="co">[</span><span class="ot">1,2</span><span class="co">]</span>$ and $<span class="co">[</span><span class="ot">2,4</span><span class="co">]</span>$ are in the line</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$<span class="co">[</span><span class="ot">1,2</span><span class="co">]</span> + <span class="co">[</span><span class="ot">2,4</span><span class="co">]</span> = <span class="co">[</span><span class="ot">3,6</span><span class="co">]</span>$ is still in the line ✓</span>
 <span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>\log \mathcal{L}(w, b) = \sum_{i=1}^n \left<span class="co">[</span><span class="ot"> y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right</span><span class="co">]</span></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2. Closed Under Scalar Multiplication</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>If vector $\vec{v}$ is in the subspace and $c$ is any scalar, then $c\vec{v}$ is also in the subspace.</span>
 <span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a><span class="fu">### 3. Cost Function</span></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>In machine learning, we frame problems as minimizing a cost function. The standard convention is to minimize the **negative** log-likelihood. This gives us the **Binary Cross-Entropy** loss, <span class="sc">\(</span>J(w, b)<span class="sc">\)</span>.</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>**Example:** For $\mathbb{R}^2$ line $y=2x$:</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$<span class="co">[</span><span class="ot">1,2</span><span class="co">]</span>$ is in the line</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$1.5 \times <span class="co">[</span><span class="ot">1,2</span><span class="co">]</span> = <span class="co">[</span><span class="ot">1.5, 3</span><span class="co">]</span>$ is still in the line ✓</span>
 <span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>J(w, b) = - \frac{1}{n} \sum_{i=1}^n \left<span class="co">[</span><span class="ot"> y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right</span><span class="co">]</span></span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>The $\frac{1}{n}$ term is an average over the training examples and doesn't change the minimum, but it helps in stabilizing the training process.</span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="fu">## refernce: Bernoulli Distribution</span></span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>Formular</span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>P(y) = p^y (1 - p)^{1 - y}, \quad y \in <span class="sc">\{</span>0, 1<span class="sc">\}</span></span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>when y = 1：$P(y=1) = p^1 (1 - p)^0 = p$</span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>when y=0: $P(y=0) = p^0 (1 - p)^1 = 1 - p $</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>*Source: MIT 18.06SC Linear Algebra, Lecture 5*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
