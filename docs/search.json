@@ -354,14 +354,14 @@
     "href": "index.html",
     "title": "ickma.dev",
     "section": "",
-    "text": "My learning notes and thoughts on math and machine learning.\nCurrently reading the Deep Learning book.\n\n\n\n\nHow ReLU solves problems that linear models cannot handle.\n\n\n\nThe mathematical connection between probabilistic models and loss functions.\n\n\n\nExploring activation functions and their impact on neural network learning.\n\n\n\nHow depth enables hierarchical feature reuse and exponential expressiveness with fewer parameters.\n\n\n\nThe algorithm that makes training deep networks computationally feasible through efficient gradient computation.\n\n\n\nEssential second-order calculus concepts needed before Chapter 7 on optimization algorithms.\n\n\n\n\n\n\nTwo powerful perspectives that reveal the hidden beauty of linear systems: row picture vs column picture.\n\n\n\nThe systematic algorithm that transforms linear systems into upper triangular form for easy solution.\n\n\n\nFive different perspectives on matrix multiplication, from element-wise computation to rank-1 decomposition, plus understanding when matrices can’t be inverted.\n\n\n\nFactoring matrices into Lower × Upper triangular form: the foundation of efficient numerical linear algebra and solving multiple systems with the same matrix.\n\n\n\nPermutation matrices reorder rows and columns using a simple structure of 0s and 1s.\n\n\n\nThe transpose operation switches rows to columns, creating symmetric matrices.\n\n\n\nVector spaces and subspaces: closed under addition and scalar multiplication.\n\n\n\n\n\n\n\nK-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
+    "text": "My learning notes and thoughts on math and machine learning.\nCurrently reading the Deep Learning book.\n\n\n\n\nHow ReLU solves problems that linear models cannot handle.\n\n\n\nThe mathematical connection between probabilistic models and loss functions.\n\n\n\nExploring activation functions and their impact on neural network learning.\n\n\n\nHow depth enables hierarchical feature reuse and exponential expressiveness with fewer parameters.\n\n\n\nThe algorithm that makes training deep networks computationally feasible through efficient gradient computation.\n\n\n\nEssential second-order calculus concepts needed before Chapter 7 on optimization algorithms.\n\n\n\nHow L2 regularization shrinks weights based on Hessian eigenvalues, preserving important directions while penalizing less sensitive ones.\n\n\n\n\n\n\nTwo powerful perspectives that reveal the hidden beauty of linear systems: row picture vs column picture.\n\n\n\nThe systematic algorithm that transforms linear systems into upper triangular form for easy solution.\n\n\n\nFive different perspectives on matrix multiplication, from element-wise computation to rank-1 decomposition, plus understanding when matrices can’t be inverted.\n\n\n\nFactoring matrices into Lower × Upper triangular form: the foundation of efficient numerical linear algebra and solving multiple systems with the same matrix.\n\n\n\nPermutation matrices reorder rows and columns using a simple structure of 0s and 1s.\n\n\n\nThe transpose operation switches rows to columns, creating symmetric matrices.\n\n\n\nVector spaces and subspaces: closed under addition and scalar multiplication.\n\n\n\n\n\n\n\nK-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\n\n\nDP Regex"
   },
   {
     "objectID": "index.html#deep-learning-book",
     "href": "index.html#deep-learning-book",
     "title": "ickma.dev",
     "section": "",
-    "text": "How ReLU solves problems that linear models cannot handle.\n\n\n\nThe mathematical connection between probabilistic models and loss functions.\n\n\n\nExploring activation functions and their impact on neural network learning.\n\n\n\nHow depth enables hierarchical feature reuse and exponential expressiveness with fewer parameters.\n\n\n\nThe algorithm that makes training deep networks computationally feasible through efficient gradient computation.\n\n\n\nEssential second-order calculus concepts needed before Chapter 7 on optimization algorithms."
+    "text": "How ReLU solves problems that linear models cannot handle.\n\n\n\nThe mathematical connection between probabilistic models and loss functions.\n\n\n\nExploring activation functions and their impact on neural network learning.\n\n\n\nHow depth enables hierarchical feature reuse and exponential expressiveness with fewer parameters.\n\n\n\nThe algorithm that makes training deep networks computationally feasible through efficient gradient computation.\n\n\n\nEssential second-order calculus concepts needed before Chapter 7 on optimization algorithms.\n\n\n\nHow L2 regularization shrinks weights based on Hessian eigenvalues, preserving important directions while penalizing less sensitive ones."
   },
   {
     "objectID": "index.html#mathematics",
@@ -768,5 +768,89 @@
     "title": "K-means Clustering",
     "section": "",
     "text": "Setup points and K\nwe will implement a KNN algorithm to cluster the points\n\n\nX=[[1,1],[2,2.1],[3,2.5],[6,7],[7,7.1],[9,7.5]]\nk=2\n\nmax_iter=3\n\n\n# Visualize the data\n\n\nimport matplotlib.pyplot as plt\n\nplt.scatter([x[0] for x in X],[x[1] for x in X])\nplt.show()\n\n\n\n\n\n\n\n\n\n# Pure python implementation of K-means clustering\ndef knn_iter(X,centroids):\n    # set up new clusters\n    new_clusters=[[] for _ in range(len(centroids))]\n    # k=len(centroids)\n    # assign each point to the nearest centroid\n    for x in X:\n        k,distance=0,(x[0]-centroids[0][0])**2+(x[1]-centroids[0][1])**2\n        for i,c in enumerate(centroids[1:],1):\n            if (x[0]-c[0])**2+(x[1]-c[1])**2&lt;distance:\n                k=i\n                distance=(x[0]-c[0])**2+(x[1]-c[1])**2\n        new_clusters[k].append(x)\n    \n    # calculate new centroids\n    new_centroids=[[\n        sum([x[0] for x in cluster])/len(cluster),\n        sum([x[1] for x in cluster])/len(cluster)\n    ] if cluster else centroids[i] for i,cluster in enumerate(new_clusters)]\n    return new_centroids\n\n\n\n\n\n\n\n\ndef iter_and_draw(X,k,max_iter):\n    centroids=X[:k]  # Randomly select 2 centroids\n    fig, axes = plt.subplots(max_iter//3+(1 if max_iter%3!=0 else 0),\n        3, figsize=(15, 10))\n    axes=axes.flatten()\n    for i in range(max_iter):\n        \n        # Plot points and centroids\n\n\n        # Assign each point to nearest centroid and plot with corresponding color\n        colors = ['blue', 'green', 'purple', 'orange', 'brown', 'pink', 'gray', 'olive', 'cyan']\n        for j, x in enumerate(X):\n            # Find nearest centroid\n            min_dist = float('inf')\n            nearest_centroid = 0\n            for k, c in enumerate(centroids):\n                dist = (x[0]-c[0])**2 + (x[1]-c[1])**2\n                if dist &lt; min_dist:\n                    min_dist = dist\n                    nearest_centroid = k\n            # Plot point with color corresponding to its cluster\n            axes[i].scatter(x[0], x[1], c=colors[nearest_centroid % len(colors)], label=f'Cluster {nearest_centroid+1}' if j==0 else \"\")\n        axes[i].scatter([c[0] for c in centroids], [c[1] for c in centroids], c='red', marker='*', s=200, label='Centroids')\n        axes[i].set_title(f'Iteration {i}')\n        centroids = knn_iter(X, centroids)\n\n    plt.tight_layout()\n    plt.show()\n\niter_and_draw(X,k,max_iter)\n# print(centroids)\n\n\n\n\n\n\n\n\n\n# A 3 clusters example\n\nimport numpy as np\n\nX1=np.random.rand(20,2)+5 # Some points in the upper right corner\nX2=np.random.rand(20,2)+3 # Some points in the middle\nX3=np.random.rand(20,2) # Some points in the lower left corner\n\niter_and_draw(np.concatenate((X1,X2,X3)),3,5)\n\n\n\n\n\n\n\n\n\n\nA question?\n\nWhat to do if one cluster has no assigned points during iteration?\n\n\n\nFormula Derivation\nThe goal is to minimize the loss of inertia which is sum of the points to cluster centroids.\n\\[\nLoss= \\sum_{i=1}^n \\sum_{x \\in C_i} ||x-\\mu_i||^2\n\\]\nTo iter \\(\\mu\\) for each cluster, let us find the derivative of the following function. \\[\nf(\\mu)=\\sum_{i=1}^n ||x_i-\\mu||^2 =\n\\sum_{i=1}^n {x_i}^2+\\mu^2-2x_i\\mu\n\\]\nGiven a \\(\\nabla \\mu\\), \\[\nf(\\mu + \\nabla \\mu)=\\sum_{i=1}^n ||x_i+\\nabla \\mu -\\mu||^2 =\n\\sum_{i=1}^n  {x_i}^2+\\mu^2+{\\nabla \\mu}^2-2{x_i \\mu}-2{\\mu \\nabla \\mu}+2{x_i \\nabla \\mu}\n\\]\n\\[\nf(\\mu + \\nabla \\mu)-f(\\mu)=\n\\sum_{i=1}^n {\\nabla \\mu}^2-2{\\mu \\nabla \\mu}+2{x_i \\nabla \\mu}\n\\]\n\\[\n\\frac {f(\\mu + \\nabla \\mu)-f(\\mu)}{\\nabla \\mu}=\\sum_{i=1}^n {\\nabla \\mu} -2 \\mu +2{x_i} = 2\\sum_{i=1}^n x_i - 2n\\mu\n\\]\nNow we can see if \\(n\\mu = \\sum_{i=1}^n x_i\\), then the derivative is 0, this is why in each iteration, we need to set the center of the cluster as centroid."
+  },
+  {
+    "objectID": "ML/l2-regularization.html",
+    "href": "ML/l2-regularization.html",
+    "title": "Deep Learning Book Chapter 7.1.1: L2 Regularization",
+    "section": "",
+    "text": "My lecture notes\nL2 regularization (ridge regression) adds a penalty term to the loss function to prevent overfitting. This post walks through the math behind how L2 regularization affects the optimal weights, using eigenvalue decomposition to show that it shrinks weights differently in different directions based on the Hessian’s curvature."
+  },
+  {
+    "objectID": "ML/l2-regularization.html#context",
+    "href": "ML/l2-regularization.html#context",
+    "title": "Deep Learning Book Chapter 7.1.1: L2 Regularization",
+    "section": "",
+    "text": "My lecture notes\nL2 regularization (ridge regression) adds a penalty term to the loss function to prevent overfitting. This post walks through the math behind how L2 regularization affects the optimal weights, using eigenvalue decomposition to show that it shrinks weights differently in different directions based on the Hessian’s curvature."
+  },
+  {
+    "objectID": "ML/l2-regularization.html#three-unproven-theorems",
+    "href": "ML/l2-regularization.html#three-unproven-theorems",
+    "title": "Deep Learning Book Chapter 7.1.1: L2 Regularization",
+    "section": "Three Unproven Theorems",
+    "text": "Three Unproven Theorems\nThese theorems are used directly here without proof. Note: Proofs will be provided in an additional blog post; here we just use them.\n\n\\(H = Q\\Lambda Q^T\\)\n\\([QAQ^T]^{-1} = (Q^T)^{-1}A^{-1}Q^{-1} = QA^{-1}Q^T\\)\n\nWhen Q is an orthogonal matrix, \\(Q^T = Q^{-1}\\)\n\nThe loss from w to w* is \\(\\frac{1}{2}(w-w^*)^TH(w-w^*)\\)\n\nThis is similar to the kinematic formula \\(s = \\frac{1}{2}at^2\\), with two key differences:\n\nHere the dimension is not time, but the displacement from w to w*\nHere the dimension is not the 0-dimensional t, but w which is a vector with dimensions, so we use H"
+  },
+  {
+    "objectID": "ML/l2-regularization.html#formula-7.1",
+    "href": "ML/l2-regularization.html#formula-7.1",
+    "title": "Deep Learning Book Chapter 7.1.1: L2 Regularization",
+    "section": "Formula 7.1",
+    "text": "Formula 7.1\n\\[\n\\tilde{J}(\\theta; x, y) = J(\\theta; x, y) + \\alpha \\Omega(\\theta)\n\\]\nTotal objective including regularization."
+  },
+  {
+    "objectID": "ML/l2-regularization.html#formula-7.2",
+    "href": "ML/l2-regularization.html#formula-7.2",
+    "title": "Deep Learning Book Chapter 7.1.1: L2 Regularization",
+    "section": "Formula 7.2",
+    "text": "Formula 7.2\nHere \\(w^Tw\\) represents the L2 norm of parameters, \\(\\alpha\\) represents the penalty coefficient, between 0-1, and relatively close to 0.\n\\[\n\\tilde{J}(w; \\theta; y) = \\frac{\\alpha}{2}w^Tw + J(w; X; y)\n\\]"
+  },
+  {
+    "objectID": "ML/l2-regularization.html#formula-7.3",
+    "href": "ML/l2-regularization.html#formula-7.3",
+    "title": "Deep Learning Book Chapter 7.1.1: L2 Regularization",
+    "section": "Formula 7.3",
+    "text": "Formula 7.3\n\\[\n\\nabla \\tilde{J}(w; X; y) = \\alpha w + \\nabla_w J(w; X; y)\n\\]\nTo understand this formula, the key is understanding the gradient of \\(w^Tw\\).\nIn the one-dimensional world, if we have \\(f(x) = x^2\\), which is equivalent to L2, then the gradient is \\(f'(x) = 2x\\).\nDerivation: \\[\n\\begin{align}\n(x + \\Delta x)^2 &= x^2 + 2x\\Delta x + \\Delta x^2 \\\\\n(x + \\Delta x)^2 - x^2 &= 2x\\Delta x + \\Delta x^2 \\\\\n\\frac{f(x) - f(\\Delta x)}{\\Delta x} &= 2x + \\Delta x\n\\end{align}\n\\]\nExtending to higher dimensions, \\(\\nabla(w^Tw) = 2w\\), so the gradient of \\(\\frac{\\alpha}{2}w^Tw\\) is \\(\\alpha w\\)."
+  },
+  {
+    "objectID": "ML/l2-regularization.html#formula-7.4-7.5",
+    "href": "ML/l2-regularization.html#formula-7.4-7.5",
+    "title": "Deep Learning Book Chapter 7.1.1: L2 Regularization",
+    "section": "Formula 7.4 & 7.5",
+    "text": "Formula 7.4 & 7.5\nThis is straightforward to understand: \\(\\epsilon\\) is the learning rate, or step size.\n\\[\nw \\leftarrow w - \\epsilon (\\alpha w + \\nabla J(w; X; y))\n\\]"
+  },
+  {
+    "objectID": "ML/l2-regularization.html#formula-7.6",
+    "href": "ML/l2-regularization.html#formula-7.6",
+    "title": "Deep Learning Book Chapter 7.1.1: L2 Regularization",
+    "section": "Formula 7.6",
+    "text": "Formula 7.6\nThis formula makes a quadratic approximation in the neighborhood of w* (the optimal solution) without introducing L2, yielding:\n\\[\n\\hat{J}(\\theta) = J(w^*) + \\frac{1}{2}(w - w^*)^T H(w - w^*)\n\\]\nThis can actually be seen as L2 weighted by the Hessian matrix. Because the curvature differs in each direction, we multiply the distance in each direction by the curvature in that direction to get a weighted squared distance.\nTo understand this, we need the Taylor expansion. For one dimension: \\[\nf(x) \\approx f(x^*) + f'(x)(x - x^*) + \\frac{1}{2}f''(x)(x - x^*)^2\n\\]\nFor second order: \\[\nJ(w) \\approx J(w^*) + (w - w^*)^\\top \\nabla J(w^*) + \\frac{1}{2}(w - w^*)^\\top H(w - w^*)\n\\]\nSince w* is the optimal solution, the gradient is 0, so we can directly remove \\((w - w^*)^\\top \\nabla J(w^*)\\).\nThis directly gives us formula 7.6."
+  },
+  {
+    "objectID": "ML/l2-regularization.html#formula-7.7",
+    "href": "ML/l2-regularization.html#formula-7.7",
+    "title": "Deep Learning Book Chapter 7.1.1: L2 Regularization",
+    "section": "Formula 7.7",
+    "text": "Formula 7.7\n\\[\n\\nabla \\hat{J}(w) = H(w - w^*)\n\\]\nFormula 7.7 is the derivative of formula 7.6. Since \\(J(w^*)\\) is a constant with gradient 0, we only need to find the gradient of \\(\\frac{1}{2}(w - w^*)^T H(w - w^*)\\), which is \\((w - w^*)\\) times H (can be derived from one dimension)."
+  },
+  {
+    "objectID": "ML/l2-regularization.html#formula-7.87.97.10",
+    "href": "ML/l2-regularization.html#formula-7.87.97.10",
+    "title": "Deep Learning Book Chapter 7.1.1: L2 Regularization",
+    "section": "Formula 7.8/7.9/7.10",
+    "text": "Formula 7.8/7.9/7.10\nFormula 7.8 combines 7.3 and 7.7: \\[\n\\alpha \\tilde{w} + H(\\tilde{w} - w^*) = 0\n\\]\nFrom 7.3, we already have: \\[\n\\nabla J(w; X; y) = \\alpha w + \\nabla_w J(w; X; y)\n\\]\nSubstituting into 7.7 gives us 7.8.\nFormula 7.9 is a transformation of 7.8: \\[\n\\begin{align}\n\\alpha \\tilde{w} + H\\tilde{w} &= Hw^* \\\\\n(H + \\alpha I)\\tilde{w} &= Hw^*\n\\end{align}\n\\]\nMultiplying both sides by the inverse of \\((H + \\alpha I)\\), the left side becomes just \\(\\tilde{w}\\): \\[\n\\tilde{w} = (H + \\alpha I)^{-1} Hw^*\n\\]\nWhen \\(\\alpha \\approx 0\\), \\(\\alpha I \\approx \\mathbf{0}\\), so \\(\\tilde{w} \\approx HH^{-1}w^* \\approx w^*\\)."
+  },
+  {
+    "objectID": "ML/l2-regularization.html#formula-7.11-7.12-7.13",
+    "href": "ML/l2-regularization.html#formula-7.11-7.12-7.13",
+    "title": "Deep Learning Book Chapter 7.1.1: L2 Regularization",
+    "section": "Formula 7.11 & 7.12 & 7.13",
+    "text": "Formula 7.11 & 7.12 & 7.13\nWe transform H to \\(H = Q\\Lambda Q^T\\), since it’s real symmetric, we can do this transformation.\nWe get formula 7.11: \\[\n\\tilde{w} = (Q\\Lambda Q^T + \\alpha I)^{-1} Q\\Lambda Q^T w^*\n\\]\nReplace I with \\(QQ^T\\): \\[\nQ\\Lambda Q^T + \\alpha QQ^T\n\\]\nThe common factors are Q and \\(Q^T\\), \\(\\Lambda\\) can be added with \\(\\alpha\\) because \\(\\alpha\\) is a constant multiplied by I.\nThis gives us formula 7.12: \\[\n\\tilde{w} = [Q(\\Lambda + \\alpha I)Q^T]^{-1} Q\\Lambda Q^T w^*\n\\]\nSubstituting \\([QAQ^T]^{-1} = QA^{-1}Q^T\\): \\[\n\\tilde{w} = Q(\\Lambda + \\alpha I)^{-1} \\Lambda Q^T w^*\n\\]\nTransform this formula to \\(\\frac{\\lambda_i}{\\lambda_i + \\alpha}\\):\n\n\\(\\Lambda = \\operatorname{diag}(\\lambda_1, \\dots, \\lambda_n), \\quad \\Lambda + \\alpha I = \\operatorname{diag}(\\lambda_1 + \\alpha, \\dots, \\lambda_n + \\alpha)\\)\n\\((\\Lambda + \\alpha I)^{-1} = \\operatorname{diag}\\!\\Big(\\tfrac{1}{\\lambda_1 + \\alpha}, \\dots, \\tfrac{1}{\\lambda_n + \\alpha}\\Big)\\)\n\\((\\Lambda + \\alpha I)^{-1}\\Lambda = \\operatorname{diag}\\!\\Big(\\tfrac{1}{\\lambda_i + \\alpha}\\Big) \\, \\operatorname{diag}(\\lambda_i) = \\operatorname{diag}\\!\\Big(\\tfrac{\\lambda_i}{\\lambda_i + \\alpha}\\Big)\\)\nSo: \\[\n\\tilde{w} = Q \\operatorname{diag}\\Big(\\frac{\\lambda_i}{\\lambda_i + \\alpha}\\Big) Q^T w^*\n\\]\n\nThis transformation tells us: in directions with large eigenvalues, w is preserved more; in directions with small eigenvalues, w is preserved less."
+  },
+  {
+    "objectID": "ML/l2-regularization.html#contour-lines",
+    "href": "ML/l2-regularization.html#contour-lines",
+    "title": "Deep Learning Book Chapter 7.1.1: L2 Regularization",
+    "section": "Contour Lines",
+    "text": "Contour Lines\n\n\n\nL2 Regularization Contour Lines\n\n\nUnderstanding this figure:\n\nSolid lines are the true contour lines of the loss function. These ellipses represent contour curves under different loss scenarios. On each contour curve, each point means we need to move in the direction perpendicular to the tangent, otherwise there’s no change (gradient).\nDashed lines are the regularized loss. Because it’s a scalar, it affects all directions equally, so the contour lines are circles.\nWhen the first ellipse of the solid line intersects with a circle layer of the dashed line, that point achieves balance for both (gradients are opposite in direction, equal in magnitude).\nOur ellipse shows that change along the x-axis is larger, y-axis is smaller, proving that for equal loss, we need to move more along x, less along y.\nAt the intersection point, our regularization curve pulls up more along the x-axis, less along the y-axis, proving that the y-axis is preserved better, while x has relatively large adjustments.\n\n\nThe ellipse shows the sensitivity of the loss function in different directions. The circle shows uniform penalty of regularization in all directions. The point where they are tangent has balanced gradients and minimum loss, which is the optimal solution for ridge regression— shrinking more in unstable directions, less in stable directions.\n\n\nSource: Deep Learning Book, Chapter 7.1.1"
   }
 ]
