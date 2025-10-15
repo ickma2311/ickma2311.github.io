@@ -1,0 +1,150 @@
+---
+title: "MIT 18.06SC Lecture 6: Column Space and Null Space"
+author: "Chao Ma"
+date: "2025-10-13"
+categories: ["Linear Algebra", "MIT 18.06", "Vector Spaces"]
+---
+
+## Context
+
+[My lecture notes](https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture06/lecture06_column_space_and_null_space.md)
+
+Column space and null space are two fundamental subspaces associated with any matrix. This lecture shows which vectors $b$ make $Ax = b$ solvable and which vectors $x$ satisfy $Ax = 0$.
+
+---
+
+## Subspace Properties
+
+- $P \cup L$ is **not** a subspace (P and L are two subspaces)
+- $P \cap L$ **is** a subspace
+
+---
+
+## Column Space
+
+### Definition
+
+Given a matrix A:
+$$
+A = \begin{bmatrix}
+1 & 1 & 2 \\
+2 & 1 & 3 \\
+3 & 1 & 4 \\
+4 & 1 & 5
+\end{bmatrix}
+$$
+
+The **column space** of A consists of all possible linear combinations of the columns of A.
+
+### Key Observation
+
+Because the column space has 4 dimensions (rows) but only 3 columns (subspaces/lines), the entire space cannot be filled. There are many vectors $b$ outside the column space.
+
+**Therefore:** We **cannot** say that for every $Ax = b$, there is a solution.
+
+### Solutions to $Ax = b$
+
+#### Special Case: $b = \mathbf{0}$
+
+- $b = [0, 0, 0, 0]$ **always has a solution**
+- This is the origin point, and all subspaces pass through the origin
+- The solution is $x = [0, 0, 0]$
+
+#### Which $b$ Can Be Solved?
+
+**General Rule:** $Ax = b$ has a solution **if and only if** $b$ is in the column space of A.
+
+#### Examples of Solvable $b$:
+
+1. $b = [1, 2, 3, 4]$ has solution $x = [1, 0, 0]$
+   - This is the first column of A
+
+2. $b = [1, 1, 1, 1]$ has solution $x = [0, 1, 0]$
+   - This is the second column of A
+
+3. Any linear combination of columns has a solution
+   - If $b = c_1 \cdot \text{col}_1 + c_2 \cdot \text{col}_2 + c_3 \cdot \text{col}_3$
+   - Then $x = [c_1, c_2, c_3]$ is the solution
+
+---
+
+## Null Space
+
+### Definition
+
+The **null space** of A, denoted $N(A)$, contains all vectors $x$ that satisfy:
+$$
+Ax = \mathbf{0}
+$$
+
+### Proof: $N(A)$ is a Subspace
+
+To prove that the null space is a subspace, we must show it satisfies two properties:
+
+#### 1. Closed Under Addition
+
+If $v$ and $w$ are in $N(A)$, then $v + w$ is also in $N(A)$.
+
+**Proof:**
+$$
+\begin{align}
+Av &= \mathbf{0} \\
+Aw &= \mathbf{0} \\
+A(v + w) &= Av + Aw = \mathbf{0} + \mathbf{0} = \mathbf{0}
+\end{align}
+$$
+
+Therefore, $v + w \in N(A)$.
+
+#### 2. Closed Under Scalar Multiplication
+
+If $x$ is in $N(A)$ and $c$ is any scalar, then $cx$ is also in $N(A)$.
+
+**Proof:**
+$$
+\begin{align}
+Ax &= \mathbf{0} \\
+A(cx) &= c(Ax) = c \cdot \mathbf{0} = \mathbf{0}
+\end{align}
+$$
+
+Therefore, $cx \in N(A)$.
+
+### Important Contrast: When $b \neq \mathbf{0}$
+
+The solution set of $Ax = b$ (when $b \neq \mathbf{0}$) is **not** a subspace.
+
+#### Proof: Not Closed Under Scalar Multiplication
+
+**Given:**
+$$
+Ax = b, \quad b \neq \mathbf{0}
+$$
+
+**For scalar $c \neq 1$:**
+$$
+A(cx) = c(Ax) = cb \neq b
+$$
+
+Therefore, if $x$ is a solution, $cx$ is **not** a solution (unless $c = 1$).
+
+**Conclusion:** The solution set fails the scalar multiplication property, so it is not a subspace.
+
+---
+
+## Summary
+
+**Column Space:**
+- **Column space** = all possible linear combinations of columns
+- $Ax = b$ is solvable $\Leftrightarrow$ $b$ is in the column space
+- Not every $b \in \mathbb{R}^4$ is in the column space of this particular A
+
+**Null Space:**
+- **Null space** $N(A) = \{x : Ax = \mathbf{0}\}$ **is** a subspace
+- Solution set of $Ax = b$ (when $b \neq \mathbf{0}$) is **not** a subspace
+- The null space always contains the zero vector
+- The null space is closed under addition and scalar multiplication
+
+---
+
+*Source: MIT 18.06SC Linear Algebra, Lecture 6*
