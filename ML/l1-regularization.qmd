@@ -1,0 +1,120 @@
+---
+title: "Deep Learning Book Chapter 7.1.2: L1 Regularization"
+author: "Chao Ma"
+date: "2025-10-13"
+categories: ["Deep Learning", "Optimization", "Regularization"]
+---
+
+## Context
+
+[My lecture notes](https://github.com/ickma2311/foundations/blob/main/deep_learning/chapter7/7.1/7.1.2_L1_regularization.md)
+
+L1 regularization penalizes the absolute values of weights, creating sparse solutions where many weights become exactly zero. This post derives the analytical solution and shows how soft thresholding leads to feature selection.
+
+---
+
+## Definition
+
+For L1 regularization, the penalty term is defined as:
+
+**Formula 7.18:**
+$$
+\Omega(\theta) = ||w||_1 = \sum_i |w_i|
+$$
+
+Using a regularization parameter $\alpha$, our total loss becomes:
+
+**Formula 7.19:**
+$$
+\tilde{J}(w;X,y) = \alpha||w||_1 + J(w;X,y)
+$$
+
+## Gradient Calculation
+
+For the absolute value function $f = |w|$, the derivative (subgradient) is:
+$$
+\frac{\partial f}{\partial w} = \begin{cases}
+1, & w > 0 \\
+-1, & w < 0
+\end{cases}
+$$
+
+Therefore, the gradient of $\alpha||w||_1$ is $\alpha \text{sign}(w)$, and we get:
+
+**Formula 7.20:**
+$$
+\nabla_w \tilde{J}(w;X,y) = \alpha \text{sign}(w) + \nabla_w J(w;X,y)
+$$
+
+## Analytical Solution
+
+For the model, assuming the gradient of the unregularized loss can be approximated as:
+
+**Formula 7.21:**
+$$
+\nabla_w J(w;X,y) \approx H(w - w^*)
+$$
+
+where $w^*$ is the optimal solution without regularization (where $\nabla_w J(w^*;X,y) = 0$), and $H$ is the Hessian matrix.
+
+Using a quadratic approximation around $w^*$, the regularized loss becomes:
+
+**Formula 7.22:**
+$$
+\hat{J}(w;X,y) = J(w^*;X,y) + \sum_{i=1}^n \left[\frac{1}{2}H_{i,i}(w_i - w_i^*)^2 + \alpha|w_i|\right]
+$$
+
+The gradient with respect to $w_i$ is:
+$$
+\frac{\partial \hat{J}}{\partial w_i} = H_{i,i}(w_i - w_i^*) + \alpha \text{sign}(w_i)
+$$
+
+Setting the gradient to zero:
+$$
+H_{i,i}(w_i - w_i^*) + \alpha \text{sign}(w_i) = 0
+$$
+
+$$
+H_{i,i}w_i = H_{i,i}w_i^* - \alpha \text{sign}(w_i)
+$$
+
+Dividing both sides by $H_{i,i}$:
+$$
+w_i = w_i^* - \frac{\alpha}{H_{i,i}} \text{sign}(w_i)
+$$
+
+Since $\alpha$ and $H_{i,i}$ are both positive:
+
+- **When $w_i^* > 0$**: We expect $w_i > 0$, so $\text{sign}(w_i) = +1$:
+  $$
+  w_i = w_i^* - \frac{\alpha}{H_{i,i}}
+  $$
+
+- **When $w_i^* < 0$**: We expect $w_i < 0$, so $\text{sign}(w_i) = -1$:
+  $$
+  w_i = w_i^* + \frac{\alpha}{H_{i,i}}
+  $$
+
+  Note that for $w_i^* < 0$, we have $|w_i^*| = -w_i^*$, so this can be written as:
+  $$
+  w_i = -(|w_i^*| - \frac{\alpha}{H_{i,i}})
+  $$
+
+Combining both cases with the sign function:
+
+**Formula 7.23:**
+$$
+w_i = \text{sign}(w_i^*) \max\left(|w_i^*| - \frac{\alpha}{H_{i,i}}, 0\right)
+$$
+
+**Important note**: The $\max(\cdot, 0)$ prevents sign reversal. When $|w_i^*| < \frac{\alpha}{H_{i,i}}$, the regularization is strong enough to push $w_i$ to exactly zero, rather than changing its sign. This is the **soft thresholding** operation.
+
+## Sparsity Property
+
+L1 regularization has a **sparse solution property**: it tends to push many weights to exactly zero, effectively performing feature selection. This is in contrast to L2 regularization, which shrinks weights toward zero but rarely sets them exactly to zero.
+
+This sparsity arises from the soft thresholding effect shown in Formula 7.23, where weights smaller than the threshold $\frac{\alpha}{H_{i,i}}$ are set to zero.
+
+---
+
+*Source: Deep Learning Book, Chapter 7.1.2*
