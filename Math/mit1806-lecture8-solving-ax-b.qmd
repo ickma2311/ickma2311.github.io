@@ -1,0 +1,170 @@
+---
+title: "MIT 18.06SC Lecture 8: Solving Ax=b - Complete Solution to Linear Systems"
+author: "Chao Ma"
+date: "2025-10-17"
+categories: ["Linear Algebra", "MIT 18.06", "Linear Systems"]
+---
+
+## Context
+
+[My lecture notes](https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture08/lecture08_solving_Ax_equals_b.md)
+
+This lecture presents the complete solution structure for $Ax = b$ and classifies all linear systems into four cases based on rank: exactly determined (unique solution), overdetermined (0 or 1 solution), underdetermined (infinite solutions), and rank deficient (0 or infinite solutions).
+
+---
+
+## Complete Solution Structure
+
+The general solution to $Ax = b$ (when it exists) has the form:
+$$
+x = x_p + x_n
+$$
+
+where:
+- $x_p$ is a **particular solution**: any specific solution satisfying $Ax_p = b$
+- $x_n$ is any vector from the **null space**: $Ax_n = 0$
+
+### Why This Works
+
+$$
+\begin{aligned}
+Ax_p &= b \\
+Ax_n &= 0 \\
+\hline
+A(x_p + x_n) &= Ax_p + Ax_n = b + 0 = b
+\end{aligned}
+$$
+
+**Key insight**: The complete solution is the particular solution plus the entire null space.
+
+## Finding a Particular Solution
+
+### Algorithm
+1. Row reduce $[A \mid b]$ to reduced row echelon form
+2. Set all **free variables** to 0
+3. Solve for the **pivot variables** from the reduced equations
+4. This gives $x_p$
+
+If row reduction produces a row like $[0 \, 0 \, \cdots \, 0 \mid c]$ where $c \neq 0$, then no solution exists.
+
+## Rank and Solution Existence
+
+For an $m \times n$ matrix $A$ with rank $r$:
+
+$$
+r \leq \min(m, n)
+$$
+
+This is because:
+- $r \leq m$ (rank cannot exceed number of rows)
+- $r \leq n$ (rank cannot exceed number of columns)
+
+### Solvability Condition
+
+The system $Ax = b$ has a solution **if and only if** $b$ is in the column space of $A$:
+$$
+b \in C(A)
+$$
+
+Equivalently, the system is solvable when $\text{rank}(A) = \text{rank}([A \mid b])$.
+
+## Four Cases Based on Rank
+
+### Case 1: Exactly Determined (Square, Full Rank)
+
+**Conditions**: $r = n = m$ (square matrix with full rank)
+
+**Properties**:
+- Matrix is **invertible**
+- RREF: $R = I_n$ (identity matrix)
+- No free variables
+- Null space: $N(A) = \{\vec{0}\}$ (only zero vector)
+
+**Solutions**:
+- **Unique solution** for every $b$: $x = A^{-1}b$
+- Number of solutions = 1 (always)
+
+**Example**:
+$$
+A = \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}, \quad r = 2 = m = n
+$$
+
+### Case 2: Overdetermined (Tall, Full Column Rank)
+
+**Conditions**: $m > n$ and $r = n$ (more equations than unknowns)
+
+**Properties**:
+- Matrix is **tall and skinny**
+- RREF: $R = \begin{bmatrix} I_n \\ 0 \end{bmatrix}$ (identity on top, zeros below)
+- No free variables ($n - r = 0$)
+- Null space: $N(A) = \{\vec{0}\}$ (only zero vector)
+
+**Solutions**:
+- **0 or 1 solution** (depends on whether $b \in C(A)$)
+- If solution exists, it is unique (no free variables)
+- Most $b$ vectors have **no solution** (overconstrained system)
+
+**Example**:
+$$
+A = \begin{bmatrix} 1 & 2 \\ 3 & 4 \\ 5 & 6 \end{bmatrix}, \quad r = 2, \, m = 3, \, n = 2
+$$
+
+**Interpretation**: More constraints than degrees of freedom; typically no exact solution (leads to least squares in practice).
+
+### Case 3: Underdetermined (Wide, Full Row Rank)
+
+**Conditions**: $m < n$ and $r = m$ (fewer equations than unknowns)
+
+**Properties**:
+- Matrix is **short and wide**
+- RREF: $R = [I_m \mid F]$ (identity on left, free columns on right)
+- Has free variables ($n - r = n - m > 0$)
+- Non-trivial null space: $\dim(N(A)) = n - m$
+
+**Solutions**:
+- **Infinitely many solutions** for every $b$ (when $r = m$)
+- Solution exists because $C(A) = \mathbb{R}^m$ (full row rank)
+- Complete solution: $x = x_p + x_n$ where $x_n$ ranges over $(n-m)$-dimensional null space
+
+**Example**:
+$$
+A = \begin{bmatrix} 1 & 2 & 3 & 4 \\ 0 & 0 & 1 & 2 \end{bmatrix}, \quad r = 2, \, m = 2, \, n = 4
+$$
+
+**Interpretation**: More degrees of freedom than constraints; infinitely many ways to satisfy the equations.
+
+### Case 4: Rank Deficient (Neither Full Column nor Full Row Rank)
+
+**Conditions**: $r < m$ and $r < n$ (rank deficient)
+
+**Properties**:
+- Has free variables: $n - r > 0$
+- Column space is proper subspace: $C(A) \subsetneq \mathbb{R}^m$
+
+**Solutions**:
+- **0 or infinitely many solutions**
+- If $b \in C(A)$: infinitely many solutions (due to non-trivial null space)
+- If $b \notin C(A)$: no solution
+
+**Example**:
+$$
+A = \begin{bmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 0 & 0 & 0 \end{bmatrix}, \quad r = 1, \, m = 3, \, n = 3
+$$
+
+## Summary Table
+
+| Case | Rank Condition | Matrix Shape | # Free Vars | # Solutions |
+|------|---------------|--------------|-------------|-------------|
+| Exactly determined | $r = n = m$ | Square, invertible | 0 | 1 (always) |
+| Overdetermined | $r = n < m$ | Tall, full column rank | 0 | 0 or 1 |
+| Underdetermined | $r = m < n$ | Wide, full row rank | $n - m$ | $\infty$ (always) |
+| Rank deficient | $r < \min(m,n)$ | General | $n - r > 0$ | 0 or $\infty$ |
+
+**Key principle**:
+- Number of free variables = $n - r$
+- If $r = n$: 0 or 1 solution (unique if exists)
+- If $r < n$: 0 or $\infty$ solutions (null space is non-trivial)
+
+---
+
+*Source: MIT 18.06SC Linear Algebra, Lecture 8*
