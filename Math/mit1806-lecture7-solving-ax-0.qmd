@@ -1,0 +1,160 @@
+---
+title: "MIT 18.06SC Lecture 7: Solving Ax=0 - Pivot Variables and Special Solutions"
+author: "Chao Ma"
+date: "2025-10-14"
+categories: ["Linear Algebra", "MIT 18.06", "Null Space"]
+---
+
+## Context
+
+[My lecture notes](https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture07/lecture07_pivot_variables_special_solutions.md)
+
+This lecture develops a systematic algorithm to find all solutions to $Ax = 0$ using pivot variables, free variables, and special solutions. The null space structure is revealed through reduced row echelon form.
+
+---
+
+## Homogeneous Linear System
+
+We consider the homogeneous linear system:
+$$
+Ax = 0
+$$
+
+where $A$ is an $m \times n$ matrix with rank $r$.
+
+## Pivot Variables and Free Variables
+
+After performing row reduction on $A$, we identify:
+
+- **Pivot variables**: Variables corresponding to columns with pivot positions (leading entries in row echelon form)
+- **Free variables**: Variables corresponding to columns without pivot positions
+- **Number of free variables**: $n - r$ (total variables minus rank)
+
+### Relationship to Solutions
+
+- **If rank $r = n$**: No free variables
+  - Only the trivial solution $x = \vec{0}$ exists
+  - The null space contains only the zero vector
+
+- **If rank $r < n$**: There are $n - r$ free variables
+  - Infinitely many non-trivial solutions exist
+  - The null space is a $(n-r)$-dimensional subspace
+
+**Key insight**: Free variables are necessary for non-trivial solutions. Each free variable adds one dimension to the null space.
+
+## Special Solutions
+
+Special solutions form a basis for the null space $N(A)$. To find them:
+
+### Algorithm
+1. Identify the free variables (there are $n - r$ of them)
+2. For each free variable:
+   - Set that free variable to 1
+   - Set all other free variables to 0
+   - Solve for the pivot variables
+   - This gives one special solution
+
+The null space is the span of all special solutions.
+
+### Example
+
+Consider the row echelon form matrix:
+$$
+R = \begin{bmatrix}
+1 & 2 & 3 & 4 \\
+0 & 0 & 2 & 1 \\
+0 & 0 & 0 & 0
+\end{bmatrix}
+$$
+
+From this, we have:
+- Pivot columns: 1 and 3 (variables $x_1$ and $x_3$)
+- Free columns: 2 and 4 (variables $x_2$ and $x_4$)
+- Equations: $x_1 + 2x_2 + 3x_3 + 4x_4 = 0$ and $2x_3 + x_4 = 0$
+
+**Special solution 1**: Set $x_2 = 1$, $x_4 = 0$
+- From equation 2: $2x_3 = 0 \Rightarrow x_3 = 0$
+- From equation 1: $x_1 + 2(1) + 3(0) + 4(0) = 0 \Rightarrow x_1 = -2$
+- Special solution: $\begin{bmatrix} -2 \\ 1 \\ 0 \\ 0 \end{bmatrix}$
+
+**Special solution 2**: Set $x_2 = 0$, $x_4 = 1$
+- From equation 2: $2x_3 + 1 = 0 \Rightarrow x_3 = -\frac{1}{2}$
+- From equation 1: $x_1 + 2(0) + 3(-\frac{1}{2}) + 4(1) = 0 \Rightarrow x_1 = -\frac{5}{2}$
+- Special solution: $\begin{bmatrix} -\frac{5}{2} \\ 0 \\ -\frac{1}{2} \\ 1 \end{bmatrix}$
+
+**Complete null space**:
+$$
+N(A) = c_1 \begin{bmatrix} -2 \\ 1 \\ 0 \\ 0 \end{bmatrix} + c_2 \begin{bmatrix} -\frac{5}{2} \\ 0 \\ -\frac{1}{2} \\ 1 \end{bmatrix}
+$$
+
+for any scalars $c_1, c_2 \in \mathbb{R}$.
+
+## RREF (Reduced Row Echelon Form)
+
+The reduced row echelon form provides the clearest view of the null space structure.
+
+### Properties of RREF
+- Each pivot column contains exactly one 1 (the pivot) and all other entries are 0
+- The pivot is the only non-zero entry in its row among pivot columns
+- Makes it easy to read off special solutions directly
+
+### Block Structure
+
+For a matrix with $r$ pivot columns and $n-r$ free columns, the RREF has the form:
+$$
+R_{\text{rref}} = \begin{bmatrix}
+I_r & F
+\end{bmatrix}
+$$
+
+where:
+- $I_r$ is the $r \times r$ identity matrix (pivot columns)
+- $F$ is an $r \times (n-r)$ matrix (free variable coefficients)
+
+### Example
+
+For our example, RREF would be:
+$$
+R_{\text{rref}} = \begin{bmatrix}
+1 & 2 & 0 & \frac{5}{2} \\
+0 & 0 & 1 & \frac{1}{2} \\
+0 & 0 & 0 & 0
+\end{bmatrix}
+= \begin{bmatrix}
+1 & 0 \\
+0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+2 & \frac{5}{2} \\
+0 & \frac{1}{2}
+\end{bmatrix}
+$$
+
+Here $I_r = I_2$ and $F = \begin{bmatrix} 2 & \frac{5}{2} \\ 0 & \frac{1}{2} \end{bmatrix}$.
+
+### Direct Formula for Null Space
+
+From the RREF block structure $[I_r \mid F]$, the null space matrix (whose columns are special solutions) is:
+$$
+N(A) = \begin{bmatrix}
+-F \\
+I_{n-r}
+\end{bmatrix}
+$$
+
+This $n \times (n-r)$ matrix contains all special solutions as its columns.
+
+### Dimensions Summary
+
+| Matrix | Shape | Description |
+|--------|-------|-------------|
+| $A$ | $m \times n$ | Original matrix |
+| $I_r$ | $r \times r$ | Identity block in RREF |
+| $F$ | $r \times (n-r)$ | Free variable coefficients |
+| $N(A)$ | $n \times (n-r)$ | Null space basis matrix |
+
+The null space $N(A)$ is an $(n-r)$-dimensional subspace of $\mathbb{R}^n$.
+
+---
+
+*Source: MIT 18.06SC Linear Algebra, Lecture 7*
