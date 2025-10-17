@@ -1,0 +1,129 @@
+---
+title: "Deep Learning Book Chapter 7.2: Constrained Optimization View of Regularization"
+author: "Chao Ma"
+date: "2025-10-14"
+categories: ["Deep Learning", "Optimization", "Regularization"]
+---
+
+## Context
+
+[My lecture notes](https://github.com/ickma2311/foundations/blob/main/deep_learning/chapter7/7.2_constrained_optimization_view.md)
+
+Regularization can be viewed as either adding a penalty term or enforcing a constraint. This post shows the equivalence between these two perspectives using Lagrange multipliers and dual optimization.
+
+---
+
+## From Penalty to Constraint
+
+Regularization can be viewed from two equivalent perspectives:
+
+### Penalty Form (Unconstrained)
+
+**Formula 7.25:**
+$$
+\tilde{J}(\theta; X, y) = J(\theta; X, y) + \alpha \Omega(\theta)
+$$
+
+This adds a penalty term $\alpha \Omega(\theta)$ to the original loss, where $\alpha$ controls the strength of regularization.
+
+### Constraint Form (Lagrangian)
+
+We can equivalently express regularization as a constrained optimization problem requiring $\Omega(\theta) \leq k$.
+
+**Formula 7.26 (Lagrangian):**
+$$
+\mathcal{L}(\theta, \alpha; X, y) = J(\theta; X, y) + \alpha(\Omega(\theta) - k)
+$$
+
+where $\alpha \geq 0$ is the Lagrange multiplier.
+
+**Formula 7.27 (Optimization Problem):**
+$$
+\theta^* = \arg\min_{\theta} \max_{\alpha \geq 0} \mathcal{L}(\theta, \alpha)
+$$
+
+This is equivalent to the constrained optimization:
+$$
+\theta^* = \arg\min_{\theta} J(\theta; X, y) \quad \text{subject to} \quad \Omega(\theta) \leq k
+$$
+
+**Interpretation**: The solution corresponds to finding parameters $\theta$ that minimize the loss while satisfying the constraint. When $\alpha$ is large, it strongly enforces the constraint $\Omega(\theta) \leq k$.
+
+## Lagrange Multiplier Method
+
+The Lagrangian formulation transforms the problem into a **min-max optimization**:
+$$
+\min_{\theta} \max_{\alpha \geq 0} \mathcal{L}(\theta, \alpha)
+$$
+
+### Dual Direction Training
+
+Instead of a single gradient descent on $\min \mathcal{L}(\theta)$, we now have **two opposing optimization directions**:
+
+$$
+\begin{aligned}
+\theta &\downarrow \quad \text{(minimize w.r.t. } \theta\text{)} \\
+\alpha &\uparrow \quad \text{(maximize w.r.t. } \alpha\text{)}
+\end{aligned}
+$$
+
+### Training Dynamics
+
+The training process balances two forces:
+
+1. **When $\Omega(\theta) > k$** (constraint violated):
+   - $\alpha$ increases to penalize the violation
+   - Larger $\alpha$ pushes $\theta$ toward smaller norms
+   - This enforces the constraint
+
+2. **When $\Omega(\theta) < k$** (constraint satisfied):
+   - $\alpha$ decreases toward 0
+   - The constraint is not active
+   - Optimization focuses on minimizing $J(\theta)$
+
+### Saddle Point Solution
+
+The training converges to a **saddle point** satisfying the **KKT (Karush-Kuhn-Tucker) conditions**:
+
+$$
+\begin{aligned}
+\nabla_{\theta} \mathcal{L}(\theta, \alpha) &= 0 \quad \text{(stationarity)} \\
+\alpha(\Omega(\theta) - k) &= 0 \quad \text{(complementary slackness)} \\
+\alpha &\geq 0 \quad \text{(dual feasibility)}
+\end{aligned}
+$$
+
+The complementary slackness condition means:
+- Either $\alpha = 0$ (constraint inactive, $\Omega(\theta) < k$)
+- Or $\Omega(\theta) = k$ (constraint active, $\alpha > 0$)
+
+## Penalty vs Projection Methods
+
+### Weight Norm Penalties (Soft Constraint)
+
+When using **weight norm penalties** such as L¹ or L² regularization:
+- The penalty term $\alpha \Omega(\theta)$ provides a "soft" constraint
+- The optimal solution may be **locally optimal** for the regularized objective $\tilde{J}(\theta)$
+- Even if increasing weights could reduce the original loss $J(\theta)$, the penalty prevents this
+- The regularization strength $\alpha$ determines how strictly the constraint is enforced
+
+### Explicit Constraints (Hard Constraint)
+
+In contrast, **explicit constraint or projection methods** enforce $\Omega(\theta) \leq k$ directly:
+- Provide a **hard boundary** on the weight norm
+- After each gradient step, project $\theta$ back onto the constraint set if needed
+- Often lead to **more stable optimization** with clearer geometric interpretation
+- The constraint is always exactly satisfied (not approximately)
+
+### Trade-offs
+
+| Method | Constraint Type | Stability | Flexibility |
+|--------|----------------|-----------|-------------|
+| Penalty (L¹/L²) | Soft | Good | High (tune $\alpha$) |
+| Projection | Hard | Very Good | Lower (fixed $k$) |
+
+**Key insight**: Both approaches are equivalent in theory (there exists a correspondence between $\alpha$ and $k$), but in practice they may have different optimization properties and convergence behavior.
+
+---
+
+*Source: Deep Learning Book, Chapter 7.2*
