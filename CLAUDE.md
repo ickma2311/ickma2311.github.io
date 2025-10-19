@@ -48,10 +48,11 @@ The site uses a hierarchical navigation structure defined in `_quarto.yml`:
 
 ### Adding New Content
 
-1. Create the content file in the appropriate directory (`ML/` or `Algorithm/`)
+1. Create the content file in the appropriate directory (`ML/` or `Math/` or `Algorithm/`)
 2. Update the corresponding index.qmd file to include the new content
 3. Add navigation entry to `_quarto.yml` if it should appear in the navbar dropdown
 4. Use consistent frontmatter with `title` field
+5. **Important**: After adding new navbar items, run `quarto render` (full site render) to update the navbar on ALL existing pages. Individual file renders only update that specific page.
 
 ## Configuration Notes
 
