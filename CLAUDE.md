@@ -69,6 +69,20 @@ The site is automatically deployed from the `docs/` directory. After rendering, 
 
 ## LinkedIn Post Guidelines
 
+### Emoji Usage
 When drafting LinkedIn posts for blog content, use these emojis:
 - **Deep Learning topics**: ∇ (delta/nabla symbol) - represents gradients and optimization
 - **Linear Algebra topics**: 📐 (triangle/ruler) - represents geometric and matrix concepts
+
+### Writing Process
+1. **Identify the key insight**: Focus on the main conceptual connection or "aha moment" from the blog post
+2. **Use "connecting the dots" tone**: Emphasize how concepts link together (e.g., "how linear algebra connects to machine learning")
+3. **Structure**:
+   - Start with chapter reference if applicable (e.g., "Deep Learning Book (Chapter 7.3)")
+   - Present the problem (what breaks down?)
+   - Present the solution (how is it fixed?)
+   - Explain the insight (why does this matter?)
+   - Link to full blog post
+4. **Keep it concise**: Aim for clarity over comprehensiveness
+5. **Source attribution**: Always mention the source book/material (e.g., "My notes on Deep Learning (Ian Goodfellow) Chapter X.X")
+6. **Include relevant hashtags**: #MachineLearning #LinearAlgebra #DeepLearning
