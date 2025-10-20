@@ -1,0 +1,236 @@
+---
+title: "Regularization and Under-Constrained Problems"
+author: "Chao Ma"
+date: "2025-10-19"
+categories: [deep learning, regularization, linear algebra, ridge regression]
+description: "Why regularization is mathematically necessary when solving under-constrained linear systems, and how it ensures invertibility"
+---
+
+## Problem Context
+
+In linear regression, we often encounter scenarios where the standard solution breaks down:
+
+**Under-constrained scenarios:**
+
+- $m < n$ (fewer samples than dimensions)
+- Feature-dependent columns (linearly dependent features)
+
+**Consequence**: Matrix $X^T X$ is not invertible, preventing direct solution of linear regression.
+
+This post explores why this happens and how regularization provides a mathematically sound solution.
+
+## Linear Regression and the Normal Equations
+
+### Objective Function
+
+In linear regression, we want to minimize the squared error:
+
+$$
+\min_w ||Xw - y||^2
+$$
+
+where:
+- $X$ is the $m \times n$ data matrix (m samples, n features)
+- $w$ is the $n \times 1$ weight vector
+- $y$ is the $m \times 1$ target vector
+
+### Loss Function
+
+The squared error can be written as:
+
+$$
+J(w; X, y) = ||Xw - y||^2 = (Xw - y)^T (Xw - y)
+$$
+
+## Derivation of the Normal Equations
+
+Let's derive the analytical solution step by step.
+
+### Step 1: Expand the Loss
+
+$$
+J(w; X, y) = (Xw)^T Xw - (Xw)^T y - y^T Xw + y^T y
+$$
+
+### Step 2: Simplify Using Vector Dot Product Symmetry
+
+Since $Xw$ and $y$ are vectors, their dot product is commutative:
+
+$$
+(Xw)^T y = y^T Xw \quad \text{(because } \vec{v}_1 \cdot \vec{v}_2 = \vec{v}_2 \cdot \vec{v}_1\text{)}
+$$
+
+Therefore:
+
+$$
+J(w; X, y) = w^T X^T Xw - 2y^T Xw + y^T y
+$$
+
+### Step 3: Compute the Gradient
+
+We need $\nabla_w J(w; X, y)$. The gradient has three parts:
+
+**Part 1: Quadratic Term** $w^T X^T Xw$
+
+This is a quadratic form. Using the matrix derivative rule $\nabla_w (w^T A w) = 2Aw$ for symmetric $A$:
+
+$$
+\nabla_w (w^T X^T Xw) = 2X^T Xw
+$$
+
+::: {.callout-note}
+## Detailed Derivation
+
+$$
+\begin{aligned}
+w^T X^T Xw &= (Xw)^T (Xw) = ||Xw||^2 \\
+\nabla_w ||Xw||^2 &= 2X^T Xw
+\end{aligned}
+$$
+:::
+
+**Part 2: Linear Term** $-2y^T Xw$
+
+This is a linear term. Using the rule $\nabla_w (a^T w) = a$:
+
+$$
+\nabla_w (-2y^T Xw) = -2X^T y
+$$
+
+**Explanation of dimensions:**
+- If $X$ is $m \times n$ and $w$ is $n \times 1$, then $Xw$ is $m \times 1$
+- $y$ is $m \times 1$
+- For the gradient with respect to $w$ (which is $n \times 1$), we need $X^T$ (which is $n \times m$) to match dimensions
+- The linear derivative formula $\nabla_w (a^T w) = a$ tells us the gradient is the transpose of the coefficient
+
+**Part 3: Constant Term** $y^T y$
+
+This is constant with respect to $w$, so its gradient is 0.
+
+### Step 4: Complete Gradient
+
+$$
+\nabla_w J(w; X, y) = 2X^T Xw - 2X^T y
+$$
+
+### Step 5: Solve for Optimal $w$
+
+Set the gradient to zero:
+
+$$
+\begin{aligned}
+2X^T Xw - 2X^T y &= 0 \\
+X^T Xw &= X^T y \\
+w &= (X^T X)^{-1} X^T y \quad \text{(if } X^T X \text{ is invertible)}
+\end{aligned}
+$$
+
+This is the **normal equation** - the closed-form solution to linear regression.
+
+## The Problem: When $X^T X$ is Not Invertible
+
+The normal equation requires $(X^T X)^{-1}$ to exist. However, $X^T X$ is **not invertible** when:
+
+1. **Under-constrained**: $m < n$ (fewer samples than features)
+2. **Rank deficient**: Columns of $X$ are linearly dependent
+
+In these cases, we cannot compute $(X^T X)^{-1}$, and the standard solution fails.
+
+## Solution: Regularization
+
+The key insight is to add a small positive constant $\alpha$ to the diagonal of $X^T X$:
+
+$$
+w = (X^T X + \alpha I_n)^{-1} X^T y
+$$
+
+where:
+- $\alpha > 0$ is the regularization parameter
+- $I_n$ is the $n \times n$ identity matrix
+
+**Effect**: $X^T X + \alpha I_n$ is **always invertible** for $\alpha > 0$, even when $X^T X$ is singular.
+
+::: {.callout-tip}
+## Why This Works
+
+Adding $\alpha I_n$ increases all eigenvalues of $X^T X$ by $\alpha$. Since $\alpha > 0$, no eigenvalue can be zero, ensuring invertibility.
+:::
+
+### Two Variants: Ridge vs Pseudo-Inverse
+
+This approach gives us two related solutions depending on the value of $\alpha$:
+
+**1. Ridge Regression (L2 Regularization)**: Use $\alpha > 0$ in practice. This is the common approach where you choose a small positive regularization parameter.
+
+**2. Moore-Penrose Pseudo-Inverse**: The limiting case as $\alpha \to 0$:
+
+$$
+X^+ = \lim_{\alpha \to 0} (X^T X + \alpha I_n)^{-1} X^T
+$$
+
+This is the **pseudo-inverse** of $X$, which exists even when $X^T X$ is singular.
+
+**Properties**:
+
+- When $X^T X$ is invertible: $X^+ = (X^T X)^{-1} X^T$ (standard inverse)
+- When $X^T X$ is singular: $X^+$ provides the minimum-norm solution
+
+## Intuitive Derivation: From Scalar to Matrix
+
+Understanding the matrix form becomes easier if we start from a simple scalar case.
+
+### Scalar Case
+
+For a simple quadratic loss $(ax - c)^2$ where $a$ is input, $x$ is weight, and $c$ is target:
+
+**Expand:**
+
+$$
+\text{Loss} = a^2 x^2 - 2acx + c^2
+$$
+
+**Derivative:**
+
+$$
+\frac{\partial \text{Loss}}{\partial x} = 2a^2 x - 2ac
+$$
+
+**Set to zero:**
+
+$$
+2a^2 x = 2ac \quad \Rightarrow \quad x = \frac{c}{a}
+$$
+
+### Extension to Matrix Form
+
+By analogy, replace:
+
+- $a^2 \to X^T X$ (scalar squared becomes matrix product)
+- $x \to w$ (scalar weight becomes weight vector)
+- $ac \to X^T y$ (scalar product becomes matrix-vector product)
+
+This gives:
+
+$$
+\nabla_w J(w) = 2X^T Xw - 2X^T y
+$$
+
+::: {.callout-important}
+## Key Insight
+
+The matrix derivative follows the same pattern as the scalar derivative, with appropriate transpose operations to maintain dimensional consistency.
+:::
+
+## Summary
+
+| Scenario | $X^T X$ Status | Solution Method |
+|----------|---------------|-----------------|
+| $m \geq n$, full rank | Invertible | $w = (X^T X)^{-1} X^T y$ |
+| $m < n$ (under-constrained) | Not invertible | $w = (X^T X + \alpha I_n)^{-1} X^T y$ |
+| Rank deficient | Not invertible | Use pseudo-inverse $X^+$ |
+
+**Key principle**: Regularization $X^T X + \alpha I_n$ ensures invertibility by adding a small positive value to all eigenvalues of $X^T X$, making the system solvable even in under-constrained scenarios.
+
+---
+
+*Source: Deep Learning Book, Chapter 7.3*
