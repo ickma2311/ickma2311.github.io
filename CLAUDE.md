@@ -66,6 +66,7 @@ The site uses a hierarchical navigation structure defined in `_quarto.yml`:
 
 The site is automatically deployed from the `docs/` directory. After rendering, commit and push the `docs/` folder to trigger GitHub Pages rebuild.
 - Author is Chao Ma
+- GitHub Pages URL: https://ickma2311.github.io/
 
 ## LinkedIn Post Guidelines
 
