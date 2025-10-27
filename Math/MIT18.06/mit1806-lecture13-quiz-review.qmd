@@ -1,0 +1,560 @@
+---
+title: "Lecture 13: Quiz 1 Review"
+author: "Chao Ma"
+date: "2025-01-25"
+---
+
+{{< video https://www.youtube.com/watch?v=l88D4r74gtM >}}
+
+---
+
+## 1. Dimension of Subspaces
+
+**Problem**: Suppose $u, v, w$ are non-zero vectors in $\mathbb{R}^7$. They span a subspace of $\mathbb{R}^7$. What are the possible dimensions?
+
+**Answer**: 1, 2, or 3
+
+**Explanation**:
+
+- **Minimum dimension**: 1 (if all vectors are scalar multiples of each other)
+- **Maximum dimension**: 3 (if all three vectors are linearly independent)
+- **Middle case**: 2 (if exactly two are independent)
+- Cannot be 0 (all vectors are non-zero)
+- Cannot exceed 3 (only three vectors available)
+
+---
+
+## 2. Null Space Dimensions
+
+**Problem**: We have $A$, a $5 \times 3$ matrix with rank $r = 3$. What is the null space?
+
+**Answer**: $N(A) = \{\mathbf{0}\}$ (just the zero vector)
+
+**Calculation**:
+
+$$
+\dim(N(A)) = n - r = 3 - 3 = 0
+$$
+
+**Interpretation**: Since the rank equals the number of columns, all columns are independent. The only solution to $Ax = \mathbf{0}$ is $x = \mathbf{0}$.
+
+---
+
+## 3. Echelon Forms with Block Matrices
+
+### Problem 3a: Matrix B
+
+**Given**:
+
+$$
+B = \begin{bmatrix}
+u \\
+2u
+\end{bmatrix}
+$$
+
+where $u$ is a row vector.
+
+**Echelon form**:
+
+$$
+\begin{bmatrix}
+u \\
+\mathbf{0}
+\end{bmatrix}
+$$
+
+**Explanation**: Row 2 is a multiple of row 1, so elimination makes row 2 become zero.
+
+---
+
+### Problem 3b: Matrix C
+
+**Given**:
+
+$$
+C = \begin{bmatrix}
+u & u \\
+u & 0
+\end{bmatrix}
+$$
+
+where $u$ is a $5 \times 3$ matrix with rank 3.
+
+**Elimination steps**:
+
+$$
+\begin{bmatrix}
+u & u \\
+u & 0
+\end{bmatrix}
+\rightarrow
+\begin{bmatrix}
+u & u \\
+0 & -u
+\end{bmatrix}
+\rightarrow
+\begin{bmatrix}
+u & 0 \\
+0 & -u
+\end{bmatrix}
+\rightarrow
+\begin{bmatrix}
+u & 0 \\
+0 & u
+\end{bmatrix}
+$$
+
+**Step-by-step**:
+
+1. Subtract row 1 from row 2: eliminates bottom-left block
+2. Subtract column 1 from column 2: eliminates top-right block
+3. Multiply row 2 by -1: normalize
+
+**Rank of C**:
+
+- $u$ is $5 \times 3$ with rank 3
+- $C$ is $10 \times 6$ (two $5 \times 3$ blocks side by side)
+- Both $u$ blocks contribute full rank
+- **Rank of C = 6**
+
+**Dimension of left null space**:
+
+$$
+\dim(N(C^T)) = m - r = 10 - 6 = 4
+$$
+
+---
+
+## 4. Complete Solution to Linear Systems
+
+**Problem**: Given
+
+$$
+Ax = \begin{bmatrix}
+2 \\
+4 \\
+2
+\end{bmatrix}, \quad
+x = \begin{bmatrix}
+2 \\
+0 \\
+0
+\end{bmatrix}
++ c\begin{bmatrix}
+1 \\
+1 \\
+0
+\end{bmatrix}
++ d\begin{bmatrix}
+0 \\
+0 \\
+1
+\end{bmatrix}
+$$
+
+### Part a: Dimension of Row Space
+
+**Answer**: 1
+
+**Reasoning**:
+
+- The null space has dimension 2 (two free variables: $c$ and $d$)
+- $\dim(N(A)) = n - r = 2$
+- Since $n = 3$ (three columns), $r = 3 - 2 = 1$
+- Row space dimension = rank = 1
+
+---
+
+### Part b: Find Matrix A
+
+**Strategy**: Use the particular solution and null space vectors.
+
+**Column 1**:
+
+$$
+A\begin{bmatrix}
+2 \\
+0 \\
+0
+\end{bmatrix}
+= \begin{bmatrix}
+2 \\
+4 \\
+2
+\end{bmatrix}
+\implies \text{Column 1} = \begin{bmatrix}
+1 \\
+2 \\
+1
+\end{bmatrix}
+$$
+
+**Column 3**:
+
+$$
+A\begin{bmatrix}
+0 \\
+0 \\
+1
+\end{bmatrix}
+= \mathbf{0}
+\implies \text{Column 3} = \begin{bmatrix}
+0 \\
+0 \\
+0
+\end{bmatrix}
+$$
+
+**Column 2**:
+
+$$
+A\begin{bmatrix}
+1 \\
+1 \\
+0
+\end{bmatrix}
+= \mathbf{0}
+\implies \text{Column 1} + \text{Column 2} = \mathbf{0}
+$$
+
+Therefore, Column 2 = $-$Column 1:
+
+$$
+\text{Column 2} = \begin{bmatrix}
+-1 \\
+-2 \\
+-1
+\end{bmatrix}
+$$
+
+**Matrix A**:
+
+$$
+A = \begin{bmatrix}
+1 & -1 & 0 \\
+2 & -2 & 0 \\
+1 & -1 & 0
+\end{bmatrix}
+$$
+
+---
+
+### Part c: Which b Can Be Solved?
+
+**Answer**: $b$ must be a multiple of $\begin{bmatrix}1 \\ 2 \\ 1\end{bmatrix}$
+
+**Reasoning**:
+
+- Column space of $A$ is spanned by $\begin{bmatrix}1 \\ 2 \\ 1\end{bmatrix}$
+- All columns are multiples of this vector
+- $Ax = b$ has a solution only if $b \in C(A)$
+
+Therefore: $b = c\begin{bmatrix}1 \\ 2 \\ 1\end{bmatrix}$ for some scalar $c$.
+
+---
+
+## 5. Properties of Null Spaces
+
+**Problem**: If the null space is $\{\mathbf{0}\}$ and $A$ is square, what is the null space of $A^T$?
+
+**Answer**: $N(A^T) = \{\mathbf{0}\}$
+
+**Proof**:
+
+- $A$ is $n \times n$ (square)
+- $N(A) = \{\mathbf{0}\}$ means $\dim(N(A)) = 0$
+- Therefore: $\text{rank}(A) = n - 0 = n$
+- Since $A$ is square with full rank, $A$ is invertible
+- For $A^T$: $\dim(N(A^T)) = m - r = n - n = 0$
+
+---
+
+## 6. Subspaces of Matrix Spaces
+
+**Problem**: Consider the space of all $5 \times 5$ matrices (dimension 25). Do the invertible $5 \times 5$ matrices form a subspace?
+
+**Answer**: No
+
+**Reason**: Not closed under addition.
+
+**Counterexample**:
+
+$$
+A = \begin{bmatrix}
+1 & 0 \\
+0 & 1
+\end{bmatrix}, \quad
+B = \begin{bmatrix}
+-1 & 0 \\
+0 & -1
+\end{bmatrix}
+$$
+
+Both $A$ and $B$ are invertible, but:
+
+$$
+A + B = \begin{bmatrix}
+0 & 0 \\
+0 & 0
+\end{bmatrix}
+$$
+
+is not invertible.
+
+---
+
+## 7. Nilpotent Matrices
+
+**Problem**: If $B^2 = 0$, must $B = \mathbf{0}$?
+
+**Answer**: False
+
+**Counterexample**:
+
+$$
+B = \begin{bmatrix}
+0 & 1 \\
+0 & 0
+\end{bmatrix}
+$$
+
+**Verification**:
+
+$$
+B^2 = \begin{bmatrix}
+0 & 1 \\
+0 & 0
+\end{bmatrix}
+\begin{bmatrix}
+0 & 1 \\
+0 & 0
+\end{bmatrix}
+= \begin{bmatrix}
+0 & 0 \\
+0 & 0
+\end{bmatrix}
+$$
+
+**Explanation**: Rows times columns can all be zero even when the matrix itself is non-zero.
+
+---
+
+## 8. Solvability of Square Systems
+
+**Problem**: If an $n \times n$ matrix has rank $n$, does $Ax = b$ always have a solution?
+
+**Answer**: Yes
+
+**Proof**:
+
+- Rank $n$ for an $n \times n$ matrix means $A$ is invertible
+- Therefore: $x = A^{-1}b$ always exists
+- Every $b \in \mathbb{R}^n$ is in the column space
+
+---
+
+## 9. Null Space from Matrix Factorization
+
+**Problem**: Given
+
+$$
+B = \begin{bmatrix}
+1 & 1 & 0 \\
+0 & 1 & 0 \\
+1 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+1 & 0 & -1 & 2 \\
+0 & 1 & 1 & -1 \\
+0 & 0 & 0 & 0
+\end{bmatrix}
+$$
+
+**Without multiplication**, find the basis for $N(B)$.
+
+### Analysis
+
+**Dimensions**:
+
+- Left matrix: $3 \times 3$, full rank (invertible)
+- Right matrix: $3 \times 4$, rank 2
+- $B$: $3 \times 4$
+
+**Key insight**: $\operatorname{rank}(AB) \leq \min(\operatorname{rank}(A), \operatorname{rank}(B))$
+
+Therefore: $\operatorname{rank}(B) = 2$
+
+**Null space dimension**:
+
+$$
+\dim(N(B)) = n - r = 4 - 2 = 2
+$$
+
+**Finding basis**: Since the left matrix is invertible, $N(B) = N(\text{right matrix})$
+
+From the right matrix in RREF:
+
+- Pivot columns: 1, 2
+- Free variables: columns 3, 4
+
+**Basis for N(B)**:
+
+$$
+c_1\begin{bmatrix}
+1 \\
+-1 \\
+1 \\
+0
+\end{bmatrix}
++ c_2\begin{bmatrix}
+-2 \\
+1 \\
+0 \\
+1
+\end{bmatrix}
+$$
+
+**Verification**:
+
+- Column 3 = $1 \cdot$Column 1 + $(-1) \cdot$Column 2
+- Column 4 = $(-2) \cdot$Column 1 + $1 \cdot$Column 2
+
+---
+
+### Solving Bx = b
+
+**Problem**: Solve $Bx = \begin{bmatrix}1 \\ 0 \\ 1\end{bmatrix}$
+
+**Analysis**:
+
+$$
+B_{\text{col1}} = [1, 0, 1]^T \\
+B_{\text{col2}} = [1, 1, 0]^T \\
+B_{\text{col3}} = [0, 1, -1]^T \\
+B_{\text{col4}} = [1, -1, 2]^T
+$$
+
+**Particular solution**: $x_p = \begin{bmatrix}1 \\ 0 \\ 0 \\ 0\end{bmatrix}$
+
+**Complete solution**:
+
+$$
+x = \begin{bmatrix}
+1 \\
+0 \\
+0 \\
+0
+\end{bmatrix}
++ c_1\begin{bmatrix}
+1 \\
+-1 \\
+1 \\
+0
+\end{bmatrix}
++ c_2\begin{bmatrix}
+-2 \\
+1 \\
+0 \\
+1
+\end{bmatrix}
+$$
+
+---
+
+## 10. Conceptual Questions
+
+### Question 1: Do A and -A Share the Same Four Fundamental Subspaces?
+
+**Answer**: Yes
+
+**Proof**:
+
+- $C(A) = C(-A)$ (columns are just scaled by -1)
+- $N(A) = N(-A)$ (if $Ax = \mathbf{0}$, then $(-A)x = \mathbf{0}$)
+- $C(A^T) = C((-A)^T)$ (row space argument)
+- $N(A^T) = N((-A)^T)$ (left null space argument)
+
+---
+
+### Question 2: If m = n, Are Row Space and Column Space the Same?
+
+**Answer**: No, not in general
+
+**When true**: Only when $A$ is symmetric ($A = A^T$)
+
+**Counterexample**:
+
+$$
+A = \begin{bmatrix}
+1 & 0 \\
+0 & 0
+\end{bmatrix}
+$$
+
+- Column space: span of $\begin{bmatrix}1 \\ 0\end{bmatrix}$
+- Row space: span of $\begin{bmatrix}1 \\ 0\end{bmatrix}$
+
+(In this case they happen to be the same, but that's coincidental)
+
+Better counterexample:
+
+$$
+A = \begin{bmatrix}
+1 & 1 \\
+0 & 0
+\end{bmatrix}
+$$
+
+- Column space: $\{c\begin{bmatrix}1 \\ 0\end{bmatrix}\}$ (in $\mathbb{R}^2$)
+- Row space: $\{c\begin{bmatrix}1 \\ 1\end{bmatrix}\}$ (in $\mathbb{R}^2$)
+
+Different vectors!
+
+---
+
+### Question 3: If A and B Have the Same Four Subspaces, Is A a Multiple of B?
+
+**Answer**: No
+
+**Counterexample**: If $A$ and $B$ are both full rank $n \times n$ matrices:
+
+- They both have column space = $\mathbb{R}^n$
+- They both have null space = $\{\mathbf{0}\}$
+- They both have row space = $\mathbb{R}^n$
+- They both have left null space = $\{\mathbf{0}\}$
+
+But $A$ and $B$ can be completely different matrices (e.g., different invertible matrices).
+
+---
+
+### Question 4: If I Change Two Rows of A, Which Subspaces Stay the Same?
+
+**Answer**:
+
+- **$N(A)$** (null space)
+- **$C(A^T)$** (row space)
+
+**Explanation**:
+
+- Row operations preserve the null space
+- Row operations preserve the row space (just produce different linear combinations)
+- Column space and left null space will generally change
+
+---
+
+### Question 5: Can Vector [1, 2, 3] Be in Both Null Space and Row Space?
+
+**Answer**: No (assuming non-zero matrix)
+
+**Reason**:
+
+- If $v$ is in the null space: $Av = \mathbf{0}$
+- If $v$ is also a row of $A$: then $Av$ includes the dot product $v \cdot v = \|v\|^2 > 0$
+- This is a contradiction
+
+**Key insight**: Null space and row space are orthogonal complements in $\mathbb{R}^n$.
+
+---
+
+*Source: MIT 18.06SC Linear Algebra, Lecture 13*
