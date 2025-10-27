@@ -52,7 +52,10 @@ The site uses a hierarchical navigation structure defined in `_quarto.yml`:
 2. Update the corresponding index.qmd file to include the new content
 3. Add navigation entry to `_quarto.yml` if it should appear in the navbar dropdown
 4. Use consistent frontmatter with `title` field
-5. **Important**: After adding new navbar items, run `quarto render` (full site render) to update the navbar on ALL existing pages. Individual file renders only update that specific page.
+5. **Set publication date**: Always use the current date from the system for the `date` field in frontmatter
+   - Get current date with: `date +"%Y-%m-%d"` (format: YYYY-MM-DD)
+   - Example: `date: "2025-10-26"`
+6. **Important**: After adding new navbar items, run `quarto render` (full site render) to update the navbar on ALL existing pages. Individual file renders only update that specific page.
 
 ## Configuration Notes
 
