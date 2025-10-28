@@ -8,9 +8,9 @@
 
 <meta name="author" content="Chao Ma">
 <meta name="dcterms.date" content="2025-10-27">
-<meta name="description" content="Two strategies for reducing parameters and improving generalization: encouraging similarity vs.&nbsp;enforcing identity">
+<meta name="description" content="Regularizing learned representations rather than model parameters: the difference between parameter sparsity and representation sparsity">
 
-<title>Chapter 7.9: Parameter Tying and Parameter Sharing – ∇ ickma.dev</title>
+<title>Chapter 7.10: Sparse Representations – ∇ ickma.dev</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -358,18 +358,13 @@ window.Quarto = {
    
   <ul>
   <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#parameter-tying" id="toc-parameter-tying" class="nav-link" data-scroll-target="#parameter-tying">Parameter Tying</a>
+  <li><a href="#parameter-regularization" id="toc-parameter-regularization" class="nav-link" data-scroll-target="#parameter-regularization">Parameter Regularization</a></li>
+  <li><a href="#representation-sparsity" id="toc-representation-sparsity" class="nav-link" data-scroll-target="#representation-sparsity">Representation Sparsity</a>
   <ul class="collapse">
-  <li><a href="#definition" id="toc-definition" class="nav-link" data-scroll-target="#definition">Definition</a></li>
-  <li><a href="#mathematical-formulation" id="toc-mathematical-formulation" class="nav-link" data-scroll-target="#mathematical-formulation">Mathematical Formulation</a></li>
+  <li><a href="#key-difference-parameter-vs-representation-regularization" id="toc-key-difference-parameter-vs-representation-regularization" class="nav-link" data-scroll-target="#key-difference-parameter-vs-representation-regularization">Key Difference: Parameter vs Representation Regularization</a></li>
+  </ul></li>
+  <li><a href="#orthogonal-matching-pursuit" id="toc-orthogonal-matching-pursuit" class="nav-link" data-scroll-target="#orthogonal-matching-pursuit">Orthogonal Matching Pursuit</a></li>
   <li><a href="#real-world-applications" id="toc-real-world-applications" class="nav-link" data-scroll-target="#real-world-applications">Real-World Applications</a></li>
-  </ul></li>
-  <li><a href="#parameter-sharing" id="toc-parameter-sharing" class="nav-link" data-scroll-target="#parameter-sharing">Parameter Sharing</a>
-  <ul class="collapse">
-  <li><a href="#definition-1" id="toc-definition-1" class="nav-link" data-scroll-target="#definition-1">Definition</a></li>
-  <li><a href="#cnn-example" id="toc-cnn-example" class="nav-link" data-scroll-target="#cnn-example">CNN Example</a></li>
-  <li><a href="#real-world-applications-1" id="toc-real-world-applications-1" class="nav-link" data-scroll-target="#real-world-applications-1">Real-World Applications</a></li>
-  </ul></li>
   </ul>
 </nav>
     </div>
@@ -378,19 +373,18 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Chapter 7.9: Parameter Tying and Parameter Sharing</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">Chapter 7.10: Sparse Representations</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
   <div class="quarto-categories">
     <div class="quarto-category">deep learning</div>
     <div class="quarto-category">regularization</div>
-    <div class="quarto-category">parameter sharing</div>
-    <div class="quarto-category">CNN</div>
-    <div class="quarto-category">RNN</div>
+    <div class="quarto-category">sparsity</div>
+    <div class="quarto-category">sparse coding</div>
   </div>
   </div>
 
 <div>
   <div class="description">
-    Two strategies for reducing parameters and improving generalization: encouraging similarity vs.&nbsp;enforcing identity
+    Regularizing learned representations rather than model parameters: the difference between parameter sparsity and representation sparsity
   </div>
 </div>
 
@@ -421,175 +415,268 @@ window.Quarto = {
 
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>Neural networks can benefit from <strong>constraints on parameters</strong> in two distinct ways:</p>
-<ol type="1">
-<li><strong>Parameter Tying</strong>: Encourages parameters to be similar through regularization</li>
-<li><strong>Parameter Sharing</strong>: Forces parameters to be identical by design</li>
-</ol>
-<p>Both approaches reduce effective model capacity and improve generalization, but they differ fundamentally in how strictly they enforce parameter relationships.</p>
-</section>
-<section id="parameter-tying" class="level2">
-<h2 class="anchored" data-anchor-id="parameter-tying">Parameter Tying</h2>
-<section id="definition" class="level3">
-<h3 class="anchored" data-anchor-id="definition">Definition</h3>
-<p><strong>Parameter tying</strong> constrains parameters of different models or layers to be similar by adding a penalty term to the loss function.</p>
-</section>
-<section id="mathematical-formulation" class="level3">
-<h3 class="anchored" data-anchor-id="mathematical-formulation">Mathematical Formulation</h3>
-<p><span class="math display">\[
-\Omega(w^{(A)}, w^{(B)}) = \|w^{(A)} - w^{(B)}\|_2^2
-\]</span></p>
-<p><strong>How it works</strong>:</p>
+<p>Previous chapters focused on <strong>parameter regularization</strong> — constraining the weights <span class="math inline">\(W\)</span> of a model (see <a href="../ML/l1-regularization.html">Chapter 7.1.2: L1 Regularization</a> and <a href="../ML/l2-regularization.html">Chapter 7.1.1: L2 Regularization</a>).</p>
+<p>This chapter introduces <strong>representation regularization</strong> — constraining the activations <span class="math inline">\(h\)</span> (the learned representations).</p>
+<p><strong>Key distinction</strong>:</p>
 <ul>
-<li>Add this penalty term to the loss function</li>
-<li>Forces two models (or layers) to learn similar parameters</li>
-<li>The parameters are still independent, but regularization encourages similarity</li>
+<li><strong>Parameter sparsity</strong>: Makes the weight matrix sparse (few connections)</li>
+<li><strong>Representation sparsity</strong>: Makes the activation vector sparse (few active neurons)</li>
 </ul>
+</section>
+<section id="parameter-regularization" class="level2">
+<h2 class="anchored" data-anchor-id="parameter-regularization">Parameter Regularization</h2>
+<p><strong>Equation 7.46</strong> - Linear system with parameter matrix:</p>
+<p><span class="math display">\[
+\begin{array}{c}
+\begin{bmatrix}
+18\\
+5\\
+15\\
+-9\\
+-3
+\end{bmatrix}
+=
+\begin{bmatrix}
+4 &amp; 0 &amp; 0 &amp; -2 &amp; 0\\
+0 &amp; -1 &amp; 0 &amp; 3 &amp; 0\\
+1 &amp; 0 &amp; 0 &amp; 0 &amp; 3\\
+0 &amp; 5 &amp; 0 &amp; -1 &amp; 0\\
+1 &amp; 0 &amp; 0 &amp; -5 &amp; 0
+\end{bmatrix}
+\begin{bmatrix}
+2\\
+3\\
+-2\\
+-5\\
+1
+\end{bmatrix}
+\\[6pt]
+y \in \mathbb{R}^m,\quad
+A \in \mathbb{R}^{m\times n},\quad
+x \in \mathbb{R}^n
+\end{array}
+\]</span></p>
+<p><strong>L1 regularization on parameters</strong>:</p>
+<p><span class="math display">\[
+\Omega(A) = \|A\|_1 = \sum_{i,j} |A_{ij}|
+\]</span></p>
+<p><strong>Effect</strong>: Encourages sparsity in the parameter matrix <span class="math inline">\(A\)</span> itself, making many weights zero.</p>
+</section>
+<section id="representation-sparsity" class="level2">
+<h2 class="anchored" data-anchor-id="representation-sparsity">Representation Sparsity</h2>
+<p><strong>Equation 7.47</strong> - Linear system with sparse representation:</p>
+<p><span class="math display">\[
+\begin{array}{c}
+\begin{bmatrix}
+-14\\
+1\\
+3\\
+2\\
+23
+\end{bmatrix}
+=
+\begin{bmatrix}
+3 &amp; -1 &amp; 2 &amp; -5 &amp; 4 &amp; 1\\
+4 &amp; -2 &amp; -3 &amp; -1 &amp; 3 &amp; 0\\
+1 &amp; 5 &amp; 2 &amp; -4 &amp; 0 &amp; 0\\
+3 &amp; 4 &amp; -3 &amp; 0 &amp; 2 &amp; 0\\
+-5 &amp; -4 &amp; 2 &amp; 5 &amp; -1 &amp; 3
+\end{bmatrix}
+\begin{bmatrix}
+0\\
+0\\
+1\\
+0\\
+0\\
+0
+\end{bmatrix}
+\\[6pt]
+y \in \mathbb{R}^m, \quad
+B \in \mathbb{R}^{m\times n}, \quad
+h \in \mathbb{R}^n
+\end{array}
+\]</span></p>
+<p><strong>L1 regularization on representation</strong>:</p>
+<p><span class="math display">\[
+\Omega(h) = \|h\|_1 = \sum_{i} |h_i|
+\]</span></p>
+<p><strong>Equation 7.48</strong> - Loss function with representation regularization:</p>
+<p><span class="math display">\[
+\tilde{J}(\theta; x, y) = J(\theta; x, y) + \alpha \Omega(h)
+\]</span></p>
+<p>where <span class="math inline">\(\alpha \in [0, \infty)\)</span> controls the contribution of the norm penalty to the total loss.</p>
+<section id="key-difference-parameter-vs-representation-regularization" class="level3">
+<h3 class="anchored" data-anchor-id="key-difference-parameter-vs-representation-regularization">Key Difference: Parameter vs Representation Regularization</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 45%">
+<col style="width: 19%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>What is Regularized</th>
+<th>Effect</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Parameter regularization</strong></td>
+<td>Weight matrix <span class="math inline">\(A\)</span> or <span class="math inline">\(W\)</span></td>
+<td>Makes weights sparse</td>
+<td>L1/L2 weight decay</td>
+</tr>
+<tr class="even">
+<td><strong>Representation regularization</strong></td>
+<td>Activation vector <span class="math inline">\(h\)</span></td>
+<td>Makes activations sparse</td>
+<td>Sparse autoencoders</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation</strong>:</p>
+<ul>
+<li><strong>Parameter sparsity</strong>: Few connections between layers (network pruning)</li>
+<li><strong>Representation sparsity</strong>: Few neurons active at once (sparse coding)</li>
+</ul>
+</section>
+</section>
+<section id="orthogonal-matching-pursuit" class="level2">
+<h2 class="anchored" data-anchor-id="orthogonal-matching-pursuit">Orthogonal Matching Pursuit</h2>
+<p><strong>Equation 7.49</strong> - Sparse approximation problem:</p>
+<p><span class="math display">\[
+\arg\min_h \|x - Wh\|^2 \quad \text{subject to} \quad \|h\|_0 &lt; k
+\]</span></p>
+<p><strong>Goal</strong>: Find both <span class="math inline">\(W\)</span> and <span class="math inline">\(h\)</span> such that:</p>
+<ol type="1">
+<li><span class="math inline">\(Wh\)</span> closely approximates <span class="math inline">\(x\)</span> (reconstruction accuracy)</li>
+<li><span class="math inline">\(h\)</span> is sparse — the number of nonzero elements in <span class="math inline">\(h\)</span> (denoted <span class="math inline">\(\|h\|_0\)</span>) is less than <span class="math inline">\(k\)</span></li>
+</ol>
+<p><strong>Interpretation</strong>: Use <span class="math inline">\(Wh\)</span> to represent <span class="math inline">\(x\)</span> with only a few active components.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>Nature of Constraint
+<span class="screen-reader-only">Note</span>Orthogonal Matching Pursuit
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This is a <strong>soft constraint</strong> that allows some deviation while encouraging parameter alignment.</p>
+<p>When the columns of <span class="math inline">\(W\)</span> are orthogonal, this problem can be efficiently solved using <strong>orthogonal matching pursuit (OMP)</strong> algorithm.</p>
+<p><strong>Key insight</strong>: Orthogonality of basis vectors (columns of <span class="math inline">\(W\)</span>) enables efficient sparse decomposition.</p>
 </div>
 </div>
 </section>
-<section id="real-world-applications" class="level3">
-<h3 class="anchored" data-anchor-id="real-world-applications">Real-World Applications</h3>
+<section id="real-world-applications" class="level2">
+<h2 class="anchored" data-anchor-id="real-world-applications">Real-World Applications</h2>
 <p><strong>Note</strong>: The following table is generated by ChatGPT.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 27%">
-<col style="width: 25%">
-<col style="width: 20%">
-<col style="width: 25%">
+<col style="width: 8%">
+<col style="width: 16%">
+<col style="width: 18%">
+<col style="width: 32%">
+<col style="width: 24%">
 </colgroup>
 <thead>
 <tr class="header">
-<th>Application</th>
-<th>Mechanism</th>
-<th>Purpose</th>
-<th>Reference</th>
+<th>Category</th>
+<th>Technique / Model</th>
+<th>Representation Type</th>
+<th>How it Uses Sparsity / Orthogonality</th>
+<th>Real-World Example / Effect</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><strong>Word Embedding Tying</strong></td>
-<td>Input embedding matrix and output softmax matrix tied: <span class="math inline">\(W_{\text{out}} = E^T\)</span></td>
-<td>Reduce parameters; consistent embedding space</td>
-<td>Press &amp; Wolf, 2017</td>
+<td>🧠 <strong>Neuroscience &amp; Vision</strong></td>
+<td><strong>Sparse coding (Olshausen &amp; Field, 1996)</strong></td>
+<td><strong>Sparse</strong></td>
+<td>The brain represents visual inputs by activating only a few neurons for each stimulus.</td>
+<td>Explains receptive fields in V1 visual cortex — neurons respond only to specific edges or orientations.</td>
 </tr>
 <tr class="even">
-<td><strong>Autoencoder</strong></td>
-<td>Decoder weights tied to encoder transpose: <span class="math inline">\(W_{\text{dec}} = W_{\text{enc}}^T\)</span></td>
-<td>Regularize; stabilize training; mimic PCA</td>
-<td>Hinton &amp; Salakhutdinov, 2006</td>
+<td>🧮 <strong>Machine Learning</strong></td>
+<td><strong>LASSO Regression</strong></td>
+<td><strong>Sparse</strong></td>
+<td>Adds <span class="math inline">\(\lambda \|w\|_1\)</span> penalty to make weights sparse, selecting only key features.</td>
+<td>Feature selection in predictive models (finance, genomics, etc.).</td>
 </tr>
 <tr class="odd">
-<td><strong>Multi-task Learning</strong></td>
-<td>Different tasks’ parameters constrained to be similar: <span class="math inline">\(\Omega = \|w^{(A)} - w^{(B)}\|^2\)</span></td>
-<td>Encourage knowledge sharing between tasks</td>
-<td>Caruana, 1997</td>
+<td>🧩 <strong>Autoencoders</strong></td>
+<td><strong>Sparse Autoencoder</strong></td>
+<td><strong>Sparse</strong></td>
+<td>Adds regularizer <span class="math inline">\(\Omega(h) = \|h\|_1\)</span> or KL divergence to force sparse activations.</td>
+<td>Used in image compression and pretraining deep networks (unsupervised learning).</td>
 </tr>
 <tr class="even">
-<td><strong>Knowledge Distillation</strong></td>
-<td>Student layers tied to teacher via loss constraint: <span class="math inline">\(\|h_s^{(l)} - h_t^{(l)}\|^2\)</span></td>
-<td>Transfer intermediate representations</td>
-<td>Sanh et al., 2019 — DistilBERT</td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="parameter-sharing" class="level2">
-<h2 class="anchored" data-anchor-id="parameter-sharing">Parameter Sharing</h2>
-<section id="definition-1" class="level3">
-<h3 class="anchored" data-anchor-id="definition-1">Definition</h3>
-<p><strong>Parameter sharing</strong> uses the exact same set of parameters across multiple locations or time steps.</p>
-</section>
-<section id="cnn-example" class="level3">
-<h3 class="anchored" data-anchor-id="cnn-example">CNN Example</h3>
-<p>The same kernel (set of weights) is applied across all spatial locations of the input:</p>
-<p><span class="math display">\[
-y_{i,j} = \sum_{u,v} w_{u,v} x_{i+u, j+v}
-\]</span></p>
-<p><strong>Benefits</strong>:</p>
-<ol type="1">
-<li><strong>Pattern detection</strong>: Detects the same pattern (e.g., edge or texture) anywhere in the image</li>
-<li><strong>Parameter reduction</strong>: Dramatically reduces the number of parameters</li>
-<li><strong>Translation equivariance</strong>: Output shifts when input shifts</li>
-</ol>
-<div class="callout callout-style-default callout-important callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Important</span>Nature of Constraint
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>This is a <strong>hard constraint</strong> where parameters are identical by design, not just similar.</p>
-</div>
-</div>
-</section>
-<section id="real-world-applications-1" class="level3">
-<h3 class="anchored" data-anchor-id="real-world-applications-1">Real-World Applications</h3>
-<p><strong>Note</strong>: The following table is generated by ChatGPT.</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 27%">
-<col style="width: 25%">
-<col style="width: 20%">
-<col style="width: 25%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Application</th>
-<th>Mechanism</th>
-<th>Purpose</th>
-<th>Reference</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><strong>CNN</strong></td>
-<td>Same kernel slides across all spatial positions: <span class="math inline">\(y_{i,j} = \sum_{u,v} w_{u,v} x_{i+u, j+v}\)</span></td>
-<td>Detect same pattern anywhere; reduce parameters; translation equivariance</td>
-<td>LeCun et al., 1998 — LeNet</td>
-</tr>
-<tr class="even">
-<td><strong>RNN / LSTM / GRU</strong></td>
-<td>Same weights used at each time step: <span class="math inline">\(h_t = f(W_h h_{t-1} + W_x x_t)\)</span></td>
-<td>Temporal consistency; handle variable-length sequences</td>
-<td>Hochreiter &amp; Schmidhuber, 1997</td>
+<td>🖼️ <strong>Image Processing / Compression</strong></td>
+<td><strong>Dictionary Learning / K-SVD</strong></td>
+<td><strong>Sparse</strong></td>
+<td>Represent an image as a combination of few learned basis patches (atoms).</td>
+<td>JPEG-like compression, denoising, super-resolution.</td>
 </tr>
 <tr class="odd">
-<td><strong>Transformer (ALBERT)</strong></td>
-<td>All encoder layers share parameters: <span class="math inline">\(\theta_1 = \theta_2 = \dots = \theta_L\)</span></td>
-<td>Reduce memory; efficient deep sharing</td>
-<td>Lan et al., 2020 — ALBERT</td>
+<td>🔊 <strong>Speech Processing</strong></td>
+<td><strong>Non-negative Matrix Factorization (NMF)</strong></td>
+<td><strong>Sparse + Nonnegative</strong></td>
+<td>Decomposes sound spectrograms into few additive components.</td>
+<td>Source separation (e.g., separating voice from music).</td>
 </tr>
 <tr class="even">
-<td><strong>Siamese / Twin Networks</strong></td>
-<td>Two (or more) branches share all parameters: <span class="math inline">\(f_\theta(x_1), f_\theta(x_2)\)</span></td>
-<td>Compare similarity; representation consistency</td>
-<td>Bromley et al., 1993 — Siamese Nets</td>
+<td>🧠 <strong>Transform-based Compression</strong></td>
+<td><strong>DCT (Discrete Cosine Transform)</strong></td>
+<td><strong>Orthogonal</strong></td>
+<td>Projects signals onto orthogonal cosine basis vectors.</td>
+<td>JPEG compression — energy concentrated in few coefficients.</td>
+</tr>
+<tr class="odd">
+<td>📶 <strong>Signal Processing</strong></td>
+<td><strong>Fourier Transform</strong></td>
+<td><strong>Orthogonal</strong></td>
+<td>Represents time-domain signals in orthogonal sinusoidal basis.</td>
+<td>Audio, RF, vibration analysis.</td>
+</tr>
+<tr class="even">
+<td>🖥️ <strong>Dimensionality Reduction</strong></td>
+<td><strong>Principal Component Analysis (PCA)</strong></td>
+<td><strong>Orthogonal</strong></td>
+<td>Finds orthogonal axes (principal components) that maximize variance.</td>
+<td>Dimensionality reduction, data visualization.</td>
+</tr>
+<tr class="odd">
+<td>🎙️ <strong>Source Separation</strong></td>
+<td><strong>Independent Component Analysis (ICA)</strong></td>
+<td><strong>Sparse-like / Orthogonal</strong></td>
+<td>Seeks statistically independent (often sparse) components.</td>
+<td>Blind source separation (“cocktail party problem”).</td>
+</tr>
+<tr class="even">
+<td>🤖 <strong>CNN Filters</strong></td>
+<td><strong>Orthogonal Regularization</strong></td>
+<td><strong>Orthogonal</strong></td>
+<td>Forces convolution filters to be orthogonal to prevent redundancy.</td>
+<td>Improves training stability and generalization.</td>
+</tr>
+<tr class="odd">
+<td>💾 <strong>Transformers</strong></td>
+<td><strong>Embedding Orthogonalization</strong></td>
+<td><strong>Orthogonal or Near-orthogonal</strong></td>
+<td>Orthogonalizes embedding vectors for better separation in latent space.</td>
+<td>Improves language model expressiveness and prevents collapse.</td>
 </tr>
 </tbody>
 </table>
 <hr>
-<p><em>Source: Deep Learning Book, Chapter 7.9</em></p>
+<p><em>Source: Deep Learning Book, Chapter 7.10</em></p>
 
 
 <!-- -->
 
-</section>
 </section>
 
 </main> <!-- /main -->
@@ -1045,97 +1132,173 @@ y_{i,j} = \sum_{u,v} w_{u,v} x_{i+u, j+v}
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 7.9: Parameter Tying and Parameter Sharing"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 7.10: Sparse Representations"</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2025-10-27"</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [deep learning, regularization, parameter sharing, CNN, RNN]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Two strategies for reducing parameters and improving generalization: encouraging similarity vs. enforcing identity"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [deep learning, regularization, sparsity, sparse coding]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Regularizing learned representations rather than model parameters: the difference between parameter sparsity and representation sparsity"</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">## Overview</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>Neural networks can benefit from **constraints on parameters** in two distinct ways:</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>Previous chapters focused on **parameter regularization** — constraining the weights $W$ of a model (see <span class="co">[</span><span class="ot">Chapter 7.1.2: L1 Regularization</span><span class="co">](l1-regularization.qmd)</span> and <span class="co">[</span><span class="ot">Chapter 7.1.1: L2 Regularization</span><span class="co">](l2-regularization.qmd)</span>).</span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Parameter Tying**: Encourages parameters to be similar through regularization</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Parameter Sharing**: Forces parameters to be identical by design</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>Both approaches reduce effective model capacity and improve generalization, but they differ fundamentally in how strictly they enforce parameter relationships.</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">## Parameter Tying</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>This chapter introduces **representation regularization** — constraining the activations $h$ (the learned representations).</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>**Key distinction**:</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Parameter sparsity**: Makes the weight matrix sparse (few connections)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Representation sparsity**: Makes the activation vector sparse (few active neurons)</span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">### Definition</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">## Parameter Regularization</span></span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>**Parameter tying** constrains parameters of different models or layers to be similar by adding a penalty term to the loss function.</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>**Equation 7.46** - Linear system with parameter matrix:</span>
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">### Mathematical Formulation</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>\Omega(w^{(A)}, w^{(B)}) = <span class="sc">\|</span>w^{(A)} - w^{(B)}<span class="sc">\|</span>_2^2</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>**How it works**:</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Add this penalty term to the loss function</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Forces two models (or layers) to learn similar parameters</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The parameters are still independent, but regularization encourages similarity</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="fu">## Nature of Constraint</span></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>This is a **soft constraint** that allows some deviation while encouraging parameter alignment.</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="fu">### Real-World Applications</span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>**Note**: The following table is generated by ChatGPT.</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Application <span class="pp">|</span> Mechanism <span class="pp">|</span> Purpose <span class="pp">|</span> Reference <span class="pp">|</span></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------|-----------|---------|-----------|</span></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Word Embedding Tying** <span class="pp">|</span> Input embedding matrix and output softmax matrix tied: $W_{\text{out}} = E^T$ <span class="pp">|</span> Reduce parameters; consistent embedding space <span class="pp">|</span> Press &amp; Wolf, 2017 <span class="pp">|</span></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Autoencoder** <span class="pp">|</span> Decoder weights tied to encoder transpose: $W_{\text{dec}} = W_{\text{enc}}^T$ <span class="pp">|</span> Regularize; stabilize training; mimic PCA <span class="pp">|</span> Hinton &amp; Salakhutdinov, 2006 <span class="pp">|</span></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Multi-task Learning** <span class="pp">|</span> Different tasks' parameters constrained to be similar: $\Omega = <span class="sc">\|</span>w^{(A)} - w^{(B)}<span class="sc">\|</span>^2$ <span class="pp">|</span> Encourage knowledge sharing between tasks <span class="pp">|</span> Caruana, 1997 <span class="pp">|</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Knowledge Distillation** <span class="pp">|</span> Student layers tied to teacher via loss constraint: $<span class="sc">\|</span>h_s^{(l)} - h_t^{(l)}<span class="sc">\|</span>^2$ <span class="pp">|</span> Transfer intermediate representations <span class="pp">|</span> Sanh et al., 2019 — DistilBERT <span class="pp">|</span></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="fu">## Parameter Sharing</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>\begin{array}{c}</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>18<span class="sc">\\</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>5<span class="sc">\\</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>15<span class="sc">\\</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>-9<span class="sc">\\</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>-3</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>4 &amp; 0 &amp; 0 &amp; -2 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>0 &amp; -1 &amp; 0 &amp; 3 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>1 &amp; 0 &amp; 0 &amp; 0 &amp; 3<span class="sc">\\</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>0 &amp; 5 &amp; 0 &amp; -1 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>1 &amp; 0 &amp; 0 &amp; -5 &amp; 0</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>2<span class="sc">\\</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>3<span class="sc">\\</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>-2<span class="sc">\\</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>-5<span class="sc">\\</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>1</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="sc">\\</span><span class="co">[</span><span class="ot">6pt</span><span class="co">]</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>y \in \mathbb{R}^m,\quad</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>A \in \mathbb{R}^{m\times n},\quad</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>x \in \mathbb{R}^n</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>\end{array}</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="fu">### Definition</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>**L1 regularization on parameters**:</span>
 <span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>**Parameter sharing** uses the exact same set of parameters across multiple locations or time steps.</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="fu">### CNN Example</span></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>\Omega(A) = <span class="sc">\|</span>A<span class="sc">\|</span>_1 = \sum_{i,j} |A_{ij}|</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>The same kernel (set of weights) is applied across all spatial locations of the input:</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>**Effect**: Encourages sparsity in the parameter matrix $A$ itself, making many weights zero.</span>
 <span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>y_{i,j} = \sum_{u,v} w_{u,v} x_{i+u, j+v}</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="fu">## Representation Sparsity</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>**Equation 7.47** - Linear system with sparse representation:</span>
 <span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>**Benefits**:</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Pattern detection**: Detects the same pattern (e.g., edge or texture) anywhere in the image</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Parameter reduction**: Dramatically reduces the number of parameters</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Translation equivariance**: Output shifts when input shifts</span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>::: {.callout-important}</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="fu">## Nature of Constraint</span></span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>This is a **hard constraint** where parameters are identical by design, not just similar.</span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="fu">### Real-World Applications</span></span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>**Note**: The following table is generated by ChatGPT.</span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Application <span class="pp">|</span> Mechanism <span class="pp">|</span> Purpose <span class="pp">|</span> Reference <span class="pp">|</span></span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------|-----------|---------|-----------|</span></span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **CNN** <span class="pp">|</span> Same kernel slides across all spatial positions: $y_{i,j} = \sum_{u,v} w_{u,v} x_{i+u, j+v}$ <span class="pp">|</span> Detect same pattern anywhere; reduce parameters; translation equivariance <span class="pp">|</span> LeCun et al., 1998 — LeNet <span class="pp">|</span></span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **RNN / LSTM / GRU** <span class="pp">|</span> Same weights used at each time step: $h_t = f(W_h h_{t-1} + W_x x_t)$ <span class="pp">|</span> Temporal consistency; handle variable-length sequences <span class="pp">|</span> Hochreiter &amp; Schmidhuber, 1997 <span class="pp">|</span></span>
-<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Transformer (ALBERT)** <span class="pp">|</span> All encoder layers share parameters: $\theta_1 = \theta_2 = \dots = \theta_L$ <span class="pp">|</span> Reduce memory; efficient deep sharing <span class="pp">|</span> Lan et al., 2020 — ALBERT <span class="pp">|</span></span>
-<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Siamese / Twin Networks** <span class="pp">|</span> Two (or more) branches share all parameters: $f_\theta(x_1), f_\theta(x_2)$ <span class="pp">|</span> Compare similarity; representation consistency <span class="pp">|</span> Bromley et al., 1993 — Siamese Nets <span class="pp">|</span></span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>*Source: Deep Learning Book, Chapter 7.9*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>\begin{array}{c}</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>-14<span class="sc">\\</span></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>1<span class="sc">\\</span></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>3<span class="sc">\\</span></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>2<span class="sc">\\</span></span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>23</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>3 &amp; -1 &amp; 2 &amp; -5 &amp; 4 &amp; 1<span class="sc">\\</span></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>4 &amp; -2 &amp; -3 &amp; -1 &amp; 3 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>1 &amp; 5 &amp; 2 &amp; -4 &amp; 0 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>3 &amp; 4 &amp; -3 &amp; 0 &amp; 2 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>-5 &amp; -4 &amp; 2 &amp; 5 &amp; -1 &amp; 3</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>0<span class="sc">\\</span></span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>0<span class="sc">\\</span></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>1<span class="sc">\\</span></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>0<span class="sc">\\</span></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>0<span class="sc">\\</span></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>0</span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a><span class="sc">\\</span><span class="co">[</span><span class="ot">6pt</span><span class="co">]</span></span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>y \in \mathbb{R}^m, \quad</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>B \in \mathbb{R}^{m\times n}, \quad</span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>h \in \mathbb{R}^n</span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>\end{array}</span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>**L1 regularization on representation**:</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>\Omega(h) = <span class="sc">\|</span>h<span class="sc">\|</span>_1 = \sum_{i} |h_i|</span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>**Equation 7.48** - Loss function with representation regularization:</span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>\tilde{J}(\theta; x, y) = J(\theta; x, y) + \alpha \Omega(h)</span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>where $\alpha \in [0, \infty)$ controls the contribution of the norm penalty to the total loss.</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Difference: Parameter vs Representation Regularization</span></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Type <span class="pp">|</span> What is Regularized <span class="pp">|</span> Effect <span class="pp">|</span> Example <span class="pp">|</span></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|-------------------|--------|---------|</span></span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Parameter regularization** <span class="pp">|</span> Weight matrix $A$ or $W$ <span class="pp">|</span> Makes weights sparse <span class="pp">|</span> L1/L2 weight decay <span class="pp">|</span></span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Representation regularization** <span class="pp">|</span> Activation vector $h$ <span class="pp">|</span> Makes activations sparse <span class="pp">|</span> Sparse autoencoders <span class="pp">|</span></span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>**Interpretation**:</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Parameter sparsity**: Few connections between layers (network pruning)</span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Representation sparsity**: Few neurons active at once (sparse coding)</span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a><span class="fu">## Orthogonal Matching Pursuit</span></span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>**Equation 7.49** - Sparse approximation problem:</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>\arg\min_h <span class="sc">\|</span>x - Wh<span class="sc">\|</span>^2 \quad \text{subject to} \quad <span class="sc">\|</span>h<span class="sc">\|</span>_0 &lt; k</span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>**Goal**: Find both $W$ and $h$ such that:</span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>$Wh$ closely approximates $x$ (reconstruction accuracy)</span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>$h$ is sparse — the number of nonzero elements in $h$ (denoted $<span class="sc">\|</span>h<span class="sc">\|</span>_0$) is less than $k$</span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>**Interpretation**: Use $Wh$ to represent $x$ with only a few active components.</span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a><span class="fu">## Orthogonal Matching Pursuit</span></span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>When the columns of $W$ are orthogonal, this problem can be efficiently solved using **orthogonal matching pursuit (OMP)** algorithm.</span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>**Key insight**: Orthogonality of basis vectors (columns of $W$) enables efficient sparse decomposition.</span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a><span class="fu">## Real-World Applications</span></span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>**Note**: The following table is generated by ChatGPT.</span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Category <span class="pp">|</span> Technique / Model <span class="pp">|</span> Representation Type <span class="pp">|</span> How it Uses Sparsity / Orthogonality <span class="pp">|</span> Real-World Example / Effect <span class="pp">|</span></span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------|-------------------|---------------------|-------------------------------------|----------------------------|</span></span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 🧠 **Neuroscience &amp; Vision** | **Sparse coding (Olshausen &amp; Field, 1996)** | **Sparse** <span class="pp">|</span> The brain represents visual inputs by activating only a few neurons for each stimulus. <span class="pp">|</span> Explains receptive fields in V1 visual cortex — neurons respond only to specific edges or orientations. <span class="pp">|</span></span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 🧮 **Machine Learning** | **LASSO Regression** | **Sparse** <span class="pp">|</span> Adds $\lambda <span class="sc">\|</span>w<span class="sc">\|</span>_1$ penalty to make weights sparse, selecting only key features. <span class="pp">|</span> Feature selection in predictive models (finance, genomics, etc.). <span class="pp">|</span></span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 🧩 **Autoencoders** | **Sparse Autoencoder** | **Sparse** <span class="pp">|</span> Adds regularizer $\Omega(h) = <span class="sc">\|</span>h<span class="sc">\|</span>_1$ or KL divergence to force sparse activations. <span class="pp">|</span> Used in image compression and pretraining deep networks (unsupervised learning). <span class="pp">|</span></span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 🖼️ **Image Processing / Compression** | **Dictionary Learning / K-SVD** | **Sparse** <span class="pp">|</span> Represent an image as a combination of few learned basis patches (atoms). <span class="pp">|</span> JPEG-like compression, denoising, super-resolution. <span class="pp">|</span></span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 🔊 **Speech Processing** | **Non-negative Matrix Factorization (NMF)** | **Sparse + Nonnegative** <span class="pp">|</span> Decomposes sound spectrograms into few additive components. <span class="pp">|</span> Source separation (e.g., separating voice from music). <span class="pp">|</span></span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 🧠 **Transform-based Compression** | **DCT (Discrete Cosine Transform)** | **Orthogonal** <span class="pp">|</span> Projects signals onto orthogonal cosine basis vectors. <span class="pp">|</span> JPEG compression — energy concentrated in few coefficients. <span class="pp">|</span></span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 📶 **Signal Processing** | **Fourier Transform** | **Orthogonal** <span class="pp">|</span> Represents time-domain signals in orthogonal sinusoidal basis. <span class="pp">|</span> Audio, RF, vibration analysis. <span class="pp">|</span></span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 🖥️ **Dimensionality Reduction** | **Principal Component Analysis (PCA)** | **Orthogonal** <span class="pp">|</span> Finds orthogonal axes (principal components) that maximize variance. <span class="pp">|</span> Dimensionality reduction, data visualization. <span class="pp">|</span></span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 🎙️ **Source Separation** | **Independent Component Analysis (ICA)** | **Sparse-like / Orthogonal** <span class="pp">|</span> Seeks statistically independent (often sparse) components. <span class="pp">|</span> Blind source separation ("cocktail party problem"). <span class="pp">|</span></span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 🤖 **CNN Filters** | **Orthogonal Regularization** | **Orthogonal** <span class="pp">|</span> Forces convolution filters to be orthogonal to prevent redundancy. <span class="pp">|</span> Improves training stability and generalization. <span class="pp">|</span></span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 💾 **Transformers** | **Embedding Orthogonalization** | **Orthogonal or Near-orthogonal** <span class="pp">|</span> Orthogonalizes embedding vectors for better separation in latent space. <span class="pp">|</span> Improves language model expressiveness and prevents collapse. <span class="pp">|</span></span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>*Source: Deep Learning Book, Chapter 7.10*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
