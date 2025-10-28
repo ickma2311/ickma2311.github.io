@@ -7,9 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Chao Ma">
-<meta name="dcterms.date" content="2024-05-17">
+<meta name="dcterms.date" content="2025-10-27">
+<meta name="description" content="Two strategies for reducing parameters and improving generalization: encouraging similarity vs.&nbsp;enforcing identity">
 
-<title>Logistic Regression – ∇ ickma.dev</title>
+<title>Chapter 7.9: Parameter Tying and Parameter Sharing – ∇ ickma.dev</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -352,17 +353,19 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#model-formulation" id="toc-model-formulation" class="nav-link active" data-scroll-target="#model-formulation">Model Formulation</a>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#parameter-tying" id="toc-parameter-tying" class="nav-link" data-scroll-target="#parameter-tying">Parameter Tying</a>
   <ul class="collapse">
-  <li><a href="#hypothesis" id="toc-hypothesis" class="nav-link" data-scroll-target="#hypothesis">Hypothesis</a></li>
+  <li><a href="#definition" id="toc-definition" class="nav-link" data-scroll-target="#definition">Definition</a></li>
+  <li><a href="#mathematical-formulation" id="toc-mathematical-formulation" class="nav-link" data-scroll-target="#mathematical-formulation">Mathematical Formulation</a></li>
+  <li><a href="#real-world-applications" id="toc-real-world-applications" class="nav-link" data-scroll-target="#real-world-applications">Real-World Applications</a></li>
   </ul></li>
-  <li><a href="#loss-function-binary-cross-entropy" id="toc-loss-function-binary-cross-entropy" class="nav-link" data-scroll-target="#loss-function-binary-cross-entropy">Loss Function (Binary Cross-Entropy)</a>
+  <li><a href="#parameter-sharing" id="toc-parameter-sharing" class="nav-link" data-scroll-target="#parameter-sharing">Parameter Sharing</a>
   <ul class="collapse">
-  <li><a href="#likelihood" id="toc-likelihood" class="nav-link" data-scroll-target="#likelihood">1. Likelihood</a></li>
-  <li><a href="#log-likelihood" id="toc-log-likelihood" class="nav-link" data-scroll-target="#log-likelihood">2. Log-Likelihood</a></li>
-  <li><a href="#cost-function" id="toc-cost-function" class="nav-link" data-scroll-target="#cost-function">3. Cost Function</a></li>
+  <li><a href="#definition-1" id="toc-definition-1" class="nav-link" data-scroll-target="#definition-1">Definition</a></li>
+  <li><a href="#cnn-example" id="toc-cnn-example" class="nav-link" data-scroll-target="#cnn-example">CNN Example</a></li>
+  <li><a href="#real-world-applications-1" id="toc-real-world-applications-1" class="nav-link" data-scroll-target="#real-world-applications-1">Real-World Applications</a></li>
   </ul></li>
-  <li><a href="#refernce-bernoulli-distribution" id="toc-refernce-bernoulli-distribution" class="nav-link" data-scroll-target="#refernce-bernoulli-distribution">refernce: Bernoulli Distribution</a></li>
   </ul>
 </nav>
     </div>
@@ -371,13 +374,21 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Logistic Regression</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">Chapter 7.9: Parameter Tying and Parameter Sharing</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
   <div class="quarto-categories">
-    <div class="quarto-category">ML</div>
-    <div class="quarto-category">classification</div>
+    <div class="quarto-category">deep learning</div>
+    <div class="quarto-category">regularization</div>
+    <div class="quarto-category">parameter sharing</div>
+    <div class="quarto-category">CNN</div>
+    <div class="quarto-category">RNN</div>
   </div>
   </div>
 
+<div>
+  <div class="description">
+    Two strategies for reducing parameters and improving generalization: encouraging similarity vs.&nbsp;enforcing identity
+  </div>
+</div>
 
 
 <div class="quarto-title-meta">
@@ -392,7 +403,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">May 17, 2024</p>
+      <p class="date">October 27, 2025</p>
     </div>
   </div>
   
@@ -404,59 +415,177 @@ window.Quarto = {
 </header>
 
 
-<section id="model-formulation" class="level2">
-<h2 class="anchored" data-anchor-id="model-formulation">Model Formulation</h2>
-<p>The core idea of logistic regression is to model the probability of a binary outcome.</p>
-<section id="hypothesis" class="level3">
-<h3 class="anchored" data-anchor-id="hypothesis">Hypothesis</h3>
-<p>We model the probability that the target variable (y) is 1, given the features (x), using the sigmoid (or logistic) function, denoted by ().</p>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>Neural networks can benefit from <strong>constraints on parameters</strong> in two distinct ways:</p>
+<ol type="1">
+<li><strong>Parameter Tying</strong>: Encourages parameters to be similar through regularization</li>
+<li><strong>Parameter Sharing</strong>: Forces parameters to be identical by design</li>
+</ol>
+<p>Both approaches reduce effective model capacity and improve generalization, but they differ fundamentally in how strictly they enforce parameter relationships.</p>
+</section>
+<section id="parameter-tying" class="level2">
+<h2 class="anchored" data-anchor-id="parameter-tying">Parameter Tying</h2>
+<section id="definition" class="level3">
+<h3 class="anchored" data-anchor-id="definition">Definition</h3>
+<p><strong>Parameter tying</strong> constrains parameters of different models or layers to be similar by adding a penalty term to the loss function.</p>
+</section>
+<section id="mathematical-formulation" class="level3">
+<h3 class="anchored" data-anchor-id="mathematical-formulation">Mathematical Formulation</h3>
 <p><span class="math display">\[
-P(y_i=1 \mid x_i) = \hat{y}_i = \sigma(w^T x_i + b)
+\Omega(w^{(A)}, w^{(B)}) = \|w^{(A)} - w^{(B)}\|_2^2
 \]</span></p>
-<p>The sigmoid function is defined as: <span class="math display">\[
-\sigma(z) = \frac{1}{1 + e^{-z}}
-\]</span></p>
-<p>Since the outcome is binary, the probability of (y) being 0 is simply: <span class="math display">\[
-P(y_i=0 \mid x_i) = 1 - \hat{y}_i
-\]</span></p>
-<p>These two cases can be written compactly as a single equation, which is the probability mass function of a Bernoulli distribution: <span class="math display">\[
-P(y_i \mid x_i) = \hat{y}_i^{y_i} (1 - \hat{y}_i)^{1 - y_i}
-\]</span></p>
+<p><strong>How it works</strong>:</p>
+<ul>
+<li>Add this penalty term to the loss function</li>
+<li>Forces two models (or layers) to learn similar parameters</li>
+<li>The parameters are still independent, but regularization encourages similarity</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Nature of Constraint
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This is a <strong>soft constraint</strong> that allows some deviation while encouraging parameter alignment.</p>
+</div>
+</div>
+</section>
+<section id="real-world-applications" class="level3">
+<h3 class="anchored" data-anchor-id="real-world-applications">Real-World Applications</h3>
+<p><strong>Note</strong>: The following table is generated by ChatGPT.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 27%">
+<col style="width: 25%">
+<col style="width: 20%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Application</th>
+<th>Mechanism</th>
+<th>Purpose</th>
+<th>Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Word Embedding Tying</strong></td>
+<td>Input embedding matrix and output softmax matrix tied: <span class="math inline">\(W_{\text{out}} = E^T\)</span></td>
+<td>Reduce parameters; consistent embedding space</td>
+<td>Press &amp; Wolf, 2017</td>
+</tr>
+<tr class="even">
+<td><strong>Autoencoder</strong></td>
+<td>Decoder weights tied to encoder transpose: <span class="math inline">\(W_{\text{dec}} = W_{\text{enc}}^T\)</span></td>
+<td>Regularize; stabilize training; mimic PCA</td>
+<td>Hinton &amp; Salakhutdinov, 2006</td>
+</tr>
+<tr class="odd">
+<td><strong>Multi-task Learning</strong></td>
+<td>Different tasks’ parameters constrained to be similar: <span class="math inline">\(\Omega = \|w^{(A)} - w^{(B)}\|^2\)</span></td>
+<td>Encourage knowledge sharing between tasks</td>
+<td>Caruana, 1997</td>
+</tr>
+<tr class="even">
+<td><strong>Knowledge Distillation</strong></td>
+<td>Student layers tied to teacher via loss constraint: <span class="math inline">\(\|h_s^{(l)} - h_t^{(l)}\|^2\)</span></td>
+<td>Transfer intermediate representations</td>
+<td>Sanh et al., 2019 — DistilBERT</td>
+</tr>
+</tbody>
+</table>
 </section>
 </section>
-<section id="loss-function-binary-cross-entropy" class="level2">
-<h2 class="anchored" data-anchor-id="loss-function-binary-cross-entropy">Loss Function (Binary Cross-Entropy)</h2>
-<p>To find the optimal parameters (w) and (b), we use Maximum Likelihood Estimation (MLE). We want to find the parameters that maximize the probability of observing our given dataset.</p>
-<section id="likelihood" class="level3">
-<h3 class="anchored" data-anchor-id="likelihood">1. Likelihood</h3>
-<p>The likelihood is the joint probability of observing all (n) data points, assuming they are independent and identically distributed (i.i.d.): <span class="math display">\[
-\mathcal{L}(w, b) = \prod_{i=1}^n P(y_i \mid x_i) = \prod_{i=1}^n \hat{y}_i^{y_i} (1 - \hat{y}_i)^{1 - y_i}
-\]</span></p>
+<section id="parameter-sharing" class="level2">
+<h2 class="anchored" data-anchor-id="parameter-sharing">Parameter Sharing</h2>
+<section id="definition-1" class="level3">
+<h3 class="anchored" data-anchor-id="definition-1">Definition</h3>
+<p><strong>Parameter sharing</strong> uses the exact same set of parameters across multiple locations or time steps.</p>
 </section>
-<section id="log-likelihood" class="level3">
-<h3 class="anchored" data-anchor-id="log-likelihood">2. Log-Likelihood</h3>
-<p>Working with products is difficult, so we take the logarithm of the likelihood. Maximizing the log-likelihood is equivalent to maximizing the likelihood.</p>
+<section id="cnn-example" class="level3">
+<h3 class="anchored" data-anchor-id="cnn-example">CNN Example</h3>
+<p>The same kernel (set of weights) is applied across all spatial locations of the input:</p>
 <p><span class="math display">\[
-\log \mathcal{L}(w, b) = \sum_{i=1}^n \left[ y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right]
+y_{i,j} = \sum_{u,v} w_{u,v} x_{i+u, j+v}
 \]</span></p>
+<p><strong>Benefits</strong>:</p>
+<ol type="1">
+<li><strong>Pattern detection</strong>: Detects the same pattern (e.g., edge or texture) anywhere in the image</li>
+<li><strong>Parameter reduction</strong>: Dramatically reduces the number of parameters</li>
+<li><strong>Translation equivariance</strong>: Output shifts when input shifts</li>
+</ol>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Nature of Constraint
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This is a <strong>hard constraint</strong> where parameters are identical by design, not just similar.</p>
+</div>
+</div>
 </section>
-<section id="cost-function" class="level3">
-<h3 class="anchored" data-anchor-id="cost-function">3. Cost Function</h3>
-<p>In machine learning, we frame problems as minimizing a cost function. The standard convention is to minimize the <strong>negative</strong> log-likelihood. This gives us the <strong>Binary Cross-Entropy</strong> loss, (J(w, b)).</p>
-<p><span class="math display">\[
-J(w, b) = - \frac{1}{n} \sum_{i=1}^n \left[ y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right]
-\]</span> The <span class="math inline">\(\frac{1}{n}\)</span> term is an average over the training examples and doesn’t change the minimum, but it helps in stabilizing the training process.</p>
-</section>
-</section>
-<section id="refernce-bernoulli-distribution" class="level2">
-<h2 class="anchored" data-anchor-id="refernce-bernoulli-distribution">refernce: Bernoulli Distribution</h2>
-<p>Formular <span class="math display">\[
-P(y) = p^y (1 - p)^{1 - y}, \quad y \in \{0, 1\}
-\]</span> * when y = 1：<span class="math inline">\(P(y=1) = p^1 (1 - p)^0 = p\)</span> * when y=0: $P(y=0) = p^0 (1 - p)^1 = 1 - p $</p>
+<section id="real-world-applications-1" class="level3">
+<h3 class="anchored" data-anchor-id="real-world-applications-1">Real-World Applications</h3>
+<p><strong>Note</strong>: The following table is generated by ChatGPT.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 27%">
+<col style="width: 25%">
+<col style="width: 20%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Application</th>
+<th>Mechanism</th>
+<th>Purpose</th>
+<th>Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>CNN</strong></td>
+<td>Same kernel slides across all spatial positions: <span class="math inline">\(y_{i,j} = \sum_{u,v} w_{u,v} x_{i+u, j+v}\)</span></td>
+<td>Detect same pattern anywhere; reduce parameters; translation equivariance</td>
+<td>LeCun et al., 1998 — LeNet</td>
+</tr>
+<tr class="even">
+<td><strong>RNN / LSTM / GRU</strong></td>
+<td>Same weights used at each time step: <span class="math inline">\(h_t = f(W_h h_{t-1} + W_x x_t)\)</span></td>
+<td>Temporal consistency; handle variable-length sequences</td>
+<td>Hochreiter &amp; Schmidhuber, 1997</td>
+</tr>
+<tr class="odd">
+<td><strong>Transformer (ALBERT)</strong></td>
+<td>All encoder layers share parameters: <span class="math inline">\(\theta_1 = \theta_2 = \dots = \theta_L\)</span></td>
+<td>Reduce memory; efficient deep sharing</td>
+<td>Lan et al., 2020 — ALBERT</td>
+</tr>
+<tr class="even">
+<td><strong>Siamese / Twin Networks</strong></td>
+<td>Two (or more) branches share all parameters: <span class="math inline">\(f_\theta(x_1), f_\theta(x_2)\)</span></td>
+<td>Compare similarity; representation consistency</td>
+<td>Bromley et al., 1993 — Siamese Nets</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><em>Source: Deep Learning Book, Chapter 7.9</em></p>
 
 
 <!-- -->
 
+</section>
 </section>
 
 </main> <!-- /main -->
@@ -912,78 +1041,97 @@ P(y) = p^y (1 - p)^{1 - y}, \quad y \in \{0, 1\}
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Logistic Regression"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 7.9: Parameter Tying and Parameter Sharing"</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2024-05-17"</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [ML, classification]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## Model Formulation</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>The core idea of logistic regression is to model the probability of a binary outcome.</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2025-10-27"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [deep learning, regularization, parameter sharing, CNN, RNN]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Two strategies for reducing parameters and improving generalization: encouraging similarity vs. enforcing identity"</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">## Overview</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>Neural networks can benefit from **constraints on parameters** in two distinct ways:</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Parameter Tying**: Encourages parameters to be similar through regularization</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Parameter Sharing**: Forces parameters to be identical by design</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">### Hypothesis</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>Both approaches reduce effective model capacity and improve generalization, but they differ fundamentally in how strictly they enforce parameter relationships.</span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>We model the probability that the target variable <span class="sc">\(</span>y<span class="sc">\)</span> is 1, given the features <span class="sc">\(</span>x<span class="sc">\)</span>, using the sigmoid (or logistic) function, denoted by <span class="sc">\(</span>\sigma<span class="sc">\)</span>.</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">## Parameter Tying</span></span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>P(y_i=1 \mid x_i) = \hat{y}_i = \sigma(w^T x_i + b)</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">### Definition</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>**Parameter tying** constrains parameters of different models or layers to be similar by adding a penalty term to the loss function.</span>
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>The sigmoid function is defined as:</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>\sigma(z) = \frac{1}{1 + e^{-z}}</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>Since the outcome is binary, the probability of <span class="sc">\(</span>y<span class="sc">\)</span> being 0 is simply:</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>P(y_i=0 \mid x_i) = 1 - \hat{y}_i</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>These two cases can be written compactly as a single equation, which is the probability mass function of a Bernoulli distribution:</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>P(y_i \mid x_i) = \hat{y}_i^{y_i} (1 - \hat{y}_i)^{1 - y_i}</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">### Mathematical Formulation</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>\Omega(w^{(A)}, w^{(B)}) = <span class="sc">\|</span>w^{(A)} - w^{(B)}<span class="sc">\|</span>_2^2</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>**How it works**:</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Add this penalty term to the loss function</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Forces two models (or layers) to learn similar parameters</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The parameters are still independent, but regularization encourages similarity</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="fu">## Nature of Constraint</span></span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="fu">## Loss Function (Binary Cross-Entropy)</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>To find the optimal parameters <span class="sc">\(</span>w<span class="sc">\)</span> and <span class="sc">\(</span>b<span class="sc">\)</span>, we use Maximum Likelihood Estimation (MLE). We want to find the parameters that maximize the probability of observing our given dataset.</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1. Likelihood</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>The likelihood is the joint probability of observing all <span class="sc">\(</span>n<span class="sc">\)</span> data points, assuming they are independent and identically distributed (i.i.d.):</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>\mathcal{L}(w, b) = \prod_{i=1}^n P(y_i \mid x_i) = \prod_{i=1}^n \hat{y}_i^{y_i} (1 - \hat{y}_i)^{1 - y_i}</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2. Log-Likelihood</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>Working with products is difficult, so we take the logarithm of the likelihood. Maximizing the log-likelihood is equivalent to maximizing the likelihood.</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>\log \mathcal{L}(w, b) = \sum_{i=1}^n \left<span class="co">[</span><span class="ot"> y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right</span><span class="co">]</span></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a><span class="fu">### 3. Cost Function</span></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>In machine learning, we frame problems as minimizing a cost function. The standard convention is to minimize the **negative** log-likelihood. This gives us the **Binary Cross-Entropy** loss, <span class="sc">\(</span>J(w, b)<span class="sc">\)</span>.</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>J(w, b) = - \frac{1}{n} \sum_{i=1}^n \left<span class="co">[</span><span class="ot"> y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right</span><span class="co">]</span></span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>The $\frac{1}{n}$ term is an average over the training examples and doesn't change the minimum, but it helps in stabilizing the training process.</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>This is a **soft constraint** that allows some deviation while encouraging parameter alignment.</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="fu">### Real-World Applications</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>**Note**: The following table is generated by ChatGPT.</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Application <span class="pp">|</span> Mechanism <span class="pp">|</span> Purpose <span class="pp">|</span> Reference <span class="pp">|</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------|-----------|---------|-----------|</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Word Embedding Tying** <span class="pp">|</span> Input embedding matrix and output softmax matrix tied: $W_{\text{out}} = E^T$ <span class="pp">|</span> Reduce parameters; consistent embedding space <span class="pp">|</span> Press &amp; Wolf, 2017 <span class="pp">|</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Autoencoder** <span class="pp">|</span> Decoder weights tied to encoder transpose: $W_{\text{dec}} = W_{\text{enc}}^T$ <span class="pp">|</span> Regularize; stabilize training; mimic PCA <span class="pp">|</span> Hinton &amp; Salakhutdinov, 2006 <span class="pp">|</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Multi-task Learning** <span class="pp">|</span> Different tasks' parameters constrained to be similar: $\Omega = <span class="sc">\|</span>w^{(A)} - w^{(B)}<span class="sc">\|</span>^2$ <span class="pp">|</span> Encourage knowledge sharing between tasks <span class="pp">|</span> Caruana, 1997 <span class="pp">|</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Knowledge Distillation** <span class="pp">|</span> Student layers tied to teacher via loss constraint: $<span class="sc">\|</span>h_s^{(l)} - h_t^{(l)}<span class="sc">\|</span>^2$ <span class="pp">|</span> Transfer intermediate representations <span class="pp">|</span> Sanh et al., 2019 — DistilBERT <span class="pp">|</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="fu">## Parameter Sharing</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="fu">### Definition</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>**Parameter sharing** uses the exact same set of parameters across multiple locations or time steps.</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="fu">### CNN Example</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>The same kernel (set of weights) is applied across all spatial locations of the input:</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>y_{i,j} = \sum_{u,v} w_{u,v} x_{i+u, j+v}</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="fu">## refernce: Bernoulli Distribution</span></span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>Formular</span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>P(y) = p^y (1 - p)^{1 - y}, \quad y \in <span class="sc">\{</span>0, 1<span class="sc">\}</span></span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>when y = 1：$P(y=1) = p^1 (1 - p)^0 = p$</span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>when y=0: $P(y=0) = p^0 (1 - p)^1 = 1 - p $</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>**Benefits**:</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Pattern detection**: Detects the same pattern (e.g., edge or texture) anywhere in the image</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Parameter reduction**: Dramatically reduces the number of parameters</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Translation equivariance**: Output shifts when input shifts</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>::: {.callout-important}</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="fu">## Nature of Constraint</span></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>This is a **hard constraint** where parameters are identical by design, not just similar.</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="fu">### Real-World Applications</span></span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>**Note**: The following table is generated by ChatGPT.</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Application <span class="pp">|</span> Mechanism <span class="pp">|</span> Purpose <span class="pp">|</span> Reference <span class="pp">|</span></span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------|-----------|---------|-----------|</span></span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **CNN** <span class="pp">|</span> Same kernel slides across all spatial positions: $y_{i,j} = \sum_{u,v} w_{u,v} x_{i+u, j+v}$ <span class="pp">|</span> Detect same pattern anywhere; reduce parameters; translation equivariance <span class="pp">|</span> LeCun et al., 1998 — LeNet <span class="pp">|</span></span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **RNN / LSTM / GRU** <span class="pp">|</span> Same weights used at each time step: $h_t = f(W_h h_{t-1} + W_x x_t)$ <span class="pp">|</span> Temporal consistency; handle variable-length sequences <span class="pp">|</span> Hochreiter &amp; Schmidhuber, 1997 <span class="pp">|</span></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Transformer (ALBERT)** <span class="pp">|</span> All encoder layers share parameters: $\theta_1 = \theta_2 = \dots = \theta_L$ <span class="pp">|</span> Reduce memory; efficient deep sharing <span class="pp">|</span> Lan et al., 2020 — ALBERT <span class="pp">|</span></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Siamese / Twin Networks** <span class="pp">|</span> Two (or more) branches share all parameters: $f_\theta(x_1), f_\theta(x_2)$ <span class="pp">|</span> Compare similarity; representation consistency <span class="pp">|</span> Bromley et al., 1993 — Siamese Nets <span class="pp">|</span></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>*Source: Deep Learning Book, Chapter 7.9*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
