@@ -1,0 +1,152 @@
+---
+title: "Chapter 7.11: Bagging and Other Ensemble Methods"
+author: "Chao Ma"
+date: "2025-10-28"
+categories: [deep learning, regularization, ensemble methods, bagging]
+description: "How training multiple models on bootstrap samples and averaging their predictions reduces variance and improves generalization"
+---
+
+## 1. Bagging (Bootstrap Aggregating)
+
+**Definition**: Also known as **model averaging**, bagging trains several different models and combines their outputs through averaging or voting.
+
+**Key idea**: Train multiple models on slightly different datasets, then aggregate their predictions to reduce variance.
+
+---
+
+## 2. Mathematical Analysis of Ensemble Error
+
+### Setup
+
+Consider an ensemble of $k$ models with prediction errors:
+
+- Error of model $i$: $\epsilon_i$
+- Variance: $\mathbb{E}[\epsilon_i^2] = v$
+- Covariance: $\mathbb{E}[\epsilon_i \epsilon_j] = c$ (for $i \neq j$)
+- Number of models: $k$
+
+### Expected Squared Error of Ensemble
+
+**Equation 7.50** - Ensemble error analysis:
+
+$$
+\begin{aligned}
+\mathbb{E}\left[\left(\frac{1}{k} \sum_i \epsilon_i\right)^2\right] &= \frac{1}{k^2}\mathbb{E}\left[\sum_i \left(\epsilon_i^2 + \sum_{i \neq j} \epsilon_i \epsilon_j \right) \right] \\
+&= \frac{1}{k}v + \frac{k-1}{k}c
+\end{aligned}
+$$
+
+**Derivation**:
+- Expand the squared sum: $(\sum_i \epsilon_i)^2 = \sum_i \epsilon_i^2 + \sum_{i \neq j} \epsilon_i \epsilon_j$
+- Take expectation: $\mathbb{E}[\epsilon_i^2] = v$ and $\mathbb{E}[\epsilon_i \epsilon_j] = c$
+- There are $k$ terms with $\epsilon_i^2$ and $k(k-1)$ terms with $\epsilon_i \epsilon_j$
+- Divide by $k^2$ from the average
+
+---
+
+### Analysis of Different Cases
+
+**Equation 7.51** - Case 1: Perfectly correlated errors ($c = v$)
+
+$$
+\frac{1}{k}v + \frac{k-1}{k}v = \frac{1}{k}v + v - \frac{1}{k}v = v
+$$
+
+**Interpretation**: The expected error equals $v$, meaning **bagging provides no benefit**. Models make the same mistakes.
+
+---
+
+**Case 2: Uncorrelated errors ($c = 0$)**
+
+$$
+\frac{1}{k}v + \frac{k-1}{k} \cdot 0 = \frac{1}{k}v
+$$
+
+**Interpretation**: Expected error is $\frac{1}{k}v$. As $k$ increases, error approaches zero. This is the **ideal case** for bagging.
+
+---
+
+**Case 3: Partially correlated errors ($0 < c < v$)**
+
+$$
+\frac{1}{k}v < \text{Expected Error} < v
+$$
+
+**Interpretation**: Error is between $\frac{1}{k}v$ and $v$. Bagging provides some benefit, but not as much as the uncorrelated case.
+
+---
+
+**Case 4: Perfectly anti-correlated errors ($c > v$)**
+
+$$
+\text{Not possible in practice}
+$$
+
+**Reason**: Covariance cannot exceed variance for prediction errors.
+
+---
+
+## 3. Training Approach
+
+### Step 1: Bootstrap Sampling
+
+**Process**:
+- From the original dataset, draw multiple new datasets **with replacement**
+- Each bootstrap dataset has the same size as the original
+- Contains some duplicated and some omitted examples
+- On average, each bootstrap dataset includes about **two-thirds** of the unique samples
+
+---
+
+### Step 2: Train Multiple Models
+
+**Process**:
+- Train one model (ensemble member) on each bootstrap dataset
+- Because training data differ slightly, each model learns slightly different patterns
+- Each model makes different errors on different regions of input space
+
+**Effect**: Creates diversity among models, reducing correlation between errors.
+
+---
+
+### Step 3: Average Predictions
+
+**Inference**:
+- All models predict on the same input
+- Final output is the **average** (regression) or **majority vote** (classification) of all predictions
+
+**Aggregation formulas**:
+
+**Regression**:
+
+$$
+\hat{y} = \frac{1}{k} \sum_{i=1}^k f_i(x)
+$$
+
+**Classification**:
+
+$$
+\hat{y} = \operatorname{mode}\{f_1(x), f_2(x), \ldots, f_k(x)\}
+$$
+
+## 4. Example: Digit Recognition
+
+**Original dataset**: Contains digits $\{8, 6, 9\}$
+
+**Bootstrap samples**:
+- Bootstrap Sample 1 → $\{9, 6, 8\}$
+- Bootstrap Sample 2 → $\{9, 9, 8\}$
+
+**Training**:
+- Each dataset trains a model to recognize the digit "8"
+- Samples differ (one has more 9's, another lacks 6's)
+- Models learn different decision boundaries
+
+**Key insight**:
+- Individually, each model may be unreliable
+- Their **average output is much more stable**
+- Errors tend to cancel out through averaging
+
+---
+
+*Source: Deep Learning Book, Chapter 7.11*
