@@ -7,10 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Chao Ma">
-<meta name="dcterms.date" content="2025-10-29">
-<meta name="description" content="Understanding projections from lines to subspaces, and their application to solving overdetermined systems through least squares">
+<meta name="dcterms.date" content="2025-10-17">
 
-<title>MIT 18.06 Lecture 15: Projection onto Subspaces – ∇ ickma.dev</title>
+<title>MIT 18.06SC Lecture 8: Solving Ax=b - Complete Solution to Linear Systems – ∇ ickma.dev</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -373,12 +372,27 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#projection-of-a-vector-onto-a-line" id="toc-projection-of-a-vector-onto-a-line" class="nav-link active" data-scroll-target="#projection-of-a-vector-onto-a-line">1. Projection of a Vector onto a Line</a></li>
-  <li><a href="#projection-matrix" id="toc-projection-matrix" class="nav-link" data-scroll-target="#projection-matrix">2. Projection Matrix</a></li>
-  <li><a href="#why-projection" id="toc-why-projection" class="nav-link" data-scroll-target="#why-projection">3. Why Projection?</a></li>
-  <li><a href="#finding-hatx" id="toc-finding-hatx" class="nav-link" data-scroll-target="#finding-hatx">4. Finding <span class="math inline">\(\hat{x}\)</span></a></li>
-  <li><a href="#least-squares-application" id="toc-least-squares-application" class="nav-link" data-scroll-target="#least-squares-application">5. Least Squares Application</a></li>
-  <li><a href="#geometric-interpretation" id="toc-geometric-interpretation" class="nav-link" data-scroll-target="#geometric-interpretation">6. Geometric Interpretation</a></li>
+  <li><a href="#context" id="toc-context" class="nav-link active" data-scroll-target="#context">Context</a></li>
+  <li><a href="#complete-solution-structure" id="toc-complete-solution-structure" class="nav-link" data-scroll-target="#complete-solution-structure">Complete Solution Structure</a>
+  <ul class="collapse">
+  <li><a href="#why-this-works" id="toc-why-this-works" class="nav-link" data-scroll-target="#why-this-works">Why This Works</a></li>
+  </ul></li>
+  <li><a href="#finding-a-particular-solution" id="toc-finding-a-particular-solution" class="nav-link" data-scroll-target="#finding-a-particular-solution">Finding a Particular Solution</a>
+  <ul class="collapse">
+  <li><a href="#algorithm" id="toc-algorithm" class="nav-link" data-scroll-target="#algorithm">Algorithm</a></li>
+  </ul></li>
+  <li><a href="#rank-and-solution-existence" id="toc-rank-and-solution-existence" class="nav-link" data-scroll-target="#rank-and-solution-existence">Rank and Solution Existence</a>
+  <ul class="collapse">
+  <li><a href="#solvability-condition" id="toc-solvability-condition" class="nav-link" data-scroll-target="#solvability-condition">Solvability Condition</a></li>
+  </ul></li>
+  <li><a href="#four-cases-based-on-rank" id="toc-four-cases-based-on-rank" class="nav-link" data-scroll-target="#four-cases-based-on-rank">Four Cases Based on Rank</a>
+  <ul class="collapse">
+  <li><a href="#case-1-exactly-determined-square-full-rank" id="toc-case-1-exactly-determined-square-full-rank" class="nav-link" data-scroll-target="#case-1-exactly-determined-square-full-rank">Case 1: Exactly Determined (Square, Full Rank)</a></li>
+  <li><a href="#case-2-overdetermined-tall-full-column-rank" id="toc-case-2-overdetermined-tall-full-column-rank" class="nav-link" data-scroll-target="#case-2-overdetermined-tall-full-column-rank">Case 2: Overdetermined (Tall, Full Column Rank)</a></li>
+  <li><a href="#case-3-underdetermined-wide-full-row-rank" id="toc-case-3-underdetermined-wide-full-row-rank" class="nav-link" data-scroll-target="#case-3-underdetermined-wide-full-row-rank">Case 3: Underdetermined (Wide, Full Row Rank)</a></li>
+  <li><a href="#case-4-rank-deficient-neither-full-column-nor-full-row-rank" id="toc-case-4-rank-deficient-neither-full-column-nor-full-row-rank" class="nav-link" data-scroll-target="#case-4-rank-deficient-neither-full-column-nor-full-row-rank">Case 4: Rank Deficient (Neither Full Column nor Full Row Rank)</a></li>
+  </ul></li>
+  <li><a href="#summary-table" id="toc-summary-table" class="nav-link" data-scroll-target="#summary-table">Summary Table</a></li>
   </ul>
 </nav>
     </div>
@@ -387,20 +401,14 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">MIT 18.06 Lecture 15: Projection onto Subspaces</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">MIT 18.06SC Lecture 8: Solving Ax=b - Complete Solution to Linear Systems</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
   <div class="quarto-categories">
-    <div class="quarto-category">linear algebra</div>
+    <div class="quarto-category">Linear Algebra</div>
     <div class="quarto-category">MIT 18.06</div>
-    <div class="quarto-category">projections</div>
-    <div class="quarto-category">least squares</div>
+    <div class="quarto-category">Linear Systems</div>
   </div>
   </div>
 
-<div>
-  <div class="description">
-    Understanding projections from lines to subspaces, and their application to solving overdetermined systems through least squares
-  </div>
-</div>
 
 
 <div class="quarto-title-meta">
@@ -415,7 +423,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">October 29, 2025</p>
+      <p class="date">October 17, 2025</p>
     </div>
   </div>
   
@@ -427,129 +435,154 @@ window.Quarto = {
 </header>
 
 
-<div class="quarto-video ratio ratio-16x9"><iframe data-external="1" src="https://www.youtube.com/embed/Y_Ac6KiQ1t0" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>
+<section id="context" class="level2">
+<h2 class="anchored" data-anchor-id="context">Context</h2>
+<p><a href="https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture08/lecture08_solving_Ax_equals_b.md">My lecture notes</a></p>
+<p>This lecture presents the complete solution structure for <span class="math inline">\(Ax = b\)</span> and classifies all linear systems into four cases based on rank: exactly determined (unique solution), overdetermined (0 or 1 solution), underdetermined (infinite solutions), and rank deficient (0 or infinite solutions).</p>
+<div class="quarto-video ratio ratio-16x9"><iframe data-external="1" src="https://www.youtube.com/embed/9Q1q7s1jTzU" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>
 <hr>
-<section id="projection-of-a-vector-onto-a-line" class="level2">
-<h2 class="anchored" data-anchor-id="projection-of-a-vector-onto-a-line">1. Projection of a Vector onto a Line</h2>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="../../media/projection.png" class="img-fluid figure-img"></p>
-<figcaption>Projection onto a Line</figcaption>
-</figure>
-</div>
-<p><strong>Setup</strong>: Project vector <span class="math inline">\(b\)</span> onto vector <span class="math inline">\(a\)</span>.</p>
-<p><strong>Key equations</strong>:</p>
+</section>
+<section id="complete-solution-structure" class="level2">
+<h2 class="anchored" data-anchor-id="complete-solution-structure">Complete Solution Structure</h2>
+<p>The general solution to <span class="math inline">\(Ax = b\)</span> (when it exists) has the form: <span class="math display">\[
+x = x_p + x_n
+\]</span></p>
+<p>where: - <span class="math inline">\(x_p\)</span> is a <strong>particular solution</strong>: any specific solution satisfying <span class="math inline">\(Ax_p = b\)</span> - <span class="math inline">\(x_n\)</span> is any vector from the <strong>null space</strong>: <span class="math inline">\(Ax_n = 0\)</span></p>
+<section id="why-this-works" class="level3">
+<h3 class="anchored" data-anchor-id="why-this-works">Why This Works</h3>
 <p><span class="math display">\[
 \begin{aligned}
-p &amp;= xa \\
-a^T(b - xa) &amp;= 0 \\
-a^T b &amp;= xa^T a \\
-x &amp;= \frac{a^T b}{a^T a}
+Ax_p &amp;= b \\
+Ax_n &amp;= 0 \\
+\hline
+A(x_p + x_n) &amp;= Ax_p + Ax_n = b + 0 = b
 \end{aligned}
 \]</span></p>
-<p><strong>Components</strong>: - <span class="math inline">\(p\)</span>: Projection of <span class="math inline">\(b\)</span> onto <span class="math inline">\(a\)</span> - <span class="math inline">\(e\)</span>: Error vector (<span class="math inline">\(e = b - p\)</span>) - <span class="math inline">\(e \perp a\)</span> (error is perpendicular to <span class="math inline">\(a\)</span>) - <span class="math inline">\(p + e = b\)</span> - <span class="math inline">\(p = b - e\)</span></p>
-<p><strong>Projection formula</strong>:</p>
-<p><span class="math display">\[
-p = a\frac{a^T b}{a^T a}
-\]</span></p>
-<p><strong>Properties</strong>: - If <span class="math inline">\(b\)</span> is doubled, then <span class="math inline">\(p\)</span> is doubled - If <span class="math inline">\(a\)</span> is doubled, then <span class="math inline">\(p\)</span> does not change at all</p>
-<hr>
+<p><strong>Key insight</strong>: The complete solution is the particular solution plus the entire null space.</p>
 </section>
-<section id="projection-matrix" class="level2">
-<h2 class="anchored" data-anchor-id="projection-matrix">2. Projection Matrix</h2>
-<p><strong>Matrix form</strong>:</p>
-<p><span class="math display">\[
-p = Pb
-\]</span></p>
-<p>where</p>
-<p><span class="math display">\[
-P = \frac{aa^T}{a^T a}
-\]</span></p>
-<p><strong>Analysis</strong>: - <span class="math inline">\(aa^T\)</span> is <span class="math inline">\((n \times 1)(1 \times n) = n \times n\)</span> - <span class="math inline">\(a^T a\)</span> is a scalar - <span class="math inline">\(P\)</span> is <span class="math inline">\(n \times n\)</span> - Column space of <span class="math inline">\(P\)</span> is the line through <span class="math inline">\(a\)</span> - Rank is 1 - <span class="math inline">\(P\)</span> is symmetric: <span class="math inline">\(P^T = P\)</span> - <span class="math inline">\(P^2 = P\)</span> (if I project twice, the result is the same)</p>
-<hr>
 </section>
-<section id="why-projection" class="level2">
-<h2 class="anchored" data-anchor-id="why-projection">3. Why Projection?</h2>
-<p><strong>Problem</strong>: The equation <span class="math inline">\(Ax = b\)</span> may have 0 solutions when <span class="math inline">\(m &gt; n\)</span>.</p>
-<p><strong>Solution</strong>: Solve <span class="math inline">\(A\hat{x} = p\)</span> instead, where <span class="math inline">\(p\)</span> is the projection of <span class="math inline">\(b\)</span> onto the column space.</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="../../media/projection_high_dimension.png" class="img-fluid figure-img"></p>
-<figcaption>Projection in Higher Dimensions</figcaption>
-</figure>
-</div>
-<p><strong>Setup</strong>: - <span class="math inline">\(e = b - p\)</span> is perpendicular to the plane (spanned by <span class="math inline">\(a_1\)</span> and <span class="math inline">\(a_2\)</span>) - <span class="math inline">\(A = \begin{bmatrix}| &amp; | \\ a_1 &amp; a_2 \\ | &amp; |\end{bmatrix}\)</span> - <span class="math inline">\(p = \hat{x}_1 a_1 + \hat{x}_2 a_2 = A\hat{x}\)</span></p>
-<hr>
+<section id="finding-a-particular-solution" class="level2">
+<h2 class="anchored" data-anchor-id="finding-a-particular-solution">Finding a Particular Solution</h2>
+<section id="algorithm" class="level3">
+<h3 class="anchored" data-anchor-id="algorithm">Algorithm</h3>
+<ol type="1">
+<li>Row reduce <span class="math inline">\([A \mid b]\)</span> to reduced row echelon form</li>
+<li>Set all <strong>free variables</strong> to 0</li>
+<li>Solve for the <strong>pivot variables</strong> from the reduced equations</li>
+<li>This gives <span class="math inline">\(x_p\)</span></li>
+</ol>
+<p>If row reduction produces a row like <span class="math inline">\([0 \, 0 \, \cdots \, 0 \mid c]\)</span> where <span class="math inline">\(c \neq 0\)</span>, then no solution exists.</p>
 </section>
-<section id="finding-hatx" class="level2">
-<h2 class="anchored" data-anchor-id="finding-hatx">4. Finding <span class="math inline">\(\hat{x}\)</span></h2>
-<p><strong>Key idea</strong>: <span class="math inline">\(b - A\hat{x} \perp C(A)\)</span> (error is perpendicular to column space)</p>
-<p><strong>Derivation</strong>: Error <span class="math inline">\(e\)</span> is perpendicular to <span class="math inline">\(a_1\)</span> and <span class="math inline">\(a_2\)</span>:</p>
-<p><span class="math display">\[
-\begin{aligned}
-a_1^T(b - A\hat{x}) &amp;= 0 \text{ and } a_2^T(b - A\hat{x}) = 0 \\
-\begin{bmatrix}a_1^T \\ a_2^T\end{bmatrix}(b - A\hat{x}) &amp;= \begin{bmatrix}0 \\ 0\end{bmatrix} \\
-A^T(b - A\hat{x}) &amp;= \mathbf{0}
-\end{aligned}
-\]</span></p>
-<p><strong>Key relationships</strong>: - <span class="math inline">\(e = b - A\hat{x}\)</span> is in the left null space - <span class="math inline">\(e \in N(A^T)\)</span> - <span class="math inline">\(e \perp C(A)\)</span> (error is perpendicular to column space of <span class="math inline">\(A\)</span>)</p>
-<p><strong>Normal equations</strong>:</p>
-<p><span class="math display">\[
-A^T b = A^T A\hat{x}
-\]</span></p>
-<p><strong>Solution</strong>:</p>
-<p><span class="math display">\[
-\hat{x} = (A^T A)^{-1} A^T b
-\]</span></p>
-<p><strong>Projection</strong>:</p>
-<p><span class="math display">\[
-p = A\hat{x} = A(A^T A)^{-1} A^T b
-\]</span></p>
-<p><strong>Projection matrix</strong>:</p>
-<p><span class="math display">\[
-P = A(A^T A)^{-1} A^T
-\]</span></p>
-<p><strong>Special case</strong>: If <span class="math inline">\(A\)</span> is invertible, then <span class="math inline">\(P = I\)</span> (identity matrix).</p>
-<p><strong>Properties in high dimensions</strong>: - <span class="math inline">\(P^T = P\)</span> (symmetric) - <span class="math inline">\(P^2 = P\)</span> (idempotent)</p>
-<hr>
 </section>
-<section id="least-squares-application" class="level2">
-<h2 class="anchored" data-anchor-id="least-squares-application">5. Least Squares Application</h2>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="../../media/least_square.png" class="img-fluid figure-img" style="width:50.0%"></p>
-<figcaption>Least Squares</figcaption>
-</figure>
-</div>
-<p><strong>Problem</strong>: Fit a line <span class="math inline">\(y = c + dt\)</span> to data points <span class="math inline">\((1,1)\)</span>, <span class="math inline">\((2,2)\)</span>, and <span class="math inline">\((3,3)\)</span>.</p>
-<p><strong>Setup</strong>:</p>
+<section id="rank-and-solution-existence" class="level2">
+<h2 class="anchored" data-anchor-id="rank-and-solution-existence">Rank and Solution Existence</h2>
+<p>For an <span class="math inline">\(m \times n\)</span> matrix <span class="math inline">\(A\)</span> with rank <span class="math inline">\(r\)</span>:</p>
 <p><span class="math display">\[
-A = \begin{bmatrix}
-1 &amp; 1 \\
-1 &amp; 2 \\
-1 &amp; 3
-\end{bmatrix}, \quad
-b = \begin{bmatrix}
-1 \\
-2 \\
-3
-\end{bmatrix}, \quad
-x = \begin{bmatrix}
-c \\
-d
-\end{bmatrix}
+r \leq \min(m, n)
 \]</span></p>
-<p><strong>Equation system</strong>: <span class="math inline">\(Ax = b\)</span> - Row 1: <span class="math inline">\(c + 1 \cdot d = 1\)</span> - Row 2: <span class="math inline">\(c + 2 \cdot d = 2\)</span> - Row 3: <span class="math inline">\(c + 3 \cdot d = 3\)</span></p>
-<p><strong>Issue</strong>: Cannot find exact solution for <span class="math inline">\(x\)</span> because: - <span class="math inline">\(A\)</span> is not invertible (not square: <span class="math inline">\(3 \times 2\)</span>) - System is overdetermined (3 equations, 2 unknowns)</p>
-<p><strong>Solution</strong>: Use projection to find <span class="math inline">\(\hat{x}\)</span> that minimizes <span class="math inline">\(\|Ax - b\|^2\)</span>.</p>
-<hr>
+<p>This is because: - <span class="math inline">\(r \leq m\)</span> (rank cannot exceed number of rows) - <span class="math inline">\(r \leq n\)</span> (rank cannot exceed number of columns)</p>
+<section id="solvability-condition" class="level3">
+<h3 class="anchored" data-anchor-id="solvability-condition">Solvability Condition</h3>
+<p>The system <span class="math inline">\(Ax = b\)</span> has a solution <strong>if and only if</strong> <span class="math inline">\(b\)</span> is in the column space of <span class="math inline">\(A\)</span>: <span class="math display">\[
+b \in C(A)
+\]</span></p>
+<p>Equivalently, the system is solvable when <span class="math inline">\(\text{rank}(A) = \text{rank}([A \mid b])\)</span>.</p>
 </section>
-<section id="geometric-interpretation" class="level2">
-<h2 class="anchored" data-anchor-id="geometric-interpretation">6. Geometric Interpretation</h2>
-<p><strong>3 Lines in 3D</strong>: If we have 3 lines in 3-dimensional space, then <span class="math inline">\(A\)</span> will be square.</p>
-<p><strong>If <span class="math inline">\(A\)</span> is invertible</strong> (full rank): - <span class="math inline">\(Ax = b\)</span> has an exact solution - The solution geometrically means: find the plane spanned by column 1 and column 2, then find where column 3 crosses it</p>
+</section>
+<section id="four-cases-based-on-rank" class="level2">
+<h2 class="anchored" data-anchor-id="four-cases-based-on-rank">Four Cases Based on Rank</h2>
+<section id="case-1-exactly-determined-square-full-rank" class="level3">
+<h3 class="anchored" data-anchor-id="case-1-exactly-determined-square-full-rank">Case 1: Exactly Determined (Square, Full Rank)</h3>
+<p><strong>Conditions</strong>: <span class="math inline">\(r = n = m\)</span> (square matrix with full rank)</p>
+<p><strong>Properties</strong>: - Matrix is <strong>invertible</strong> - RREF: <span class="math inline">\(R = I_n\)</span> (identity matrix) - No free variables - Null space: <span class="math inline">\(N(A) = \{\vec{0}\}\)</span> (only zero vector)</p>
+<p><strong>Solutions</strong>: - <strong>Unique solution</strong> for every <span class="math inline">\(b\)</span>: <span class="math inline">\(x = A^{-1}b\)</span> - Number of solutions = 1 (always)</p>
+<p><strong>Example</strong>: <span class="math display">\[
+A = \begin{bmatrix} 1 &amp; 2 \\ 3 &amp; 4 \end{bmatrix}, \quad r = 2 = m = n
+\]</span></p>
+</section>
+<section id="case-2-overdetermined-tall-full-column-rank" class="level3">
+<h3 class="anchored" data-anchor-id="case-2-overdetermined-tall-full-column-rank">Case 2: Overdetermined (Tall, Full Column Rank)</h3>
+<p><strong>Conditions</strong>: <span class="math inline">\(m &gt; n\)</span> and <span class="math inline">\(r = n\)</span> (more equations than unknowns)</p>
+<p><strong>Properties</strong>: - Matrix is <strong>tall and skinny</strong> - RREF: <span class="math inline">\(R = \begin{bmatrix} I_n \\ 0 \end{bmatrix}\)</span> (identity on top, zeros below) - No free variables (<span class="math inline">\(n - r = 0\)</span>) - Null space: <span class="math inline">\(N(A) = \{\vec{0}\}\)</span> (only zero vector)</p>
+<p><strong>Solutions</strong>: - <strong>0 or 1 solution</strong> (depends on whether <span class="math inline">\(b \in C(A)\)</span>) - If solution exists, it is unique (no free variables) - Most <span class="math inline">\(b\)</span> vectors have <strong>no solution</strong> (overconstrained system)</p>
+<p><strong>Example</strong>: <span class="math display">\[
+A = \begin{bmatrix} 1 &amp; 2 \\ 3 &amp; 4 \\ 5 &amp; 6 \end{bmatrix}, \quad r = 2, \, m = 3, \, n = 2
+\]</span></p>
+<p><strong>Interpretation</strong>: More constraints than degrees of freedom; typically no exact solution (leads to least squares in practice).</p>
+</section>
+<section id="case-3-underdetermined-wide-full-row-rank" class="level3">
+<h3 class="anchored" data-anchor-id="case-3-underdetermined-wide-full-row-rank">Case 3: Underdetermined (Wide, Full Row Rank)</h3>
+<p><strong>Conditions</strong>: <span class="math inline">\(m &lt; n\)</span> and <span class="math inline">\(r = m\)</span> (fewer equations than unknowns)</p>
+<p><strong>Properties</strong>: - Matrix is <strong>short and wide</strong> - RREF: <span class="math inline">\(R = [I_m \mid F]\)</span> (identity on left, free columns on right) - Has free variables (<span class="math inline">\(n - r = n - m &gt; 0\)</span>) - Non-trivial null space: <span class="math inline">\(\dim(N(A)) = n - m\)</span></p>
+<p><strong>Solutions</strong>: - <strong>Infinitely many solutions</strong> for every <span class="math inline">\(b\)</span> (when <span class="math inline">\(r = m\)</span>) - Solution exists because <span class="math inline">\(C(A) = \mathbb{R}^m\)</span> (full row rank) - Complete solution: <span class="math inline">\(x = x_p + x_n\)</span> where <span class="math inline">\(x_n\)</span> ranges over <span class="math inline">\((n-m)\)</span>-dimensional null space</p>
+<p><strong>Example</strong>: <span class="math display">\[
+A = \begin{bmatrix} 1 &amp; 2 &amp; 3 &amp; 4 \\ 0 &amp; 0 &amp; 1 &amp; 2 \end{bmatrix}, \quad r = 2, \, m = 2, \, n = 4
+\]</span></p>
+<p><strong>Interpretation</strong>: More degrees of freedom than constraints; infinitely many ways to satisfy the equations.</p>
+</section>
+<section id="case-4-rank-deficient-neither-full-column-nor-full-row-rank" class="level3">
+<h3 class="anchored" data-anchor-id="case-4-rank-deficient-neither-full-column-nor-full-row-rank">Case 4: Rank Deficient (Neither Full Column nor Full Row Rank)</h3>
+<p><strong>Conditions</strong>: <span class="math inline">\(r &lt; m\)</span> and <span class="math inline">\(r &lt; n\)</span> (rank deficient)</p>
+<p><strong>Properties</strong>: - Has free variables: <span class="math inline">\(n - r &gt; 0\)</span> - Column space is proper subspace: <span class="math inline">\(C(A) \subsetneq \mathbb{R}^m\)</span></p>
+<p><strong>Solutions</strong>: - <strong>0 or infinitely many solutions</strong> - If <span class="math inline">\(b \in C(A)\)</span>: infinitely many solutions (due to non-trivial null space) - If <span class="math inline">\(b \notin C(A)\)</span>: no solution</p>
+<p><strong>Example</strong>: <span class="math display">\[
+A = \begin{bmatrix} 1 &amp; 2 &amp; 3 \\ 2 &amp; 4 &amp; 6 \\ 0 &amp; 0 &amp; 0 \end{bmatrix}, \quad r = 1, \, m = 3, \, n = 3
+\]</span></p>
+</section>
+</section>
+<section id="summary-table" class="level2">
+<h2 class="anchored" data-anchor-id="summary-table">Summary Table</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 24%">
+<col style="width: 22%">
+<col style="width: 21%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Case</th>
+<th>Rank Condition</th>
+<th>Matrix Shape</th>
+<th># Free Vars</th>
+<th># Solutions</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Exactly determined</td>
+<td><span class="math inline">\(r = n = m\)</span></td>
+<td>Square, invertible</td>
+<td>0</td>
+<td>1 (always)</td>
+</tr>
+<tr class="even">
+<td>Overdetermined</td>
+<td><span class="math inline">\(r = n &lt; m\)</span></td>
+<td>Tall, full column rank</td>
+<td>0</td>
+<td>0 or 1</td>
+</tr>
+<tr class="odd">
+<td>Underdetermined</td>
+<td><span class="math inline">\(r = m &lt; n\)</span></td>
+<td>Wide, full row rank</td>
+<td><span class="math inline">\(n - m\)</span></td>
+<td><span class="math inline">\(\infty\)</span> (always)</td>
+</tr>
+<tr class="even">
+<td>Rank deficient</td>
+<td><span class="math inline">\(r &lt; \min(m,n)\)</span></td>
+<td>General</td>
+<td><span class="math inline">\(n - r &gt; 0\)</span></td>
+<td>0 or <span class="math inline">\(\infty\)</span></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key principle</strong>: - Number of free variables = <span class="math inline">\(n - r\)</span> - If <span class="math inline">\(r = n\)</span>: 0 or 1 solution (unique if exists) - If <span class="math inline">\(r &lt; n\)</span>: 0 or <span class="math inline">\(\infty\)</span> solutions (null space is non-trivial)</p>
 <hr>
-<p><em>Source: MIT 18.06SC Linear Algebra, Lecture 15</em></p>
+<p><em>Source: MIT 18.06SC Linear Algebra, Lecture 8</em></p>
 
 
 <!-- -->
@@ -1038,193 +1071,177 @@ d
   loadGiscus();
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "MIT 18.06 Lecture 15: Projection onto Subspaces"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "MIT 18.06SC Lecture 8: Solving Ax=b - Complete Solution to Linear Systems"</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2025-10-29"</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [linear algebra, MIT 18.06, projections, least squares]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Understanding projections from lines to subspaces, and their application to solving overdetermined systems through least squares"</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>{{&lt; video https://www.youtube.com/watch?v=Y_Ac6KiQ1t0 &gt;}}</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">## 1. Projection of a Vector onto a Line</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="al">![Projection onto a Line](../../media/projection.png)</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>**Setup**: Project vector $b$ onto vector $a$.</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>**Key equations**:</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2025-10-17"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> ["Linear Algebra", "MIT 18.06", "Linear Systems"]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## Context</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">My lecture notes</span><span class="co">](https://github.com/ickma2311/foundations/blob/main/MIT18.06SC/lecture08/lecture08_solving_Ax_equals_b.md)</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>This lecture presents the complete solution structure for $Ax = b$ and classifies all linear systems into four cases based on rank: exactly determined (unique solution), overdetermined (0 or 1 solution), underdetermined (infinite solutions), and rank deficient (0 or infinite solutions).</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>{{&lt; video https://www.youtube.com/watch?v=9Q1q7s1jTzU &gt;}}</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">## Complete Solution Structure</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>The general solution to $Ax = b$ (when it exists) has the form:</span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>p &amp;= xa <span class="sc">\\</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>a^T(b - xa) &amp;= 0 <span class="sc">\\</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>a^T b &amp;= xa^T a <span class="sc">\\</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>x &amp;= \frac{a^T b}{a^T a}</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>**Components**:</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$p$: Projection of $b$ onto $a$</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$e$: Error vector ($e = b - p$)</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$e \perp a$ (error is perpendicular to $a$)</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$p + e = b$</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$p = b - e$</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>**Projection formula**:</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>p = a\frac{a^T b}{a^T a}</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>**Properties**:</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>If $b$ is doubled, then $p$ is doubled</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>If $a$ is doubled, then $p$ does not change at all</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2. Projection Matrix</span></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>**Matrix form**:</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>p = Pb</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>where</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>P = \frac{aa^T}{a^T a}</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>**Analysis**:</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$aa^T$ is $(n \times 1)(1 \times n) = n \times n$</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$a^T a$ is a scalar</span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$P$ is $n \times n$</span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Column space of $P$ is the line through $a$</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Rank is 1</span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$P$ is symmetric: $P^T = P$</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$P^2 = P$ (if I project twice, the result is the same)</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. Why Projection?</span></span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>**Problem**: The equation $Ax = b$ may have 0 solutions when $m &gt; n$.</span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>**Solution**: Solve $A\hat{x} = p$ instead, where $p$ is the projection of $b$ onto the column space.</span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a><span class="al">![Projection in Higher Dimensions](../../media/projection_high_dimension.png)</span></span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>**Setup**:</span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$e = b - p$ is perpendicular to the plane (spanned by $a_1$ and $a_2$)</span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$A = \begin{bmatrix}| &amp; | <span class="sc">\\</span> a_1 &amp; a_2 <span class="sc">\\</span> | &amp; |\end{bmatrix}$</span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$p = \hat{x}_1 a_1 + \hat{x}_2 a_2 = A\hat{x}$</span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>x = x_p + x_n</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>where:</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$x_p$ is a **particular solution**: any specific solution satisfying $Ax_p = b$</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$x_n$ is any vector from the **null space**: $Ax_n = 0$</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="fu">### Why This Works</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>Ax_p &amp;= b <span class="sc">\\</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>Ax_n &amp;= 0 <span class="sc">\\</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>\hline</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>A(x_p + x_n) &amp;= Ax_p + Ax_n = b + 0 = b</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>**Key insight**: The complete solution is the particular solution plus the entire null space.</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="fu">## Finding a Particular Solution</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="fu">### Algorithm</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Row reduce $<span class="co">[</span><span class="ot">A \mid b</span><span class="co">]</span>$ to reduced row echelon form</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Set all **free variables** to 0</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Solve for the **pivot variables** from the reduced equations</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>This gives $x_p$</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>If row reduction produces a row like $<span class="co">[</span><span class="ot">0 \, 0 \, \cdots \, 0 \mid c</span><span class="co">]</span>$ where $c \neq 0$, then no solution exists.</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="fu">## Rank and Solution Existence</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>For an $m \times n$ matrix $A$ with rank $r$:</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>r \leq \min(m, n)</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>This is because:</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$r \leq m$ (rank cannot exceed number of rows)</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$r \leq n$ (rank cannot exceed number of columns)</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="fu">### Solvability Condition</span></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>The system $Ax = b$ has a solution **if and only if** $b$ is in the column space of $A$:</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>b \in C(A)</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>Equivalently, the system is solvable when $\text{rank}(A) = \text{rank}(<span class="co">[</span><span class="ot">A \mid b</span><span class="co">]</span>)$.</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="fu">## Four Cases Based on Rank</span></span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="fu">### Case 1: Exactly Determined (Square, Full Rank)</span></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>**Conditions**: $r = n = m$ (square matrix with full rank)</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>**Properties**:</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Matrix is **invertible**</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>RREF: $R = I_n$ (identity matrix)</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>No free variables</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Null space: $N(A) = <span class="sc">\{</span>\vec{0}<span class="sc">\}</span>$ (only zero vector)</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>**Solutions**:</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Unique solution** for every $b$: $x = A^{-1}b$</span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Number of solutions = 1 (always)</span>
 <span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a><span class="fu">## 4. Finding $\hat{x}$</span></span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>**Key idea**: $b - A\hat{x} \perp C(A)$ (error is perpendicular to column space)</span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>**Derivation**: Error $e$ is perpendicular to $a_1$ and $a_2$:</span>
-<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
-<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>a_1^T(b - A\hat{x}) &amp;= 0 \text{ and } a_2^T(b - A\hat{x}) = 0 <span class="sc">\\</span></span>
-<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}a_1^T <span class="sc">\\</span> a_2^T\end{bmatrix}(b - A\hat{x}) &amp;= \begin{bmatrix}0 <span class="sc">\\</span> 0\end{bmatrix} <span class="sc">\\</span></span>
-<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>A^T(b - A\hat{x}) &amp;= \mathbf{0}</span>
-<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
-<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>**Key relationships**:</span>
-<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$e = b - A\hat{x}$ is in the left null space</span>
-<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$e \in N(A^T)$</span>
-<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$e \perp C(A)$ (error is perpendicular to column space of $A$)</span>
-<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>**Normal equations**:</span>
-<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>**Example**:</span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>A = \begin{bmatrix} 1 &amp; 2 <span class="sc">\\</span> 3 &amp; 4 \end{bmatrix}, \quad r = 2 = m = n</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a><span class="fu">### Case 2: Overdetermined (Tall, Full Column Rank)</span></span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>**Conditions**: $m &gt; n$ and $r = n$ (more equations than unknowns)</span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>**Properties**:</span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Matrix is **tall and skinny**</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>RREF: $R = \begin{bmatrix} I_n <span class="sc">\\</span> 0 \end{bmatrix}$ (identity on top, zeros below)</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>No free variables ($n - r = 0$)</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Null space: $N(A) = <span class="sc">\{</span>\vec{0}<span class="sc">\}</span>$ (only zero vector)</span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a>**Solutions**:</span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**0 or 1 solution** (depends on whether $b \in C(A)$)</span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>If solution exists, it is unique (no free variables)</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Most $b$ vectors have **no solution** (overconstrained system)</span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>**Example**:</span>
 <span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>A^T b = A^T A\hat{x}</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>A = \begin{bmatrix} 1 &amp; 2 <span class="sc">\\</span> 3 &amp; 4 <span class="sc">\\</span> 5 &amp; 6 \end{bmatrix}, \quad r = 2, \, m = 3, \, n = 2</span>
 <span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>**Solution**:</span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>**Interpretation**: More constraints than degrees of freedom; typically no exact solution (leads to least squares in practice).</span>
 <span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>\hat{x} = (A^T A)^{-1} A^T b</span>
-<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a><span class="fu">### Case 3: Underdetermined (Wide, Full Row Rank)</span></span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>**Conditions**: $m &lt; n$ and $r = m$ (fewer equations than unknowns)</span>
 <span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>**Projection**:</span>
-<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>p = A\hat{x} = A(A^T A)^{-1} A^T b</span>
-<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>**Properties**:</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Matrix is **short and wide**</span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>RREF: $R = <span class="co">[</span><span class="ot">I_m \mid F</span><span class="co">]</span>$ (identity on left, free columns on right)</span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Has free variables ($n - r = n - m &gt; 0$)</span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Non-trivial null space: $\dim(N(A)) = n - m$</span>
 <span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>**Projection matrix**:</span>
-<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>P = A(A^T A)^{-1} A^T</span>
-<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>**Special case**: If $A$ is invertible, then $P = I$ (identity matrix).</span>
-<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>**Properties in high dimensions**:</span>
-<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$P^T = P$ (symmetric)</span>
-<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$P^2 = P$ (idempotent)</span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>**Solutions**:</span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Infinitely many solutions** for every $b$ (when $r = m$)</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Solution exists because $C(A) = \mathbb{R}^m$ (full row rank)</span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Complete solution: $x = x_p + x_n$ where $x_n$ ranges over $(n-m)$-dimensional null space</span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>**Example**:</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>A = \begin{bmatrix} 1 &amp; 2 &amp; 3 &amp; 4 <span class="sc">\\</span> 0 &amp; 0 &amp; 1 &amp; 2 \end{bmatrix}, \quad r = 2, \, m = 2, \, n = 4</span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>**Interpretation**: More degrees of freedom than constraints; infinitely many ways to satisfy the equations.</span>
 <span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a><span class="fu">### Case 4: Rank Deficient (Neither Full Column nor Full Row Rank)</span></span>
 <span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a><span class="fu">## 5. Least Squares Application</span></span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>**Conditions**: $r &lt; m$ and $r &lt; n$ (rank deficient)</span>
 <span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a><span class="al">![Least Squares](../../media/least_square.png)</span>{width=50%}</span>
-<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>**Problem**: Fit a line $y = c + dt$ to data points $(1,1)$, $(2,2)$, and $(3,3)$.</span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>**Properties**:</span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Has free variables: $n - r &gt; 0$</span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Column space is proper subspace: $C(A) \subsetneq \mathbb{R}^m$</span>
 <span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a>**Setup**:</span>
-<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>A = \begin{bmatrix}</span>
-<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>1 &amp; 1 <span class="sc">\\</span></span>
-<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>1 &amp; 2 <span class="sc">\\</span></span>
-<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>1 &amp; 3</span>
-<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}, \quad</span>
-<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>b = \begin{bmatrix}</span>
-<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>1 <span class="sc">\\</span></span>
-<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>2 <span class="sc">\\</span></span>
-<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a>3</span>
-<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}, \quad</span>
-<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>x = \begin{bmatrix}</span>
-<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>c <span class="sc">\\</span></span>
-<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>d</span>
-<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}</span>
-<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a>**Solutions**:</span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**0 or infinitely many solutions**</span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>If $b \in C(A)$: infinitely many solutions (due to non-trivial null space)</span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>If $b \notin C(A)$: no solution</span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>**Example**:</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>A = \begin{bmatrix} 1 &amp; 2 &amp; 3 <span class="sc">\\</span> 2 &amp; 4 &amp; 6 <span class="sc">\\</span> 0 &amp; 0 &amp; 0 \end{bmatrix}, \quad r = 1, \, m = 3, \, n = 3</span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary Table</span></span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Case <span class="pp">|</span> Rank Condition <span class="pp">|</span> Matrix Shape <span class="pp">|</span> # Free Vars <span class="pp">|</span> # Solutions <span class="pp">|</span></span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|---------------|--------------|-------------|-------------|</span></span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Exactly determined <span class="pp">|</span> $r = n = m$ <span class="pp">|</span> Square, invertible <span class="pp">|</span> 0 <span class="pp">|</span> 1 (always) <span class="pp">|</span></span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Overdetermined <span class="pp">|</span> $r = n &lt; m$ <span class="pp">|</span> Tall, full column rank <span class="pp">|</span> 0 <span class="pp">|</span> 0 or 1 <span class="pp">|</span></span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Underdetermined <span class="pp">|</span> $r = m &lt; n$ <span class="pp">|</span> Wide, full row rank <span class="pp">|</span> $n - m$ <span class="pp">|</span> $\infty$ (always) <span class="pp">|</span></span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Rank deficient <span class="pp">|</span> $r &lt; \min(m,n)$ <span class="pp">|</span> General <span class="pp">|</span> $n - r &gt; 0$ <span class="pp">|</span> 0 or $\infty$ <span class="pp">|</span></span>
 <span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>**Equation system**: $Ax = b$</span>
-<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Row 1: $c + 1 \cdot d = 1$</span>
-<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Row 2: $c + 2 \cdot d = 2$</span>
-<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Row 3: $c + 3 \cdot d = 3$</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>**Key principle**:</span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Number of free variables = $n - r$</span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>If $r = n$: 0 or 1 solution (unique if exists)</span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>If $r &lt; n$: 0 or $\infty$ solutions (null space is non-trivial)</span>
 <span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>**Issue**: Cannot find exact solution for $x$ because:</span>
-<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$A$ is not invertible (not square: $3 \times 2$)</span>
-<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>System is overdetermined (3 equations, 2 unknowns)</span>
-<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>**Solution**: Use projection to find $\hat{x}$ that minimizes $<span class="sc">\|</span>Ax - b<span class="sc">\|</span>^2$.</span>
-<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6. Geometric Interpretation</span></span>
-<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>**3 Lines in 3D**: If we have 3 lines in 3-dimensional space, then $A$ will be square.</span>
-<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a>**If $A$ is invertible** (full rank):</span>
-<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$Ax = b$ has an exact solution</span>
-<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The solution geometrically means: find the plane spanned by column 1 and column 2, then find where column 3 crosses it</span>
-<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a>*Source: MIT 18.06SC Linear Algebra, Lecture 15*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a>*Source: MIT 18.06SC Linear Algebra, Lecture 8*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
