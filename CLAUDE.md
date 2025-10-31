@@ -71,6 +71,22 @@ The site is automatically deployed from the `docs/` directory. After rendering, 
 - Author is Chao Ma
 - GitHub Pages URL: https://ickma2311.github.io/
 
+### Pre-Push Checklist (CRITICAL)
+
+**ALWAYS verify locally before pushing to prevent broken images on production:**
+
+1. **Run full render**: `quarto render` (not individual file renders)
+2. **Check git status**: `git status` - verify all `*_files/` directories are staged
+   - Look for `docs/**/*_files/figure-html/*.png` files
+   - These contain code-generated images from Jupyter notebooks and Python code blocks
+3. **Local preview**: Open `docs/` HTML files in browser to verify images load
+   - Check pages with Jupyter notebooks (e.g., `mit1806-lecture1-geometry.html`)
+   - Verify matplotlib/plotly figures appear correctly
+4. **Commit ALL generated files**: Don't commit `.html` without their `*_files/` directories
+5. **Only then push**: `git push`
+
+**Why this matters**: GitHub Pages serves from the `docs/` directory. If code-generated images aren't committed, the HTML will reference missing files, causing broken images on production even though they work locally.
+
 ## LinkedIn Post Guidelines
 
 ### Emoji Usage
