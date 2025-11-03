@@ -50,9 +50,23 @@ Minimizing this term encourages the model's gradient $\nabla_x f(x)$ to be **ort
 
 **In short**: Tangent Propagation achieves **local smoothness** along the manifold (invariance to small deformations), while still allowing sharp variation in directions orthogonal to the manifold, which separate different classes.
 
+### Tangent Direction Vectors
+
+In Tangent Propagation, each $v^{(i)}$ represents a **tangent direction** of the data manifold at the point $x$.
+
+It describes a small, meaningful variation of the input that should **not change the output** of the network—for example, a slight translation, rotation, or scaling of an image.
+
+Mathematically, $v^{(i)}$ can be obtained as the derivative of a transformation $T(x, \alpha_i)$ with respect to its parameter:
+
+$$
+v^{(i)} = \left.\frac{\partial T(x, \alpha_i)}{\partial \alpha_i}\right|_{\alpha_i=0}
+$$
+
+During training, the model is penalized if its output changes along these directions, which enforces **invariance and smoothness** of $f(x)$ along the manifold.
+
 ---
 
-## Summary
+## From Tangent Propagation to Manifold Learning
 
 Tangent Propagation regularizes the model so that its output remains invariant along directions of known transformations, such as translations or rotations.
 
@@ -67,6 +81,14 @@ This idea connects to **bidirectional propagation** and **adversarial training**
 The **Manifold Tangent Classifier** (Rifai et al., 2011d) further removes the need to explicitly specify tangent directions.
 
 It uses an autoencoder to learn the manifold structure and derive tangent vectors automatically, allowing the network to regularize itself along the data manifold without handcrafted transformations.
+
+### Manual Specification of Tangent Directions
+
+A key limitation of Tangent Propagation is that these tangent directions $v^{(i)}$ must be **manually specified** based on prior knowledge about the task.
+
+For example, in handwritten digit recognition, we explicitly define directions corresponding to translation or rotation.
+
+While this makes the method interpretable, it also limits its applicability—manual definitions are impractical for complex, high-dimensional data.
 
 ---
 

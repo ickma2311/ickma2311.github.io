@@ -402,10 +402,12 @@ window.Quarto = {
   <li><a href="#tangent-prop" id="toc-tangent-prop" class="nav-link" data-scroll-target="#tangent-prop">Tangent Prop</a>
   <ul class="collapse">
   <li><a href="#regularization-term" id="toc-regularization-term" class="nav-link" data-scroll-target="#regularization-term">Regularization Term</a></li>
+  <li><a href="#tangent-direction-vectors" id="toc-tangent-direction-vectors" class="nav-link" data-scroll-target="#tangent-direction-vectors">Tangent Direction Vectors</a></li>
   </ul></li>
-  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a>
+  <li><a href="#from-tangent-propagation-to-manifold-learning" id="toc-from-tangent-propagation-to-manifold-learning" class="nav-link" data-scroll-target="#from-tangent-propagation-to-manifold-learning">From Tangent Propagation to Manifold Learning</a>
   <ul class="collapse">
   <li><a href="#connections-to-other-methods" id="toc-connections-to-other-methods" class="nav-link" data-scroll-target="#connections-to-other-methods">Connections to Other Methods</a></li>
+  <li><a href="#manual-specification-of-tangent-directions" id="toc-manual-specification-of-tangent-directions" class="nav-link" data-scroll-target="#manual-specification-of-tangent-directions">Manual Specification of Tangent Directions</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -493,11 +495,21 @@ window.Quarto = {
 <p>This regularization term penalizes the sensitivity of the network’s output <span class="math inline">\(f(x)\)</span> to small movements along each tangent direction <span class="math inline">\(v^{(i)}\)</span>.</p>
 <p>Minimizing this term encourages the model’s gradient <span class="math inline">\(\nabla_x f(x)\)</span> to be <strong>orthogonal to all tangent vectors</strong>, ensuring that <span class="math inline">\(f(x)\)</span> remains approximately constant when the input slides along the manifold.</p>
 <p><strong>In short</strong>: Tangent Propagation achieves <strong>local smoothness</strong> along the manifold (invariance to small deformations), while still allowing sharp variation in directions orthogonal to the manifold, which separate different classes.</p>
+</section>
+<section id="tangent-direction-vectors" class="level3">
+<h3 class="anchored" data-anchor-id="tangent-direction-vectors">Tangent Direction Vectors</h3>
+<p>In Tangent Propagation, each <span class="math inline">\(v^{(i)}\)</span> represents a <strong>tangent direction</strong> of the data manifold at the point <span class="math inline">\(x\)</span>.</p>
+<p>It describes a small, meaningful variation of the input that should <strong>not change the output</strong> of the network—for example, a slight translation, rotation, or scaling of an image.</p>
+<p>Mathematically, <span class="math inline">\(v^{(i)}\)</span> can be obtained as the derivative of a transformation <span class="math inline">\(T(x, \alpha_i)\)</span> with respect to its parameter:</p>
+<p><span class="math display">\[
+v^{(i)} = \left.\frac{\partial T(x, \alpha_i)}{\partial \alpha_i}\right|_{\alpha_i=0}
+\]</span></p>
+<p>During training, the model is penalized if its output changes along these directions, which enforces <strong>invariance and smoothness</strong> of <span class="math inline">\(f(x)\)</span> along the manifold.</p>
 <hr>
 </section>
 </section>
-<section id="summary" class="level2">
-<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<section id="from-tangent-propagation-to-manifold-learning" class="level2">
+<h2 class="anchored" data-anchor-id="from-tangent-propagation-to-manifold-learning">From Tangent Propagation to Manifold Learning</h2>
 <p>Tangent Propagation regularizes the model so that its output remains invariant along directions of known transformations, such as translations or rotations.</p>
 <p>It can be seen as an <strong>analytical version of data augmentation</strong>—rather than generating new samples, it directly penalizes the model’s sensitivity to those transformations.</p>
 <section id="connections-to-other-methods" class="level3">
@@ -506,6 +518,12 @@ window.Quarto = {
 <p><strong>Adversarial training</strong> extends Tangent Propagation by finding, for each input, the direction that most changes the model’s prediction and then enforcing robustness along that direction.</p>
 <p>The <strong>Manifold Tangent Classifier</strong> (Rifai et al., 2011d) further removes the need to explicitly specify tangent directions.</p>
 <p>It uses an autoencoder to learn the manifold structure and derive tangent vectors automatically, allowing the network to regularize itself along the data manifold without handcrafted transformations.</p>
+</section>
+<section id="manual-specification-of-tangent-directions" class="level3">
+<h3 class="anchored" data-anchor-id="manual-specification-of-tangent-directions">Manual Specification of Tangent Directions</h3>
+<p>A key limitation of Tangent Propagation is that these tangent directions <span class="math inline">\(v^{(i)}\)</span> must be <strong>manually specified</strong> based on prior knowledge about the task.</p>
+<p>For example, in handwritten digit recognition, we explicitly define directions corresponding to translation or rotation.</p>
+<p>While this makes the method interpretable, it also limits its applicability—manual definitions are impractical for complex, high-dimensional data.</p>
 <hr>
 <p><em>Source: Deep Learning (Ian Goodfellow, Yoshua Bengio, Aaron Courville) - Chapter 7.14</em></p>
 
@@ -1048,27 +1066,49 @@ window.Quarto = {
 <span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>**In short**: Tangent Propagation achieves **local smoothness** along the manifold (invariance to small deformations), while still allowing sharp variation in directions orthogonal to the manifold, which separate different classes.</span>
 <span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="fu">### Tangent Direction Vectors</span></span>
 <span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>In Tangent Propagation, each $v^{(i)}$ represents a **tangent direction** of the data manifold at the point $x$.</span>
 <span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>Tangent Propagation regularizes the model so that its output remains invariant along directions of known transformations, such as translations or rotations.</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>It describes a small, meaningful variation of the input that should **not change the output** of the network—for example, a slight translation, rotation, or scaling of an image.</span>
 <span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>It can be seen as an **analytical version of data augmentation**—rather than generating new samples, it directly penalizes the model's sensitivity to those transformations.</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>Mathematically, $v^{(i)}$ can be obtained as the derivative of a transformation $T(x, \alpha_i)$ with respect to its parameter:</span>
 <span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="fu">### Connections to Other Methods</span></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>This idea connects to **bidirectional propagation** and **adversarial training**, both of which encourage the model to stay locally smooth in input space.</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>v^{(i)} = \left.\frac{\partial T(x, \alpha_i)}{\partial \alpha_i}\right|_{\alpha_i=0}</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>**Adversarial training** extends Tangent Propagation by finding, for each input, the direction that most changes the model's prediction and then enforcing robustness along that direction.</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>During training, the model is penalized if its output changes along these directions, which enforces **invariance and smoothness** of $f(x)$ along the manifold.</span>
 <span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>The **Manifold Tangent Classifier** (Rifai et al., 2011d) further removes the need to explicitly specify tangent directions.</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>It uses an autoencoder to learn the manifold structure and derive tangent vectors automatically, allowing the network to regularize itself along the data manifold without handcrafted transformations.</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="fu">## From Tangent Propagation to Manifold Learning</span></span>
 <span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>Tangent Propagation regularizes the model so that its output remains invariant along directions of known transformations, such as translations or rotations.</span>
 <span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>*Source: Deep Learning (Ian Goodfellow, Yoshua Bengio, Aaron Courville) - Chapter 7.14*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>It can be seen as an **analytical version of data augmentation**—rather than generating new samples, it directly penalizes the model's sensitivity to those transformations.</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="fu">### Connections to Other Methods</span></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>This idea connects to **bidirectional propagation** and **adversarial training**, both of which encourage the model to stay locally smooth in input space.</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>**Adversarial training** extends Tangent Propagation by finding, for each input, the direction that most changes the model's prediction and then enforcing robustness along that direction.</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>The **Manifold Tangent Classifier** (Rifai et al., 2011d) further removes the need to explicitly specify tangent directions.</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>It uses an autoencoder to learn the manifold structure and derive tangent vectors automatically, allowing the network to regularize itself along the data manifold without handcrafted transformations.</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="fu">### Manual Specification of Tangent Directions</span></span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>A key limitation of Tangent Propagation is that these tangent directions $v^{(i)}$ must be **manually specified** based on prior knowledge about the task.</span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>For example, in handwritten digit recognition, we explicitly define directions corresponding to translation or rotation.</span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>While this makes the method interpretable, it also limits its applicability—manual definitions are impractical for complex, high-dimensional data.</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>*Source: Deep Learning (Ian Goodfellow, Yoshua Bengio, Aaron Courville) - Chapter 7.14*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
