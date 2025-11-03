@@ -1,0 +1,73 @@
+---
+title: "Deep Learning Chapter 7.14: Tangent Distance, Tangent Prop and Manifold Tangent Classifier"
+author: "Chao Ma"
+date: "2025-11-02"
+categories: [deep learning, regularization, manifold learning, tangent propagation]
+description: "How enforcing invariance along manifold tangent directions regularizes models to be robust to meaningful transformations"
+---
+
+## The Manifold Assumption
+
+The assumption is that samples lie on a **low-dimensional manifold** embedded in a high-dimensional space.
+
+If we measure their distance using the Euclidean metric, the points might appear far apart, even though they actually reside on the same manifold.
+
+---
+
+## Tangent Distance: Difficulties and Alternative
+
+### The Challenge
+
+Computing tangent distances directly is computationally expensive. For every pair of samples, it requires solving an optimization problem to find the minimal distance between two tangent planes that approximate their local manifolds. This becomes infeasible with large datasets or high-dimensional input spaces.
+
+### The Alternative
+
+As an alternative, the method approximates the manifold locally using the **tangent plane at a single point**. Instead of explicitly finding the closest points between two manifolds, we measure distances using these local linear approximations. This greatly reduces computational cost while still capturing local invariance properties.
+
+---
+
+## Tangent Prop
+
+The figure illustrates how Tangent Propagation enforces local invariance of the model output along the tangent directions of the data manifold.
+
+Each data point lies on a smooth low-dimensional surface embedded in high-dimensional space. The **tangent plane** represents all directions along which the data can move without changing its semantic meaning (e.g., small translation or rotation).
+
+The **normal vector** points in the direction orthogonal to the manifold — changes along this direction correspond to changes in class or semantic meaning.
+
+![Tangent Vector and Normal Vector](../media/tangent-vector.png)
+
+This approach achieves partial consistency by forcing $\nabla_xf(x) \perp v^{(i)}$.
+
+### Regularization Term
+
+$$
+\Omega(f)=\sum_i\left((\nabla_xf(x)^\top v^{(i)})^2\right)
+$$
+
+This regularization term penalizes the sensitivity of the network's output $f(x)$ to small movements along each tangent direction $v^{(i)}$.
+
+Minimizing this term encourages the model's gradient $\nabla_x f(x)$ to be **orthogonal to all tangent vectors**, ensuring that $f(x)$ remains approximately constant when the input slides along the manifold.
+
+**In short**: Tangent Propagation achieves **local smoothness** along the manifold (invariance to small deformations), while still allowing sharp variation in directions orthogonal to the manifold, which separate different classes.
+
+---
+
+## Summary
+
+Tangent Propagation regularizes the model so that its output remains invariant along directions of known transformations, such as translations or rotations.
+
+It can be seen as an **analytical version of data augmentation**—rather than generating new samples, it directly penalizes the model's sensitivity to those transformations.
+
+### Connections to Other Methods
+
+This idea connects to **bidirectional propagation** and **adversarial training**, both of which encourage the model to stay locally smooth in input space.
+
+**Adversarial training** extends Tangent Propagation by finding, for each input, the direction that most changes the model's prediction and then enforcing robustness along that direction.
+
+The **Manifold Tangent Classifier** (Rifai et al., 2011d) further removes the need to explicitly specify tangent directions.
+
+It uses an autoencoder to learn the manifold structure and derive tangent vectors automatically, allowing the network to regularize itself along the data manifold without handcrafted transformations.
+
+---
+
+*Source: Deep Learning (Ian Goodfellow, Yoshua Bengio, Aaron Courville) - Chapter 7.14*
