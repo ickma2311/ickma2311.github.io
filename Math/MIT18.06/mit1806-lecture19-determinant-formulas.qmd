@@ -1,0 +1,156 @@
+---
+title: "MIT 18.06 Lecture 19: Determinant Formulas and Cofactors"
+author: "Chao Ma"
+date: "2025-11-04"
+categories: [linear algebra, MIT 18.06, determinants, cofactors, permutations]
+description: "Three computational methods for determinants: pivots, the big formula, and cofactor expansion"
+---
+
+{{< video https://www.youtube.com/watch?v=23LLB9mNJvc >}}
+
+## 2 by 2 Matrix
+
+$$
+\begin{vmatrix}a&b\\c&d\end{vmatrix}=\begin{vmatrix}a&0\\c&d\end{vmatrix}+\begin{vmatrix}0&b\\c&d\end{vmatrix}=\\
+\begin{vmatrix}a&0\\0&d\end{vmatrix}+\begin{vmatrix}a&0\\c&0\end{vmatrix}+\begin{vmatrix}0&b\\c&0\end{vmatrix}+\begin{vmatrix}0&b\\0&d\end{vmatrix}=\\
+\begin{vmatrix}a&0\\0&d\end{vmatrix}+0+\begin{vmatrix}0&b\\c&0\end{vmatrix}+0
+$$
+
+- $\begin{vmatrix}a&0\\0&d\end{vmatrix}=ad$ is the product of the diagonal
+- $\begin{vmatrix}0&b\\c&0\end{vmatrix}=-bc$ requires exchanging rows, then taking the product of the diagonal
+
+### The Method
+
+- Keep rows 2, 3, …, n unchanged
+- Split the first row into n pieces, one nonzero element per part
+
+$$
+|A|=\begin{bmatrix}a&0&0\\.&\text{row}_2&.\\.&\text{row}_n&.\end{bmatrix}+
+\begin{bmatrix}0&b&0\\.&\text{row}_2&.\\.&\text{row}_n&.\end{bmatrix}+
+\begin{bmatrix}0&0&c\\.&\text{row}_2&.\\.&\text{row}_n&.\end{bmatrix}+
+\ldots
+$$
+
+- Now we have n smaller matrices, each matrix keeps all lower rows the same and has only 1 active element entry in the first row
+- Repeat this step recursively
+- We can apply the same splitting process to the second row, then the third, and so on — each time expanding the matrix into smaller pieces
+- **Eventually, we will obtain many ($n^n$) matrices, each with only 1 active (non-zero) entry per row**
+
+## 3 by 3 Matrix
+
+$$
+\begin{vmatrix}a_{11}&a_{12}&a_{13}\\a_{21}&a_{22}&a_{23}\\a_{31}&a_{32}&a_{33}\end{vmatrix}
+$$
+
+### The Survivors
+
+The survivors have one entry in each row and each column. Because if one column is all zeros, the matrix is singular and the determinant is 0.
+
+**Proof**:
+- For an $n \times n$ matrix, after the processing, there should be $n^n$ matrices
+- For each matrix, each row has only 1 non-zero entry, so in total there are n non-zero entries
+- If one column has >1 non-zero entry, there must be at least one other column that is all zero
+  - Reason: we have n columns and n non-zero entries
+  - If one column has >1 non-zero entries, the other columns (n-1 in total) have <n-1 non-zeros to share
+
+**Survivors of 3×3**:
+
+$$
+\begin{vmatrix}a_{11}&0&0\\0&a_{22}&0\\0&0&a_{33}\end{vmatrix}+\begin{vmatrix}a_{11}&0&0\\0&0&a_{23}\\0&a_{32}&0\end{vmatrix}+\begin{vmatrix}0&a_{12}&0\\a_{21}&0&0\\0&0&a_{33}\end{vmatrix}+\\
+\begin{vmatrix}0&a_{12}&0\\0&0&a_{23}\\a_{31}&0&0\end{vmatrix}+\begin{vmatrix}0&0&a_{13}\\a_{21}&0&0\\0&a_{32}&0 \end{vmatrix}+\begin{vmatrix}0&0&a_{13}\\0&a_{22}&0\\a_{31}&0&0 \end{vmatrix}
+$$
+
+The determinants:
+
+$$
+a_{11}a_{22}a_{33}-a_{11}a_{23}a_{32}-a_{12}a_{21}a_{33}+a_{12}a_{23}a_{31}+a_{13}a_{21}a_{32}-a_{13}a_{22}a_{31}
+$$
+
+- Each part is the product of the diagonal
+- The sign is determined by how many row exchanges are needed to make it diagonal
+
+## The Big Formula
+
+For an n by n matrix, we have $n!$ (n factorial) terms of survivors and the determinant is:
+
+$$
+\det A=\sum_{n!} \pm a_{1\alpha}a_{2\beta}a_{3\gamma}\ldots a_{n\omega}
+$$
+
+where $(\alpha, \beta, \gamma,\ldots,\omega)$ is a permutation of $(1,\ldots,n)$.
+
+### Why n! Terms?
+
+It is because of permutations:
+- Row 1 can be chosen in n ways
+- Row 2 can be chosen in n-1 ways
+- …
+- Row n can be chosen in 1 way
+
+Therefore: $n \times (n-1) \times \ldots \times 1 = n!$
+
+## $\det A=0$ and Singularity
+
+Consider this 4×4 matrix:
+
+$$
+\begin{vmatrix}0&0&1&1\\0&1&1&0\\1&1&0&0\\1&0&0&1\end{vmatrix}
+$$
+
+Try the big formula, we can find 2 permutations that each make every row and column have a 1:
+
+- $D_1=\begin{vmatrix}0&0&1&\underline{1}\\0&1&\underline{1}&0\\1&\underline{1}&0&0\\\underline{1}&0&0&1\end{vmatrix}$
+
+- $D_2=\begin{vmatrix}0&0&\underline{1}&1\\0&\underline{1}&1&0\\\underline{1}&1&0&0\\1&0&0&\underline{1}\end{vmatrix}$
+
+$$
+\det D_1+\det D_2=1-1=0
+$$
+
+The determinant of the 4×4 matrix is 0, and there are dependent rows: row₁ + row₃ = row₂ + row₄, which proves the finding.
+
+## Cofactor
+
+### 3×3 Example
+
+$$
+\det A=a_{11}(a_{22}a_{33}-a_{23}a_{32})+\\
+a_{12}(\ldots)+\\
+a_{13}(\ldots)
+$$
+
+The picture for $a_{11}(a_{22}a_{33}-a_{23}a_{32})$:
+
+$$
+\begin{vmatrix}a_{11}&0&0\\0&a_{22}&a_{23}\\0&a_{32}&a_{33}\end{vmatrix}
+$$
+
+This is just $a_{11} \det \begin{vmatrix}a_{22}&a_{23}\\a_{32}&a_{33}\end{vmatrix}$.
+
+### Cofactor Definition
+
+The cofactor of $a_{ij}=C_{ij}$ is $\pm \det$ of the (n-1) × (n-1) matrix with $\text{row}_i$ and $\text{col}_j$ erased.
+
+$$
+C_{ij} = \begin{cases}+ \det M_{ij} & \text{ if } i+j \text{ is even}\\ - \det M_{ij} & \text{ if } i+j \text{ is odd} \end{cases}
+$$
+
+where $M_{ij}$ is the matrix with row i and column j removed.
+
+### Cofactor Formula
+
+$$
+\det A=a_{11}C_{11}+a_{12}C_{12}+\ldots+a_{1n}C_{1n}
+$$
+
+This formula allows us to expand along any row (or column) to compute the determinant.
+
+## Three Formulas for Computing Determinants
+
+1. **Product of pivots** (from elimination)
+2. **Big formula** (sum over all n! permutations)
+3. **Cofactor formula** (recursive expansion along a row or column)
+
+---
+
+*Source: MIT 18.06SC Linear Algebra - Lecture 19*

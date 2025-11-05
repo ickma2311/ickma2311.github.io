@@ -97,12 +97,12 @@ When drafting LinkedIn posts for blog content, use these emojis:
 ### Writing Process
 1. **Identify the key insight**: Focus on the main conceptual connection or "aha moment" from the blog post
 2. **Use "connecting the dots" tone**: Emphasize how concepts link together (e.g., "how linear algebra connects to machine learning")
-3. **Structure**:
-   - Start with chapter reference if applicable (e.g., "Deep Learning Book (Chapter 7.3)")
-   - Present the problem (what breaks down?)
-   - Present the solution (how is it fixed?)
-   - Explain the insight (why does this matter?)
-   - Link to full blog post
-4. **Keep it concise**: Aim for clarity over comprehensiveness
-5. **Source attribution**: Always mention the source book/material (e.g., "My notes on Deep Learning (Ian Goodfellow) Chapter X.X")
-6. **Include relevant hashtags**: #MachineLearning #LinearAlgebra #DeepLearning
+3. **Structure (Knowledge Card Format)**:
+   - Start with emoji and chapter reference (e.g., "∇ **Deep Learning Book (Chapter 8.1)**")
+   - Clear statement or equation (e.g., "Learning ≠ Optimization")
+   - 2-4 bullet points (🔹) with key insights
+   - Philosophical closing line (💡)
+   - Link to full blog post (📖)
+   - Source attribution at the end (e.g., "My notes on Deep Learning (Ian Goodfellow) Chapter X.X")
+4. **Keep it concise**: Aim for clarity over comprehensiveness - use knowledge card format for quick, digestible insights
+5. **Include relevant hashtags**: #MachineLearning #LinearAlgebra #DeepLearning
