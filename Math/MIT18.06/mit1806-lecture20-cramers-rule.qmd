@@ -1,0 +1,166 @@
+---
+title: "MIT 18.06SC Lecture 20: Cramer's Rule, Inverse Matrix and Volume"
+author: "Chao Ma"
+date: "2025-11-06"
+categories: [linear algebra, MIT 18.06, determinants, Cramer's rule, matrix inverse, volume]
+description: "The inverse matrix formula using cofactors, Cramer's rule for solving linear systems, and the geometric interpretation of determinants as volume"
+---
+
+{{< video https://www.youtube.com/watch?v=QNpj-gOXW9M >}}
+
+## Inverse Matrix Formula
+
+The inverse of a matrix can be computed using cofactors and determinants, providing an explicit formula that reveals the geometric structure behind matrix inversion.
+
+### 2×2 Matrices
+
+$$
+\begin{bmatrix}a&b\\c&d\end{bmatrix}^{-1}=\frac{1}{ad-bc}\begin{bmatrix}d&-b\\-c&a\end{bmatrix}
+$$
+
+The general formula for the inverse is:
+
+$$
+A^{-1}=\frac{1}{\det A}C^\top
+$$
+
+where $C$ is the cofactor matrix.
+
+### Why Does This Formula Work?
+
+We need to prove that $AC^\top=(\det A)I$.
+
+$$
+\begin{bmatrix}a_{11}&\cdots&a_{1n}\\.&.&.\\a_{n1}&\cdots&a_{nn}\end{bmatrix}
+\begin{bmatrix}C_{11}&\cdots&C_{n1}\\.&.&.\\C_{1n}&\cdots&C_{nn}\end{bmatrix}
+$$
+
+**Proof**:
+
+**Diagonal entries**: From the cofactor formula, we have:
+
+$$
+a_{11}C_{11}+a_{12}C_{12}+\cdots+a_{1n}C_{1n}=\det A
+$$
+
+So the diagonal entries of $AC^\top$ are $\det A$.
+
+**Off-diagonal entries**: Row $i$ of $A$ times column $j$ of $C^\top$ (where $i \neq j$) is always 0.
+
+**Proof of off-diagonal being zero**:
+
+- Consider matrix $A=\begin{bmatrix}A_1\\A_2\\A_3\end{bmatrix}$ and cofactor matrix $C=\begin{bmatrix}C_1\\C_2\\C_3\end{bmatrix}$
+- If we compute $A_1 \cdot C_2^\top$, construct a modified matrix:
+
+$$
+A_s=\begin{bmatrix}A_1\\A_1\\A_3\end{bmatrix}
+$$
+
+- Then $|A_s|$ equals $A_1 \cdot C_2^\top$, because $C_2$ is the cofactor computed by removing row 2, and now row 2 is replaced by $A_1$
+- Since $A_s$ has two identical rows, $|A_s|=0$
+- Therefore, all off-diagonal entries are 0
+
+This proves $AC^\top=(\det A)I$, which gives us $A^{-1}=\frac{1}{\det A}C^\top$.
+
+## Cramer's Rule
+
+Starting from:
+
+$$
+Ax=b\\
+x=A^{-1}b=\frac{1}{\det A}C^\top b
+$$
+
+Cramer's Rule states:
+
+$$
+x_j=\frac{\det B_j}{\det A}
+$$
+
+where $B_j$ is matrix $A$ with column $j$ replaced by vector $b$.
+
+While this formula is mathematically elegant, it requires computing determinants for $n+1$ matrices. In practice, elimination remains the more efficient method for solving $Ax=b$.
+
+## Determinant as Volume
+
+$|\det A|$ equals the volume of a box (parallelepiped).
+
+The absolute value of the determinant of an $n \times n$ matrix equals the n-dimensional volume of the **parallelotope** spanned by its column vectors.
+
+![Determinant as Volume](https://github.com/ickma2311/foundations/raw/main/MIT18.06SC/lecture20/MIT1806-Lecture20-Determinant-as-Volume.png)
+
+### Sign of the Determinant
+
+The sign is determined by the orientation (handedness) of the box:
+
+- Positive for right-handed orientation
+- Negative for left-handed orientation
+
+### Identity Matrix
+
+$$
+A=I
+$$
+
+The identity matrix spans a unit cube with edge length 1, so the volume is 1. Correspondingly, $\det I=1$.
+
+### Orthogonal Matrix
+
+For an orthogonal matrix $Q$:
+
+$$
+|\det Q|=1
+$$
+
+**Proof**:
+
+$$
+|QQ^\top|=|I|=1\\
+|QQ^\top|=|Q||Q^\top|=|Q|^2=1
+$$
+
+Based on the determinant property $|AB|=|A||B|$, we have $|Q|^2=1$, so $|Q|=\pm1$.
+
+This means orthogonal transformations preserve volume.
+
+### Area of Parallelogram
+
+![Determinant Area Parallelogram](https://github.com/ickma2311/foundations/raw/main/MIT18.06SC/lecture20/MIT1806-Lecture20-Determinant-Area-Parallelogram.png)
+
+For a 2D parallelogram formed by vectors $\begin{bmatrix}a\\c\end{bmatrix}$ and $\begin{bmatrix}b\\d\end{bmatrix}$:
+
+$$
+\text{Area} = |ad-bc| = \left|\begin{vmatrix}a&b\\c&d\end{vmatrix}\right|
+$$
+
+### Triangle Area
+
+The area of a triangle is half the area of the parallelogram:
+
+$$
+\text{Triangle Area} = \left|\frac{1}{2}(ad-bc)\right|
+$$
+
+When we only have the coordinates of the 3 vertices of the triangle $(x_1, y_1)$, $(x_2, y_2)$, $(x_3, y_3)$, we have 3 vectors in a 2D world. We can lift the dimension by using:
+
+$$
+\text{Triangle Area} = \frac{1}{2}\left|\begin{vmatrix}x_1&y_1&1\\x_2&y_2&1\\x_3&y_3&1\end{vmatrix}\right|
+$$
+
+This projects the triangle into 3D space without changing its area (all points remain in the same plane with $z=$ constant).
+
+### Scaling Property
+
+Doubling an edge doubles the volume:
+
+$$
+\begin{vmatrix}ta&tb\\c&d\end{vmatrix}=t\begin{vmatrix}a&b\\c&d\end{vmatrix}
+$$
+
+If we multiply row 1 by $t$ and keep all other rows unchanged, then $|A'|=t|A|$.
+
+This reflects the geometric fact that scaling one edge of a parallelotope scales its volume proportionally.
+
+---
+
+*Source: MIT 18.06SC Linear Algebra, Lecture 20*

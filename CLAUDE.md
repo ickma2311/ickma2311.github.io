@@ -98,11 +98,14 @@ When drafting LinkedIn posts for blog content, use these emojis:
 1. **Identify the key insight**: Focus on the main conceptual connection or "aha moment" from the blog post
 2. **Use "connecting the dots" tone**: Emphasize how concepts link together (e.g., "how linear algebra connects to machine learning")
 3. **Structure (Knowledge Card Format)**:
-   - Start with emoji and chapter reference (e.g., "∇ **Deep Learning Book (Chapter 8.1)**")
+   - Start with emoji and chapter reference (e.g., "∇ **Deep Learning Book (Chapter 8.1)**" or "📐 **MIT 18.06SC Linear Algebra (Lecture 19)**")
    - Clear statement or equation (e.g., "Learning ≠ Optimization")
    - 2-4 bullet points (🔹) with key insights
    - Philosophical closing line (💡)
    - Link to full blog post (📖)
-   - Source attribution at the end (e.g., "My notes on Deep Learning (Ian Goodfellow) Chapter X.X")
+   - Source attribution at the end (e.g., "My notes on Deep Learning (Ian Goodfellow) Chapter X.X" or "My notes on MIT 18.06SC Linear Algebra - Lecture XX")
 4. **Keep it concise**: Aim for clarity over comprehensiveness - use knowledge card format for quick, digestible insights
-5. **Include relevant hashtags**: #MachineLearning #LinearAlgebra #DeepLearning
+5. **Course naming**:
+   - Always use "MIT 18.06SC" (not just "MIT 18.06") for linear algebra posts
+   - Use full course titles to maintain consistency
+6. **Include relevant hashtags**: #MachineLearning #LinearAlgebra #DeepLearning
