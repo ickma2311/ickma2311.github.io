@@ -1,0 +1,182 @@
+---
+title: "MIT 18.06 Lecture 21: Eigenvalues and Eigenvectors"
+author: "Chao Ma"
+date: "2025-11-08"
+categories: [Linear Algebra, MIT 18.06, Eigenvalues, Eigenvectors]
+description: "Understanding eigenvalues and eigenvectors: the key to understanding how matrices transform space"
+---
+
+{{< video https://www.youtube.com/watch?v=cdZnhQjJu4I >}}
+
+**An eigenvector of A is a vector such that $Ax = \lambda x$, meaning A only scales (not rotates) x.**
+
+$$
+Ax \parallel x\\
+Ax=\lambda x
+$$
+
+For a singular matrix, $\lambda=0$ and x is in the null space.
+
+## Special Matrices
+
+### Projection Matrix
+
+If P is the projection matrix onto plane A, then:
+
+- Any vector on the plane is an eigenvector of P with eigenvalue 1
+- Any vector perpendicular to plane A is also an eigenvector of P with eigenvalue 0
+
+### Permutation Matrix
+
+For a permutation matrix, it permutes the items in the vector into another order. Vectors that have the same items remain unchanged after multiplication.
+
+$$
+A=\begin{bmatrix}0&1\\1&0\end{bmatrix}
+$$
+
+- $x_1=\begin{bmatrix}1\\1\end{bmatrix}$, $\lambda=1$
+
+Since A reverses the direction of the vector, if we choose x with the same magnitudes but opposite signs, we obtain another eigenvector corresponding to eigenvalue $-1$:
+
+- $x_2=\begin{bmatrix}-1\\1\end{bmatrix}$, $\lambda=-1$
+
+## Key Facts
+
+- Any $n \times n$ **matrix** has n eigenvalues (counting algebraic multiplicities, possibly complex)
+- For a **real symmetric** (or Hermitian) matrix, all eigenvalues are **real**, and the eigenvectors corresponding to distinct eigenvalues are **orthogonal**
+- The **sum** of the eigenvalues equals the **trace** of the matrix:
+
+$$
+\operatorname{tr}(A) = \sum_{i=1}^n \lambda_i
+$$
+
+- The **product** of the eigenvalues equals the **determinant** of the matrix:
+
+$$
+\det(A) = \prod_{i=1}^n \lambda_i
+$$
+
+## Solving $Ax=\lambda x$
+
+### Method
+
+Rewrite the eigenvalue equation:
+
+$$
+(A-\lambda I)x=\mathbf{0}
+$$
+
+For non-trivial solutions to exist, $A-\lambda I$ must be singular, so x is in the null space. This requires:
+
+$$
+\det (A-\lambda I)=0
+$$
+
+This is called the **characteristic equation**.
+
+### Example
+
+Find the eigenvalues and eigenvectors of:
+
+$$
+A=\begin{bmatrix}3&1\\1&3\end{bmatrix}
+$$
+
+**Finding $\lambda$:**
+
+$$
+\det(A-\lambda I)=\begin{vmatrix}3-\lambda & 1\\ 1&3-\lambda\end{vmatrix}=(3-\lambda)^2-1=0
+$$
+
+Solving: $(3-\lambda)^2=1$, so $3-\lambda=\pm 1$
+
+$$
+\lambda_1=4\\
+\lambda_2=2
+$$
+
+**Finding eigenvectors:**
+
+For $\lambda_1=4$:
+
+$$
+A-4I=\begin{bmatrix}-1&1\\1&-1\end{bmatrix}\\
+x_1=\begin{bmatrix}1\\1\end{bmatrix}
+$$
+
+For $\lambda_2=2$:
+
+$$
+A-2I=\begin{bmatrix}1&1\\1&1\end{bmatrix}\\
+x_2=\begin{bmatrix}-1\\1\end{bmatrix}
+$$
+
+## Effect of Shifting the Matrix
+
+If we add $nI$ to matrix A, the eigenvectors remain unchanged while the eigenvalues increase by n:
+
+$$
+(A+3I)x=Ax+3x=\lambda x+3x=(\lambda+3)x
+$$
+
+So the new eigenvalues are $\lambda+3$.
+
+## Complex Eigenvalues
+
+### Rotation Matrix
+
+For a $90°$ rotation matrix:
+
+$$
+A=\begin{bmatrix}0&-1\\1&0\end{bmatrix}
+$$
+
+From the key facts, we know:
+
+$$
+\lambda_1+\lambda_2=0\\
+\lambda_1\lambda_2=1
+$$
+
+Computing the characteristic equation:
+
+$$
+\det(A- \lambda I)=\begin{vmatrix}-\lambda &-1\\1& - \lambda \end{vmatrix}=\lambda^2+1=0
+$$
+
+$$
+\lambda_1=i\\
+\lambda_2=-i
+$$
+
+Both eigenvalues are complex numbers, reflecting the fact that rotation cannot be represented by simple scaling along real directions.
+
+## Triangular Matrix
+
+$$
+A=\begin{bmatrix}3&1\\0&3\end{bmatrix}
+$$
+
+$$
+\det(A-\lambda I)=\begin{vmatrix}3-\lambda&1\\0&3-\lambda\end{vmatrix}=(3-\lambda)^2=0
+$$
+
+$$
+\lambda_1=\lambda_2=3
+$$
+
+For a triangular matrix, the determinant of $A-\lambda I$ is determined by the diagonal only, so the eigenvalues are simply the diagonal entries.
+
+**Finding the eigenvector:**
+
+$$
+(A-3I)x=\begin{bmatrix}0&1\\0&0\end{bmatrix}x=\mathbf{0}
+$$
+
+Since $0x_1+1x_2=x_2=0$, we must have $x_2=0$ and $x_1$ is free.
+
+$$
+x=c\begin{bmatrix}1\\0\end{bmatrix}
+$$
+
+In this case, we have a **repeated eigenvalue** $\lambda=3$, but only one independent eigenvector. This indicates that the matrix is not diagonalizable.
