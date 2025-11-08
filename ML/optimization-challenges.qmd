@@ -1,0 +1,184 @@
+---
+title: "Chapter 8.2: Challenges in Deep Learning Optimization"
+author: "Chao Ma"
+date: "2025-11-07"
+categories: [deep learning, optimization, gradient descent, convexity, saddle points]
+description: "Understanding why deep learning optimization is hard: ill-conditioning, local minima, saddle points, exploding gradients, and the theoretical limits of optimization"
+---
+
+Deep learning optimization faces unique challenges that distinguish it from classical convex optimization. Understanding these challenges is crucial for designing effective training algorithms.
+
+## Convex Function
+
+A function is convex if for all $x, y \in \mathbb{R}^n$ and for all $\alpha \in (0,1)$:
+
+$$
+f(\alpha x+(1-\alpha)y) \leq \alpha f(x)+(1-\alpha)f(y)
+$$
+
+### Example: $f(x) = x^2$
+
+Consider two points:
+- A = (-2, 4), where $x_1 = -2$, $f(x_1) = 4$
+- B = (2, 4), where $x_2 = 2$, $f(x_2) = 4$
+
+For any $\alpha \in (0,1)$:
+- $\alpha f(x_1) + (1-\alpha)f(x_2) = 4$
+- $f(\alpha x_1 + (1-\alpha)x_2) \leq 4$
+
+This shows that any point on the line segment AB lies below or on the function curve, confirming convexity.
+
+![Convex Function](https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-Convex-function.png)
+
+You can explore this interactively with my [GeoGebra link](https://www.geogebra.org/m/y2qs4kfq) to slide the alpha value and adjust $x_1$ and $x_2$.
+
+## Ill-Conditioned Functions
+
+![Ill-Conditioned](https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-ill-conditioned.png)
+
+Consider the ill-conditioned function:
+
+$$
+f = \frac{1}{2}(100x^2 + y^2)
+$$
+
+The Hessian matrix is:
+
+$$
+H = \begin{bmatrix}100 & 0\\0 & 1\end{bmatrix}
+$$
+
+**Example**: Starting from point A(0.5, 1) with loss = 13, near the error contour line 10.
+
+The gradient at A is $\nabla f = [50, 1]$. Using learning rate $\eta = 0.05$:
+
+$$
+x_{new} = 0.5 - 0.05 \times 50 = -2\\
+y_{new} = 1 - 0.05 \times 1 = 0.95
+$$
+
+This gives point B(-2, 0.95), but the new loss is:
+
+$$
+f(B) = 0.5(100 \times 2^2 + 0.95^2) \approx 201
+$$
+
+The loss increased dramatically! This demonstrates how ill-conditioning causes gradient descent to overshoot.
+
+{{< video https://www.youtube.com/watch?v=ZlcQ8xHwx0Y >}}
+
+### Second-Order Taylor Expansion of Loss Function
+
+$$
+J(\theta') - J(\theta) \approx \frac{1}{2}\epsilon^2 g^\top H g - \epsilon g^\top g
+$$
+
+If $\frac{1}{2}\epsilon^2 g^\top H g > \epsilon g^\top g$, the loss will increase instead of decrease.
+
+## Local Minima
+
+For convex functions, any local minimum is a global minimum, as there is only one local minimum.
+
+However, for non-convex functions, there might be multiple local minima.
+
+### Benign Local Minima
+
+Neural networks may have infinitely many equivalent local minima due to parameter symmetries (model non-identifiability), but this phenomenon is not caused by the non-convexity of the loss function.
+
+![Benign Local Minima](https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-Benign-Local-Minima.png)
+
+### Suboptimal Local Minimum
+
+This example shows a **suboptimal local minimum**—its loss is higher than the global minimum. In non-convex problems, a local minimum **need not** coincide with the global minimum.
+
+By contrast, many local minima in neural networks are **benign**: they are equivalent or have nearly the same loss due to parameter symmetries (non-identifiability).
+
+$$
+f(x,y) = (x^2-1)^2 + y^2 + 0.6x
+$$
+
+![Suboptimal Local Minimum](https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-multiple-partial-minimal.png)
+
+**Recent research** suggests that, in large neural networks, most local minima have sufficiently low loss values, so finding the exact global minimum is often unnecessary. Moreover, one should not attribute all optimization challenges to local minima. Instead, it is important to examine the gradient norm and determine whether the optimization has converged—if it has, the issue is likely not caused by local minima.
+
+## Plateaus, Saddles and Other Flat Regions
+
+### Saddle Points
+
+Consider the function:
+
+$$
+f = x^2 - y^2\\
+\frac{\partial f}{\partial x} = 2x\\
+\frac{\partial f}{\partial y} = -2y
+$$
+
+When $(x,y) = (0,0)$, the gradient $\nabla f = \begin{bmatrix}0\\0\end{bmatrix}$, and training will get stuck at this point.
+
+The Hessian $H = \begin{bmatrix}2 & 0\\0 & -2\end{bmatrix}$ indicates positive curvature along the x-axis and negative curvature along the y-axis. Therefore, moving along the y direction decreases the function value, revealing the presence of a saddle point.
+
+![Saddle Point](https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-Saddle.png)
+
+## Cliffs and Exploding Gradients
+
+![Cliffs](https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-Cliffs.png)
+
+Deep networks often contain regions in parameter space where the loss surface changes extremely rapidly with respect to the parameters. These steep regions are called **cliffs**.
+
+When the optimization step crosses a cliff, the gradient magnitude becomes extremely large—leading to **exploding gradients** and unstable parameter updates.
+
+### Solution: Gradient Clipping
+
+Rescale gradients when their norm exceeds a threshold $\tau$:
+
+$$
+\nabla_\theta J \leftarrow \frac{\nabla_\theta J}{\max(1, \|\nabla_\theta J\|/\tau)}
+$$
+
+This keeps updates within a safe range.
+
+## Long-Term Dependencies
+
+In networks where a weight matrix $W$ needs to be multiplied many times (e.g., in RNNs), we can analyze stability using eigenvalue decomposition:
+
+$$
+W^t = (V \operatorname{diag}(\lambda) V^{-1})^t = V \operatorname{diag}(\lambda^t) V^{-1}
+$$
+
+- If $|\lambda| < 1$, then $\lambda^t \to 0$ as t increases, causing **vanishing gradients**
+- If $|\lambda| > 1$, then $\lambda^t \to \infty$, leading to **exploding gradients**
+- Only when $|\lambda| = 1$ can the signal **propagate stably** over time—though this case is extremely rare in practice
+
+## Imperfect Gradient Information
+
+In practice, optimization rarely has access to the exact gradient or Hessian.
+
+Gradients are estimated from noisy minibatches or numerical approximations.
+
+Thus, most learning algorithms operate under **stochastic** and **imperfect** gradient information.
+
+The objective function is effectively a noisy landscape, and optimization seeks robustness to this uncertainty.
+
+## Weak Correspondence Between Local and Global Structure
+
+The local geometry of the loss function (such as saddle points or flat regions) does not necessarily reflect the global optimum.
+
+Deep networks often contain large flat areas or cliffs where gradients vanish or oscillate.
+
+Optimization may stagnate even without true local minima.
+
+Hence, success depends more on finding **good initialization** and **stable descent paths** than on reaching a perfect local minimum.
+
+## Theoretical Limits of Optimization
+
+Theoretical analyses (Blum & Rivest, 1992; Judd, 1989; Wolpert & MacReady, 1997) show that:
+
+- Training neural networks is **NP-hard**
+- There is **no universally optimal optimization algorithm** (*No Free Lunch Theorem*)
+- Every algorithm performs well only for a subset of problems
+
+Therefore, the practical goal is to design **approximate optimization methods** that generalize well and work reliably in large-scale neural networks.
+
+---
+
+*Source: Deep Learning (Ian Goodfellow, Yoshua Bengio, and Aaron Courville) - Chapter 8.2*
