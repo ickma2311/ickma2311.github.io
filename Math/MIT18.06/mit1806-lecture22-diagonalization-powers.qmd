@@ -1,0 +1,276 @@
+---
+title: "MIT 18.06 Lecture 22: Diagonalization and Powers of A"
+author: "Chao Ma"
+date: "2025-11-09"
+categories: [Linear Algebra, MIT 18.06, Diagonalization, Eigenvalues, Fibonacci]
+description: "Understanding matrix powers through diagonalization and solving the Fibonacci sequence with eigenvalues"
+---
+
+{{< video https://www.youtube.com/watch?v=13r9QY6cmjc >}}
+
+This lecture explores one of the most powerful applications of eigenvalues and eigenvectors: **diagonalization**. By expressing a matrix in terms of its eigenvalues and eigenvectors, we can efficiently compute matrix powers and solve recurrence relations like the Fibonacci sequence.
+
+## Diagonalizing a Matrix
+
+A matrix $A$ is diagonalizable if it can be written as:
+
+$$
+S^{-1}AS = \Lambda
+$$
+
+where $\Lambda$ is a diagonal matrix containing the eigenvalues of $A$.
+
+**Key definition**: $S$ is the matrix whose columns are the $n$ eigenvectors of $A$:
+
+$$
+S = \begin{bmatrix}
+| & | & | & | \\
+x_1 & x_2 & \ldots & x_n \\
+| & | & | & |
+\end{bmatrix}
+$$
+
+### Why Does Diagonalization Work?
+
+When we compute $AS$, we multiply $A$ by each eigenvector column:
+
+$$
+AS = \begin{bmatrix}
+| & | & | & | \\
+\lambda_1 x_1 & \lambda_2 x_2 & \ldots & \lambda_n x_n \\
+| & | & | & |
+\end{bmatrix}
+$$
+
+Since $Ax_i = \lambda_i x_i$ for each eigenvector, multiplying by $A$ simply scales each column by its corresponding eigenvalue.
+
+Now, multiplying both sides by $S^{-1}$ from the left:
+
+$$
+S^{-1}AS = \begin{bmatrix}
+\lambda_1 & 0 & \ldots & 0 \\
+0 & \lambda_2 & \ldots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+0 & 0 & \ldots & \lambda_n
+\end{bmatrix} = \Lambda
+$$
+
+This gives us a beautiful representation of $A$:
+
+$$
+SS^{-1}AS = S\Lambda = IAS = AS
+$$
+
+$$
+ASS^{-1} = S\Lambda S^{-1}
+$$
+
+$$
+A = S\Lambda S^{-1}
+$$
+
+This formula expresses $A$ in terms of its eigenvalues ($\Lambda$) and eigenvectors ($S$).
+
+## Powers of A
+
+### A Squared
+
+If $Ax = \lambda x$, then what happens when we apply $A$ again?
+
+$$
+A^2 x = A(Ax) = A(\lambda x) = \lambda Ax = \lambda^2 x
+$$
+
+**Conclusion**:
+
+- The eigenvalues of $A^2$ are the squares of $A$'s eigenvalues
+- The eigenvectors of $A^2$ are the same as $A$'s eigenvectors
+
+Using diagonalization:
+
+$$
+A^2 = S\Lambda S^{-1} \cdot S\Lambda S^{-1} = S\Lambda^2 S^{-1}
+$$
+
+Notice how the middle terms $S^{-1}S$ cancel to give the identity matrix, leaving us with $\Lambda^2$.
+
+### The General Power Formula
+
+By the same reasoning:
+
+$$
+A^k = S\Lambda^k S^{-1}
+$$
+
+where $\Lambda^k$ is simply the diagonal matrix with each eigenvalue raised to the $k$-th power:
+
+$$
+\Lambda^k = \begin{bmatrix}
+\lambda_1^k & 0 & \ldots & 0 \\
+0 & \lambda_2^k & \ldots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+0 & 0 & \ldots & \lambda_n^k
+\end{bmatrix}
+$$
+
+**Key properties**:
+
+- The eigenvalues of $A^k$ are the $k$-th powers of the eigenvalues of $A$
+- The eigenvectors remain unchanged
+
+This formula transforms a difficult problem (computing matrix powers) into a simple one (raising numbers to powers).
+
+### Important Theorems
+
+**Theorem 1 (Convergence to zero)**: $A^k \to 0$ as $k \to \infty$ if and only if all $|\lambda_i| < 1$.
+
+This is because $\lambda_i^k \to 0$ when $|\lambda_i| < 1$, making all entries in $\Lambda^k$ approach zero.
+
+**Theorem 2 (Diagonalizability with distinct eigenvalues)**: If all eigenvalues $\lambda_i$ are distinct (no repeated eigenvalues), then $A$ is guaranteed to have $n$ independent eigenvectors and is diagonalizable.
+
+**Theorem 3 (Repeated eigenvalues)**: If there are repeated eigenvalues, $A$ may or may not have $n$ independent eigenvectors.
+
+**Examples**:
+
+- The identity matrix $I_n$ has eigenvalue 1 repeated $n$ times, but it has $n$ independent eigenvectors (any vector is an eigenvector)
+- Triangular matrices with repeated eigenvalues often lack sufficient eigenvectors
+
+### Example: Non-diagonalizable Matrix
+
+Consider:
+
+$$
+A = \begin{bmatrix}2 & 1 \\ 0 & 2\end{bmatrix}
+$$
+
+Finding eigenvalues:
+
+$$
+|A - \lambda I| = \begin{vmatrix}2 - \lambda & 1 \\ 0 & 2 - \lambda\end{vmatrix} = (2 - \lambda)^2 = 0
+$$
+
+$$
+\lambda_1 = \lambda_2 = 2
+$$
+
+Finding eigenvectors: The null space of $A - \lambda I = \begin{bmatrix}0 & 1 \\ 0 & 0\end{bmatrix}$ is only one-dimensional.
+
+The only eigenvector is $\begin{bmatrix}1 \\ 0\end{bmatrix}$.
+
+Since we have only one independent eigenvector for a 2×2 matrix, $A$ is **not diagonalizable**.
+
+## Solving Difference Equations: $u_k = A^k u_0$
+
+Many problems in science and engineering involve iterating a linear transformation:
+
+- $u_1 = Au_0$
+- $u_2 = Au_1 = A^2u_0$
+- $u_k = A^k u_0$
+
+### Solution Strategy
+
+The key insight is to decompose $u_0$ in terms of eigenvectors:
+
+$$
+u_0 = c_1 x_1 + c_2 x_2 + \ldots + c_n x_n = SC
+$$
+
+where $C = \begin{bmatrix}c_1 \\ c_2 \\ \vdots \\ c_n\end{bmatrix}$ are the coefficients.
+
+Applying $A$ to each eigenvector:
+
+$$
+Au_0 = \lambda_1 c_1 x_1 + \lambda_2 c_2 x_2 + \ldots + \lambda_n c_n x_n
+$$
+
+Applying $A$ a total of $k$ times:
+
+$$
+A^k u_0 = \lambda_1^k c_1 x_1 + \lambda_2^k c_2 x_2 + \ldots + \lambda_n^k c_n x_n = S\Lambda^k C
+$$
+
+This shows that each eigenvector component grows (or decays) exponentially at a rate determined by its eigenvalue.
+
+## Fibonacci Example
+
+### The Question
+
+What is $F_{100}$ in the Fibonacci sequence $0, 1, 1, 2, 3, 5, 8, 13, \ldots$?
+
+Computing this directly would require 100 additions, but eigenvalues give us a closed-form solution.
+
+### The Trick: Convert to Matrix Form
+
+The Fibonacci recurrence relation is:
+
+$$
+F_{k+2} = F_{k+1} + F_k
+$$
+
+We can convert this scalar recurrence into a vector equation. Define:
+
+$$
+u_k = \begin{bmatrix}F_{k+1} \\ F_k\end{bmatrix}
+$$
+
+Then:
+
+$$
+u_{k+1} = \begin{bmatrix}F_{k+2} \\ F_{k+1}\end{bmatrix} = \begin{bmatrix}F_{k+1} + F_k \\ F_{k+1}\end{bmatrix} = \begin{bmatrix}1 & 1 \\ 1 & 0\end{bmatrix} \begin{bmatrix}F_{k+1} \\ F_k\end{bmatrix} = Au_k
+$$
+
+So the Fibonacci sequence is generated by repeatedly multiplying by matrix $A = \begin{bmatrix}1 & 1 \\ 1 & 0\end{bmatrix}$.
+
+### Finding Eigenvalues and Eigenvectors
+
+$$
+|A - \lambda I| = \begin{vmatrix}1 - \lambda & 1 \\ 1 & -\lambda\end{vmatrix} = \lambda^2 - \lambda - 1 = 0
+$$
+
+From Vieta's formulas for a quadratic equation:
+
+$$
+\lambda_1 + \lambda_2 = 1
+$$
+
+$$
+\lambda_1 \lambda_2 = -1
+$$
+
+Using the quadratic formula for $ax^2 + bx + c = 0$:
+
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+
+We get:
+
+$$
+\lambda = \frac{1 \pm \sqrt{1 - 4(1)(-1)}}{2} = \frac{1 \pm \sqrt{5}}{2}
+$$
+
+$$
+\lambda_1 = \frac{1 + \sqrt{5}}{2} \approx 1.618 \quad \text{(the golden ratio!)}
+$$
+
+$$
+\lambda_2 = \frac{1 - \sqrt{5}}{2} \approx -0.618
+$$
+
+### The Solution
+
+Since $u_k = A^k u_0$, we can write:
+
+$$
+u_k = c_1 \lambda_1^k x_1 + c_2 \lambda_2^k x_2
+$$
+
+For large $k$:
+
+$$
+F_{100} \approx c_1 \left(\frac{1 + \sqrt{5}}{2}\right)^{100}
+$$
+
+Because $|\lambda_2| < 1$, the term $\lambda_2^{100}$ becomes negligibly small. The Fibonacci numbers grow exponentially at a rate determined by the golden ratio!
+
+**Key insight**: The eigenvalues tell us the long-term behavior. The dominant eigenvalue $\lambda_1 \approx 1.618$ determines how fast the Fibonacci sequence grows, while the smaller eigenvalue $|\lambda_2| < 1$ contributes a rapidly decaying oscillation that becomes negligible for large $k$.
