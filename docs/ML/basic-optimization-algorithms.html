@@ -7,10 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Chao Ma">
-<meta name="dcterms.date" content="2025-11-07">
-<meta name="description" content="Understanding why deep learning optimization is hard: ill-conditioning, local minima, saddle points, exploding gradients, and the theoretical limits of optimization">
+<meta name="dcterms.date" content="2025-11-09">
+<meta name="description" content="SGD, momentum, and Nesterov momentum: the foundational algorithms for training deep neural networks">
 
-<title>Chapter 8.2: Challenges in Deep Learning Optimization – ∇ ickma.dev</title>
+<title>Chapter 8.3: Basic Algorithms – ∇ ickma.dev</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -421,31 +421,20 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#convex-function" id="toc-convex-function" class="nav-link active" data-scroll-target="#convex-function">Convex Function</a>
+  <li><a href="#stochastic-gradient-descent" id="toc-stochastic-gradient-descent" class="nav-link active" data-scroll-target="#stochastic-gradient-descent">Stochastic Gradient Descent</a>
   <ul class="collapse">
-  <li><a href="#example-fx-x2" id="toc-example-fx-x2" class="nav-link" data-scroll-target="#example-fx-x2">Example: <span class="math inline">\(f(x) = x^2\)</span></a></li>
+  <li><a href="#algorithm" id="toc-algorithm" class="nav-link" data-scroll-target="#algorithm">Algorithm</a></li>
+  <li><a href="#sufficient-conditions-for-convergence" id="toc-sufficient-conditions-for-convergence" class="nav-link" data-scroll-target="#sufficient-conditions-for-convergence">Sufficient Conditions for Convergence</a></li>
+  <li><a href="#practical-learning-rate-scheduling-linear-decay" id="toc-practical-learning-rate-scheduling-linear-decay" class="nav-link" data-scroll-target="#practical-learning-rate-scheduling-linear-decay">Practical Learning Rate Scheduling: Linear Decay</a></li>
   </ul></li>
-  <li><a href="#ill-conditioned-functions" id="toc-ill-conditioned-functions" class="nav-link" data-scroll-target="#ill-conditioned-functions">Ill-Conditioned Functions</a>
+  <li><a href="#momentum" id="toc-momentum" class="nav-link" data-scroll-target="#momentum">Momentum</a>
   <ul class="collapse">
-  <li><a href="#second-order-taylor-expansion-of-loss-function" id="toc-second-order-taylor-expansion-of-loss-function" class="nav-link" data-scroll-target="#second-order-taylor-expansion-of-loss-function">Second-Order Taylor Expansion of Loss Function</a></li>
+  <li><a href="#alternative-formulation" id="toc-alternative-formulation" class="nav-link" data-scroll-target="#alternative-formulation">Alternative Formulation</a></li>
+  <li><a href="#maximum-step-length" id="toc-maximum-step-length" class="nav-link" data-scroll-target="#maximum-step-length">Maximum Step Length</a></li>
+  <li><a href="#physical-interpretation-newtons-law-of-acceleration" id="toc-physical-interpretation-newtons-law-of-acceleration" class="nav-link" data-scroll-target="#physical-interpretation-newtons-law-of-acceleration">Physical Interpretation: Newton’s Law of Acceleration</a></li>
+  <li><a href="#damping-in-momentum" id="toc-damping-in-momentum" class="nav-link" data-scroll-target="#damping-in-momentum">Damping in Momentum</a></li>
   </ul></li>
-  <li><a href="#local-minima" id="toc-local-minima" class="nav-link" data-scroll-target="#local-minima">Local Minima</a>
-  <ul class="collapse">
-  <li><a href="#benign-local-minima" id="toc-benign-local-minima" class="nav-link" data-scroll-target="#benign-local-minima">Benign Local Minima</a></li>
-  <li><a href="#suboptimal-local-minimum" id="toc-suboptimal-local-minimum" class="nav-link" data-scroll-target="#suboptimal-local-minimum">Suboptimal Local Minimum</a></li>
-  </ul></li>
-  <li><a href="#plateaus-saddles-and-other-flat-regions" id="toc-plateaus-saddles-and-other-flat-regions" class="nav-link" data-scroll-target="#plateaus-saddles-and-other-flat-regions">Plateaus, Saddles and Other Flat Regions</a>
-  <ul class="collapse">
-  <li><a href="#saddle-points" id="toc-saddle-points" class="nav-link" data-scroll-target="#saddle-points">Saddle Points</a></li>
-  </ul></li>
-  <li><a href="#cliffs-and-exploding-gradients" id="toc-cliffs-and-exploding-gradients" class="nav-link" data-scroll-target="#cliffs-and-exploding-gradients">Cliffs and Exploding Gradients</a>
-  <ul class="collapse">
-  <li><a href="#solution-gradient-clipping" id="toc-solution-gradient-clipping" class="nav-link" data-scroll-target="#solution-gradient-clipping">Solution: Gradient Clipping</a></li>
-  </ul></li>
-  <li><a href="#long-term-dependencies" id="toc-long-term-dependencies" class="nav-link" data-scroll-target="#long-term-dependencies">Long-Term Dependencies</a></li>
-  <li><a href="#imperfect-gradient-information" id="toc-imperfect-gradient-information" class="nav-link" data-scroll-target="#imperfect-gradient-information">Imperfect Gradient Information</a></li>
-  <li><a href="#weak-correspondence-between-local-and-global-structure" id="toc-weak-correspondence-between-local-and-global-structure" class="nav-link" data-scroll-target="#weak-correspondence-between-local-and-global-structure">Weak Correspondence Between Local and Global Structure</a></li>
-  <li><a href="#theoretical-limits-of-optimization" id="toc-theoretical-limits-of-optimization" class="nav-link" data-scroll-target="#theoretical-limits-of-optimization">Theoretical Limits of Optimization</a></li>
+  <li><a href="#nesterov-momentum" id="toc-nesterov-momentum" class="nav-link" data-scroll-target="#nesterov-momentum">Nesterov Momentum</a></li>
   </ul>
 </nav>
     </div>
@@ -454,19 +443,18 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Chapter 8.2: Challenges in Deep Learning Optimization</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">Chapter 8.3: Basic Algorithms</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
   <div class="quarto-categories">
-    <div class="quarto-category">deep learning</div>
-    <div class="quarto-category">optimization</div>
-    <div class="quarto-category">gradient descent</div>
-    <div class="quarto-category">convexity</div>
-    <div class="quarto-category">saddle points</div>
+    <div class="quarto-category">Deep Learning</div>
+    <div class="quarto-category">Optimization</div>
+    <div class="quarto-category">SGD</div>
+    <div class="quarto-category">Momentum</div>
   </div>
   </div>
 
 <div>
   <div class="description">
-    Understanding why deep learning optimization is hard: ill-conditioning, local minima, saddle points, exploding gradients, and the theoretical limits of optimization
+    SGD, momentum, and Nesterov momentum: the foundational algorithms for training deep neural networks
   </div>
 </div>
 
@@ -483,7 +471,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">November 7, 2025</p>
+      <p class="date">November 9, 2025</p>
     </div>
   </div>
   
@@ -495,169 +483,179 @@ window.Quarto = {
 </header>
 
 
-<p>Deep learning optimization faces unique challenges that distinguish it from classical convex optimization. Understanding these challenges is crucial for designing effective training algorithms.</p>
-<section id="convex-function" class="level2">
-<h2 class="anchored" data-anchor-id="convex-function">Convex Function</h2>
-<p>A function is convex if for all <span class="math inline">\(x, y \in \mathbb{R}^n\)</span> and for all <span class="math inline">\(\alpha \in (0,1)\)</span>:</p>
-<p><span class="math display">\[
-f(\alpha x+(1-\alpha)y) \leq \alpha f(x)+(1-\alpha)f(y)
-\]</span></p>
-<section id="example-fx-x2" class="level3">
-<h3 class="anchored" data-anchor-id="example-fx-x2">Example: <span class="math inline">\(f(x) = x^2\)</span></h3>
-<p>Consider two points: - A = (-2, 4), where <span class="math inline">\(x_1 = -2\)</span>, <span class="math inline">\(f(x_1) = 4\)</span> - B = (2, 4), where <span class="math inline">\(x_2 = 2\)</span>, <span class="math inline">\(f(x_2) = 4\)</span></p>
-<p>For any <span class="math inline">\(\alpha \in (0,1)\)</span>: - <span class="math inline">\(\alpha f(x_1) + (1-\alpha)f(x_2) = 4\)</span> - <span class="math inline">\(f(\alpha x_1 + (1-\alpha)x_2) \leq 4\)</span></p>
-<p>This shows that any point on the line segment AB lies below or on the function curve, confirming convexity.</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-Convex-function.png" class="img-fluid figure-img"></p>
-<figcaption>Convex Function</figcaption>
-</figure>
-</div>
-<p>You can explore this interactively with my <a href="https://www.geogebra.org/m/y2qs4kfq">GeoGebra link</a> to slide the alpha value and adjust <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span>.</p>
-</section>
-</section>
-<section id="ill-conditioned-functions" class="level2">
-<h2 class="anchored" data-anchor-id="ill-conditioned-functions">Ill-Conditioned Functions</h2>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-ill-conditioned.png" class="img-fluid figure-img"></p>
-<figcaption>Ill-Conditioned</figcaption>
-</figure>
-</div>
-<p>Consider the ill-conditioned function:</p>
-<p><span class="math display">\[
-f = \frac{1}{2}(100x^2 + y^2)
-\]</span></p>
-<p>The Hessian matrix is:</p>
-<p><span class="math display">\[
-H = \begin{bmatrix}100 &amp; 0\\0 &amp; 1\end{bmatrix}
-\]</span></p>
-<p><strong>Example</strong>: Starting from point A(0.5, 1) with loss = 13, near the error contour line 10.</p>
-<p>The gradient at A is <span class="math inline">\(\nabla f = [50, 1]\)</span>. Using learning rate <span class="math inline">\(\eta = 0.05\)</span>:</p>
-<p><span class="math display">\[
-x_{new} = 0.5 - 0.05 \times 50 = -2\\
-y_{new} = 1 - 0.05 \times 1 = 0.95
-\]</span></p>
-<p>This gives point B(-2, 0.95), but the new loss is:</p>
-<p><span class="math display">\[
-f(B) = 0.5(100 \times 2^2 + 0.95^2) \approx 201
-\]</span></p>
-<p>The loss increased dramatically! This demonstrates how ill-conditioning causes gradient descent to overshoot.</p>
-<div class="quarto-video ratio ratio-16x9"><iframe data-external="1" src="https://www.youtube.com/embed/ZlcQ8xHwx0Y" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>
-<section id="second-order-taylor-expansion-of-loss-function" class="level3">
-<h3 class="anchored" data-anchor-id="second-order-taylor-expansion-of-loss-function">Second-Order Taylor Expansion of Loss Function</h3>
-<p><span class="math display">\[
-J(\theta') - J(\theta) \approx \frac{1}{2}\epsilon^2 g^\top H g - \epsilon g^\top g
-\]</span></p>
-<p>If <span class="math inline">\(\frac{1}{2}\epsilon^2 g^\top H g &gt; \epsilon g^\top g\)</span>, the loss will increase instead of decrease.</p>
-</section>
-</section>
-<section id="local-minima" class="level2">
-<h2 class="anchored" data-anchor-id="local-minima">Local Minima</h2>
-<p>For convex functions, any local minimum is a global minimum, as there is only one local minimum.</p>
-<p>However, for non-convex functions, there might be multiple local minima.</p>
-<section id="benign-local-minima" class="level3">
-<h3 class="anchored" data-anchor-id="benign-local-minima">Benign Local Minima</h3>
-<p>Neural networks may have infinitely many equivalent local minima due to parameter symmetries (model non-identifiability), but this phenomenon is not caused by the non-convexity of the loss function.</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-Benign-Local-Minima.png" class="img-fluid figure-img"></p>
-<figcaption>Benign Local Minima</figcaption>
-</figure>
-</div>
-</section>
-<section id="suboptimal-local-minimum" class="level3">
-<h3 class="anchored" data-anchor-id="suboptimal-local-minimum">Suboptimal Local Minimum</h3>
-<p>This example shows a <strong>suboptimal local minimum</strong>—its loss is higher than the global minimum. In non-convex problems, a local minimum <strong>need not</strong> coincide with the global minimum.</p>
-<p>By contrast, many local minima in neural networks are <strong>benign</strong>: they are equivalent or have nearly the same loss due to parameter symmetries (non-identifiability).</p>
-<p><span class="math display">\[
-f(x,y) = (x^2-1)^2 + y^2 + 0.6x
-\]</span></p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-multiple-partial-minimal.png" class="img-fluid figure-img"></p>
-<figcaption>Suboptimal Local Minimum</figcaption>
-</figure>
-</div>
-<p><strong>Recent research</strong> suggests that, in large neural networks, most local minima have sufficiently low loss values, so finding the exact global minimum is often unnecessary. Moreover, one should not attribute all optimization challenges to local minima. Instead, it is important to examine the gradient norm and determine whether the optimization has converged—if it has, the issue is likely not caused by local minima.</p>
-</section>
-</section>
-<section id="plateaus-saddles-and-other-flat-regions" class="level2">
-<h2 class="anchored" data-anchor-id="plateaus-saddles-and-other-flat-regions">Plateaus, Saddles and Other Flat Regions</h2>
-<section id="saddle-points" class="level3">
-<h3 class="anchored" data-anchor-id="saddle-points">Saddle Points</h3>
-<p>Consider the function:</p>
-<p><span class="math display">\[
-f = x^2 - y^2\\
-\frac{\partial f}{\partial x} = 2x\\
-\frac{\partial f}{\partial y} = -2y
-\]</span></p>
-<p>When <span class="math inline">\((x,y) = (0,0)\)</span>, the gradient <span class="math inline">\(\nabla f = \begin{bmatrix}0\\0\end{bmatrix}\)</span>, and training will get stuck at this point.</p>
-<p>The Hessian <span class="math inline">\(H = \begin{bmatrix}2 &amp; 0\\0 &amp; -2\end{bmatrix}\)</span> indicates positive curvature along the x-axis and negative curvature along the y-axis. Therefore, moving along the y direction decreases the function value, revealing the presence of a saddle point.</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-Saddle.png" class="img-fluid figure-img"></p>
-<figcaption>Saddle Point</figcaption>
-</figure>
-</div>
-</section>
-</section>
-<section id="cliffs-and-exploding-gradients" class="level2">
-<h2 class="anchored" data-anchor-id="cliffs-and-exploding-gradients">Cliffs and Exploding Gradients</h2>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-Cliffs.png" class="img-fluid figure-img"></p>
-<figcaption>Cliffs</figcaption>
-</figure>
-</div>
-<p>Deep networks often contain regions in parameter space where the loss surface changes extremely rapidly with respect to the parameters. These steep regions are called <strong>cliffs</strong>.</p>
-<p>When the optimization step crosses a cliff, the gradient magnitude becomes extremely large—leading to <strong>exploding gradients</strong> and unstable parameter updates.</p>
-<section id="solution-gradient-clipping" class="level3">
-<h3 class="anchored" data-anchor-id="solution-gradient-clipping">Solution: Gradient Clipping</h3>
-<p>Rescale gradients when their norm exceeds a threshold <span class="math inline">\(\tau\)</span>:</p>
-<p><span class="math display">\[
-\nabla_\theta J \leftarrow \frac{\nabla_\theta J}{\max(1, \|\nabla_\theta J\|/\tau)}
-\]</span></p>
-<p>This keeps updates within a safe range.</p>
-</section>
-</section>
-<section id="long-term-dependencies" class="level2">
-<h2 class="anchored" data-anchor-id="long-term-dependencies">Long-Term Dependencies</h2>
-<p>In networks where a weight matrix <span class="math inline">\(W\)</span> needs to be multiplied many times (e.g., in RNNs), we can analyze stability using eigenvalue decomposition:</p>
-<p><span class="math display">\[
-W^t = (V \operatorname{diag}(\lambda) V^{-1})^t = V \operatorname{diag}(\lambda^t) V^{-1}
-\]</span></p>
+<section id="stochastic-gradient-descent" class="level2">
+<h2 class="anchored" data-anchor-id="stochastic-gradient-descent">Stochastic Gradient Descent</h2>
+<p>Stochastic Gradient Descent (SGD) is the most fundamental optimization algorithm in deep learning. Unlike batch gradient descent, which computes gradients over the entire training set, SGD uses small random samples (minibatches) to estimate the gradient, making it computationally efficient for large datasets.</p>
+<section id="algorithm" class="level3">
+<h3 class="anchored" data-anchor-id="algorithm">Algorithm</h3>
+<p><strong>Hyperparameters</strong>:</p>
 <ul>
-<li>If <span class="math inline">\(|\lambda| &lt; 1\)</span>, then <span class="math inline">\(\lambda^t \to 0\)</span> as t increases, causing <strong>vanishing gradients</strong></li>
-<li>If <span class="math inline">\(|\lambda| &gt; 1\)</span>, then <span class="math inline">\(\lambda^t \to \infty\)</span>, leading to <strong>exploding gradients</strong></li>
-<li>Only when <span class="math inline">\(|\lambda| = 1\)</span> can the signal <strong>propagate stably</strong> over time—though this case is extremely rare in practice</li>
+<li>Learning rate <span class="math inline">\(\epsilon\)</span></li>
+<li>Initial parameters <span class="math inline">\(\theta\)</span></li>
+</ul>
+<p><strong>Training procedure</strong>:</p>
+<p>While stopping criterion not met, do:</p>
+<ol type="1">
+<li>Sample a minibatch of m examples from the training set</li>
+<li>Compute the loss and gradient on the minibatch</li>
+<li>Compute the gradient estimate:</li>
+</ol>
+<p><span class="math display">\[
+\hat{g} \leftarrow +\frac{1}{m}\nabla_{\theta}\sum_i L(f(x^{(i)};\theta), y^{(i)})
+\]</span></p>
+<ol start="4" type="1">
+<li>Update parameters:</li>
+</ol>
+<p><span class="math display">\[
+\theta \leftarrow \theta - \epsilon \hat{g}
+\]</span></p>
+</section>
+<section id="sufficient-conditions-for-convergence" class="level3">
+<h3 class="anchored" data-anchor-id="sufficient-conditions-for-convergence">Sufficient Conditions for Convergence</h3>
+<p>A critical question in SGD is: how should we choose the learning rate schedule to guarantee convergence? For SGD to converge to a minimum, the learning rate schedule must satisfy two complementary conditions that balance exploration and stability:</p>
+<p><strong>Condition 1</strong>: The sum of learning rates must diverge (equation 8.12):</p>
+<p><span class="math display">\[
+\sum_{k=1}^{\infty}\epsilon_k = \infty \tag{8.12}
+\]</span></p>
+<p>In other words, <span class="math inline">\(\epsilon_1 + \epsilon_2 + \ldots\)</span> must be unbounded.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../imgs/DL8.3-Divergence.png" class="img-fluid figure-img"></p>
+<figcaption>Divergence</figcaption>
+</figure>
+</div>
+<p>This condition ensures that the algorithm can reach any point in parameter space, no matter how far from the initialization.</p>
+<p><strong>Condition 2</strong>: The sum of squared learning rates must converge (equation 8.13):</p>
+<p><span class="math display">\[
+\sum_{k=1}^{\infty} \epsilon_k^2 &lt; \infty \tag{8.13}
+\]</span></p>
+<p>In other words, <span class="math inline">\(\epsilon_1^2 + \epsilon_2^2 + \ldots = C\)</span> (a finite constant).</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../imgs/DL8.3-Convergence.png" class="img-fluid figure-img"></p>
+<figcaption>Convergence</figcaption>
+</figure>
+</div>
+<p>This condition ensures that the accumulated noise from stochastic gradient estimates remains bounded, allowing the algorithm to settle into a minimum rather than bouncing around indefinitely.</p>
+<p><strong>Summary</strong>: Together, these two conditions ensure that SGD can initially make large steps to explore parameter space (Condition 1), while eventually taking smaller steps that allow convergence to a minimum (Condition 2).</p>
+</section>
+<section id="practical-learning-rate-scheduling-linear-decay" class="level3">
+<h3 class="anchored" data-anchor-id="practical-learning-rate-scheduling-linear-decay">Practical Learning Rate Scheduling: Linear Decay</h3>
+<p>While the theoretical conditions above provide convergence guarantees, they are often impractical for real-world training.</p>
+<p>A commonly used learning rate schedule in practice is linear decay (equation 8.14):</p>
+<p><span class="math display">\[
+\epsilon_k = (1-\alpha)\epsilon_0 + \alpha \epsilon_{\tau} \tag{8.14}
+\]</span></p>
+<p>where <span class="math inline">\(\alpha = \frac{k}{\tau}\)</span>.</p>
+<p>This schedule starts at <span class="math inline">\(\epsilon_0\)</span> and linearly decreases to <span class="math inline">\(\epsilon_{\tau}\)</span> over <span class="math inline">\(\tau\)</span> iterations. After <span class="math inline">\(\tau\)</span> iterations, when <span class="math inline">\(\alpha = 1\)</span>, the learning rate remains fixed at <span class="math inline">\(\epsilon_{\tau}\)</span>.</p>
+</section>
+</section>
+<section id="momentum" class="level2">
+<h2 class="anchored" data-anchor-id="momentum">Momentum</h2>
+<p>While SGD provides a solid foundation for optimization, it can struggle with ill-conditioned loss surfaces where gradients in different directions have vastly different magnitudes. Momentum addresses this problem by adding “inertia” to parameter updates. It accelerates learning in directions with consistent gradients and smooths oscillations in steep or noisy directions.</p>
+<p>The momentum method introduces a velocity variable <span class="math inline">\(v\)</span> that accumulates an exponentially decaying moving average of past gradients:</p>
+<p><span class="math display">\[
+v_t = \beta v_{t-1} + (1-\beta)\nabla_\theta L(\theta)
+\]</span></p>
+<p><span class="math display">\[
+\theta_{t+1} = \theta_t - \epsilon v_t
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(\beta\)</span> is the momentum coefficient (typically 0.9)</li>
+<li><span class="math inline">\(v_t\)</span> is the velocity, representing the weighted average of gradients</li>
+<li><span class="math inline">\(\epsilon\)</span> is the learning rate</li>
+</ul>
+<section id="alternative-formulation" class="level3">
+<h3 class="anchored" data-anchor-id="alternative-formulation">Alternative Formulation</h3>
+<p>The momentum algorithm can equivalently be written in a slightly different form (equations 8.15-8.16):</p>
+<p><span class="math display">\[
+v \leftarrow \alpha v - \epsilon \nabla_\theta \left(\frac{1}{m}\sum_{i=1}^m L(f(x^{(i)}; \theta), y^{(i)}) \right) \tag{8.15}
+\]</span></p>
+<p><span class="math display">\[
+\theta \leftarrow \theta + v \tag{8.16}
+\]</span></p>
+<p>In this formulation, <span class="math inline">\(\epsilon\)</span> represents the learning rate scaled by <span class="math inline">\((1-\alpha)\)</span>. Note that here we use <span class="math inline">\(\alpha\)</span> instead of <span class="math inline">\(\beta\)</span> as the momentum coefficient, and the parameter update adds the velocity instead of subtracting it.</p>
+</section>
+<section id="maximum-step-length" class="level3">
+<h3 class="anchored" data-anchor-id="maximum-step-length">Maximum Step Length</h3>
+<p>Equation 8.17 gives the upper bound of the effective step size in momentum-based SGD:</p>
+<p><span class="math display">\[
+\text{Max step length} = \frac{\epsilon \lVert g \rVert}{1 - \alpha} \tag{8.17}
+\]</span></p>
+<p><strong>Intuition</strong>: Assuming the gradients <span class="math inline">\(g_t\)</span> remain in a consistent direction, the velocity accumulates geometrically as:</p>
+<p><span class="math display">\[
+v_t = -\epsilon(g_t + \alpha g_{t-1} + \alpha^2 g_{t-2} + \cdots)
+\]</span></p>
+<p>which converges to <span class="math inline">\(\frac{\epsilon g}{1 - \alpha}\)</span>.</p>
+<p>This shows that momentum effectively amplifies the step length by a factor of <span class="math inline">\(\frac{1}{1-\alpha}\)</span>.</p>
+<p><strong>Example</strong>: With <span class="math inline">\(\alpha = 0.9\)</span>, the effective speed can be up to <strong>10× faster</strong> than standard SGD.</p>
+</section>
+<section id="physical-interpretation-newtons-law-of-acceleration" class="level3">
+<h3 class="anchored" data-anchor-id="physical-interpretation-newtons-law-of-acceleration">Physical Interpretation: Newton’s Law of Acceleration</h3>
+<p>The momentum method is not just a mathematical trick — it has a deep connection to classical physics. We can understand momentum optimization by drawing an analogy with a particle moving on a physical surface under the influence of forces.</p>
+<p><strong>Equation 8.18 - Newton’s Second Law of Motion</strong>:</p>
+<p>In physics, force equals mass times acceleration:</p>
+<p><span class="math display">\[
+F = ma = m\frac{\partial^2 x}{\partial t^2}
+\]</span></p>
+<p>In deep learning, assuming <span class="math inline">\(m = 1\)</span> and viewing the parameters <span class="math inline">\(\theta\)</span> as the position of a particle on the loss surface, we obtain:</p>
+<p><span class="math display">\[
+f(t) = \frac{\partial^2 \theta(t)}{\partial t^2} \tag{8.18}
+\]</span></p>
+<p>This expresses that the force acting on parameters corresponds to their <strong>acceleration</strong>, forming the physical foundation of <strong>momentum optimization</strong>.</p>
+<p><strong>Equation 8.19 - Velocity as Rate of Change</strong>:</p>
+<p>To further express the relationship between force, velocity, and position, we define velocity <span class="math inline">\(v(t)\)</span> as the first derivative of the position <span class="math inline">\(\theta(t)\)</span> with respect to time:</p>
+<p><span class="math display">\[
+v(t) = \frac{\partial \theta(t)}{\partial t} \tag{8.19}
+\]</span></p>
+<p><span class="math display">\[
+f(t) = \frac{\partial v(t)}{\partial t}
+\]</span></p>
+<p>The velocity is the <em>instantaneous rate of change</em> — the first derivative of position. Likewise, the force (or acceleration) is the <em>instantaneous rate of change</em> of velocity — the first derivative of velocity.</p>
+<p>This physical interpretation helps us understand why momentum works: the negative gradient acts as a force pushing the parameters downhill, while the velocity variable accumulates this force over time, allowing the optimizer to build up speed in consistent directions.</p>
+</section>
+<section id="damping-in-momentum" class="level3">
+<h3 class="anchored" data-anchor-id="damping-in-momentum">Damping in Momentum</h3>
+<p>In the physical analogy, we can also understand the momentum coefficient <span class="math inline">\(\alpha\)</span> as a damping or friction term that prevents the optimizer from accelerating indefinitely.</p>
+<p>In momentum optimization, the damping (or friction) effect is implicitly controlled by the factor <span class="math inline">\(\alpha\)</span> in the velocity update rule:</p>
+<p><span class="math display">\[
+v_t = \alpha v_{t-1} - \epsilon \nabla_\theta L(\theta_t)
+\]</span></p>
+<p>This formulation can be seen as a discrete version of Newton’s second law with viscous damping:</p>
+<p><span class="math display">\[
+\frac{d^2 \theta}{dt^2} = -\nabla_\theta L(\theta) - \mu \frac{d\theta}{dt}
+\]</span></p>
+<p>where the damping coefficient <span class="math inline">\(\mu\)</span> corresponds to <span class="math inline">\(1 - \alpha\)</span>.</p>
+<p><strong>Intuition</strong>:</p>
+<ul>
+<li><span class="math inline">\(\alpha\)</span> determines how much of the previous velocity is retained (the <em>inertia</em>)</li>
+<li><span class="math inline">\(1 - \alpha\)</span> represents the proportion of velocity lost due to <em>friction</em></li>
+</ul>
+<p><strong>Effect of <span class="math inline">\(\alpha\)</span></strong>:</p>
+<ul>
+<li>When <span class="math inline">\(\alpha\)</span> is close to 1 (e.g., 0.99), damping is weak — the optimizer moves faster but tends to oscillate near minima</li>
+<li>When <span class="math inline">\(\alpha\)</span> is smaller (e.g., 0.5), damping is strong — the motion is smoother but slower</li>
 </ul>
 </section>
-<section id="imperfect-gradient-information" class="level2">
-<h2 class="anchored" data-anchor-id="imperfect-gradient-information">Imperfect Gradient Information</h2>
-<p>In practice, optimization rarely has access to the exact gradient or Hessian.</p>
-<p>Gradients are estimated from noisy minibatches or numerical approximations.</p>
-<p>Thus, most learning algorithms operate under <strong>stochastic</strong> and <strong>imperfect</strong> gradient information.</p>
-<p>The objective function is effectively a noisy landscape, and optimization seeks robustness to this uncertainty.</p>
 </section>
-<section id="weak-correspondence-between-local-and-global-structure" class="level2">
-<h2 class="anchored" data-anchor-id="weak-correspondence-between-local-and-global-structure">Weak Correspondence Between Local and Global Structure</h2>
-<p>The local geometry of the loss function (such as saddle points or flat regions) does not necessarily reflect the global optimum.</p>
-<p>Deep networks often contain large flat areas or cliffs where gradients vanish or oscillate.</p>
-<p>Optimization may stagnate even without true local minima.</p>
-<p>Hence, success depends more on finding <strong>good initialization</strong> and <strong>stable descent paths</strong> than on reaching a perfect local minimum.</p>
-</section>
-<section id="theoretical-limits-of-optimization" class="level2">
-<h2 class="anchored" data-anchor-id="theoretical-limits-of-optimization">Theoretical Limits of Optimization</h2>
-<p>Theoretical analyses (Blum &amp; Rivest, 1992; Judd, 1989; Wolpert &amp; MacReady, 1997) show that:</p>
-<ul>
-<li>Training neural networks is <strong>NP-hard</strong></li>
-<li>There is <strong>no universally optimal optimization algorithm</strong> (<em>No Free Lunch Theorem</em>)</li>
-<li>Every algorithm performs well only for a subset of problems</li>
-</ul>
-<p>Therefore, the practical goal is to design <strong>approximate optimization methods</strong> that generalize well and work reliably in large-scale neural networks.</p>
-<hr>
-<p><em>Source: Deep Learning (Ian Goodfellow, Yoshua Bengio, and Aaron Courville) - Chapter 8.2</em></p>
+<section id="nesterov-momentum" class="level2">
+<h2 class="anchored" data-anchor-id="nesterov-momentum">Nesterov Momentum</h2>
+<p>While standard momentum provides significant improvements over vanilla SGD, it still has a limitation: it computes gradients at the current position without considering where the momentum will take us next. Nesterov momentum addresses this by introducing a “lookahead” mechanism.</p>
+<p>Standard momentum looks backward — it uses gradients from the current position. Nesterov momentum looks ahead — it first predicts the next position <span class="math inline">\(\theta + \alpha v\)</span> and then calculates the gradient there.</p>
+<p>This leads to the modified update rule (equation 8.21):</p>
+<p><span class="math display">\[
+v_{t+1} = \alpha v_t - \epsilon \nabla_\theta L(\theta_t + \alpha v_t)
+\]</span></p>
+<p><span class="math display">\[
+v \leftarrow \alpha v - \epsilon \nabla_{\theta}\left[\frac{1}{m} \sum_{i=1}^m L(f(x^{(i)};\theta + \alpha v), y^{(i)}) \right] \tag{8.21}
+\]</span></p>
+<p>Finally, the parameters are updated using this new velocity (equation 8.22):</p>
+<p><span class="math display">\[
+\theta_{t+1} = \theta_t + v_{t+1} \tag{8.22}
+\]</span></p>
+<p>This “lookahead” strategy allows the optimizer to anticipate its next move, resulting in faster convergence and less oscillation near minima compared to standard momentum.</p>
+<p><strong>Intuition</strong>: Imagine you’re rolling a ball down a hill. Standard momentum uses the slope at your current position to decide how fast to roll. Nesterov momentum is smarter — it first looks ahead to where the momentum will carry you, checks the slope there, and then adjusts the velocity accordingly. This prevents overshooting and makes the optimizer more responsive to the local curvature of the loss surface.</p>
 
 
 <!-- -->
@@ -1146,189 +1144,229 @@ W^t = (V \operatorname{diag}(\lambda) V^{-1})^t = V \operatorname{diag}(\lambda^
   loadGiscus();
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 8.2: Challenges in Deep Learning Optimization"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Chapter 8.3: Basic Algorithms"</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2025-11-07"</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [deep learning, optimization, gradient descent, convexity, saddle points]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Understanding why deep learning optimization is hard: ill-conditioning, local minima, saddle points, exploding gradients, and the theoretical limits of optimization"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2025-11-09"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Deep Learning, Optimization, SGD, Momentum]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "SGD, momentum, and Nesterov momentum: the foundational algorithms for training deep neural networks"</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>Deep learning optimization faces unique challenges that distinguish it from classical convex optimization. Understanding these challenges is crucial for designing effective training algorithms.</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">## Stochastic Gradient Descent</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">## Convex Function</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>Stochastic Gradient Descent (SGD) is the most fundamental optimization algorithm in deep learning. Unlike batch gradient descent, which computes gradients over the entire training set, SGD uses small random samples (minibatches) to estimate the gradient, making it computationally efficient for large datasets.</span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>A function is convex if for all $x, y \in \mathbb{R}^n$ and for all $\alpha \in (0,1)$:</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">### Algorithm</span></span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>f(\alpha x+(1-\alpha)y) \leq \alpha f(x)+(1-\alpha)f(y)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="fu">### Example: $f(x) = x^2$</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>Consider two points:</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A = (-2, 4), where $x_1 = -2$, $f(x_1) = 4$</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>B = (2, 4), where $x_2 = 2$, $f(x_2) = 4$</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>For any $\alpha \in (0,1)$:</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\alpha f(x_1) + (1-\alpha)f(x_2) = 4$</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$f(\alpha x_1 + (1-\alpha)x_2) \leq 4$</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>This shows that any point on the line segment AB lies below or on the function curve, confirming convexity.</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="al">![Convex Function](https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-Convex-function.png)</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>You can explore this interactively with my <span class="co">[</span><span class="ot">GeoGebra link</span><span class="co">](https://www.geogebra.org/m/y2qs4kfq)</span> to slide the alpha value and adjust $x_1$ and $x_2$.</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="fu">## Ill-Conditioned Functions</span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="al">![Ill-Conditioned](https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-ill-conditioned.png)</span></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>Consider the ill-conditioned function:</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>f = \frac{1}{2}(100x^2 + y^2)</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>The Hessian matrix is:</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>H = \begin{bmatrix}100 &amp; 0<span class="sc">\\</span>0 &amp; 1\end{bmatrix}</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>**Example**: Starting from point A(0.5, 1) with loss = 13, near the error contour line 10.</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>The gradient at A is $\nabla f = <span class="co">[</span><span class="ot">50, 1</span><span class="co">]</span>$. Using learning rate $\eta = 0.05$:</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>x_{new} = 0.5 - 0.05 \times 50 = -2<span class="sc">\\</span></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>y_{new} = 1 - 0.05 \times 1 = 0.95</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>**Hyperparameters**:</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Learning rate $\epsilon$</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Initial parameters $\theta$</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>**Training procedure**:</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>While stopping criterion not met, do:</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Sample a minibatch of m examples from the training set</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Compute the loss and gradient on the minibatch</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Compute the gradient estimate:</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>\hat{g} \leftarrow +\frac{1}{m}\nabla_{\theta}\sum_i L(f(x^{(i)};\theta), y^{(i)})</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Update parameters:</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>\theta \leftarrow \theta - \epsilon \hat{g}</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="fu">### Sufficient Conditions for Convergence</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>A critical question in SGD is: how should we choose the learning rate schedule to guarantee convergence? For SGD to converge to a minimum, the learning rate schedule must satisfy two complementary conditions that balance exploration and stability:</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>**Condition 1**: The sum of learning rates must diverge (equation 8.12):</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>\sum_{k=1}^{\infty}\epsilon_k = \infty \tag{8.12}</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>In other words, $\epsilon_1 + \epsilon_2 + \ldots$ must be unbounded.</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="al">![Divergence](../imgs/DL8.3-Divergence.png)</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>This condition ensures that the algorithm can reach any point in parameter space, no matter how far from the initialization.</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>**Condition 2**: The sum of squared learning rates must converge (equation 8.13):</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>\sum_{k=1}^{\infty} \epsilon_k^2 &lt; \infty \tag{8.13}</span>
 <span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>This gives point B(-2, 0.95), but the new loss is:</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>In other words, $\epsilon_1^2 + \epsilon_2^2 + \ldots = C$ (a finite constant).</span>
 <span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>f(B) = 0.5(100 \times 2^2 + 0.95^2) \approx 201</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="al">![Convergence](../imgs/DL8.3-Convergence.png)</span></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>This condition ensures that the accumulated noise from stochastic gradient estimates remains bounded, allowing the algorithm to settle into a minimum rather than bouncing around indefinitely.</span>
 <span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>The loss increased dramatically! This demonstrates how ill-conditioning causes gradient descent to overshoot.</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>**Summary**: Together, these two conditions ensure that SGD can initially make large steps to explore parameter space (Condition 1), while eventually taking smaller steps that allow convergence to a minimum (Condition 2).</span>
 <span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>{{&lt; video https://www.youtube.com/watch?v=ZlcQ8xHwx0Y &gt;}}</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="fu">### Practical Learning Rate Scheduling: Linear Decay</span></span>
 <span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a><span class="fu">### Second-Order Taylor Expansion of Loss Function</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>While the theoretical conditions above provide convergence guarantees, they are often impractical for real-world training.</span>
 <span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>J(\theta') - J(\theta) \approx \frac{1}{2}\epsilon^2 g^\top H g - \epsilon g^\top g</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>A commonly used learning rate schedule in practice is linear decay (equation 8.14):</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>If $\frac{1}{2}\epsilon^2 g^\top H g &gt; \epsilon g^\top g$, the loss will increase instead of decrease.</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>\epsilon_k = (1-\alpha)\epsilon_0 + \alpha \epsilon_{\tau} \tag{8.14}</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="fu">## Local Minima</span></span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>where $\alpha = \frac{k}{\tau}$.</span>
 <span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>For convex functions, any local minimum is a global minimum, as there is only one local minimum.</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>This schedule starts at $\epsilon_0$ and linearly decreases to $\epsilon_{\tau}$ over $\tau$ iterations. After $\tau$ iterations, when $\alpha = 1$, the learning rate remains fixed at $\epsilon_{\tau}$.</span>
 <span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>However, for non-convex functions, there might be multiple local minima.</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a><span class="fu">## Momentum</span></span>
 <span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a><span class="fu">### Benign Local Minima</span></span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>While SGD provides a solid foundation for optimization, it can struggle with ill-conditioned loss surfaces where gradients in different directions have vastly different magnitudes. Momentum addresses this problem by adding "inertia" to parameter updates. It accelerates learning in directions with consistent gradients and smooths oscillations in steep or noisy directions.</span>
 <span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>Neural networks may have infinitely many equivalent local minima due to parameter symmetries (model non-identifiability), but this phenomenon is not caused by the non-convexity of the loss function.</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>The momentum method introduces a velocity variable $v$ that accumulates an exponentially decaying moving average of past gradients:</span>
 <span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a><span class="al">![Benign Local Minima](https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-Benign-Local-Minima.png)</span></span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a><span class="fu">### Suboptimal Local Minimum</span></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>v_t = \beta v_{t-1} + (1-\beta)\nabla_\theta L(\theta)</span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>This example shows a **suboptimal local minimum**—its loss is higher than the global minimum. In non-convex problems, a local minimum **need not** coincide with the global minimum.</span>
-<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>By contrast, many local minima in neural networks are **benign**: they are equivalent or have nearly the same loss due to parameter symmetries (non-identifiability).</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>\theta_{t+1} = \theta_t - \epsilon v_t</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>f(x,y) = (x^2-1)^2 + y^2 + 0.6x</span>
-<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a><span class="al">![Suboptimal Local Minimum](https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-multiple-partial-minimal.png)</span></span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>where:</span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\beta$ is the momentum coefficient (typically 0.9)</span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$v_t$ is the velocity, representing the weighted average of gradients</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\epsilon$ is the learning rate</span>
 <span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>**Recent research** suggests that, in large neural networks, most local minima have sufficiently low loss values, so finding the exact global minimum is often unnecessary. Moreover, one should not attribute all optimization challenges to local minima. Instead, it is important to examine the gradient norm and determine whether the optimization has converged—if it has, the issue is likely not caused by local minima.</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a><span class="fu">### Alternative Formulation</span></span>
 <span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a><span class="fu">## Plateaus, Saddles and Other Flat Regions</span></span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a>The momentum algorithm can equivalently be written in a slightly different form (equations 8.15-8.16):</span>
 <span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a><span class="fu">### Saddle Points</span></span>
-<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>Consider the function:</span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>v \leftarrow \alpha v - \epsilon \nabla_\theta \left(\frac{1}{m}\sum_{i=1}^m L(f(x^{(i)}; \theta), y^{(i)}) \right) \tag{8.15}</span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>f = x^2 - y^2<span class="sc">\\</span></span>
-<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>\frac{\partial f}{\partial x} = 2x<span class="sc">\\</span></span>
-<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>\frac{\partial f}{\partial y} = -2y</span>
-<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>\theta \leftarrow \theta + v \tag{8.16}</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>In this formulation, $\epsilon$ represents the learning rate scaled by $(1-\alpha)$. Note that here we use $\alpha$ instead of $\beta$ as the momentum coefficient, and the parameter update adds the velocity instead of subtracting it.</span>
 <span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>When $(x,y) = (0,0)$, the gradient $\nabla f = \begin{bmatrix}0<span class="sc">\\</span>0\end{bmatrix}$, and training will get stuck at this point.</span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a><span class="fu">### Maximum Step Length</span></span>
 <span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>The Hessian $H = \begin{bmatrix}2 &amp; 0<span class="sc">\\</span>0 &amp; -2\end{bmatrix}$ indicates positive curvature along the x-axis and negative curvature along the y-axis. Therefore, moving along the y direction decreases the function value, revealing the presence of a saddle point.</span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>Equation 8.17 gives the upper bound of the effective step size in momentum-based SGD:</span>
 <span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a><span class="al">![Saddle Point](https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-Saddle.png)</span></span>
-<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a><span class="fu">## Cliffs and Exploding Gradients</span></span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a>\text{Max step length} = \frac{\epsilon \lVert g \rVert}{1 - \alpha} \tag{8.17}</span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a><span class="al">![Cliffs](https://github.com/ickma2311/foundations/raw/main/deep_learning/chapter8/8.2/DL8.2-Cliffs.png)</span></span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>**Intuition**: Assuming the gradients $g_t$ remain in a consistent direction, the velocity accumulates geometrically as:</span>
 <span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>Deep networks often contain regions in parameter space where the loss surface changes extremely rapidly with respect to the parameters. These steep regions are called **cliffs**.</span>
-<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>When the optimization step crosses a cliff, the gradient magnitude becomes extremely large—leading to **exploding gradients** and unstable parameter updates.</span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>v_t = -\epsilon(g_t + \alpha g_{t-1} + \alpha^2 g_{t-2} + \cdots)</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a><span class="fu">### Solution: Gradient Clipping</span></span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>which converges to $\frac{\epsilon g}{1 - \alpha}$.</span>
 <span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>Rescale gradients when their norm exceeds a threshold $\tau$:</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>This shows that momentum effectively amplifies the step length by a factor of $\frac{1}{1-\alpha}$.</span>
 <span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>\nabla_\theta J \leftarrow \frac{\nabla_\theta J}{\max(1, <span class="sc">\|</span>\nabla_\theta J<span class="sc">\|</span>/\tau)}</span>
-<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>**Example**: With $\alpha = 0.9$, the effective speed can be up to **10× faster** than standard SGD.</span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a><span class="fu">### Physical Interpretation: Newton's Law of Acceleration</span></span>
 <span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>This keeps updates within a safe range.</span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>The momentum method is not just a mathematical trick — it has a deep connection to classical physics. We can understand momentum optimization by drawing an analogy with a particle moving on a physical surface under the influence of forces.</span>
 <span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a><span class="fu">## Long-Term Dependencies</span></span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>**Equation 8.18 - Newton's Second Law of Motion**:</span>
 <span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>In networks where a weight matrix $W$ needs to be multiplied many times (e.g., in RNNs), we can analyze stability using eigenvalue decomposition:</span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>In physics, force equals mass times acceleration:</span>
 <span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>W^t = (V \operatorname{diag}(\lambda) V^{-1})^t = V \operatorname{diag}(\lambda^t) V^{-1}</span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>F = ma = m\frac{\partial^2 x}{\partial t^2}</span>
 <span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>If $|\lambda| &lt; 1$, then $\lambda^t \to 0$ as t increases, causing **vanishing gradients**</span>
-<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>If $|\lambda| &gt; 1$, then $\lambda^t \to \infty$, leading to **exploding gradients**</span>
-<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Only when $|\lambda| = 1$ can the signal **propagate stably** over time—though this case is extremely rare in practice</span>
-<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a><span class="fu">## Imperfect Gradient Information</span></span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>In deep learning, assuming $m = 1$ and viewing the parameters $\theta$ as the position of a particle on the loss surface, we obtain:</span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>f(t) = \frac{\partial^2 \theta(t)}{\partial t^2} \tag{8.18}</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>In practice, optimization rarely has access to the exact gradient or Hessian.</span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>This expresses that the force acting on parameters corresponds to their **acceleration**, forming the physical foundation of **momentum optimization**.</span>
 <span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>Gradients are estimated from noisy minibatches or numerical approximations.</span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>**Equation 8.19 - Velocity as Rate of Change**:</span>
 <span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>Thus, most learning algorithms operate under **stochastic** and **imperfect** gradient information.</span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>To further express the relationship between force, velocity, and position, we define velocity $v(t)$ as the first derivative of the position $\theta(t)$ with respect to time:</span>
 <span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>The objective function is effectively a noisy landscape, and optimization seeks robustness to this uncertainty.</span>
-<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a><span class="fu">## Weak Correspondence Between Local and Global Structure</span></span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>v(t) = \frac{\partial \theta(t)}{\partial t} \tag{8.19}</span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>The local geometry of the loss function (such as saddle points or flat regions) does not necessarily reflect the global optimum.</span>
-<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>Deep networks often contain large flat areas or cliffs where gradients vanish or oscillate.</span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>f(t) = \frac{\partial v(t)}{\partial t}</span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>Optimization may stagnate even without true local minima.</span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>The velocity is the *instantaneous rate of change* — the first derivative of position. Likewise, the force (or acceleration) is the *instantaneous rate of change* of velocity — the first derivative of velocity.</span>
 <span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>Hence, success depends more on finding **good initialization** and **stable descent paths** than on reaching a perfect local minimum.</span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>This physical interpretation helps us understand why momentum works: the negative gradient acts as a force pushing the parameters downhill, while the velocity variable accumulates this force over time, allowing the optimizer to build up speed in consistent directions.</span>
 <span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a><span class="fu">## Theoretical Limits of Optimization</span></span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a><span class="fu">### Damping in Momentum</span></span>
 <span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>Theoretical analyses (Blum &amp; Rivest, 1992; Judd, 1989; Wolpert &amp; MacReady, 1997) show that:</span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>In the physical analogy, we can also understand the momentum coefficient $\alpha$ as a damping or friction term that prevents the optimizer from accelerating indefinitely.</span>
 <span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Training neural networks is **NP-hard**</span>
-<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>There is **no universally optimal optimization algorithm** (*No Free Lunch Theorem*)</span>
-<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Every algorithm performs well only for a subset of problems</span>
-<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>Therefore, the practical goal is to design **approximate optimization methods** that generalize well and work reliably in large-scale neural networks.</span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>In momentum optimization, the damping (or friction) effect is implicitly controlled by the factor $\alpha$ in the velocity update rule:</span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a>v_t = \alpha v_{t-1} - \epsilon \nabla_\theta L(\theta_t)</span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a>This formulation can be seen as a discrete version of Newton's second law with viscous damping:</span>
 <span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a>*Source: Deep Learning (Ian Goodfellow, Yoshua Bengio, and Aaron Courville) - Chapter 8.2*</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a>\frac{d^2 \theta}{dt^2} = -\nabla_\theta L(\theta) - \mu \frac{d\theta}{dt}</span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a>where the damping coefficient $\mu$ corresponds to $1 - \alpha$.</span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a>**Intuition**:</span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\alpha$ determines how much of the previous velocity is retained (the *inertia*)</span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$1 - \alpha$ represents the proportion of velocity lost due to *friction*</span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a>**Effect of $\alpha$**:</span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>When $\alpha$ is close to 1 (e.g., 0.99), damping is weak — the optimizer moves faster but tends to oscillate near minima</span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>When $\alpha$ is smaller (e.g., 0.5), damping is strong — the motion is smoother but slower</span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a><span class="fu">## Nesterov Momentum</span></span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>While standard momentum provides significant improvements over vanilla SGD, it still has a limitation: it computes gradients at the current position without considering where the momentum will take us next. Nesterov momentum addresses this by introducing a "lookahead" mechanism.</span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>Standard momentum looks backward — it uses gradients from the current position. Nesterov momentum looks ahead — it first predicts the next position $\theta + \alpha v$ and then calculates the gradient there.</span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a>This leads to the modified update rule (equation 8.21):</span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a>v_{t+1} = \alpha v_t - \epsilon \nabla_\theta L(\theta_t + \alpha v_t)</span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>v \leftarrow \alpha v - \epsilon \nabla_{\theta}\left<span class="co">[</span><span class="ot">\frac{1}{m} \sum_{i=1}^m L(f(x^{(i)};\theta + \alpha v), y^{(i)}) \right</span><span class="co">]</span> \tag{8.21}</span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a>Finally, the parameters are updated using this new velocity (equation 8.22):</span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a>\theta_{t+1} = \theta_t + v_{t+1} \tag{8.22}</span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a>This "lookahead" strategy allows the optimizer to anticipate its next move, resulting in faster convergence and less oscillation near minima compared to standard momentum.</span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a>**Intuition**: Imagine you're rolling a ball down a hill. Standard momentum uses the slope at your current position to decide how fast to roll. Nesterov momentum is smarter — it first looks ahead to where the momentum will carry you, checks the slope there, and then adjusts the velocity accordingly. This prevents overshooting and makes the optimizer more responsive to the local curvature of the loss surface.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
