@@ -1,0 +1,162 @@
+---
+title: "Chapter 8.4: Parameter Initialization Strategies"
+author: "Chao Ma"
+date: "2025-11-10"
+categories: [Deep Learning, Optimization, Initialization, Neural Networks]
+description: "Why initialization matters: breaking symmetry, avoiding null spaces, and finding the right balance for convergence and generalization"
+---
+
+Deep learning relies on iterative optimization, so the initialization of parameters must be specified carefully. Because deep networks are highly nonlinear and complex, the initial values can strongly influence whether and how fast the model converges.
+
+**Important consideration**: Some initialization points are beneficial to optimization but harmful to generalization. Finding the right balance is part of the art of deep learning.
+
+## What We Know and Don't Know
+
+Despite decades of research, parameter initialization remains partly an art and partly a science. The only thing we can say with certainty is that deep learning relies on **symmetry breaking** — if two neurons receive the same inputs, they must start with different initial parameters.
+
+Without symmetry breaking, all neurons in a layer would compute identical functions and receive identical gradient updates, making it impossible for the network to learn diverse features.
+
+## The Danger of Uniform Initialization: Null Space and Symmetry
+
+If we initialize all parameters with the same values, the resulting weight matrices will have identical rows (and possibly columns). Such matrices are **singular** and thus have a large **null space**.
+
+**Consequence**: When inputs pass through these matrices, any component that lies in the null space is lost, meaning part of the input information vanishes during forward propagation. This creates a permanent information bottleneck that cannot be recovered in later layers.
+
+For a deeper understanding of null spaces, see: [Column Space and Null Space](https://ickma2311.github.io/Math/MIT18.06/mit1806-lecture6-column-null-space.html)
+
+## Orthogonal Matrix Initialization
+
+We can initialize the parameters as an **orthogonal matrix**, which helps prevent redundancy among weight vectors and allows for more efficient and stable learning.
+
+**Saxe et al. (2013)** suggests random orthogonal initialization with carefully selected gain:
+
+$$
+W = Q \cdot g
+$$
+
+where $Q$ is a random orthogonal matrix and $g$ is a gain factor.
+
+**Benefits**:
+
+- Orthogonal matrices preserve the norm of vectors, preventing signal explosion or vanishing
+- They maximize diversity among weight vectors
+- They provide stable gradient flow during backpropagation
+
+For more on orthogonal matrices: [Orthogonal Matrices and Gram-Schmidt](https://ickma2311.github.io/Math/MIT18.06/mit1806-lecture17-gram-schmidt.html)
+
+## The Dilemma of Large Weights
+
+We usually initialize the weights by sampling from a **Gaussian (normal)** or **uniform** distribution. The scale of this distribution creates a fundamental trade-off:
+
+**Larger initial weights**:
+
+- ✓ Provide stronger symmetry breaking effects
+- ✗ Can cause gradient explosion
+- ✗ Conflict with regularization, which favors smaller weights for better generalization
+
+The challenge is finding the "Goldilocks zone" — weights that are neither too large nor too small.
+
+## Inspired Initialization Methods
+
+### Xavier/Glorot Initialization
+
+One inspiring method is to sample from distribution $U(-\frac{1}{\sqrt{m}}, \frac{1}{\sqrt{m}})$, where $m$ is the number of inputs.
+
+**Glorot and Bengio (2010)** suggested an improved normalized initialization that considers both input and output dimensions:
+
+$$
+W_{i,k} \sim U\left(-\sqrt{\frac{6}{m+n}}, \sqrt{\frac{6}{m+n}}\right) \tag{8.23}
+$$
+
+where:
+
+- $m$ is the number of input units
+- $n$ is the number of output units
+
+**Intuition**: This initialization keeps the variance of activations roughly constant across layers, preventing signals from growing or shrinking exponentially as they propagate through the network.
+
+### Risks and Limitations
+
+The best practices of parameter initialization may not lead to the best result. Several reasons explain this:
+
+1. **Incorrect criteria**: We may have used an incorrect criterion to define what "good initialization" means
+2. **Properties don't persist**: The properties enforced at initialization may not remain valid throughout learning
+3. **Conflicts with regularization**: These properties may conflict with regularization methods
+
+### The Vanishing Output Problem
+
+Another potential risk arises when all parameters are initialized with the same standard deviation. For example, if we initialize parameters with standard deviation $\frac{1}{\sqrt{m}}$:
+
+- A large $m$ results in small standard deviation
+- Small standard deviation makes the expected output magnitude very small
+- This can cause the network to learn very slowly or get stuck in poor local minima
+
+**Example**: In a deep network with 1000-dimensional input ($m = 1000$), the variance would be $\frac{1}{1000} = 0.001$, which can lead to extremely small activations in early training.
+
+## Sparse Initialization
+
+**Martens (2010)** proposed **sparse initialization** as an alternative approach. Instead of drawing all weights from a distribution, this method:
+
+- Sets most weights to zero
+- Initializes only a fixed number of connections per neuron with non-zero values
+
+**Advantage**: This keeps the total input variance independent of $m$, preventing the output magnitude from shrinking as $m$ increases.
+
+**Trade-off**: It implicitly increases the prior on the network's parameters, effectively imposing a strong sparsity assumption that may not be appropriate for all problems.
+
+## Bias Initialization
+
+### The Default: Zero Initialization
+
+In most cases, initializing the biases to zero works well. Since weights are initialized randomly, zero biases still allow for symmetry breaking through the weights.
+
+### When Non-Zero Biases Are Beneficial
+
+There are important cases where we don't want to initialize biases to zero:
+
+**1. Output units**: If the inputs to the output layer are small or the target distribution is imbalanced, it can be beneficial to initialize the biases to non-zero values that reflect the prior distribution of outputs.
+
+**Example**: For binary classification with 90% positive examples, initializing the output bias to $\log(9) \approx 2.2$ gives the network a head start.
+
+**2. Avoiding saturation**: Sometimes we set non-zero biases to prevent early saturation. For example:
+
+- The sigmoid function $\sigma(x) = \frac{1}{1 + e^{-x}}$ saturates near 0 or 1
+- Initializing biases to small positive values (e.g., 0.1) keeps neurons in the linear region initially
+- This ensures strong gradients in early training
+
+**3. Gating units**: When a unit serves as a gate for other units (e.g., in LSTMs), we often initialize its bias to a positive value so that the gate is open at the beginning of training.
+
+**Example**: In LSTMs, the forget gate bias is typically initialized to 1 or 2, allowing the network to remember information by default until it learns when to forget.
+
+## Beyond Weights and Biases: Other Parameters
+
+Parameter initialization goes beyond just weights and biases. Some models also include **variance or precision parameters** that need to be initialized properly.
+
+### Example: Gaussian Conditional Models
+
+Consider a Gaussian conditional model:
+
+$$
+p(y \mid x) = \mathcal{N}(y \mid w^\top x + b, 1/\beta) \tag{8.24}
+$$
+
+where:
+
+- $w^\top x + b$ represents the mean prediction
+- $1/\beta$ denotes the variance (with $\beta$ as the precision parameter)
+
+**Standard practice**: Initialize variance to 1 (or equivalently, precision $\beta = 1$). This represents a neutral prior belief about the spread of predictions.
+
+As training progresses, the model learns to adjust this variance based on the data, potentially increasing it for uncertain predictions or decreasing it for confident ones.
+
+## Summary: Guiding Principles
+
+While there is no universal initialization strategy, several principles guide good practice:
+
+1. **Break symmetry**: Never initialize all parameters to the same value
+2. **Scale appropriately**: Choose variance based on layer dimensions to maintain signal magnitude
+3. **Consider the architecture**: Different activation functions and architectures may benefit from different initialization schemes
+4. **Balance competing goals**: Trade off between symmetry breaking, gradient stability, and regularization
+5. **Experiment**: The best initialization often depends on the specific problem and architecture
+
+Remember that initialization is just the starting point — a good optimizer can often overcome poor initialization, though it may take longer to converge.
