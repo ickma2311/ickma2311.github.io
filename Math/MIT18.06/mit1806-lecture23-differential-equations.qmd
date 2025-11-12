@@ -1,0 +1,371 @@
+---
+title: "MIT 18.06 Lecture 23: Differential Equations and exp(At)"
+author: "Chao Ma"
+date: "2025-11-11"
+categories: [Linear Algebra, MIT 18.06, Differential Equations, Matrix Exponential]
+description: "Connecting linear algebra to differential equations: how eigenvalues determine stability and matrix exponentials solve systems"
+---
+
+{{< video https://www.youtube.com/watch?v=IZqwi0wJovM >}}
+
+This lecture connects linear algebra to differential equations, showing how eigenvalues and eigenvectors provide powerful tools for solving systems of differential equations. The key insight is that matrix exponentials $e^{At}$ behave analogously to scalar exponentials $e^{at}$.
+
+## Differential Equations: The Foundation
+
+### Basic Theorem
+
+The exponential function has a remarkable property:
+
+$$
+\frac{d}{dx}e^x = e^x
+$$
+
+This can also be expressed as a limit:
+
+$$
+e^x = \lim_{n\to\infty} \left(1 + \frac{x}{n}\right)^n
+$$
+
+### Calculus Rules
+
+Two essential rules for differentiation:
+
+1. **Constant multiplication**: $\frac{d}{dt}(c \cdot f(t)) = c \cdot \frac{d}{dt}f(t)$
+
+2. **Chain rule**: $\frac{d}{dt} f(g(t)) = f'(g(t)) \cdot g'(t)$
+
+### Constant-Coefficient Linear Equations
+
+When the coefficients in a differential equation do not depend on $t$, we have a **constant-coefficient linear equation**.
+
+For systems, if the matrix $A$ in $\frac{du}{dt} = Au$ is constant (not a function of $t$), we call it a **constant-coefficient linear system**:
+
+$$
+\frac{du}{dt} = Au
+$$
+
+## Example 1: Scalar Differential Equation
+
+Consider the simple equation $\frac{du}{dt} = 3u$.
+
+**Solution method using separation of variables**:
+
+$$
+du = 3u\,dt
+$$
+
+$$
+\frac{du}{u} = 3\,dt
+$$
+
+Integrating both sides using $\int f'(x)\,dx = f(x) + C$:
+
+- **Left side**: Since the derivative of $\ln(u)$ is $\frac{1}{u}$, the integral of $\frac{1}{u}du$ is $\ln|u| + C_1$
+
+- **Right side**: The derivative of $3t$ is $3$, so the integral is $3t + C_2$
+
+This gives us:
+
+$$
+\ln|u| = 3t + C
+$$
+
+Eliminating the logarithm:
+
+$$
+e^{\ln|u|} = e^{3t + C} \Rightarrow |u| = e^C e^{3t}
+$$
+
+$$
+u = C'' e^{3t}
+$$
+
+where $C''$ absorbs the sign and constant $e^C$.
+
+## Example 2: System of Differential Equations
+
+Consider the system:
+
+$$
+\frac{du_1}{dt} = -u_1 + 2u_2
+$$
+
+$$
+\frac{du_2}{dt} = u_1 - 2u_2
+$$
+
+In matrix form:
+
+$$
+\frac{du}{dt} = Au \quad \text{where} \quad A = \begin{bmatrix}-1 & 2 \\ 1 & -2\end{bmatrix}
+$$
+
+### Finding Eigenvalues and Eigenvectors
+
+Observe that:
+
+- The matrix is **singular** (columns are linearly dependent)
+- Therefore, $\lambda_1 = 0$
+- From the trace: $\operatorname{tr}(A) = -1 + (-2) = -3 = \lambda_1 + \lambda_2$, so $\lambda_2 = -3$
+
+The eigenvectors are:
+
+- $x_1 = \begin{bmatrix}2 \\ 1\end{bmatrix}$ for $\lambda_1 = 0$
+- $x_2 = \begin{bmatrix}-1 \\ 1\end{bmatrix}$ for $\lambda_2 = -3$
+
+### General Solution
+
+The general solution is a linear combination of exponential solutions:
+
+$$
+u(t) = c_1 e^{\lambda_1 t} x_1 + c_2 e^{\lambda_2 t} x_2 = c_1 e^0 x_1 + c_2 e^{-3t} x_2
+$$
+
+$$
+u(t) = c_1 \begin{bmatrix}2 \\ 1\end{bmatrix} + c_2 e^{-3t} \begin{bmatrix}-1 \\ 1\end{bmatrix}
+$$
+
+### Verification
+
+Let's verify that $u(t) = e^{\lambda_1 t} x_1$ is indeed a solution:
+
+$$
+\frac{du}{dt} = \frac{d}{dt}(e^{\lambda_1 t} x_1) = \lambda_1 e^{\lambda_1 t} x_1
+$$
+
+This must equal $Au = A(e^{\lambda_1 t} x_1)$:
+
+$$
+\lambda_1 \cancel{e^{\lambda_1 t}} x_1 = A \cancel{e^{\lambda_1 t}} x_1
+$$
+
+$$
+\lambda_1 x_1 = Ax_1
+$$
+
+This is exactly the eigenvalue equation!
+
+**Breaking down the derivative step**:
+
+- $\frac{d}{dt}(e^{\lambda_1 t} x_1) = x_1 \frac{d}{dt}(e^{\lambda_1 t})$ (since $x_1$ is constant)
+- $\frac{d}{dt}(e^{\lambda_1 t}) = \lambda_1 e^{\lambda_1 t}$ (chain rule: $\frac{d}{dt} f(g(t)) = f'(g(t)) \cdot g'(t)$)
+
+### Connection to Discrete Systems
+
+The continuous solution:
+
+$$
+u(t) = c_1 e^{\lambda_1 t} x_1 + c_2 e^{\lambda_2 t} x_2
+$$
+
+corresponds to the discrete version:
+
+$$
+u_k \approx c_1 \lambda_1^k x_1 + c_2 \lambda_2^k x_2
+$$
+
+This shows the deep connection between continuous and discrete dynamical systems.
+
+### Solving for Constants $c_1$ and $c_2$
+
+Given the initial condition $u(0) = \begin{bmatrix}1 \\ 0\end{bmatrix}$ at $t = 0$:
+
+$$
+c_1 \begin{bmatrix}2 \\ 1\end{bmatrix} + c_2 \begin{bmatrix}-1 \\ 1\end{bmatrix} = \begin{bmatrix}1 \\ 0\end{bmatrix}
+$$
+
+This gives us:
+
+- $2c_1 - c_2 = 1$
+- $c_1 + c_2 = 0$
+
+Solving: $c_1 = c_2 = \frac{1}{3}$
+
+### Steady State
+
+As $t \to \infty$, the term $e^{-3t} \to 0$, leaving only:
+
+$$
+u(\infty) = \frac{1}{3} \begin{bmatrix}2 \\ 1\end{bmatrix}
+$$
+
+This steady state corresponds to the eigenvector with eigenvalue $\lambda = 0$.
+
+## Information from Eigenvalues
+
+Eigenvalues tell us everything about the long-term behavior:
+
+### Stability: $u(t) \to 0$
+
+- **Condition**: All $\lambda_i < 0$ (all eigenvalues have negative real parts)
+- The solution decays exponentially to zero
+
+### Steady State: $u(t) \to$ constant
+
+- **Condition**: One $\lambda_i = 0$ and all other $\lambda_j < 0$
+- The solution approaches a non-zero constant
+
+### Blow Up: $u(t) \to \infty$
+
+- **Condition**: Any $\lambda_i > 0$ (at least one positive eigenvalue)
+- The solution grows exponentially
+
+### Example: 2×2 Stability Criterion
+
+For a $2 \times 2$ matrix to be stable (both eigenvalues negative):
+
+- **Trace < 0**: $\operatorname{tr}(A) = \lambda_1 + \lambda_2 < 0$
+- **Determinant > 0**: $\det(A) = \lambda_1 \lambda_2 > 0$
+
+These two conditions guarantee both eigenvalues are negative.
+
+## Diagonalization and the Change of Variables
+
+We can simplify the system by introducing the eigenvector matrix $S$. Since $u = Sv$, we have:
+
+$$
+\frac{du}{dt} = Au = ASv
+$$
+
+Multiplying both sides by $S^{-1}$:
+
+$$
+S\frac{dv}{dt} = ASv
+$$
+
+$$
+\frac{dv}{dt} = S^{-1}ASv = \Lambda v
+$$
+
+where $\Lambda$ is the diagonal matrix of eigenvalues.
+
+### Solution in Eigenvector Coordinates
+
+Using $\frac{d}{dt}e^x = e^x$, the solution in $v$-coordinates is:
+
+$$
+v(t) = e^{\Lambda t} v_0
+$$
+
+Transforming back to $u$-coordinates:
+
+$$
+u(t) = S v(t) = S e^{\Lambda t} v_0
+$$
+
+Since $v_0 = S^{-1}u(0)$:
+
+$$
+u(t) = S e^{\Lambda t} S^{-1} u(0)
+$$
+
+This reveals the fundamental formula:
+
+$$
+e^{At} = S e^{\Lambda t} S^{-1}
+$$
+
+$$
+u(t) = e^{At} u(0)
+$$
+
+## Matrix Exponential $e^{At}$
+
+The matrix exponential extends the scalar exponential to matrices.
+
+### Taylor Series Definition
+
+Just as $e^x = \sum_{n=0}^\infty \frac{x^n}{n!}$, we define:
+
+$$
+e^{At} = I + At + \frac{(At)^2}{2!} + \frac{(At)^3}{3!} + \cdots + \frac{(At)^n}{n!} + \cdots
+$$
+
+### Alternative Series
+
+Similarly to $\frac{1}{1-x} = \sum_{n=0}^\infty x^n$, we have:
+
+$$
+(I - At)^{-1} = I + At + (At)^2 + (At)^3 + \cdots
+$$
+
+(valid for small $t$)
+
+### Connection to Diagonalization
+
+Expanding $e^{At}$ using $A = S\Lambda S^{-1}$:
+
+$$
+e^{At} = I + At + \frac{(At)^2}{2!} + \cdots + \frac{(At)^n}{n!} + \cdots
+$$
+
+$$
+= SS^{-1} + S\Lambda S^{-1}t + \frac{S\Lambda^2 S^{-1} t^2}{2!} + \cdots + \frac{S\Lambda^n S^{-1} t^n}{n!} + \cdots
+$$
+
+Factoring out $S$ and $S^{-1}$:
+
+$$
+= S\left(I + \Lambda t + \frac{\Lambda^2 t^2}{2!} + \cdots + \frac{\Lambda^n t^n}{n!} + \cdots\right)S^{-1}
+$$
+
+$$
+= S e^{\Lambda t} S^{-1}
+$$
+
+This shows the power of diagonalization: to compute $e^{At}$, we only need to compute $e^{\Lambda t}$.
+
+## Exponential of a Diagonal Matrix
+
+For a diagonal matrix, the exponential is simple:
+
+$$
+e^{\Lambda t} = \begin{bmatrix}
+e^{\lambda_1 t} & 0 & \cdots & 0 \\
+0 & e^{\lambda_2 t} & \cdots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+0 & 0 & \cdots & e^{\lambda_n t}
+\end{bmatrix}
+$$
+
+Each diagonal entry is simply the exponential of the corresponding eigenvalue times $t$.
+
+## Converting Higher-Order to First-Order Systems
+
+### Example: Second-Order Equation
+
+Consider the second-order differential equation:
+
+$$
+y'' + by' + ky = 0
+$$
+
+We can convert this to a first-order system by defining:
+
+$$
+u = \begin{bmatrix}y' \\ y\end{bmatrix}
+$$
+
+Then:
+
+$$
+u' = \begin{bmatrix}y'' \\ y'\end{bmatrix} = \begin{bmatrix}-by' - ky \\ y'\end{bmatrix} = \begin{bmatrix}-b & -k \\ 1 & 0\end{bmatrix} \begin{bmatrix}y' \\ y\end{bmatrix}
+$$
+
+**General principle**: We can convert any $n$-th order differential equation into an $n \times n$ first-order system. For example, a 5th-order equation becomes a $5 \times 5$ first-order system.
+
+This technique allows us to use the powerful machinery of linear algebra (eigenvalues, eigenvectors, matrix exponentials) to solve high-order differential equations.
+
+## Summary
+
+The key insights of this lecture:
+
+1. **Eigenvalues determine stability**: Negative eigenvalues → decay, zero eigenvalue → steady state, positive eigenvalue → blow up
+
+2. **Matrix exponentials solve systems**: $u(t) = e^{At}u(0)$ is the solution to $\frac{du}{dt} = Au$
+
+3. **Diagonalization simplifies computation**: $e^{At} = Se^{\Lambda t}S^{-1}$, where $e^{\Lambda t}$ is trivial to compute
+
+4. **Higher-order reduces to first-order**: Any differential equation can be converted to a first-order system
+
+These connections between linear algebra and differential equations are fundamental to understanding dynamical systems in physics, engineering, and applied mathematics.
