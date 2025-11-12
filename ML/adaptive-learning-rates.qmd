@@ -1,0 +1,334 @@
+---
+title: "Chapter 8.5: Algorithms with Adaptive Learning Rates"
+author: "Chao Ma"
+date: "2025-11-12"
+categories: [Deep Learning, Optimization, AdaGrad, RMSProp, Adam]
+description: "From AdaGrad to Adam: how adaptive learning rates automatically tune optimization for each parameter"
+---
+
+A fundamental challenge in optimization is choosing the right learning rate. Too large, and training diverges; too small, and progress is painfully slow. Moreover, different parameters may benefit from different learning rates—some require large steps while others need fine-tuning.
+
+**Adaptive learning rate algorithms** address this challenge by automatically adjusting the learning rate for each parameter based on the history of gradients. This section covers three major algorithms: AdaGrad, RMSProp, and Adam.
+
+## AdaGrad
+
+**Core idea**: AdaGrad scales the learning rate for each parameter inversely proportional to the square root of the cumulative sum of its past squared gradients.
+
+**Intuition**: Parameters with large gradients have received large updates in the past and should now take smaller steps. Parameters with small gradients have moved little and can afford larger steps.
+
+### Algorithm
+
+**Hyperparameters**:
+
+- Learning rate $\epsilon$
+- Small constant $\delta$ (typically $10^{-7}$ for numerical stability)
+- Initial gradient accumulator $r = 0$
+
+**Training procedure**:
+
+While stopping criterion not met:
+
+1. Sample $m$ examples from the training set
+
+2. Compute the gradient:
+
+$$
+g \leftarrow \frac{1}{m}\nabla_{\theta}\sum_{i=1}^m L(f(x^{(i)};\theta), y^{(i)})
+$$
+
+3. Accumulate squared gradients:
+
+$$
+r \leftarrow r + g \odot g
+$$
+
+where $\odot$ denotes element-wise multiplication.
+
+4. Compute the parameter update:
+
+$$
+\Delta\theta \leftarrow -\frac{\epsilon}{\delta + \sqrt{r}} \odot g
+$$
+
+5. Update parameters:
+
+$$
+\theta \leftarrow \theta + \Delta\theta
+$$
+
+### Key Properties
+
+**Advantages**:
+
+- Automatically adapts learning rates for each parameter
+- No manual learning rate tuning required for each parameter
+- Works well for sparse features (e.g., in NLP tasks)
+
+**Disadvantages**:
+
+- The accumulator $r$ grows monotonically, causing learning rates to shrink continuously
+- Eventually, learning rates become infinitesimally small, and learning stops
+- This makes AdaGrad unsuitable for training deep neural networks
+
+## RMSProp
+
+**Core idea**: RMSProp (Root Mean Square Propagation) uses an exponential decay to discount very old gradients, allowing the algorithm to forget distant history and achieve faster convergence once it reaches a convex bowl.
+
+**Intuition**: Unlike AdaGrad, which accumulates all past gradients forever, RMSProp uses an exponentially weighted moving average. This allows the learning rate to increase again if recent gradients are small, even if very old gradients were large.
+
+### Algorithm
+
+**Hyperparameters**:
+
+- Learning rate $\epsilon$ (typically 0.001)
+- Decay rate $\rho$ (typically 0.9)
+- Small constant $\delta$ (typically $10^{-6}$)
+- Initial gradient accumulator $r = 0$
+
+**Training procedure**:
+
+While stopping criterion not met:
+
+1. Sample $m$ examples from the training set
+
+2. Compute the gradient:
+
+$$
+g \leftarrow \frac{1}{m}\nabla_{\theta}\sum_{i=1}^m L(f(x^{(i)};\theta), y^{(i)})
+$$
+
+3. Accumulate squared gradients with exponential decay:
+
+$$
+r \leftarrow \rho r + (1 - \rho) g \odot g
+$$
+
+This is the key difference from AdaGrad: instead of $r \leftarrow r + g \odot g$, we use a weighted average.
+
+4. Compute the parameter update:
+
+$$
+\Delta\theta \leftarrow -\frac{\epsilon}{\delta + \sqrt{r}} \odot g
+$$
+
+5. Update parameters:
+
+$$
+\theta \leftarrow \theta + \Delta\theta
+$$
+
+### Key Properties
+
+**Advantages**:
+
+- Overcomes AdaGrad's aggressive learning rate decay
+- Learning rates can increase when recent gradients are smaller than historical averages
+- Generally more robust than AdaGrad for non-convex optimization
+
+**Comparison to AdaGrad**:
+
+- AdaGrad: $r_t = r_{t-1} + g_t^2$ (monotonically increasing)
+- RMSProp: $r_t = \rho r_{t-1} + (1-\rho)g_t^2$ (can increase or decrease)
+
+## RMSProp with Nesterov Momentum
+
+Combining RMSProp's adaptive learning rates with Nesterov momentum's lookahead gradient computation often yields better performance.
+
+### Algorithm
+
+**Hyperparameters**:
+
+- Learning rate $\epsilon$
+- Decay rate $\rho$
+- Small constant $\delta$
+- Momentum coefficient $\alpha$ (typically 0.9)
+- Initial gradient accumulator $r = 0$
+- Initial velocity $v = 0$
+
+**Training procedure**:
+
+While stopping criterion not met:
+
+1. Sample $m$ examples from the training set
+
+2. Compute the lookahead parameters:
+
+$$
+\tilde{\theta} \leftarrow \theta + \alpha v
+$$
+
+3. Compute the gradient at the lookahead position:
+
+$$
+g \leftarrow \frac{1}{m}\nabla_{\tilde{\theta}}\sum_{i=1}^m L(f(x^{(i)};\tilde{\theta}), y^{(i)})
+$$
+
+4. Accumulate squared gradients with exponential decay:
+
+$$
+r \leftarrow \rho r + (1 - \rho) g \odot g
+$$
+
+5. Update velocity:
+
+$$
+v \leftarrow \alpha v - \frac{\epsilon}{\delta + \sqrt{r}} \odot g
+$$
+
+6. Update parameters:
+
+$$
+\theta \leftarrow \theta + v
+$$
+
+This combines the best of both worlds: Nesterov's anticipatory gradient and RMSProp's adaptive learning rates.
+
+## Adam
+
+**Core idea**: Adam (Adaptive Moment Estimation) combines the benefits of RMSProp and momentum by keeping track of both first-order moments (mean) and second-order moments (variance) of the gradients, along with bias correction for initialization.
+
+**Intuition**: Adam maintains two moving averages:
+
+- $s$: The first moment (mean) of gradients, providing momentum-like behavior
+- $r$: The second moment (uncentered variance) of gradients, providing adaptive learning rates like RMSProp
+
+### Algorithm
+
+**Hyperparameters**:
+
+- Learning rate $\epsilon$ (default: 0.001)
+- Decay rates:
+  - $\rho_1$ for first moment (default: 0.9)
+  - $\rho_2$ for second moment (default: 0.999)
+- Small constant $\delta$ (typically $10^{-8}$)
+- Initial first moment $s = 0$
+- Initial second moment $r = 0$
+- Time step $t = 0$
+
+**Training procedure**:
+
+While stopping criterion not met:
+
+1. Increment time step: $t \leftarrow t + 1$
+
+2. Sample $m$ examples from the training set
+
+3. Compute the gradient:
+
+$$
+g \leftarrow \frac{1}{m}\nabla_{\theta}\sum_{i=1}^m L(f(x^{(i)};\theta), y^{(i)})
+$$
+
+4. Update first moment estimate (momentum-like term):
+
+$$
+s \leftarrow \rho_1 s + (1 - \rho_1) g
+$$
+
+5. Apply bias correction to first moment:
+
+$$
+\hat{s} \leftarrow \frac{s}{1 - \rho_1^t}
+$$
+
+6. Update second moment estimate (adaptive learning rate term):
+
+$$
+r \leftarrow \rho_2 r + (1 - \rho_2) g \odot g
+$$
+
+7. Apply bias correction to second moment:
+
+$$
+\hat{r} \leftarrow \frac{r}{1 - \rho_2^t}
+$$
+
+8. Compute the parameter update:
+
+$$
+\Delta\theta \leftarrow -\epsilon \frac{\hat{s}}{\sqrt{\hat{r}} + \delta}
+$$
+
+9. Update parameters:
+
+$$
+\theta \leftarrow \theta + \Delta\theta
+$$
+
+### Understanding Bias Correction
+
+At the beginning of training, Adam initializes its moving averages to zero:
+
+$$
+s_0 = 0, \quad r_0 = 0
+$$
+
+This causes the first few estimates of the mean ($s_t$) and variance ($r_t$) of the gradients to be **biased toward zero**, simply because there is not enough historical data yet.
+
+**Mathematical analysis**:
+
+The expected value of the uncorrected first moment is:
+
+$$
+\mathbb{E}[s_t] = (1 - \rho_1^t)\mathbb{E}[g_t]
+$$
+
+So $s_t$ underestimates the true mean by a factor of $1 - \rho_1^t$.
+
+**Bias correction**: To correct this "cold start" bias, Adam divides each estimate by that same factor:
+
+$$
+\hat{s}_t = \frac{s_t}{1 - \rho_1^t}, \quad \hat{r}_t = \frac{r_t}{1 - \rho_2^t}
+$$
+
+After correction, the expected values become unbiased:
+
+$$
+\mathbb{E}[\hat{s}_t] = \mathbb{E}[g_t]
+$$
+
+**Note**: As $t$ increases, $\rho_1^t \to 0$ and $\rho_2^t \to 0$, so the bias correction becomes negligible after the initial training phase. The correction is most important in the first few iterations.
+
+### Interpreting the Update Rule
+
+Think of $\hat{s}_t$ as the **average direction we want to go**, and $\sqrt{\hat{r}_t}$ as the **estimated magnitude or volatility** of that direction.
+
+The update rule $\Delta\theta = -\epsilon \frac{\hat{s}}{\sqrt{\hat{r}} + \delta}$ means:
+
+**Parameters with large, noisy gradients** → **smaller updates**
+
+- High gradient variance ($\hat{r}$ is large) → larger denominator → smaller step size
+- This prevents overshooting in directions with high uncertainty
+
+**Parameters with small, stable gradients** → **larger updates**
+
+- Low gradient variance ($\hat{r}$ is small) → smaller denominator → larger step size
+- This accelerates progress in directions with consistent signal
+
+This adaptive behavior is why Adam works well across a wide range of problems without extensive hyperparameter tuning.
+
+### Key Properties
+
+**Advantages**:
+
+- Combines benefits of momentum and adaptive learning rates
+- Bias correction prevents underestimation in early training
+- Generally robust default hyperparameters (often works with $\epsilon = 0.001$, $\rho_1 = 0.9$, $\rho_2 = 0.999$)
+- Widely used in practice for training deep neural networks
+
+**When to use each algorithm**:
+
+- **AdaGrad**: Sparse data, convex problems (but not deep learning)
+- **RMSProp**: Good general-purpose optimizer, especially for RNNs
+- **Adam**: Most popular default choice for deep learning
+
+## Summary: Comparison of Adaptive Methods
+
+| Algorithm | First Moment | Second Moment | Bias Correction | Best Use Case |
+|-----------|--------------|---------------|-----------------|---------------|
+| **SGD + Momentum** | ✓ (momentum) | ✗ | ✗ | Simple, well-understood problems |
+| **AdaGrad** | ✗ | ✓ (cumulative) | ✗ | Sparse features, convex optimization |
+| **RMSProp** | ✗ | ✓ (exponential avg) | ✗ | RNNs, non-convex problems |
+| **Adam** | ✓ (exponential avg) | ✓ (exponential avg) | ✓ | General deep learning (most popular) |
+
+The evolution from SGD to Adam represents a progression toward algorithms that require less manual tuning while adapting automatically to the optimization landscape.
