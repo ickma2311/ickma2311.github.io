@@ -1,0 +1,237 @@
+---
+title: "MIT 18.06 Lecture 25: Symmetric Matrices and Positive Definiteness"
+author: "Chao Ma"
+date: "2025-11-15"
+categories: [Linear Algebra, MIT 18.06, Symmetric Matrices, Positive Definite, Eigenvalues, Spectral Theorem]
+description: "The beautiful structure of symmetric matrices: real eigenvalues, orthogonal eigenvectors, spectral decomposition, and the important concept of positive definiteness"
+---
+
+{{< video https://www.youtube.com/watch?v=UCc9q_cAhho >}}
+
+This lecture explores symmetric matrices and introduces the important concept of positive definiteness. We'll see that symmetric matrices have special properties that make them especially important in applications: real eigenvalues, orthogonal eigenvectors, and a beautiful spectral decomposition.
+
+## Symmetric Matrices
+
+A matrix $A$ is **symmetric** if it equals its transpose:
+
+$$
+A = A^{\top}
+$$
+
+**Example**:
+
+$$
+A = \begin{bmatrix}2 & -1 & 0 \\ -1 & 2 & -1 \\ 0 & -1 & 2\end{bmatrix}
+$$
+
+### Main Properties
+
+Symmetric matrices have two fundamental properties:
+
+1. **All eigenvalues are real** (when matrix entries are real)
+2. **Eigenvectors corresponding to different eigenvalues are orthogonal**
+
+These properties make symmetric matrices particularly well-behaved and useful in applications.
+
+## Spectral Theorem: Diagonalization of Symmetric Matrices
+
+### General vs Symmetric Diagonalization
+
+- **General case**: $A = S\Lambda S^{-1}$, where $S$ contains eigenvectors
+- **Symmetric case**: $A = Q\Lambda Q^{\top}$, where $Q$ is an **orthogonal matrix**
+
+The key difference is that for symmetric matrices, we can choose the eigenvector matrix $Q$ to be orthogonal (meaning $Q^{\top}Q = I$ and $Q^{-1} = Q^{\top}$).
+
+**This decomposition is called the spectral theorem or spectral decomposition.**
+
+### Why This Matters
+
+Since $Q^{-1} = Q^{\top}$, we have:
+
+$$
+A = Q\Lambda Q^{\top}
+$$
+
+This is computationally simpler than the general case because:
+- Computing $Q^{-1}$ is trivial (just transpose)
+- Orthogonal matrices preserve lengths and angles
+- The decomposition is numerically stable
+
+## Proof: Eigenvalues of Symmetric Matrices Are Real
+
+We'll prove that if $A = A^{\top}$ (with real entries), then all eigenvalues $\lambda$ must be real.
+
+### Complex Conjugate Review
+
+For a complex number $z = a + bi$:
+- The complex conjugate is $\bar{z} = a - bi$
+- If $z = \bar{z}$, then $z$ is real (no imaginary part)
+
+### Proof Strategy
+
+Start with the eigenvalue equation:
+
+$$
+Ax = \lambda x
+$$
+
+where $x$ may be complex.
+
+**Step 1**: Take the complex conjugate of the eigenvalue equation:
+
+$$
+\overline{Ax} = \overline{\lambda x}
+$$
+
+Since $A$ has real entries, $\overline{A} = A$:
+
+$$
+A\bar{x} = \bar{\lambda}\bar{x}
+$$
+
+So $\bar{x}$ is an eigenvector with eigenvalue $\bar{\lambda}$.
+
+**Step 2**: Multiply the original equation on the left by $\bar{x}^{\top}$:
+
+$$
+\bar{x}^{\top}Ax = \bar{x}^{\top}\lambda x = \lambda(\bar{x}^{\top}x)
+$$
+
+**Step 3**: Take the transpose of $A\bar{x} = \bar{\lambda}\bar{x}$:
+
+$$
+\bar{x}^{\top}A^{\top} = \bar{x}^{\top}\bar{\lambda}
+$$
+
+Multiply on the right by $x$:
+
+$$
+\bar{x}^{\top}A^{\top}x = \bar{\lambda}(\bar{x}^{\top}x)
+$$
+
+**Step 4**: Since $A = A^{\top}$, we have $A^{\top}x = Ax$, so:
+
+$$
+\bar{x}^{\top}Ax = \bar{\lambda}(\bar{x}^{\top}x)
+$$
+
+**Step 5**: Compare the two expressions for $\bar{x}^{\top}Ax$:
+
+$$
+\lambda(\bar{x}^{\top}x) = \bar{\lambda}(\bar{x}^{\top}x)
+$$
+
+Since $\bar{x}^{\top}x = |x_1|^2 + |x_2|^2 + \cdots + |x_n|^2 > 0$ (eigenvectors are non-zero), we can divide both sides:
+
+$$
+\lambda = \bar{\lambda}
+$$
+
+**Conclusion**: $\lambda$ equals its complex conjugate, so $\lambda$ must be real.
+
+## Spectral Decomposition: Sum of Projections
+
+The spectral theorem can be rewritten in an illuminating form:
+
+$$
+A = Q\Lambda Q^{\top} = \begin{bmatrix}| & | & \cdots & | \\ q_1 & q_2 & \cdots & q_n \\ | & | & \cdots & |\end{bmatrix}\begin{bmatrix}\lambda_1 & 0 & \cdots & 0 \\ 0 & \lambda_2 & \cdots & 0 \\ \vdots & \vdots & \ddots & \vdots \\ 0 & 0 & \cdots & \lambda_n\end{bmatrix}\begin{bmatrix}- & q_1^{\top} & - \\ - & q_2^{\top} & - \\ & \vdots & \\ - & q_n^{\top} & -\end{bmatrix}
+$$
+
+Expanding the matrix multiplication:
+
+$$
+A = \lambda_1 q_1q_1^{\top} + \lambda_2 q_2q_2^{\top} + \cdots + \lambda_n q_nq_n^{\top}
+$$
+
+**Interpretation**: Every symmetric matrix is a weighted sum of mutually orthogonal projection matrices $q_iq_i^{\top}$, where the weights are the eigenvalues.
+
+Each term $q_iq_i^{\top}$ projects vectors onto the one-dimensional subspace spanned by $q_i$.
+
+## Positive Definite Matrices
+
+Positive definite matrices form an important subset of symmetric matrices.
+
+### Definition
+
+A symmetric matrix $A$ is **positive definite** if for all non-zero vectors $x$:
+
+$$
+x^{\top}Ax > 0
+$$
+
+**Geometric interpretation**: The quadratic form $x^{\top}Ax$ is always positive, like the square of a distance.
+
+### Equivalent Conditions
+
+For a symmetric matrix $A$, the following are equivalent:
+
+1. **All eigenvalues are positive**: $\lambda_i > 0$ for all $i$
+2. **All pivots are positive**: $d_i > 0$ for all $i$ (from elimination)
+3. **All upper-left subdeterminants are positive**:
+   - $\det(A_1) > 0$, $\det(A_2) > 0$, ..., $\det(A_n) > 0$
+   - where $A_k$ is the $k \times k$ upper-left submatrix
+4. **Energy test**: $x^{\top}Ax > 0$ for all $x \neq 0$
+
+**Key insight**: The signs of pivots are the same as the signs of eigenvalues for symmetric matrices.
+
+### Why This Connection?
+
+From the spectral decomposition:
+
+$$
+x^{\top}Ax = x^{\top}(Q\Lambda Q^{\top})x = (Q^{\top}x)^{\top}\Lambda(Q^{\top}x) = y^{\top}\Lambda y
+$$
+
+where $y = Q^{\top}x$.
+
+Since $Q$ is orthogonal, $y \neq 0$ when $x \neq 0$, so:
+
+$$
+x^{\top}Ax = \lambda_1 y_1^2 + \lambda_2 y_2^2 + \cdots + \lambda_n y_n^2
+$$
+
+This is positive for all $x \neq 0$ if and only if all $\lambda_i > 0$.
+
+### Examples
+
+**Positive definite**:
+
+$$
+A = \begin{bmatrix}2 & -1 \\ -1 & 2\end{bmatrix}
+$$
+
+- Eigenvalues: $\lambda_1 = 3$, $\lambda_2 = 1$ (both positive)
+- Pivots: $2$, $\frac{3}{2}$ (both positive)
+- Determinants: $\det(A_1) = 2 > 0$, $\det(A_2) = 3 > 0$
+
+**Not positive definite**:
+
+$$
+B = \begin{bmatrix}2 & 6 \\ 6 & 7\end{bmatrix}
+$$
+
+- Eigenvalues: one negative
+- The upper-left $1 \times 1$ determinant is $2 > 0$, but $\det(B) = 14 - 36 = -22 < 0$
+- Therefore $B$ is not positive definite
+
+### Other Definiteness Categories
+
+- **Positive semidefinite**: $x^{\top}Ax \geq 0$ for all $x$ (allows zero), $\lambda_i \geq 0$
+- **Negative definite**: $x^{\top}Ax < 0$ for all $x \neq 0$, $\lambda_i < 0$
+- **Indefinite**: $x^{\top}Ax$ can be positive or negative depending on $x$
+
+## Summary
+
+This lecture reveals the beautiful structure of symmetric matrices:
+
+1. **Spectral theorem**: Symmetric matrices can be diagonalized by orthogonal matrices: $A = Q\Lambda Q^{\top}$
+
+2. **Real eigenvalues**: All eigenvalues of real symmetric matrices are real
+
+3. **Orthogonal eigenvectors**: Eigenvectors for different eigenvalues are perpendicular
+
+4. **Spectral decomposition**: $A = \sum_i \lambda_i q_iq_i^{\top}$ expresses $A$ as a weighted sum of projections
+
+5. **Positive definiteness**: A symmetric matrix is positive definite if and only if all eigenvalues (or equivalently, all pivots) are positive
+
+These properties make symmetric matrices the most important and well-understood class of matrices in linear algebra, with applications throughout mathematics, physics, statistics, and engineering.
