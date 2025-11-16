@@ -1,0 +1,466 @@
+---
+title: "Chapter 8.6: Second-Order Optimization Methods"
+author: "Chao Ma"
+date: "2025-11-15"
+categories: [Deep Learning, Optimization, Newton's Method, Conjugate Gradient, BFGS, Hessian]
+description: "Newton's method, Conjugate Gradient, and BFGS: elegant second-order methods that use curvature information but are rarely used in deep learning due to computational cost and scalability issues"
+---
+
+While first-order methods like gradient descent rely only on the gradient, second-order methods incorporate curvature information through the Hessian matrix. This section explores classical second-order optimization techniques: Newton's method, Conjugate Gradient, and BFGS.
+
+**Important context**: Although these methods are theoretically elegant and powerful, they are rarely used in modern deep learning due to computational cost and scalability issues. Practical deep learning almost exclusively relies on first-order methods (SGD, Momentum, RMSProp, Adam).
+
+## Newton's Method
+
+Newton's method uses a second-order Taylor approximation to find the optimal step direction.
+
+### Second-order Taylor Approximation
+
+Around a point $\theta_0$, we approximate the objective function using both first and second derivatives:
+
+$$
+J(\theta) \approx J(\theta_0) + (\theta - \theta_0)^{\top}\nabla_{\theta}J(\theta_0) + \frac{1}{2}(\theta - \theta_0)^{\top}H(\theta_0)(\theta - \theta_0) \tag{8.26}
+$$
+
+where $H(\theta_0)$ is the **Hessian matrix** at $\theta_0$:
+
+$$
+H_{ij} = \frac{\partial^2 J}{\partial \theta_i \partial \theta_j}
+$$
+
+This approximation is exact for quadratic functions and captures local curvature for general functions.
+
+### Newton's Update Rule
+
+To minimize the quadratic approximation, we find where its gradient equals zero:
+
+$$
+\theta^* = \theta_0 - H^{-1}\nabla_{\theta_0}J(\theta_0) \tag{8.27}
+$$
+
+This is the **Newton step**: instead of moving in the direction of the gradient, we move in the direction $H^{-1}g$, which accounts for the curvature of the loss surface.
+
+### Deriving the Newton Step
+
+Let's derive equation 8.27 from equation 8.26.
+
+**Step 1**: Define simplified notation:
+
+- $\Delta = \theta - \theta_0$ (the step we want to find)
+- $g = \nabla_{\theta}J(\theta_0)$ (gradient at current point)
+- $H = H(\theta_0)$ (Hessian at current point)
+
+**Step 2**: Rewrite the approximation:
+
+$$
+\tilde{J}(\theta) \approx J(\theta_0) + \Delta^{\top}g + \frac{1}{2}\Delta^{\top}H\Delta
+$$
+
+**Step 3**: Find the minimum by taking the derivative with respect to $\Delta$:
+
+$$
+\frac{\partial \tilde{J}}{\partial \Delta} = g + H\Delta
+$$
+
+**Explanation of the derivative**:
+
+- Derivative of $\Delta^{\top}g$ is $g$ (linear term)
+- Derivative of $\frac{1}{2}\Delta^{\top}H\Delta$ is $H\Delta$ (quadratic term, using symmetry of $H$)
+
+**Step 4**: Set the derivative to zero:
+
+$$
+g + H\Delta = 0
+$$
+
+$$
+H\Delta = -g
+$$
+
+$$
+\Delta = -H^{-1}g
+$$
+
+**Step 5**: Substitute back $\theta^* = \theta_0 + \Delta$:
+
+$$
+\theta^* = \theta_0 - H^{-1}\nabla_{\theta_0}J(\theta_0)
+$$
+
+### Key Property: One-step Convergence for Quadratics
+
+**If the Hessian is positive definite and the objective is quadratic, Newton's method jumps directly to the minimum in one step.**
+
+For non-quadratic objectives or non-positive-definite Hessians, we must iterate.
+
+### Newton's Method Algorithm
+
+**Hyperparameters**:
+
+- Initial parameters $\theta_0$
+- Convergence threshold
+
+**Training procedure**:
+
+While stopping criterion not met:
+
+1. **Compute gradient**:
+
+$$
+g = \frac{1}{m}\sum_{i=1}^m \nabla_\theta L(f(x^{(i)};\theta), y^{(i)})
+$$
+
+2. **Compute Hessian**:
+
+$$
+H = \frac{1}{m}\sum_{i=1}^m \nabla_\theta^2 L(f(x^{(i)};\theta), y^{(i)})
+$$
+
+3. **Compute Hessian inverse**: $H^{-1}$
+
+4. **Compute update step**:
+
+$$
+\Delta\theta = -H^{-1}g
+$$
+
+5. **Update parameters**:
+
+$$
+\theta \leftarrow \theta + \Delta\theta
+$$
+
+### Regularization: Handling Non-positive-definite Hessians
+
+When the Hessian is not positive definite (which happens at saddle points or near maxima), the Newton update may move in an ascent direction.
+
+To stabilize the update, we use a **damped** or **regularized** Newton step:
+
+$$
+\theta^* = \theta_0 - [H(f(\theta_0)) + \alpha I]^{-1}\nabla_{\theta_0}f(\theta_0) \tag{8.28}
+$$
+
+**How regularization works**:
+
+- The term $\alpha I$ shifts all eigenvalues of $H$ by $+\alpha$
+- Negative eigenvalues (indicating concave directions) become closer to zero or positive
+- This ensures the regularized matrix is positive definite for sufficiently large $\alpha$
+
+**Behavior as $\alpha$ varies**:
+
+- **Small $\alpha$**: Nearly pure Newton step, fast convergence near minima
+- **Large $\alpha$**: Update approaches $-\frac{1}{\alpha}\nabla_\theta f(\theta_0)$, which is essentially a scaled gradient descent step
+- This creates a smooth interpolation between Newton's method and gradient descent
+
+### Computational Challenge
+
+Newton's method faces severe scalability issues:
+
+**For a model with $k$ parameters**:
+
+- Hessian is a $k \times k$ matrix with $k^2$ elements
+- Computing the Hessian requires $O(k^2)$ operations
+- Inverting the Hessian requires $O(k^3)$ operations
+
+**In modern deep learning**:
+
+- Networks easily have millions of parameters ($k \approx 10^6$ or more)
+- Storing the Hessian would require terabytes of memory
+- Computing $H^{-1}$ would be prohibitively expensive
+
+**Conclusion**: Newton's method is practical only for very small models with at most a few thousand parameters.
+
+## Conjugate Gradient
+
+Conjugate Gradient (CG) is a sophisticated algorithm that achieves near-Newton performance without computing or storing the full Hessian.
+
+### The Zig-zag Problem in Steepest Descent
+
+Standard gradient descent on ill-conditioned problems exhibits **zig-zag behavior**: each step is orthogonal to the previous step, causing the algorithm to repeatedly undo its own progress.
+
+**Why this happens**:
+
+- At each step, gradient descent moves along the steepest direction
+- After one step, the new gradient is orthogonal to the previous direction (for quadratic functions with exact line search)
+- This orthogonality causes oscillation in narrow valleys
+
+**Reference**: [Visualization of ill-conditioned optimization and zig-zag](https://www.youtube.com/watch?v=ZlcQ8xHwx0Y)
+
+### A-orthogonality: The Key Concept
+
+Conjugate Gradient eliminates zig-zag by using **conjugate directions** instead of orthogonal directions.
+
+**Definition**: Two directions $d_i$ and $d_j$ are **conjugate** with respect to matrix $A$ if:
+
+$$
+d_i^{\top}Ad_j = 0
+$$
+
+This is also called **A-orthogonality** because the directions are orthogonal under the metric defined by $A$ (the Hessian).
+
+**Why this matters**: A-orthogonal directions have a crucial property: **a line search along a new direction does not undo progress made along any previous direction.**
+
+In the context of minimizing a quadratic function $J(\theta) = \frac{1}{2}\theta^{\top}A\theta + b^{\top}\theta + c$:
+
+- Orthogonal directions: $d_i^{\top}d_j = 0$ (geometric orthogonality)
+- Conjugate directions: $d_i^{\top}Ad_j = 0$ (orthogonality in curvature space)
+
+Conjugate directions preserve all previous progress, eliminating zig-zag.
+
+### Conjugate Gradient Update Rule
+
+At each iteration, we construct a search direction that is conjugate to all previous directions:
+
+$$
+d_t = -\nabla_{\theta}J(\theta) + \beta_t d_{t-1} \tag{8.29}
+$$
+
+where:
+
+- $-\nabla_{\theta}J(\theta)$ is the current gradient
+- $\beta_t$ controls how much we add from the previous direction
+- The combination ensures $d_t$ is conjugate to $d_{t-1}$
+
+### Computing $\beta_t$: Fletcher-Reeves
+
+The **Fletcher-Reeves** formula computes $\beta_t$ based on gradient magnitudes:
+
+$$
+\beta_t = \frac{\nabla_{\theta}J(\theta_t)^{\top}\nabla_{\theta}J(\theta_t)}{\nabla_{\theta}J(\theta_{t-1})^{\top}\nabla_{\theta}J(\theta_{t-1})} \tag{8.30}
+$$
+
+**Derivation** (for quadratic objectives with exact line search):
+
+**Step 1**: Impose the conjugacy condition:
+
+$$
+d_t^{\top}Ad_{t-1} = 0 \tag{1}
+$$
+
+**Step 2**: Substitute the update rule $d_t = -g_t + \beta_t d_{t-1}$:
+
+$$
+(-g_t + \beta_t d_{t-1})^{\top}Ad_{t-1} = 0
+$$
+
+$$
+-g_t^{\top}Ad_{t-1} + \beta_t d_{t-1}^{\top}Ad_{t-1} = 0
+$$
+
+**Step 3**: Solve for $\beta_t$:
+
+$$
+\beta_t = \frac{g_t^{\top}\cancel{Ad_{t-1}}}{d_{t-1}^{\top}\cancel{Ad_{t-1}}} \tag{3}
+$$
+
+**Step 4**: Replace $Ad_{t-1}$ using gradient update properties:
+
+Under a quadratic objective with exact line search, the gradient evolves as:
+
+$$
+g_t = g_{t-1} + \alpha_{t-1}Ad_{t-1}
+$$
+
+where $\alpha_{t-1}$ is the step size from the previous iteration.
+
+This gives us:
+
+$$
+Ad_{t-1} = \frac{1}{\alpha_{t-1}}(g_t - g_{t-1})
+$$
+
+Additionally, exact line search ensures:
+
+$$
+g_t^{\top}d_{t-1} = 0
+$$
+
+(the new gradient is orthogonal to the previous search direction).
+
+**Step 5**: Substitute $Ad_{t-1}$ in equation (3):
+
+$$
+\beta_t = \frac{g_t^{\top}\left(\frac{1}{\alpha_{t-1}}(g_t - g_{t-1})\right)}{d_{t-1}^{\top}\left(\frac{1}{\alpha_{t-1}}(g_t - g_{t-1})\right)}
+$$
+
+The factor $\frac{1}{\alpha_{t-1}}$ cancels:
+
+$$
+\beta_t = \frac{g_t^{\top}(g_t - g_{t-1})}{d_{t-1}^{\top}(g_t - g_{t-1})}
+$$
+
+**Step 6**: Apply the orthogonality condition $g_t^{\top}d_{t-1} = 0$:
+
+In the numerator:
+
+$$
+g_t^{\top}(g_t - g_{t-1}) = g_t^{\top}g_t - g_t^{\top}g_{t-1}
+$$
+
+In the denominator, using $g_t^{\top}d_{t-1} = 0$:
+
+$$
+d_{t-1}^{\top}(g_t - g_{t-1}) = d_{t-1}^{\top}g_t - d_{t-1}^{\top}g_{t-1} = 0 - d_{t-1}^{\top}g_{t-1} = -d_{t-1}^{\top}g_{t-1}
+$$
+
+Since $d_{t-1} = -g_{t-1} + \beta_{t-1}d_{t-2}$ and by repeated application of orthogonality, we have $d_{t-1}^{\top}g_{t-1} \propto -g_{t-1}^{\top}g_{t-1}$.
+
+This yields:
+
+$$
+\beta_t = \frac{g_t^{\top}g_t}{g_{t-1}^{\top}g_{t-1}}
+$$
+
+This is the Fletcher-Reeves formula. The derivation shows how the curvature term $Ad_{t-1}$ is replaced by the change in gradients $(g_t - g_{t-1})$, which then simplifies using the orthogonality property $g_t^{\top}d_{t-1} = 0$ from exact line search.
+
+### Computing $\beta_t$: Polak-Ribière
+
+The **Polak-Ribière** formula uses the change in gradients to incorporate curvature information:
+
+$$
+\beta_t = \frac{(\nabla J(\theta_t) - \nabla J(\theta_{t-1}))^{\top}\nabla J(\theta_t)}{\nabla J(\theta_{t-1})^{\top}\nabla J(\theta_{t-1})} \tag{8.31}
+$$
+
+**Key difference from Fletcher-Reeves**:
+
+- **Fletcher-Reeves**: Depends only on gradient norms
+- **Polak-Ribière**: Uses $(g_t - g_{t-1})$, which approximates $Ad_{t-1}$ and captures curvature
+
+**Advantage**: Polak-Ribière is more adaptive and often more effective on nonlinear problems, as it adjusts based on how gradients change rather than just their magnitude.
+
+### Line Search: Choosing the Step Size $\epsilon^*$
+
+Unlike gradient descent with a fixed learning rate, Conjugate Gradient uses **line search** to find the optimal step size at each iteration.
+
+Given a search direction $\rho_t$, we solve:
+
+$$
+\rho_t = -g_t + \beta_t\rho_{t-1}
+$$
+
+$$
+\epsilon^* = \arg\min_{\epsilon} \frac{1}{m}\sum_{i=1}^m L(f(x^{(i)};\theta_t + \epsilon\rho_t), y^{(i)})
+$$
+
+**How line search works**:
+
+- Start with an initial bracket or step size
+- Iteratively shrink or adjust the interval
+- Stop when sufficient decrease conditions are met (e.g., Armijo or Wolfe conditions)
+
+This dynamic search ensures each step is optimal along $\rho_t$ and preserves the conjugacy properties needed to avoid zig-zag behavior.
+
+### Conjugate Gradient in Practice
+
+**Ideal case**: For quadratic objectives with exact line search, CG converges in at most $n$ iterations (where $n$ is the number of parameters).
+
+**Practical case**: For general nonlinear functions:
+
+- Conjugacy degrades over iterations
+- Gradient orthogonality $g_t^{\top}Ad_{t-1} = 0$ no longer holds exactly
+- Line search is approximate (using mini-batches introduces noise)
+
+**Result**: CG is effective for medium-sized problems but struggles with stochastic gradients and high dimensionality in deep learning.
+
+## BFGS
+
+**BFGS** (Broyden-Fletcher-Goldfarb-Shanno) is a quasi-Newton method that approximates the inverse Hessian without computing it directly.
+
+### Core Idea
+
+Instead of computing $H^{-1}$ explicitly, BFGS maintains an approximation $M_t \approx H^{-1}$ and updates it iteratively using gradient information.
+
+**Update rule**:
+
+$$
+\theta_{t+1} = \theta_t + \epsilon^*\rho_t \tag{8.33}
+$$
+
+where:
+
+- $\rho_t = -M_tg_t$ is the search direction (quasi-Newton step)
+- $\epsilon^*$ is found via line search
+- $M_t$ is updated using curvature information from successive gradients
+
+### How $M_t$ is Updated
+
+BFGS uses the **secant condition** to update $M_t$:
+
+$$
+M_{t+1}(g_{t+1} - g_t) = \theta_{t+1} - \theta_t
+$$
+
+This ensures $M_{t+1}$ approximates $H^{-1}$ by matching the observed change in gradients to the change in parameters.
+
+The update formula is:
+
+$$
+M_{t+1} = M_t + \text{correction terms based on } (g_{t+1} - g_t) \text{ and } (\theta_{t+1} - \theta_t)
+$$
+
+**Advantages**:
+
+- No need to compute or store the full Hessian
+- $M_t$ is always symmetric and positive definite (with proper initialization)
+- Converges superlinearly near the optimum
+
+**Storage cost**: Still requires $O(k^2)$ memory to store $M_t$, making it impractical for networks with millions of parameters.
+
+### Limited-Memory BFGS (L-BFGS)
+
+To reduce memory requirements, **L-BFGS** stores only the last $m$ updates (typically $m = 10$) instead of the full matrix $M_t$.
+
+**Memory cost**: Reduced from $O(k^2)$ to $O(mk)$, making it feasible for moderate-sized problems.
+
+**Trade-off**: L-BFGS converges slower than full BFGS but is much more memory-efficient.
+
+## Why Second-order Methods Are Rarely Used in Deep Learning
+
+Despite their theoretical elegance, second-order methods face fundamental challenges in modern deep learning:
+
+### 1. Computational Cost
+
+- **Hessian computation**: $O(k^2)$ for storage, $O(k^3)$ for inversion
+- Modern networks have $k \approx 10^6$ to $10^9$ parameters
+- Even approximate methods like BFGS require $O(k^2)$ memory
+
+### 2. Stochastic Gradients
+
+- Second-order methods assume accurate gradients and curvature
+- Mini-batch training introduces noise, breaking line search and conjugacy
+- Hessian estimates from mini-batches are unreliable
+
+### 3. Non-convexity
+
+- Neural networks are highly non-convex with many saddle points
+- Hessian may have negative eigenvalues, requiring expensive regularization
+- Conjugacy assumptions (quadratic approximation) break down far from optima
+
+### 4. Scalability
+
+- First-order methods scale to billions of parameters and massive datasets
+- Second-order methods require full-batch or large-batch training
+- Distributed training is much simpler with gradient-based methods
+
+### Practical Consequence
+
+**Modern deep learning almost exclusively uses first-order methods**: SGD, Momentum, RMSProp, and Adam. These methods:
+
+- Require only gradient computation ($O(k)$ per iteration)
+- Work well with mini-batch stochastic gradients
+- Scale to massive models and datasets
+- Are robust to non-convexity and noise
+
+Second-order methods remain important in small-scale optimization, classical machine learning (e.g., logistic regression), and as theoretical tools for understanding optimization landscapes.
+
+## Summary
+
+This section covered three classical second-order optimization methods:
+
+1. **Newton's Method**: Uses $H^{-1}g$ for optimal quadratic convergence, but requires $O(k^3)$ computation
+
+2. **Conjugate Gradient**: Achieves near-Newton performance through conjugate directions and line search, avoiding Hessian computation
+
+3. **BFGS**: Approximates $H^{-1}$ iteratively using gradient information, with L-BFGS reducing memory requirements
+
+While theoretically powerful, these methods are rarely used in deep learning due to computational cost, incompatibility with stochastic gradients, and scalability challenges. First-order adaptive methods (Chapter 8.5) dominate in practice.
