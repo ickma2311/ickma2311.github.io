@@ -1,0 +1,417 @@
+---
+title: "MIT 18.06SC Lecture 28: Similar Matrices and Jordan Form"
+author: "Chao Ma"
+date: "2025-11-21"
+categories: [Linear Algebra, MIT 18.06SC, Eigenvalues, Matrix Theory]
+---
+
+## Overview
+
+This lecture covers:
+- Properties of $A^{\top}A$ (symmetric, positive semi-definite)
+- Similar matrices: definition, eigenvalue preservation, and eigenvector transformation
+- Repeated eigenvalues and the failure of diagonalization
+- Jordan canonical form for non-diagonalizable matrices
+- Jordan blocks and their geometric interpretation
+
+**Video**: [MIT 18.06SC Lecture 28](https://www.youtube.com/watch?v=TSdXJw83kyA&list=PLE7DDD91010BC51F8&index=30)
+
+---
+
+## 1. The Matrix $A^{\top}A$
+
+For any $m \times n$ matrix $A$, the product $A^{\top}A$ has special properties.
+
+### Properties
+
+$A^{\top}A$ is:
+
+1. **Square**: $n \times n$ (even if $A$ is rectangular)
+
+2. **Symmetric**: $(A^{\top}A)^{\top} = A^{\top}(A^{\top})^{\top} = A^{\top}A$
+
+3. **Positive semi-definite**: $x^{\top}A^{\top}Ax \geq 0$ for all $x$
+
+4. **Positive definite** if $A$ has full column rank
+
+### Proof of Positive Semi-definiteness
+
+For any vector $x \in \mathbb{R}^n$:
+
+$$
+x^{\top}A^{\top}Ax = (x^{\top}A^{\top})(Ax) = (Ax)^{\top}(Ax) = \|Ax\|^2 \geq 0
+$$
+
+Since $\|Ax\|^2$ is the squared length of a vector, it's always non-negative.
+
+### When Is $A^{\top}A$ Positive Definite?
+
+$A^{\top}A$ is **positive definite** (strictly $> 0$ for $x \neq 0$) if and only if:
+
+$$
+x^{\top}A^{\top}Ax = \|Ax\|^2 > 0 \quad \text{for all } x \neq 0
+$$
+
+This holds when:
+
+- **$A$ has no nullspace**: $Ax \neq 0$ for all $x \neq 0$
+
+- **Columns are independent**: $A$ has full column rank
+
+- **Rank of $A$ is $n$**: All $n$ columns are linearly independent
+
+**Key insight**: The Gram matrix $A^{\top}A$ encodes information about the inner products between columns of $A$. If $A = [a_1, a_2, \ldots, a_n]$, then:
+
+$$
+A^{\top}A = \begin{bmatrix}
+a_1^{\top}a_1 & a_1^{\top}a_2 & \cdots & a_1^{\top}a_n \\
+a_2^{\top}a_1 & a_2^{\top}a_2 & \cdots & a_2^{\top}a_n \\
+\vdots & \vdots & \ddots & \vdots \\
+a_n^{\top}a_1 & a_n^{\top}a_2 & \cdots & a_n^{\top}a_n
+\end{bmatrix}
+$$
+
+The diagonal entries are $\|a_i\|^2$, and off-diagonal entries measure how aligned the columns are.
+
+---
+
+## 2. Similar Matrices
+
+### Definition
+
+Matrices $A$ and $B$ are **similar** if there exists an invertible matrix $M$ such that:
+
+$$
+B = M^{-1}AM
+$$
+
+Notation: $A \sim B$
+
+**Interpretation**: $A$ and $B$ represent the same linear transformation in different coordinate systems (different bases). The matrix $M$ performs the change of basis.
+
+### Example 1: Diagonalization
+
+**Every diagonalizable matrix is similar to a diagonal matrix.**
+
+If $A$ has eigenvector matrix $S$ and eigenvalue matrix $\Lambda$, then:
+
+$$
+S^{-1}AS = \Lambda
+$$
+
+So $A \sim \Lambda$.
+
+**Concrete example**:
+
+$$
+A = \begin{bmatrix}2 & 1 \\ 1 & 2\end{bmatrix}
+$$
+
+The eigenvalues are $\lambda_1 = 3, \lambda_2 = 1$, so:
+
+$$
+\Lambda = \begin{bmatrix}3 & 0 \\ 0 & 1\end{bmatrix}
+$$
+
+Thus $A \sim \Lambda$.
+
+### Example 2: Different Similarity Transformation
+
+Using a different choice of $M$, we can find other matrices similar to $A$.
+
+Let $M = \begin{bmatrix}1 & 4 \\ 0 & 1\end{bmatrix}$. Then:
+
+$$
+B = M^{-1}AM = \begin{bmatrix}1 & -4 \\ 0 & 1\end{bmatrix} \begin{bmatrix}2 & 1 \\ 1 & 2\end{bmatrix} \begin{bmatrix}1 & 4 \\ 0 & 1\end{bmatrix} = \begin{bmatrix}-2 & -15 \\ 1 & 6\end{bmatrix}
+$$
+
+So $A \sim B$, even though $B$ looks very different from $A$.
+
+**Key observation**: Similar matrices form **equivalence classes**. All matrices in the same class represent the same transformation, just in different bases.
+
+---
+
+## 3. Properties of Similar Matrices
+
+### Main Facts
+
+If $A \sim B$ (i.e., $B = M^{-1}AM$), then:
+
+1. **Same eigenvalues**: $A$ and $B$ have identical eigenvalues
+
+2. **Different eigenvectors**: The eigenvectors transform as $x_B = M^{-1}x_A$
+
+3. **Same trace**: $\text{tr}(A) = \text{tr}(B)$
+
+4. **Same determinant**: $\det(A) = \det(B)$
+
+5. **Same rank**: $\text{rank}(A) = \text{rank}(B)$
+
+### Proof: Eigenvalues Are Preserved
+
+Suppose $Ax = \lambda x$ (so $\lambda$ is an eigenvalue of $A$ with eigenvector $x$).
+
+We want to show that $\lambda$ is also an eigenvalue of $B = M^{-1}AM$.
+
+**Step 1**: Start with the eigenvalue equation for $A$:
+
+$$
+Ax = \lambda x
+$$
+
+**Step 2**: Insert $M M^{-1} = I$ to the left of $x$:
+
+$$
+A M M^{-1} x = \lambda x
+$$
+
+**Step 3**: Multiply both sides by $M^{-1}$ on the left:
+
+$$
+M^{-1} A M M^{-1} x = \lambda M^{-1} x
+$$
+
+**Step 4**: Recognize that $M^{-1}AM = B$:
+
+$$
+B (M^{-1} x) = \lambda (M^{-1} x)
+$$
+
+**Conclusion**: $\lambda$ is an eigenvalue of $B$ with eigenvector $M^{-1}x$.
+
+**Key insight**: The eigenvalues stay unchanged, but the eigenvectors transform according to the change of basis:
+
+$$
+x_B = M^{-1} x_A
+$$
+
+---
+
+## 4. Repeated Eigenvalues: The Bad Case
+
+When a matrix has repeated eigenvalues, we must check whether it has enough eigenvectors to be diagonalizable.
+
+### Example: Two Contrasting Matrices
+
+Consider two matrices with the same eigenvalues $\lambda_1 = \lambda_2 = 4$:
+
+$$
+A = \begin{bmatrix}4 & 0 \\ 0 & 4\end{bmatrix}, \quad B = \begin{bmatrix}4 & 1 \\ 0 & 4\end{bmatrix}
+$$
+
+Both have characteristic polynomial $(\lambda - 4)^2 = 0$, so both have double eigenvalue $\lambda = 4$.
+
+### Eigenvectors
+
+**Matrix $A$**:
+
+$$
+(A - 4I)x = \begin{bmatrix}0 & 0 \\ 0 & 0\end{bmatrix}x = 0
+$$
+
+Every vector is an eigenvector! The eigenspace is all of $\mathbb{R}^2$.
+
+**Matrix $B$**:
+
+$$
+(B - 4I)x = \begin{bmatrix}0 & 1 \\ 0 & 0\end{bmatrix}x = 0
+$$
+
+This requires $x_2 = 0$, so the eigenvectors are:
+
+$$
+x = c\begin{bmatrix}1 \\ 0\end{bmatrix}
+$$
+
+The eigenspace is only **1-dimensional**, even though the eigenvalue has algebraic multiplicity 2.
+
+### Classification
+
+- **Matrix $A$**: "Small family" — diagonalizable, full set of eigenvectors
+
+- **Matrix $B$**: "Big family" — non-diagonalizable, deficient in eigenvectors
+
+**Important**: $A$ and $B$ are **not similar** because they have different numbers of independent eigenvectors.
+
+---
+
+## 5. Jordan Canonical Form
+
+When a matrix is not diagonalizable, the best we can do is put it in **Jordan form**.
+
+### The Family of $2 \times 2$ Matrices with $\lambda_1 = \lambda_2 = 4$
+
+**Non-diagonalizable matrices** with double eigenvalue 4:
+
+$$
+\begin{bmatrix}4 & 1 \\ 0 & 4\end{bmatrix}, \quad \begin{bmatrix}3 & 1 \\ -1 & 5\end{bmatrix}, \quad \ldots
+$$
+
+These all share:
+
+- **Trace**: $\text{tr}(A) = 8$
+
+- **Determinant**: $\det(A) = 16$
+
+- **Non-diagonalizable**: Only one independent eigenvector
+
+All matrices in this family are similar to the **Jordan block**:
+
+$$
+J = \begin{bmatrix}4 & 1 \\ 0 & 4\end{bmatrix}
+$$
+
+### Jordan Block
+
+A **Jordan block** of size $n$ for eigenvalue $\lambda$ has the form:
+
+$$
+J_i = \begin{bmatrix}
+\lambda_i & 1 & 0 & \cdots & 0 \\
+0 & \lambda_i & 1 & \cdots & 0 \\
+0 & 0 & \lambda_i & \cdots & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+0 & 0 & 0 & \cdots & \lambda_i
+\end{bmatrix}
+$$
+
+**Key property**: A Jordan block of size $n$ has **exactly one eigenvector** (corresponding to the repeated eigenvalue $\lambda_i$).
+
+**Structure**:
+
+- Main diagonal: eigenvalue $\lambda_i$ repeated
+
+- Superdiagonal: all 1's
+
+- Everywhere else: 0's
+
+---
+
+## 6. Case Study: Nilpotent Matrices
+
+Consider two $4 \times 4$ nilpotent matrices (all eigenvalues are 0):
+
+### Matrix $H_1$
+
+$$
+H_1 = \begin{bmatrix}
+0 & 1 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0
+\end{bmatrix}
+$$
+
+**Jordan form**: This has one Jordan block of size 3 and one block of size 1:
+
+$$
+J_1 = \begin{bmatrix}
+0 & 1 & 0 & | & 0 \\
+0 & 0 & 1 & | & 0 \\
+0 & 0 & 0 & | & 0 \\
+\hline
+0 & 0 & 0 & | & 0
+\end{bmatrix}
+$$
+
+**Eigenspace**: The eigenvectors (for $\lambda = 0$) are 2-dimensional.
+
+### Matrix $H_2$
+
+$$
+H_2 = \begin{bmatrix}
+0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 \\
+0 & 0 & 0 & 0
+\end{bmatrix}
+$$
+
+**Jordan form**: This has two Jordan blocks of size 2:
+
+$$
+J_2 = \begin{bmatrix}
+0 & 1 & | & 0 & 0 \\
+0 & 0 & | & 0 & 0 \\
+\hline
+0 & 0 & | & 0 & 1 \\
+0 & 0 & | & 0 & 0
+\end{bmatrix}
+$$
+
+**Eigenspace**: The eigenvectors are also 2-dimensional.
+
+### Are $H_1$ and $H_2$ Similar?
+
+**No!** Even though they have:
+
+- Same eigenvalues: $\lambda_1 = \lambda_2 = \lambda_3 = \lambda_4 = 0$
+
+- Same dimension of eigenspace: 2
+
+They have **different Jordan block structures**, so they are **not similar**.
+
+**Key insight**: Two matrices are similar if and only if they have the **same Jordan form** (up to reordering of blocks).
+
+---
+
+## 7. General Jordan Canonical Form
+
+Every square matrix $A$ is similar to a unique Jordan form:
+
+$$
+J = \begin{bmatrix}
+J_1 & & & \\
+& J_2 & & \\
+& & \ddots & \\
+& & & J_d
+\end{bmatrix}
+$$
+
+where each $J_i$ is a Jordan block.
+
+### The Good Case
+
+**When $A$ is diagonalizable**, the Jordan form is diagonal:
+
+$$
+J = \Lambda = \begin{bmatrix}
+\lambda_1 & & & \\
+& \lambda_2 & & \\
+& & \ddots & \\
+& & & \lambda_n
+\end{bmatrix}
+$$
+
+This happens when every eigenvalue's **geometric multiplicity** (dimension of eigenspace) equals its **algebraic multiplicity** (number of times it appears as a root of the characteristic polynomial).
+
+### The Bad Case
+
+**When $A$ is not diagonalizable**, some Jordan blocks have size greater than 1. These blocks correspond to eigenvalues with deficient eigenspaces.
+
+**Example**: If $\lambda = 4$ has algebraic multiplicity 3 but geometric multiplicity 1, the Jordan form might be:
+
+$$
+J = \begin{bmatrix}
+4 & 1 & 0 \\
+0 & 4 & 1 \\
+0 & 0 & 4
+\end{bmatrix}
+$$
+
+---
+
+## Summary
+
+| **Concept** | **Key Idea** |
+|------------|-------------|
+| **$A^{\top}A$** | Always symmetric and positive semi-definite; positive definite if $A$ has full column rank |
+| **Similar Matrices** | $B = M^{-1}AM$ represents the same transformation in a different basis |
+| **Eigenvalue Preservation** | Similar matrices have identical eigenvalues |
+| **Eigenvector Transformation** | Eigenvectors transform as $x_B = M^{-1}x_A$ |
+| **Diagonalizable** | $A$ is diagonalizable if it has $n$ independent eigenvectors |
+| **Jordan Block** | $n \times n$ block with eigenvalue $\lambda$ on diagonal, 1's on superdiagonal |
+| **Jordan Form** | Every matrix is similar to a block-diagonal matrix of Jordan blocks |
+| **Good Case** | Jordan form is diagonal $\Leftrightarrow$ diagonalizable |
+
+**Main theorem**: Two matrices are similar if and only if they have the same Jordan canonical form (up to reordering of blocks).

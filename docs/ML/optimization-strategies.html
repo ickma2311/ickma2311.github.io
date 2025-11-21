@@ -415,6 +415,10 @@ window.Quarto = {
     <a class="dropdown-item" href="../Math/MIT18.06/mit1806-lecture27-positive-definite-minima.html">
  <span class="dropdown-text">Lecture 27: Positive Definite &amp; Minima</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../Math/MIT18.06/mit1806-lecture28-similar-matrices-jordan.html">
+ <span class="dropdown-text">Lecture 28: Similar Matrices &amp; Jordan Form</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -476,7 +480,7 @@ window.Quarto = {
   <li><a href="#algorithm" id="toc-algorithm" class="nav-link" data-scroll-target="#algorithm">Algorithm</a></li>
   <li><a href="#when-coordinate-descent-works-well" id="toc-when-coordinate-descent-works-well" class="nav-link" data-scroll-target="#when-coordinate-descent-works-well">When Coordinate Descent Works Well</a></li>
   <li><a href="#example-sparse-coding" id="toc-example-sparse-coding" class="nav-link" data-scroll-target="#example-sparse-coding">Example: Sparse Coding</a></li>
-  <li><a href="#when-coordinate-descent-fails" id="toc-when-coordinate-descent-fails" class="nav-link" data-scroll-target="#when-coordinate-descent-fails">When Coordinate Descent Fails</a></li>
+  <li><a href="#when-coordinate-descent-is-inefficient" id="toc-when-coordinate-descent-is-inefficient" class="nav-link" data-scroll-target="#when-coordinate-descent-is-inefficient">When Coordinate Descent Is Inefficient</a></li>
   </ul></li>
   <li><a href="#polyak-averaging" id="toc-polyak-averaging" class="nav-link" data-scroll-target="#polyak-averaging">Polyak Averaging</a>
   <ul class="collapse">
@@ -637,19 +641,24 @@ J(H, W) = \sum_{i,j} |H_{i,j}| + \sum_{i,j} (X - W^\top H)_{i,j}^2 \tag{8.38}
 <p><strong>Coordinate descent strategy</strong>: 1. <strong>Fix <span class="math inline">\(W\)</span>, optimize <span class="math inline">\(H\)</span></strong>: This becomes a LASSO problem with a closed-form solution 2. <strong>Fix <span class="math inline">\(H\)</span>, optimize <span class="math inline">\(W\)</span></strong>: This becomes a least-squares problem, also solvable analytically</p>
 <p>The sparsity constraint prevents ill-conditioning (e.g., arbitrarily large <span class="math inline">\(W\)</span> with tiny <span class="math inline">\(H\)</span> values).</p>
 </section>
-<section id="when-coordinate-descent-fails" class="level3">
-<h3 class="anchored" data-anchor-id="when-coordinate-descent-fails">When Coordinate Descent Fails</h3>
-<p>Coordinate descent struggles when variables are <strong>strongly coupled</strong>. For example:</p>
-<p><span class="math display">\[
-f(x) = (x_1 - x_2)^2 + \alpha (x_1^2 + x_2^2)
-\]</span></p>
-<p>The optimal solution is <span class="math inline">\(x_1^* = x_2^* = 0\)</span>. However:</p>
+<section id="when-coordinate-descent-is-inefficient" class="level3">
+<h3 class="anchored" data-anchor-id="when-coordinate-descent-is-inefficient">When Coordinate Descent Is Inefficient</h3>
+<p>Coordinate descent can be <strong>slow</strong> when variables are strongly coupled, even though it still converges. For convex quadratic functions, the convergence rate depends on how elongated the level curves are.</p>
+<p><strong>Example</strong>: For <span class="math inline">\(f(x_1, x_2) = (x_1 - x_2)^2 + \alpha(x_1^2 + x_2^2)\)</span> with optimal solution <span class="math inline">\((0, 0)\)</span>:</p>
 <ul>
-<li><strong>Optimizing <span class="math inline">\(x_1\)</span> while fixing <span class="math inline">\(x_2\)</span></strong>: Minimum occurs at <span class="math inline">\(x_1 = x_2\)</span></li>
-<li><strong>Optimizing <span class="math inline">\(x_2\)</span> while fixing <span class="math inline">\(x_1\)</span></strong>: Minimum occurs at <span class="math inline">\(x_2 = x_1\)</span></li>
+<li><strong>Per-coordinate updates</strong>:
+<ul>
+<li><span class="math inline">\(x_1 = \frac{x_2}{1+\alpha}\)</span> (minimizing over <span class="math inline">\(x_1\)</span> while fixing <span class="math inline">\(x_2\)</span>)</li>
+<li><span class="math inline">\(x_2 = \frac{x_1}{1+\alpha}\)</span> (minimizing over <span class="math inline">\(x_2\)</span> while fixing <span class="math inline">\(x_1\)</span>)</li>
+</ul></li>
+<li>Each full cycle multiplies both coordinates by <span class="math inline">\(\frac{1}{1+\alpha}\)</span>, so coordinate descent <strong>does converge</strong> to <span class="math inline">\((0,0)\)</span>, but the convergence is only <strong>linear</strong> (geometric).</li>
 </ul>
-<p>If starting from <span class="math inline">\(x_1 \neq x_2\)</span>, coordinate descent <strong>cannot converge to the global minimum</strong> <span class="math inline">\((0, 0)\)</span> because the constraint <span class="math inline">\(x_1 = x_2\)</span> prevents reaching the origin. The method gets stuck in a suboptimal solution.</p>
-<p><strong>Key insight</strong>: When the optimal value of one variable depends strongly on another, joint optimization (e.g., gradient descent on both variables) is needed.</p>
+<p><strong>When coordinate descent truly fails</strong>:</p>
+<ol type="1">
+<li><p><strong>Non-smooth objectives</strong>: For <span class="math inline">\(f(x_1, x_2) = |x_1 - x_2|\)</span>, the derivative is undefined at the minimum, preventing coordinate descent from finding the exact solution.</p></li>
+<li><p><strong>Degenerate problems</strong>: For <span class="math inline">\(f(x_1, x_2) = x_1^2\)</span>, the minimum forms a line (<span class="math inline">\(x_1 = 0\)</span>, any <span class="math inline">\(x_2\)</span>). Coordinate descent on <span class="math inline">\(x_2\)</span> makes no progress since <span class="math inline">\(f\)</span> doesn’t depend on <span class="math inline">\(x_2\)</span>.</p></li>
+</ol>
+<p><strong>Key insight</strong>: Coordinate descent works best when the problem is <strong>well-conditioned</strong> and <strong>separable</strong>. For strongly coupled or ill-conditioned problems, joint optimization methods (e.g., conjugate gradient, Newton’s method) converge much faster.</p>
 <hr>
 </section>
 </section>
@@ -1399,177 +1408,180 @@ J^{(i)}(\theta) = \mathbb{E}_{\theta' \sim \mathcal{N}(\theta', \theta, \sigma_i
 <span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a>The sparsity constraint prevents ill-conditioning (e.g., arbitrarily large $W$ with tiny $H$ values).</span>
 <span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a><span class="fu">### When Coordinate Descent Fails</span></span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a><span class="fu">### When Coordinate Descent Is Inefficient</span></span>
 <span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>Coordinate descent struggles when variables are **strongly coupled**. For example:</span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>Coordinate descent can be **slow** when variables are strongly coupled, even though it still converges. For convex quadratic functions, the convergence rate depends on how elongated the level curves are.</span>
 <span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>f(x) = (x_1 - x_2)^2 + \alpha (x_1^2 + x_2^2)</span>
-<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a>The optimal solution is $x_1^* = x_2^* = 0$. However:</span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a>**Example**: For $f(x_1, x_2) = (x_1 - x_2)^2 + \alpha(x_1^2 + x_2^2)$ with optimal solution $(0, 0)$:</span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Per-coordinate updates**:</span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>$x_1 = \frac{x_2}{1+\alpha}$ (minimizing over $x_1$ while fixing $x_2$)</span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>$x_2 = \frac{x_1}{1+\alpha}$ (minimizing over $x_2$ while fixing $x_1$)</span>
 <span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Optimizing $x_1$ while fixing $x_2$**: Minimum occurs at $x_1 = x_2$</span>
-<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Optimizing $x_2$ while fixing $x_1$**: Minimum occurs at $x_2 = x_1$</span>
-<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>If starting from $x_1 \neq x_2$, coordinate descent **cannot converge to the global minimum** $(0, 0)$ because the constraint $x_1 = x_2$ prevents reaching the origin. The method gets stuck in a suboptimal solution.</span>
-<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a>**Key insight**: When the optimal value of one variable depends strongly on another, joint optimization (e.g., gradient descent on both variables) is needed.</span>
-<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a><span class="fu">## Polyak Averaging</span></span>
-<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a>Polyak averaging smooths the optimization trajectory by maintaining an exponential moving average of parameter values.</span>
-<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a><span class="fu">### Formula</span></span>
-<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a>\hat{\theta}^{(t)} = \alpha \hat{\theta}^{(t-1)} + (1 - \alpha) \theta^{(t)} \tag{8.39}</span>
-<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>where:</span>
-<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**$\theta^{(t)}$**: Current parameter values at iteration $t$</span>
-<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**$\hat{\theta}^{(t)}$**: Averaged parameter values</span>
-<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**$\alpha$**: Momentum coefficient (typically 0.9 or 0.99)</span>
-<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a><span class="fu">### Why Averaging Helps</span></span>
-<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a>**Problem**: Stochastic gradient descent oscillates around the optimum due to gradient noise from mini-batches.</span>
-<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a>**Solution**: The averaged parameters $\hat{\theta}$ lie closer to the true minimum than any individual iterate $\theta^{(t)}$.</span>
-<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a>**Geometric interpretation**:</span>
-<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>SGD follows a noisy path that zigzags around the optimum</span>
-<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Polyak averaging smooths this path by averaging out the oscillations</span>
-<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The result is a more stable estimate of the optimal parameters</span>
-<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a>**Practical benefits**:</span>
-<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Better generalization**: Averaged parameters often generalize better than final iterates</span>
-<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Reduced variance**: Smoothing removes high-frequency noise in the parameter trajectory</span>
-<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Free improvement**: No additional hyperparameter tuning required</span>
-<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a>**Implementation note**: In practice, start averaging after an initial burn-in period to avoid biasing the average with early, poorly-initialized parameters.</span>
-<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a><span class="fu">## Supervised Pretraining</span></span>
-<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a>When optimizing a very deep or complex model is difficult, we can first train simpler versions and use them to initialize the full model.</span>
-<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a><span class="fu">### Greedy Layer-wise Pretraining</span></span>
-<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a>**Strategy**: Train the network one layer at a time, where each layer learns a useful representation before adding the next layer.</span>
-<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a>**Algorithm**:</span>
-<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a><span class="in">```mermaid</span></span>
-<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
-<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a>    a[<span class="ot">"</span><span class="st">(a) x -&gt; h1 -&gt; y</span><span class="ot">"</span>]</span>
-<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a>    b[<span class="ot">"</span><span class="st">(b) x -&gt; h1 (frozen) -&gt; y_old, y_new</span><span class="ot">"</span>]</span>
-<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a>    c[<span class="ot">"</span><span class="st">(c) x -&gt; h1 (frozen) -&gt; h2 -&gt; y</span><span class="ot">"</span>]</span>
-<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a>    d[<span class="ot">"</span><span class="st">(d) x -&gt; h1 -&gt; h2 -&gt; y (fine-tune)</span><span class="ot">"</span>]</span>
-<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a>    a --&gt; b --&gt; c --&gt; d</span>
-<span id="cb2-193"><a href="#cb2-193" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Each full cycle multiplies both coordinates by $\frac{1}{1+\alpha}$, so coordinate descent **does converge** to $(0,0)$, but the convergence is only **linear** (geometric).</span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>**When coordinate descent truly fails**:</span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Non-smooth objectives**: For $f(x_1, x_2) = |x_1 - x_2|$, the derivative is undefined at the minimum, preventing coordinate descent from finding the exact solution.</span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Degenerate problems**: For $f(x_1, x_2) = x_1^2$, the minimum forms a line ($x_1 = 0$, any $x_2$). Coordinate descent on $x_2$ makes no progress since $f$ doesn't depend on $x_2$.</span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>**Key insight**: Coordinate descent works best when the problem is **well-conditioned** and **separable**. For strongly coupled or ill-conditioned problems, joint optimization methods (e.g., conjugate gradient, Newton's method) converge much faster.</span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a><span class="fu">## Polyak Averaging</span></span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a>Polyak averaging smooths the optimization trajectory by maintaining an exponential moving average of parameter values.</span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a><span class="fu">### Formula</span></span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>\hat{\theta}^{(t)} = \alpha \hat{\theta}^{(t-1)} + (1 - \alpha) \theta^{(t)} \tag{8.39}</span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a>where:</span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**$\theta^{(t)}$**: Current parameter values at iteration $t$</span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**$\hat{\theta}^{(t)}$**: Averaged parameter values</span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**$\alpha$**: Momentum coefficient (typically 0.9 or 0.99)</span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a><span class="fu">### Why Averaging Helps</span></span>
+<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a>**Problem**: Stochastic gradient descent oscillates around the optimum due to gradient noise from mini-batches.</span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a>**Solution**: The averaged parameters $\hat{\theta}$ lie closer to the true minimum than any individual iterate $\theta^{(t)}$.</span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a>**Geometric interpretation**:</span>
+<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>SGD follows a noisy path that zigzags around the optimum</span>
+<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Polyak averaging smooths this path by averaging out the oscillations</span>
+<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The result is a more stable estimate of the optimal parameters</span>
+<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a>**Practical benefits**:</span>
+<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Better generalization**: Averaged parameters often generalize better than final iterates</span>
+<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Reduced variance**: Smoothing removes high-frequency noise in the parameter trajectory</span>
+<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Free improvement**: No additional hyperparameter tuning required</span>
+<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a>**Implementation note**: In practice, start averaging after an initial burn-in period to avoid biasing the average with early, poorly-initialized parameters.</span>
+<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a><span class="fu">## Supervised Pretraining</span></span>
+<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a>When optimizing a very deep or complex model is difficult, we can first train simpler versions and use them to initialize the full model.</span>
+<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a><span class="fu">### Greedy Layer-wise Pretraining</span></span>
+<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a>**Strategy**: Train the network one layer at a time, where each layer learns a useful representation before adding the next layer.</span>
+<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a>**Algorithm**:</span>
+<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a><span class="in">```mermaid</span></span>
+<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a>    a[<span class="ot">"</span><span class="st">(a) x -&gt; h1 -&gt; y</span><span class="ot">"</span>]</span>
+<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a>    b[<span class="ot">"</span><span class="st">(b) x -&gt; h1 (frozen) -&gt; y_old, y_new</span><span class="ot">"</span>]</span>
+<span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a>    c[<span class="ot">"</span><span class="st">(c) x -&gt; h1 (frozen) -&gt; h2 -&gt; y</span><span class="ot">"</span>]</span>
+<span id="cb2-193"><a href="#cb2-193" aria-hidden="true" tabindex="-1"></a>    d[<span class="ot">"</span><span class="st">(d) x -&gt; h1 -&gt; h2 -&gt; y (fine-tune)</span><span class="ot">"</span>]</span>
 <span id="cb2-194"><a href="#cb2-194" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a>**Steps**:</span>
-<span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**(a)** Train a shallow network: $x \to h_1 \to y$</span>
-<span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**(b)** Freeze $h_1$, add new output heads to verify it learned good features</span>
-<span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**(c)** Add second layer $h_2$ on top of frozen $h_1$, train new layer: $x \to h_1 \to h_2 \to y$</span>
-<span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**(d)** **Fine-tune**: Jointly optimize all layers end-to-end</span>
-<span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-202"><a href="#cb2-202" aria-hidden="true" tabindex="-1"></a><span class="fu">### Why Pretraining Helps</span></span>
-<span id="cb2-203"><a href="#cb2-203" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Better initialization**: Each layer starts from meaningful features, not random weights</span>
-<span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Easier optimization**: Training one layer at a time is simpler than training all layers jointly</span>
-<span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Better representations**: Lower layers learn general features that help higher layers</span>
-<span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Prevents poor local minima**: Greedy initialization guides the network toward better regions</span>
-<span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-209"><a href="#cb2-209" aria-hidden="true" tabindex="-1"></a>**Historical context**: Pretraining was crucial for training deep networks before the advent of:</span>
-<span id="cb2-210"><a href="#cb2-210" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Batch normalization</span>
-<span id="cb2-211"><a href="#cb2-211" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Residual connections</span>
-<span id="cb2-212"><a href="#cb2-212" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Better initialization schemes (e.g., He initialization)</span>
-<span id="cb2-213"><a href="#cb2-213" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-214"><a href="#cb2-214" aria-hidden="true" tabindex="-1"></a>**Modern usage**: Still useful for:</span>
-<span id="cb2-215"><a href="#cb2-215" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Transfer learning**: Pretrain on large dataset, fine-tune on small target task</span>
-<span id="cb2-216"><a href="#cb2-216" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Domain adaptation**: Pretrain on source domain, adapt to target domain</span>
-<span id="cb2-217"><a href="#cb2-217" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Few-shot learning**: Pretrain general features, quickly adapt to new tasks</span>
-<span id="cb2-218"><a href="#cb2-218" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-219"><a href="#cb2-219" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb2-220"><a href="#cb2-220" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-221"><a href="#cb2-221" aria-hidden="true" tabindex="-1"></a><span class="fu">## Continuation Methods</span></span>
-<span id="cb2-222"><a href="#cb2-222" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-223"><a href="#cb2-223" aria-hidden="true" tabindex="-1"></a>Continuation methods solve difficult optimization problems by first optimizing an **easier, smoothed version** of the objective, then gradually transforming it into the **true objective**.</span>
-<span id="cb2-224"><a href="#cb2-224" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-225"><a href="#cb2-225" aria-hidden="true" tabindex="-1"></a><span class="fu">### Mathematical Formulation</span></span>
-<span id="cb2-226"><a href="#cb2-226" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-227"><a href="#cb2-227" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-228"><a href="#cb2-228" aria-hidden="true" tabindex="-1"></a>J^{(i)}(\theta) = \mathbb{E}_{\theta' \sim \mathcal{N}(\theta', \theta, \sigma_i^2)} <span class="co">[</span><span class="ot">J(\theta')</span><span class="co">]</span> \tag{8.40}</span>
-<span id="cb2-229"><a href="#cb2-229" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-230"><a href="#cb2-230" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-231"><a href="#cb2-231" aria-hidden="true" tabindex="-1"></a>This formula smooths the loss by:</span>
-<span id="cb2-232"><a href="#cb2-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-233"><a href="#cb2-233" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Sampling nearby parameters**: Draw $\theta' \sim \mathcal{N}(\theta, \sigma_i^2)$ from a Gaussian centered at $\theta$</span>
-<span id="cb2-234"><a href="#cb2-234" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Averaging their losses**: Compute $\mathbb{E}<span class="co">[</span><span class="ot">J(\theta')</span><span class="co">]</span>$ by taking the expectation over the Gaussian neighborhood</span>
-<span id="cb2-235"><a href="#cb2-235" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Gradually reducing $\sigma_i$**: Start with large $\sigma_0$ (very smooth) and decrease toward $\sigma_{\text{final}} \approx 0$ (original loss)</span>
-<span id="cb2-236"><a href="#cb2-236" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-237"><a href="#cb2-237" aria-hidden="true" tabindex="-1"></a>**Interpretation**: This is equivalent to **convolving the loss landscape** with a Gaussian kernel of variance $\sigma_i^2$.</span>
-<span id="cb2-238"><a href="#cb2-238" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-239"><a href="#cb2-239" aria-hidden="true" tabindex="-1"></a><span class="fu">### Intuition</span></span>
-<span id="cb2-240"><a href="#cb2-240" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-241"><a href="#cb2-241" aria-hidden="true" tabindex="-1"></a>**Early stages (large $\sigma$)**:</span>
-<span id="cb2-242"><a href="#cb2-242" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The smoothed objective $J^{(i)}(\theta)$ blurs out small local minima and sharp valleys</span>
-<span id="cb2-243"><a href="#cb2-243" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The loss landscape becomes easier to navigate</span>
-<span id="cb2-244"><a href="#cb2-244" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Gradient descent can find the basin of a good global minimum</span>
-<span id="cb2-245"><a href="#cb2-245" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-246"><a href="#cb2-246" aria-hidden="true" tabindex="-1"></a>**Later stages (small $\sigma$)**:</span>
-<span id="cb2-247"><a href="#cb2-247" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>As $\sigma_i \to 0$, the smoothed objective converges to the true loss $J(\theta)$</span>
-<span id="cb2-248"><a href="#cb2-248" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The optimization becomes more precise</span>
-<span id="cb2-249"><a href="#cb2-249" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Fine details and sharp features of the loss re-emerge</span>
-<span id="cb2-250"><a href="#cb2-250" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-251"><a href="#cb2-251" aria-hidden="true" tabindex="-1"></a><span class="fu">### Benefits</span></span>
-<span id="cb2-252"><a href="#cb2-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-253"><a href="#cb2-253" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Escapes poor local minima**: Smoothing removes small, shallow minima</span>
-<span id="cb2-254"><a href="#cb2-254" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Reduces gradient noise**: Averaging over nearby parameters stabilizes gradients</span>
-<span id="cb2-255"><a href="#cb2-255" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**More stable convergence**: Gradual transition prevents sudden jumps in the loss landscape</span>
-<span id="cb2-256"><a href="#cb2-256" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Better final solution**: Guides optimization toward broader, more robust minima</span>
-<span id="cb2-257"><a href="#cb2-257" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-258"><a href="#cb2-258" aria-hidden="true" tabindex="-1"></a><span class="fu">### Practical Considerations</span></span>
-<span id="cb2-259"><a href="#cb2-259" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-260"><a href="#cb2-260" aria-hidden="true" tabindex="-1"></a>**Computational cost**: Evaluating $\mathbb{E}_{\theta'}<span class="co">[</span><span class="ot">J(\theta')</span><span class="co">]</span>$ requires sampling multiple $\theta'$ values, making each step expensive.</span>
-<span id="cb2-261"><a href="#cb2-261" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-262"><a href="#cb2-262" aria-hidden="true" tabindex="-1"></a>**Approximations**:</span>
-<span id="cb2-263"><a href="#cb2-263" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Finite samples**: Approximate the expectation with a small number of Monte Carlo samples</span>
-<span id="cb2-264"><a href="#cb2-264" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Deterministic annealing**: Use a predefined schedule for $\sigma_i$ that decreases over time</span>
-<span id="cb2-265"><a href="#cb2-265" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Adaptive scheduling**: Adjust $\sigma_i$ based on convergence metrics (e.g., gradient norm)</span>
-<span id="cb2-266"><a href="#cb2-266" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-267"><a href="#cb2-267" aria-hidden="true" tabindex="-1"></a>**Connection to other methods**:</span>
-<span id="cb2-268"><a href="#cb2-268" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Simulated annealing**: Similar idea of starting with high "temperature" (randomness) and cooling</span>
-<span id="cb2-269"><a href="#cb2-269" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Curriculum learning**: Start with easier examples and gradually introduce harder ones</span>
-<span id="cb2-270"><a href="#cb2-270" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Gaussian smoothing in computer vision**: Blurring images to remove noise</span>
-<span id="cb2-271"><a href="#cb2-271" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-272"><a href="#cb2-272" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb2-273"><a href="#cb2-273" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-274"><a href="#cb2-274" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary</span></span>
-<span id="cb2-275"><a href="#cb2-275" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-276"><a href="#cb2-276" aria-hidden="true" tabindex="-1"></a>These meta-algorithms operate at a higher level than basic optimizers:</span>
-<span id="cb2-277"><a href="#cb2-277" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-278"><a href="#cb2-278" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Strategy** | **Key Idea** | **When to Use** <span class="pp">|</span></span>
-<span id="cb2-279"><a href="#cb2-279" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|-------------|----------------|</span></span>
-<span id="cb2-280"><a href="#cb2-280" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Batch Normalization** <span class="pp">|</span> Normalize activations to stabilize training <span class="pp">|</span> Deep networks, high learning rates <span class="pp">|</span></span>
-<span id="cb2-281"><a href="#cb2-281" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Coordinate Descent** <span class="pp">|</span> Optimize one variable/block at a time <span class="pp">|</span> Separable problems, closed-form sub-problems <span class="pp">|</span></span>
-<span id="cb2-282"><a href="#cb2-282" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Polyak Averaging** <span class="pp">|</span> Smooth parameter trajectory via averaging <span class="pp">|</span> Noisy optimization, better final models <span class="pp">|</span></span>
-<span id="cb2-283"><a href="#cb2-283" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Supervised Pretraining** <span class="pp">|</span> Train layers greedily, then fine-tune <span class="pp">|</span> Very deep networks, transfer learning <span class="pp">|</span></span>
-<span id="cb2-284"><a href="#cb2-284" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Continuation Methods** <span class="pp">|</span> Start with smoothed objective, gradually sharpen <span class="pp">|</span> Highly non-convex losses, many local minima <span class="pp">|</span></span>
-<span id="cb2-285"><a href="#cb2-285" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-286"><a href="#cb2-286" aria-hidden="true" tabindex="-1"></a>**Combining strategies**: These techniques are complementary and can be used together:</span>
-<span id="cb2-287"><a href="#cb2-287" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Batch normalization + Polyak averaging for stable training</span>
-<span id="cb2-288"><a href="#cb2-288" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Pretraining + continuation methods for difficult initializations</span>
-<span id="cb2-289"><a href="#cb2-289" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Coordinate descent + Polyak averaging for sparse coding problems</span>
-<span id="cb2-290"><a href="#cb2-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-291"><a href="#cb2-291" aria-hidden="true" tabindex="-1"></a>The choice of strategy depends on the problem structure, computational budget, and desired properties of the solution.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a>    a --&gt; b --&gt; c --&gt; d</span>
+<span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a>**Steps**:</span>
+<span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**(a)** Train a shallow network: $x \to h_1 \to y$</span>
+<span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**(b)** Freeze $h_1$, add new output heads to verify it learned good features</span>
+<span id="cb2-202"><a href="#cb2-202" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**(c)** Add second layer $h_2$ on top of frozen $h_1$, train new layer: $x \to h_1 \to h_2 \to y$</span>
+<span id="cb2-203"><a href="#cb2-203" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**(d)** **Fine-tune**: Jointly optimize all layers end-to-end</span>
+<span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a><span class="fu">### Why Pretraining Helps</span></span>
+<span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Better initialization**: Each layer starts from meaningful features, not random weights</span>
+<span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Easier optimization**: Training one layer at a time is simpler than training all layers jointly</span>
+<span id="cb2-209"><a href="#cb2-209" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Better representations**: Lower layers learn general features that help higher layers</span>
+<span id="cb2-210"><a href="#cb2-210" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Prevents poor local minima**: Greedy initialization guides the network toward better regions</span>
+<span id="cb2-211"><a href="#cb2-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-212"><a href="#cb2-212" aria-hidden="true" tabindex="-1"></a>**Historical context**: Pretraining was crucial for training deep networks before the advent of:</span>
+<span id="cb2-213"><a href="#cb2-213" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Batch normalization</span>
+<span id="cb2-214"><a href="#cb2-214" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Residual connections</span>
+<span id="cb2-215"><a href="#cb2-215" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Better initialization schemes (e.g., He initialization)</span>
+<span id="cb2-216"><a href="#cb2-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-217"><a href="#cb2-217" aria-hidden="true" tabindex="-1"></a>**Modern usage**: Still useful for:</span>
+<span id="cb2-218"><a href="#cb2-218" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Transfer learning**: Pretrain on large dataset, fine-tune on small target task</span>
+<span id="cb2-219"><a href="#cb2-219" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Domain adaptation**: Pretrain on source domain, adapt to target domain</span>
+<span id="cb2-220"><a href="#cb2-220" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Few-shot learning**: Pretrain general features, quickly adapt to new tasks</span>
+<span id="cb2-221"><a href="#cb2-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-222"><a href="#cb2-222" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb2-223"><a href="#cb2-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-224"><a href="#cb2-224" aria-hidden="true" tabindex="-1"></a><span class="fu">## Continuation Methods</span></span>
+<span id="cb2-225"><a href="#cb2-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-226"><a href="#cb2-226" aria-hidden="true" tabindex="-1"></a>Continuation methods solve difficult optimization problems by first optimizing an **easier, smoothed version** of the objective, then gradually transforming it into the **true objective**.</span>
+<span id="cb2-227"><a href="#cb2-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-228"><a href="#cb2-228" aria-hidden="true" tabindex="-1"></a><span class="fu">### Mathematical Formulation</span></span>
+<span id="cb2-229"><a href="#cb2-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-230"><a href="#cb2-230" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-231"><a href="#cb2-231" aria-hidden="true" tabindex="-1"></a>J^{(i)}(\theta) = \mathbb{E}_{\theta' \sim \mathcal{N}(\theta', \theta, \sigma_i^2)} <span class="co">[</span><span class="ot">J(\theta')</span><span class="co">]</span> \tag{8.40}</span>
+<span id="cb2-232"><a href="#cb2-232" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-233"><a href="#cb2-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-234"><a href="#cb2-234" aria-hidden="true" tabindex="-1"></a>This formula smooths the loss by:</span>
+<span id="cb2-235"><a href="#cb2-235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-236"><a href="#cb2-236" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Sampling nearby parameters**: Draw $\theta' \sim \mathcal{N}(\theta, \sigma_i^2)$ from a Gaussian centered at $\theta$</span>
+<span id="cb2-237"><a href="#cb2-237" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Averaging their losses**: Compute $\mathbb{E}<span class="co">[</span><span class="ot">J(\theta')</span><span class="co">]</span>$ by taking the expectation over the Gaussian neighborhood</span>
+<span id="cb2-238"><a href="#cb2-238" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Gradually reducing $\sigma_i$**: Start with large $\sigma_0$ (very smooth) and decrease toward $\sigma_{\text{final}} \approx 0$ (original loss)</span>
+<span id="cb2-239"><a href="#cb2-239" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-240"><a href="#cb2-240" aria-hidden="true" tabindex="-1"></a>**Interpretation**: This is equivalent to **convolving the loss landscape** with a Gaussian kernel of variance $\sigma_i^2$.</span>
+<span id="cb2-241"><a href="#cb2-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-242"><a href="#cb2-242" aria-hidden="true" tabindex="-1"></a><span class="fu">### Intuition</span></span>
+<span id="cb2-243"><a href="#cb2-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-244"><a href="#cb2-244" aria-hidden="true" tabindex="-1"></a>**Early stages (large $\sigma$)**:</span>
+<span id="cb2-245"><a href="#cb2-245" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The smoothed objective $J^{(i)}(\theta)$ blurs out small local minima and sharp valleys</span>
+<span id="cb2-246"><a href="#cb2-246" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The loss landscape becomes easier to navigate</span>
+<span id="cb2-247"><a href="#cb2-247" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Gradient descent can find the basin of a good global minimum</span>
+<span id="cb2-248"><a href="#cb2-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-249"><a href="#cb2-249" aria-hidden="true" tabindex="-1"></a>**Later stages (small $\sigma$)**:</span>
+<span id="cb2-250"><a href="#cb2-250" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>As $\sigma_i \to 0$, the smoothed objective converges to the true loss $J(\theta)$</span>
+<span id="cb2-251"><a href="#cb2-251" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The optimization becomes more precise</span>
+<span id="cb2-252"><a href="#cb2-252" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Fine details and sharp features of the loss re-emerge</span>
+<span id="cb2-253"><a href="#cb2-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-254"><a href="#cb2-254" aria-hidden="true" tabindex="-1"></a><span class="fu">### Benefits</span></span>
+<span id="cb2-255"><a href="#cb2-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-256"><a href="#cb2-256" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Escapes poor local minima**: Smoothing removes small, shallow minima</span>
+<span id="cb2-257"><a href="#cb2-257" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Reduces gradient noise**: Averaging over nearby parameters stabilizes gradients</span>
+<span id="cb2-258"><a href="#cb2-258" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**More stable convergence**: Gradual transition prevents sudden jumps in the loss landscape</span>
+<span id="cb2-259"><a href="#cb2-259" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Better final solution**: Guides optimization toward broader, more robust minima</span>
+<span id="cb2-260"><a href="#cb2-260" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-261"><a href="#cb2-261" aria-hidden="true" tabindex="-1"></a><span class="fu">### Practical Considerations</span></span>
+<span id="cb2-262"><a href="#cb2-262" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-263"><a href="#cb2-263" aria-hidden="true" tabindex="-1"></a>**Computational cost**: Evaluating $\mathbb{E}_{\theta'}<span class="co">[</span><span class="ot">J(\theta')</span><span class="co">]</span>$ requires sampling multiple $\theta'$ values, making each step expensive.</span>
+<span id="cb2-264"><a href="#cb2-264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-265"><a href="#cb2-265" aria-hidden="true" tabindex="-1"></a>**Approximations**:</span>
+<span id="cb2-266"><a href="#cb2-266" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Finite samples**: Approximate the expectation with a small number of Monte Carlo samples</span>
+<span id="cb2-267"><a href="#cb2-267" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Deterministic annealing**: Use a predefined schedule for $\sigma_i$ that decreases over time</span>
+<span id="cb2-268"><a href="#cb2-268" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Adaptive scheduling**: Adjust $\sigma_i$ based on convergence metrics (e.g., gradient norm)</span>
+<span id="cb2-269"><a href="#cb2-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-270"><a href="#cb2-270" aria-hidden="true" tabindex="-1"></a>**Connection to other methods**:</span>
+<span id="cb2-271"><a href="#cb2-271" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Simulated annealing**: Similar idea of starting with high "temperature" (randomness) and cooling</span>
+<span id="cb2-272"><a href="#cb2-272" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Curriculum learning**: Start with easier examples and gradually introduce harder ones</span>
+<span id="cb2-273"><a href="#cb2-273" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Gaussian smoothing in computer vision**: Blurring images to remove noise</span>
+<span id="cb2-274"><a href="#cb2-274" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-275"><a href="#cb2-275" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb2-276"><a href="#cb2-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-277"><a href="#cb2-277" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary</span></span>
+<span id="cb2-278"><a href="#cb2-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-279"><a href="#cb2-279" aria-hidden="true" tabindex="-1"></a>These meta-algorithms operate at a higher level than basic optimizers:</span>
+<span id="cb2-280"><a href="#cb2-280" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-281"><a href="#cb2-281" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Strategy** | **Key Idea** | **When to Use** <span class="pp">|</span></span>
+<span id="cb2-282"><a href="#cb2-282" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|-------------|----------------|</span></span>
+<span id="cb2-283"><a href="#cb2-283" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Batch Normalization** <span class="pp">|</span> Normalize activations to stabilize training <span class="pp">|</span> Deep networks, high learning rates <span class="pp">|</span></span>
+<span id="cb2-284"><a href="#cb2-284" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Coordinate Descent** <span class="pp">|</span> Optimize one variable/block at a time <span class="pp">|</span> Separable problems, closed-form sub-problems <span class="pp">|</span></span>
+<span id="cb2-285"><a href="#cb2-285" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Polyak Averaging** <span class="pp">|</span> Smooth parameter trajectory via averaging <span class="pp">|</span> Noisy optimization, better final models <span class="pp">|</span></span>
+<span id="cb2-286"><a href="#cb2-286" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Supervised Pretraining** <span class="pp">|</span> Train layers greedily, then fine-tune <span class="pp">|</span> Very deep networks, transfer learning <span class="pp">|</span></span>
+<span id="cb2-287"><a href="#cb2-287" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Continuation Methods** <span class="pp">|</span> Start with smoothed objective, gradually sharpen <span class="pp">|</span> Highly non-convex losses, many local minima <span class="pp">|</span></span>
+<span id="cb2-288"><a href="#cb2-288" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-289"><a href="#cb2-289" aria-hidden="true" tabindex="-1"></a>**Combining strategies**: These techniques are complementary and can be used together:</span>
+<span id="cb2-290"><a href="#cb2-290" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Batch normalization + Polyak averaging for stable training</span>
+<span id="cb2-291"><a href="#cb2-291" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Pretraining + continuation methods for difficult initializations</span>
+<span id="cb2-292"><a href="#cb2-292" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Coordinate descent + Polyak averaging for sparse coding problems</span>
+<span id="cb2-293"><a href="#cb2-293" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-294"><a href="#cb2-294" aria-hidden="true" tabindex="-1"></a>The choice of strategy depends on the problem structure, computational budget, and desired properties of the solution.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

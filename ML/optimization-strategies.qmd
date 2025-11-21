@@ -118,22 +118,25 @@ This objective learns a sparse representation:
 
 The sparsity constraint prevents ill-conditioning (e.g., arbitrarily large $W$ with tiny $H$ values).
 
-### When Coordinate Descent Fails
+### When Coordinate Descent Is Inefficient
 
-Coordinate descent struggles when variables are **strongly coupled**. For example:
+Coordinate descent can be **slow** when variables are strongly coupled, even though it still converges. For convex quadratic functions, the convergence rate depends on how elongated the level curves are.
 
-$$
-f(x) = (x_1 - x_2)^2 + \alpha (x_1^2 + x_2^2)
-$$
+**Example**: For $f(x_1, x_2) = (x_1 - x_2)^2 + \alpha(x_1^2 + x_2^2)$ with optimal solution $(0, 0)$:
 
-The optimal solution is $x_1^* = x_2^* = 0$. However:
+- **Per-coordinate updates**:
+  - $x_1 = \frac{x_2}{1+\alpha}$ (minimizing over $x_1$ while fixing $x_2$)
+  - $x_2 = \frac{x_1}{1+\alpha}$ (minimizing over $x_2$ while fixing $x_1$)
 
-- **Optimizing $x_1$ while fixing $x_2$**: Minimum occurs at $x_1 = x_2$
-- **Optimizing $x_2$ while fixing $x_1$**: Minimum occurs at $x_2 = x_1$
+- Each full cycle multiplies both coordinates by $\frac{1}{1+\alpha}$, so coordinate descent **does converge** to $(0,0)$, but the convergence is only **linear** (geometric).
 
-If starting from $x_1 \neq x_2$, coordinate descent **cannot converge to the global minimum** $(0, 0)$ because the constraint $x_1 = x_2$ prevents reaching the origin. The method gets stuck in a suboptimal solution.
+**When coordinate descent truly fails**:
 
-**Key insight**: When the optimal value of one variable depends strongly on another, joint optimization (e.g., gradient descent on both variables) is needed.
+1. **Non-smooth objectives**: For $f(x_1, x_2) = |x_1 - x_2|$, the derivative is undefined at the minimum, preventing coordinate descent from finding the exact solution.
+
+2. **Degenerate problems**: For $f(x_1, x_2) = x_1^2$, the minimum forms a line ($x_1 = 0$, any $x_2$). Coordinate descent on $x_2$ makes no progress since $f$ doesn't depend on $x_2$.
+
+**Key insight**: Coordinate descent works best when the problem is **well-conditioned** and **separable**. For strongly coupled or ill-conditioned problems, joint optimization methods (e.g., conjugate gradient, Newton's method) converge much faster.
 
 ---
 
