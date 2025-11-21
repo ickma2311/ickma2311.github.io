@@ -277,6 +277,10 @@ window.Quarto = {
     <a class="dropdown-item" href="../ML/second-order-methods.html">
  <span class="dropdown-text">Chapter 8.6: Second-Order Methods</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../ML/optimization-strategies.html">
+ <span class="dropdown-text">Chapter 8.7: Optimization Strategies</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -402,6 +406,14 @@ window.Quarto = {
         <li>
     <a class="dropdown-item" href="../Math/MIT18.06/mit1806-lecture25-symmetric-positive-definite.html">
  <span class="dropdown-text">Lecture 25: Symmetric &amp; Positive Definite</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Math/MIT18.06/mit1806-lecture26-complex-matrices-fft.html">
+ <span class="dropdown-text">Lecture 26: Complex Matrices &amp; FFT</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Math/MIT18.06/mit1806-lecture27-positive-definite-minima.html">
+ <span class="dropdown-text">Lecture 27: Positive Definite &amp; Minima</span></a>
   </li>  
     </ul>
   </li>
@@ -741,19 +753,46 @@ d_t^{\top}Ad_{t-1} = 0 \tag{1}
 \]</span></p>
 <p><strong>Step 3</strong>: Solve for <span class="math inline">\(\beta_t\)</span>:</p>
 <p><span class="math display">\[
-\beta_t = \frac{g_t^{\top}Ad_{t-1}}{d_{t-1}^{\top}Ad_{t-1}} \tag{3}
+\beta_t = \frac{g_t^{\top}\cancel{Ad_{t-1}}}{d_{t-1}^{\top}\cancel{Ad_{t-1}}} \tag{3}
 \]</span></p>
-<p><strong>Step 4</strong>: Apply orthogonality properties from exact line search:</p>
-<p>Under a quadratic objective with exact line search:</p>
-<ol type="1">
-<li>The new gradient is A-orthogonal to the previous direction: <span class="math inline">\(g_t^{\top}Ad_{t-1} = 0\)</span></li>
-<li>The previous direction is parallel to the previous gradient: <span class="math inline">\(d_{t-1} \propto -g_{t-1}\)</span></li>
-</ol>
-<p>Using these properties:</p>
+<p><strong>Step 4</strong>: Replace <span class="math inline">\(Ad_{t-1}\)</span> using gradient update properties:</p>
+<p>Under a quadratic objective with exact line search, the gradient evolves as:</p>
+<p><span class="math display">\[
+g_t = g_{t-1} + \alpha_{t-1}Ad_{t-1}
+\]</span></p>
+<p>where <span class="math inline">\(\alpha_{t-1}\)</span> is the step size from the previous iteration.</p>
+<p>This gives us:</p>
+<p><span class="math display">\[
+Ad_{t-1} = \frac{1}{\alpha_{t-1}}(g_t - g_{t-1})
+\]</span></p>
+<p>Additionally, exact line search ensures:</p>
+<p><span class="math display">\[
+g_t^{\top}d_{t-1} = 0
+\]</span></p>
+<p>(the new gradient is orthogonal to the previous search direction).</p>
+<p><strong>Step 5</strong>: Substitute <span class="math inline">\(Ad_{t-1}\)</span> in equation (3):</p>
+<p><span class="math display">\[
+\beta_t = \frac{g_t^{\top}\left(\frac{1}{\alpha_{t-1}}(g_t - g_{t-1})\right)}{d_{t-1}^{\top}\left(\frac{1}{\alpha_{t-1}}(g_t - g_{t-1})\right)}
+\]</span></p>
+<p>The factor <span class="math inline">\(\frac{1}{\alpha_{t-1}}\)</span> cancels:</p>
+<p><span class="math display">\[
+\beta_t = \frac{g_t^{\top}(g_t - g_{t-1})}{d_{t-1}^{\top}(g_t - g_{t-1})}
+\]</span></p>
+<p><strong>Step 6</strong>: Apply the orthogonality condition <span class="math inline">\(g_t^{\top}d_{t-1} = 0\)</span>:</p>
+<p>In the numerator:</p>
+<p><span class="math display">\[
+g_t^{\top}(g_t - g_{t-1}) = g_t^{\top}g_t - g_t^{\top}g_{t-1}
+\]</span></p>
+<p>In the denominator, using <span class="math inline">\(g_t^{\top}d_{t-1} = 0\)</span>:</p>
+<p><span class="math display">\[
+d_{t-1}^{\top}(g_t - g_{t-1}) = d_{t-1}^{\top}g_t - d_{t-1}^{\top}g_{t-1} = 0 - d_{t-1}^{\top}g_{t-1} = -d_{t-1}^{\top}g_{t-1}
+\]</span></p>
+<p>Since <span class="math inline">\(d_{t-1} = -g_{t-1} + \beta_{t-1}d_{t-2}\)</span> and by repeated application of orthogonality, we have <span class="math inline">\(d_{t-1}^{\top}g_{t-1} \propto -g_{t-1}^{\top}g_{t-1}\)</span>.</p>
+<p>This yields:</p>
 <p><span class="math display">\[
 \beta_t = \frac{g_t^{\top}g_t}{g_{t-1}^{\top}g_{t-1}}
 \]</span></p>
-<p>This is the Fletcher-Reeves formula. The apparent “cancellation” of <span class="math inline">\(Ad_{t-1}\)</span> is not arbitrary—it results from the orthogonality structure of exact line search on quadratic functions.</p>
+<p>This is the Fletcher-Reeves formula. The derivation shows how the curvature term <span class="math inline">\(Ad_{t-1}\)</span> is replaced by the change in gradients <span class="math inline">\((g_t - g_{t-1})\)</span>, which then simplifies using the orthogonality property <span class="math inline">\(g_t^{\top}d_{t-1} = 0\)</span> from exact line search.</p>
 </section>
 <section id="computing-beta_t-polak-ribière" class="level3">
 <h3 class="anchored" data-anchor-id="computing-beta_t-polak-ribière">Computing <span class="math inline">\(\beta_t\)</span>: Polak-Ribière</h3>

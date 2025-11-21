@@ -1,0 +1,291 @@
+---
+title: "Chapter 8.7: Optimization Strategies and Meta-Algorithms"
+author: "Chao Ma"
+date: "2025-11-20"
+categories: [Deep Learning, Optimization, Batch Normalization, Coordinate Descent, Polyak Averaging, Pretraining, Continuation Methods]
+description: "Advanced optimization strategies and meta-algorithms: batch normalization, coordinate descent, Polyak averaging, supervised pretraining, and continuation methods that enhance training efficiency and stability"
+---
+
+## Overview
+
+This section covers advanced optimization strategies and meta-algorithms that enhance training efficiency and stability:
+
+- **Batch Normalization**: Normalizing intermediate activations to stabilize training
+- **Coordinate Descent**: Decomposing optimization into simpler sub-problems
+- **Polyak Averaging**: Smoothing parameter trajectories for better convergence
+- **Supervised Pretraining**: Greedy layer-wise initialization for deep networks
+- **Continuation Methods**: Gradually transitioning from easy to hard optimization problems
+
+These meta-algorithms provide higher-level strategies that can be combined with basic optimizers like SGD or Adam.
+
+---
+
+## Batch Normalization
+
+Batch normalization normalizes the activations of each layer to have zero mean and unit variance across the mini-batch. This stabilizes training by reducing internal covariate shift and allows higher learning rates.
+
+### Normalization Formula
+
+For a layer's activations $H$, the normalized output is:
+
+$$
+H' = \frac{H - \mu}{\sigma} \tag{8.35}
+$$
+
+where:
+
+- **$\mu$**: The batch mean
+
+  $$
+  \mu = \frac{1}{m} \sum_{i=1}^{m} H_i
+  $$
+
+- **$\sigma$**: The batch standard deviation
+
+  $$
+  \sigma = \sqrt{\delta + \frac{1}{m} \sum_{i=1}^{m} (H_i - \mu)^2}
+  $$
+
+  The small constant $\delta$ (typically $10^{-5}$) prevents division by zero.
+
+### Learnable Parameters
+
+Batch normalization introduces two learnable parameters per feature:
+
+- **$\gamma$**: The **scale parameter** that controls the variance
+- **$\beta$**: The **shift parameter** that controls the mean
+
+The final batch-normalized output is:
+
+$$
+\hat{H} = \gamma \cdot \frac{H - \mu}{\sigma} + \beta
+$$
+
+**Why learnable parameters?**
+
+These parameters allow the network to undo the normalization if needed. For example:
+- Setting $\gamma = \sigma$ and $\beta = \mu$ recovers the original unnormalized activations
+- The network can learn the optimal mean and variance for each layer
+- This ensures normalization doesn't limit the expressive power of the network
+
+**Benefits**:
+1. **Faster training**: Reduces internal covariate shift, allowing higher learning rates
+2. **Better gradient flow**: Prevents vanishing/exploding gradients in deep networks
+3. **Regularization effect**: Mini-batch statistics introduce noise, acting as implicit regularization
+4. **Reduced sensitivity**: Less dependence on careful weight initialization
+
+---
+
+## Coordinate Descent
+
+Coordinate descent optimizes a complex multi-variable function by breaking it into simpler single-variable problems.
+
+### Algorithm
+
+Instead of updating all parameters simultaneously, coordinate descent:
+
+1. **Fixes** all variables except one ($x_i$)
+2. **Minimizes** the objective function with respect to $x_i$
+3. **Cycles** through all variables, repeating the process
+
+**Block Coordinate Descent**: A generalization where we optimize a **subset (block)** of variables jointly at each step, rather than just one variable.
+
+### When Coordinate Descent Works Well
+
+Coordinate descent is effective when:
+
+1. **Variables are separable**: The problem can be naturally partitioned into independent groups
+2. **Sub-problems are easier**: Optimizing one subset is much simpler than the full problem
+3. **Closed-form solutions exist**: Each sub-problem can be solved analytically
+
+### Example: Sparse Coding
+
+$$
+J(H, W) = \sum_{i,j} |H_{i,j}| + \sum_{i,j} (X - W^\top H)_{i,j}^2 \tag{8.38}
+$$
+
+This objective learns a sparse representation:
+
+- **$X$**: Input data (observations)
+- **$W$**: Dictionary matrix (basis vectors)
+- **$H$**: Sparse activation matrix (coefficients)
+- **First term**: $\ell_1$ regularization encourages sparsity in $H$
+- **Second term**: Reconstruction error measures how well $W^\top H$ approximates $X$
+
+**Coordinate descent strategy**:
+1. **Fix $W$, optimize $H$**: This becomes a LASSO problem with a closed-form solution
+2. **Fix $H$, optimize $W$**: This becomes a least-squares problem, also solvable analytically
+
+The sparsity constraint prevents ill-conditioning (e.g., arbitrarily large $W$ with tiny $H$ values).
+
+### When Coordinate Descent Fails
+
+Coordinate descent struggles when variables are **strongly coupled**. For example:
+
+$$
+f(x) = (x_1 - x_2)^2 + \alpha (x_1^2 + x_2^2)
+$$
+
+The optimal solution is $x_1^* = x_2^* = 0$. However:
+
+- **Optimizing $x_1$ while fixing $x_2$**: Minimum occurs at $x_1 = x_2$
+- **Optimizing $x_2$ while fixing $x_1$**: Minimum occurs at $x_2 = x_1$
+
+If starting from $x_1 \neq x_2$, coordinate descent **cannot converge to the global minimum** $(0, 0)$ because the constraint $x_1 = x_2$ prevents reaching the origin. The method gets stuck in a suboptimal solution.
+
+**Key insight**: When the optimal value of one variable depends strongly on another, joint optimization (e.g., gradient descent on both variables) is needed.
+
+---
+
+## Polyak Averaging
+
+Polyak averaging smooths the optimization trajectory by maintaining an exponential moving average of parameter values.
+
+### Formula
+
+$$
+\hat{\theta}^{(t)} = \alpha \hat{\theta}^{(t-1)} + (1 - \alpha) \theta^{(t)} \tag{8.39}
+$$
+
+where:
+- **$\theta^{(t)}$**: Current parameter values at iteration $t$
+- **$\hat{\theta}^{(t)}$**: Averaged parameter values
+- **$\alpha$**: Momentum coefficient (typically 0.9 or 0.99)
+
+### Why Averaging Helps
+
+**Problem**: Stochastic gradient descent oscillates around the optimum due to gradient noise from mini-batches.
+
+**Solution**: The averaged parameters $\hat{\theta}$ lie closer to the true minimum than any individual iterate $\theta^{(t)}$.
+
+**Geometric interpretation**:
+- SGD follows a noisy path that zigzags around the optimum
+- Polyak averaging smooths this path by averaging out the oscillations
+- The result is a more stable estimate of the optimal parameters
+
+**Practical benefits**:
+1. **Better generalization**: Averaged parameters often generalize better than final iterates
+2. **Reduced variance**: Smoothing removes high-frequency noise in the parameter trajectory
+3. **Free improvement**: No additional hyperparameter tuning required
+
+**Implementation note**: In practice, start averaging after an initial burn-in period to avoid biasing the average with early, poorly-initialized parameters.
+
+---
+
+## Supervised Pretraining
+
+When optimizing a very deep or complex model is difficult, we can first train simpler versions and use them to initialize the full model.
+
+### Greedy Layer-wise Pretraining
+
+**Strategy**: Train the network one layer at a time, where each layer learns a useful representation before adding the next layer.
+
+**Algorithm**:
+
+```mermaid
+flowchart LR
+    a["(a) x -> h1 -> y"]
+    b["(b) x -> h1 (frozen) -> y_old, y_new"]
+    c["(c) x -> h1 (frozen) -> h2 -> y"]
+    d["(d) x -> h1 -> h2 -> y (fine-tune)"]
+
+    a --> b --> c --> d
+```
+
+**Steps**:
+
+1. **(a)** Train a shallow network: $x \to h_1 \to y$
+2. **(b)** Freeze $h_1$, add new output heads to verify it learned good features
+3. **(c)** Add second layer $h_2$ on top of frozen $h_1$, train new layer: $x \to h_1 \to h_2 \to y$
+4. **(d)** **Fine-tune**: Jointly optimize all layers end-to-end
+
+### Why Pretraining Helps
+
+1. **Better initialization**: Each layer starts from meaningful features, not random weights
+2. **Easier optimization**: Training one layer at a time is simpler than training all layers jointly
+3. **Better representations**: Lower layers learn general features that help higher layers
+4. **Prevents poor local minima**: Greedy initialization guides the network toward better regions
+
+**Historical context**: Pretraining was crucial for training deep networks before the advent of:
+- Batch normalization
+- Residual connections
+- Better initialization schemes (e.g., He initialization)
+
+**Modern usage**: Still useful for:
+- **Transfer learning**: Pretrain on large dataset, fine-tune on small target task
+- **Domain adaptation**: Pretrain on source domain, adapt to target domain
+- **Few-shot learning**: Pretrain general features, quickly adapt to new tasks
+
+---
+
+## Continuation Methods
+
+Continuation methods solve difficult optimization problems by first optimizing an **easier, smoothed version** of the objective, then gradually transforming it into the **true objective**.
+
+### Mathematical Formulation
+
+$$
+J^{(i)}(\theta) = \mathbb{E}_{\theta' \sim \mathcal{N}(\theta', \theta, \sigma_i^2)} [J(\theta')] \tag{8.40}
+$$
+
+This formula smooths the loss by:
+
+1. **Sampling nearby parameters**: Draw $\theta' \sim \mathcal{N}(\theta, \sigma_i^2)$ from a Gaussian centered at $\theta$
+2. **Averaging their losses**: Compute $\mathbb{E}[J(\theta')]$ by taking the expectation over the Gaussian neighborhood
+3. **Gradually reducing $\sigma_i$**: Start with large $\sigma_0$ (very smooth) and decrease toward $\sigma_{\text{final}} \approx 0$ (original loss)
+
+**Interpretation**: This is equivalent to **convolving the loss landscape** with a Gaussian kernel of variance $\sigma_i^2$.
+
+### Intuition
+
+**Early stages (large $\sigma$)**:
+- The smoothed objective $J^{(i)}(\theta)$ blurs out small local minima and sharp valleys
+- The loss landscape becomes easier to navigate
+- Gradient descent can find the basin of a good global minimum
+
+**Later stages (small $\sigma$)**:
+- As $\sigma_i \to 0$, the smoothed objective converges to the true loss $J(\theta)$
+- The optimization becomes more precise
+- Fine details and sharp features of the loss re-emerge
+
+### Benefits
+
+1. **Escapes poor local minima**: Smoothing removes small, shallow minima
+2. **Reduces gradient noise**: Averaging over nearby parameters stabilizes gradients
+3. **More stable convergence**: Gradual transition prevents sudden jumps in the loss landscape
+4. **Better final solution**: Guides optimization toward broader, more robust minima
+
+### Practical Considerations
+
+**Computational cost**: Evaluating $\mathbb{E}_{\theta'}[J(\theta')]$ requires sampling multiple $\theta'$ values, making each step expensive.
+
+**Approximations**:
+- **Finite samples**: Approximate the expectation with a small number of Monte Carlo samples
+- **Deterministic annealing**: Use a predefined schedule for $\sigma_i$ that decreases over time
+- **Adaptive scheduling**: Adjust $\sigma_i$ based on convergence metrics (e.g., gradient norm)
+
+**Connection to other methods**:
+- **Simulated annealing**: Similar idea of starting with high "temperature" (randomness) and cooling
+- **Curriculum learning**: Start with easier examples and gradually introduce harder ones
+- **Gaussian smoothing in computer vision**: Blurring images to remove noise
+
+---
+
+## Summary
+
+These meta-algorithms operate at a higher level than basic optimizers:
+
+| **Strategy** | **Key Idea** | **When to Use** |
+|-------------|-------------|----------------|
+| **Batch Normalization** | Normalize activations to stabilize training | Deep networks, high learning rates |
+| **Coordinate Descent** | Optimize one variable/block at a time | Separable problems, closed-form sub-problems |
+| **Polyak Averaging** | Smooth parameter trajectory via averaging | Noisy optimization, better final models |
+| **Supervised Pretraining** | Train layers greedily, then fine-tune | Very deep networks, transfer learning |
+| **Continuation Methods** | Start with smoothed objective, gradually sharpen | Highly non-convex losses, many local minima |
+
+**Combining strategies**: These techniques are complementary and can be used together:
+- Batch normalization + Polyak averaging for stable training
+- Pretraining + continuation methods for difficult initializations
+- Coordinate descent + Polyak averaging for sparse coding problems
+
+The choice of strategy depends on the problem structure, computational budget, and desired properties of the solution.
