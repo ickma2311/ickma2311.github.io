@@ -1,0 +1,85 @@
+---
+title: "Chapter 9.3: Pooling"
+author: "Chao Ma"
+date: "2025-11-24"
+categories: [Deep Learning, Convolutional Networks, Pooling, CNN Architecture]
+---
+
+## Overview
+
+This section explains the pooling operation in convolutional neural networks:
+
+- **Local translation invariance**: How pooling makes networks insensitive to exact spatial locations
+- **Max pooling**: Downsampling by selecting maximum activations in neighborhoods
+- **CNN architectures**: Comparing no pooling, max pooling, and global average pooling approaches
+
+Pooling reduces spatial resolution while preserving important features, making CNNs more robust to translations.
+
+---
+
+![CNN architecture overview](CNN_components.png)
+*Figure: CNN components - convolution layers detect features, pooling layers aggregate and downsample, creating increasingly abstract representations.*
+
+## 1. Local Translation Invariance
+
+**Local translation invariance means that small shifts in the input produce nearly unchanged outputs.** After convolution and pooling, the representation becomes insensitive to the exact spatial location of features, responding mainly to whether a feature is present rather than where it appears within a small neighborhood.
+
+![Translation invariance through pooling](local_transition_invariant.png)
+*Figure: How pooling creates translation invariance - different detectors respond strongly to different shifted versions of the same pattern, but the pooling unit aggregates these responses into a single large output. Thus, even when the input '5' appears at different positions, the pooled representation remains nearly unchanged.*
+
+---
+
+## 2. Max Pooling
+
+**Pooling reduces the spatial resolution of feature maps by summarizing local neighborhoods** (e.g., via max or average). It makes the representation more robust to small translations, reduces sensitivity to exact pixel locations, and improves computational and statistical efficiency.
+
+![Max pooling operation](maxpooling.png)
+*Figure: Max pooling operation - the pooling window slides over the feature map, selecting the maximum value in each local neighborhood.*
+
+**"Max pooling downsamples the activations by summarizing each local neighborhood, so there are fewer pooling units than activation units."**
+
+![Downsampling effect](downsample.png)
+*Figure: Downsampling through max pooling - each pooling unit aggregates information from multiple detector units in the feature map, creating a more compact representation.*
+
+---
+
+## 3. CNN Architecture Structures
+
+![Three CNN architectures](structure.png)
+*Figure: Comparison of three CNN architectures - (left) strided convolutions without pooling, (middle) traditional max pooling network, (right) global average pooling network without fully connected layers.*
+
+### Left: No Pooling (Stride-Based Downsampling)
+
+This architecture removes pooling entirely and relies on **strided convolutions** to reduce spatial resolution.
+
+Each convolution layer computes features while simultaneously downsampling the image.
+
+After a few strided convolutions, the feature maps are flattened and fed into a fully connected classifier.
+
+**Key characteristic**: This design keeps the structure simple but usually requires more parameters in the classifier, since the flattened representation can be relatively large.
+
+---
+
+### Middle: Max Pooling Network
+
+This is the **classic CNN architecture** where pooling layers follow convolution layers.
+
+Max pooling discards precise spatial information while keeping the strongest local responses, reducing spatial resolution and achieving some translation invariance.
+
+After several conv-pool stages, the final feature maps are flattened and passed through fully connected layers.
+
+**Key characteristic**: This design is statistically efficient and was widely used in early CNNs, including LeNet and AlexNet.
+
+---
+
+### Right: Global Average Pooling (GAP) Network
+
+Instead of flattening or using dense layers, this architecture uses a **final convolution with as many channels as there are classes**.
+
+Each channel then becomes a class-specific activation map.
+
+**Global average pooling** collapses each map into a single scalar, producing one score per class.
+
+**Key advantage**: This removes the need for fully connected layers, greatly reducing parameters and improving robustness.
+
+GAP-based designs are common in modern architectures such as Network-in-Network and many variants of ResNet.
