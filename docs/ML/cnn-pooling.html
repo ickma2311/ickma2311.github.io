@@ -107,35 +107,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 <link rel="stylesheet" href="../styles.css">
 </head>
@@ -291,6 +262,10 @@ window.Quarto = {
         <li>
     <a class="dropdown-item" href="../ML/cnn-pooling.html">
  <span class="dropdown-text">Chapter 9.3: Pooling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../ML/cnn-infinitely-strong-prior.html">
+ <span class="dropdown-text">Chapter 9.4: Infinitely Strong Prior</span></a>
   </li>  
     </ul>
   </li>
@@ -489,41 +464,14 @@ window.Quarto = {
    
   <ul>
   <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#pooling-core-operation" id="toc-pooling-core-operation" class="nav-link" data-scroll-target="#pooling-core-operation">1. Pooling: Core Operation</a>
+  <li><a href="#local-translation-invariance" id="toc-local-translation-invariance" class="nav-link" data-scroll-target="#local-translation-invariance">1. Local Translation Invariance</a></li>
+  <li><a href="#max-pooling" id="toc-max-pooling" class="nav-link" data-scroll-target="#max-pooling">2. Max Pooling</a></li>
+  <li><a href="#cnn-architecture-structures" id="toc-cnn-architecture-structures" class="nav-link" data-scroll-target="#cnn-architecture-structures">3. CNN Architecture Structures</a>
   <ul class="collapse">
-  <li><a href="#why-pooling" id="toc-why-pooling" class="nav-link" data-scroll-target="#why-pooling">Why Pooling?</a></li>
+  <li><a href="#left-no-pooling-stride-based-downsampling" id="toc-left-no-pooling-stride-based-downsampling" class="nav-link" data-scroll-target="#left-no-pooling-stride-based-downsampling">Left: No Pooling (Stride-Based Downsampling)</a></li>
+  <li><a href="#middle-max-pooling-network" id="toc-middle-max-pooling-network" class="nav-link" data-scroll-target="#middle-max-pooling-network">Middle: Max Pooling Network</a></li>
+  <li><a href="#right-global-average-pooling-gap-network" id="toc-right-global-average-pooling-gap-network" class="nav-link" data-scroll-target="#right-global-average-pooling-gap-network">Right: Global Average Pooling (GAP) Network</a></li>
   </ul></li>
-  <li><a href="#local-translation-invariance" id="toc-local-translation-invariance" class="nav-link" data-scroll-target="#local-translation-invariance">2. Local Translation Invariance</a>
-  <ul class="collapse">
-  <li><a href="#definition" id="toc-definition" class="nav-link" data-scroll-target="#definition">Definition</a></li>
-  <li><a href="#how-pooling-creates-invariance" id="toc-how-pooling-creates-invariance" class="nav-link" data-scroll-target="#how-pooling-creates-invariance">How Pooling Creates Invariance</a></li>
-  <li><a href="#mathematical-interpretation" id="toc-mathematical-interpretation" class="nav-link" data-scroll-target="#mathematical-interpretation">Mathematical Interpretation</a></li>
-  </ul></li>
-  <li><a href="#max-pooling-operation" id="toc-max-pooling-operation" class="nav-link" data-scroll-target="#max-pooling-operation">3. Max Pooling Operation</a>
-  <ul class="collapse">
-  <li><a href="#definition-1" id="toc-definition-1" class="nav-link" data-scroll-target="#definition-1">Definition</a></li>
-  <li><a href="#common-configurations" id="toc-common-configurations" class="nav-link" data-scroll-target="#common-configurations">Common Configurations</a></li>
-  <li><a href="#properties-of-max-pooling" id="toc-properties-of-max-pooling" class="nav-link" data-scroll-target="#properties-of-max-pooling">Properties of Max Pooling</a></li>
-  <li><a href="#downsampling-effect" id="toc-downsampling-effect" class="nav-link" data-scroll-target="#downsampling-effect">Downsampling Effect</a></li>
-  </ul></li>
-  <li><a href="#alternative-pooling-operations" id="toc-alternative-pooling-operations" class="nav-link" data-scroll-target="#alternative-pooling-operations">4. Alternative Pooling Operations</a>
-  <ul class="collapse">
-  <li><a href="#average-pooling" id="toc-average-pooling" class="nav-link" data-scroll-target="#average-pooling">Average Pooling</a></li>
-  <li><a href="#l²-pooling" id="toc-l²-pooling" class="nav-link" data-scroll-target="#l²-pooling">L² Pooling</a></li>
-  <li><a href="#weighted-average-pooling" id="toc-weighted-average-pooling" class="nav-link" data-scroll-target="#weighted-average-pooling">Weighted Average Pooling</a></li>
-  </ul></li>
-  <li><a href="#cnn-architectures-pooling-strategies" id="toc-cnn-architectures-pooling-strategies" class="nav-link" data-scroll-target="#cnn-architectures-pooling-strategies">5. CNN Architectures: Pooling Strategies</a>
-  <ul class="collapse">
-  <li><a href="#architecture-1-no-pooling-stride-based-downsampling" id="toc-architecture-1-no-pooling-stride-based-downsampling" class="nav-link" data-scroll-target="#architecture-1-no-pooling-stride-based-downsampling">Architecture 1: No Pooling (Stride-Based Downsampling)</a></li>
-  <li><a href="#architecture-2-max-pooling-network" id="toc-architecture-2-max-pooling-network" class="nav-link" data-scroll-target="#architecture-2-max-pooling-network">Architecture 2: Max Pooling Network</a></li>
-  <li><a href="#architecture-3-global-average-pooling-gap-network" id="toc-architecture-3-global-average-pooling-gap-network" class="nav-link" data-scroll-target="#architecture-3-global-average-pooling-gap-network">Architecture 3: Global Average Pooling (GAP) Network</a></li>
-  </ul></li>
-  <li><a href="#pooling-vs-strided-convolutions" id="toc-pooling-vs-strided-convolutions" class="nav-link" data-scroll-target="#pooling-vs-strided-convolutions">6. Pooling vs Strided Convolutions</a>
-  <ul class="collapse">
-  <li><a href="#comparison-table" id="toc-comparison-table" class="nav-link" data-scroll-target="#comparison-table">Comparison Table</a></li>
-  <li><a href="#current-trends" id="toc-current-trends" class="nav-link" data-scroll-target="#current-trends">Current Trends</a></li>
-  </ul></li>
-  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
   </ul>
 </nav>
     </div>
@@ -571,297 +519,59 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
 <p>This section explains the pooling operation in convolutional neural networks:</p>
 <ul>
-<li><strong>Local translation invariance</strong>: Making networks insensitive to exact spatial locations</li>
-<li><strong>Max pooling</strong>: Downsampling by selecting maximum activations in local neighborhoods</li>
-<li><strong>Pooling benefits</strong>: Reduced computation, improved robustness, and approximate translation invariance</li>
-<li><strong>CNN architectures</strong>: Comparing different approaches to spatial downsampling</li>
+<li><strong>Local translation invariance</strong>: How pooling makes networks insensitive to exact spatial locations</li>
+<li><strong>Max pooling</strong>: Downsampling by selecting maximum activations in neighborhoods</li>
+<li><strong>CNN architectures</strong>: Comparing no pooling, max pooling, and global average pooling approaches</li>
 </ul>
-<p>Pooling is a critical component that reduces spatial resolution while preserving important features, making CNNs more efficient and robust to small translations.</p>
+<p>Pooling reduces spatial resolution while preserving important features, making CNNs more robust to translations.</p>
 <hr>
-</section>
-<section id="pooling-core-operation" class="level2">
-<h2 class="anchored" data-anchor-id="pooling-core-operation">1. Pooling: Core Operation</h2>
-<p><strong>Pooling reduces the spatial resolution of feature maps by summarizing local neighborhoods</strong> (e.g., via max or average). It makes the representation more robust to small translations, reduces sensitivity to exact pixel locations, and improves computational and statistical efficiency.</p>
-<p><img src="CNN_components.png" class="img-fluid" alt="CNN components overview"> <em>Figure: Overview of CNN components - convolution detects features, pooling aggregates and downsamples, creating a hierarchy of increasingly abstract representations.</em></p>
-<section id="why-pooling" class="level3">
-<h3 class="anchored" data-anchor-id="why-pooling">Why Pooling?</h3>
-<p>Pooling addresses several key challenges in CNNs:</p>
-<ol type="1">
-<li><strong>Computational efficiency</strong>: Fewer spatial locations means fewer parameters in subsequent layers</li>
-<li><strong>Statistical efficiency</strong>: Aggregating over neighborhoods provides more robust features</li>
-<li><strong>Translation invariance</strong>: Small shifts in input produce similar outputs after pooling</li>
-<li><strong>Receptive field growth</strong>: Each pooling layer increases the effective receptive field</li>
-</ol>
-<p><strong>Key insight</strong>: While convolution provides translation <strong>equivariance</strong> (output shifts when input shifts), pooling provides approximate translation <strong>invariance</strong> (output remains similar despite input shifts).</p>
-<hr>
-</section>
+<p><img src="CNN_components.png" class="img-fluid" alt="CNN architecture overview"> <em>Figure: CNN components - convolution layers detect features, pooling layers aggregate and downsample, creating increasingly abstract representations.</em></p>
 </section>
 <section id="local-translation-invariance" class="level2">
-<h2 class="anchored" data-anchor-id="local-translation-invariance">2. Local Translation Invariance</h2>
-<section id="definition" class="level3">
-<h3 class="anchored" data-anchor-id="definition">Definition</h3>
+<h2 class="anchored" data-anchor-id="local-translation-invariance">1. Local Translation Invariance</h2>
 <p><strong>Local translation invariance means that small shifts in the input produce nearly unchanged outputs.</strong> After convolution and pooling, the representation becomes insensitive to the exact spatial location of features, responding mainly to whether a feature is present rather than where it appears within a small neighborhood.</p>
-</section>
-<section id="how-pooling-creates-invariance" class="level3">
-<h3 class="anchored" data-anchor-id="how-pooling-creates-invariance">How Pooling Creates Invariance</h3>
-<p>Consider detecting a specific pattern (like an edge or a digit) in an image:</p>
-<ul>
-<li><strong>Without pooling</strong>: Each detector unit responds to the pattern at one precise location</li>
-<li><strong>With pooling</strong>: Multiple detectors at nearby locations feed into a single pooling unit</li>
-<li><strong>Result</strong>: The pooling unit fires strongly if the pattern appears <em>anywhere</em> in the pooling region</li>
-</ul>
-<p><img src="local_transition_invariant.png" class="img-fluid" alt="Translation invariance through pooling"> <em>Figure: Translation invariance through pooling - different detectors respond strongly to different shifted versions of the same pattern (middle row shows three shifted ‘5’ digits), but the pooling unit aggregates these responses into a single large output. Thus, even when the input ‘5’ appears at different positions, the pooled representation remains nearly unchanged.</em></p>
-</section>
-<section id="mathematical-interpretation" class="level3">
-<h3 class="anchored" data-anchor-id="mathematical-interpretation">Mathematical Interpretation</h3>
-<p>If <span class="math inline">\(f(x)\)</span> is the convolution output at position <span class="math inline">\(x\)</span>, and we apply max pooling over a region <span class="math inline">\(R\)</span>:</p>
-<p><span class="math display">\[
-\text{pool}(R) = \max_{x \in R} f(x)
-\]</span></p>
-<p><strong>Translation invariance property</strong>: If we shift the input slightly, some detector within the pooling region will still fire strongly:</p>
-<p><span class="math display">\[
-\text{pool}(R) \approx \text{pool}(R + \delta)
-\]</span></p>
-<p>for small shifts <span class="math inline">\(\delta\)</span>.</p>
-<p><strong>Contrast with translation equivariance</strong>: - <strong>Convolution alone</strong>: <span class="math inline">\(f(g(x)) = g(f(x))\)</span> (equivariant - output shifts with input) - <strong>Convolution + pooling</strong>: <span class="math inline">\(\text{pool}(f(g(x))) \approx \text{pool}(f(x))\)</span> (invariant - output approximately unchanged)</p>
+<p><img src="local_transition_invariant.png" class="img-fluid" alt="Translation invariance through pooling"> <em>Figure: How pooling creates translation invariance - different detectors respond strongly to different shifted versions of the same pattern, but the pooling unit aggregates these responses into a single large output. Thus, even when the input ‘5’ appears at different positions, the pooled representation remains nearly unchanged.</em></p>
 <hr>
 </section>
-</section>
-<section id="max-pooling-operation" class="level2">
-<h2 class="anchored" data-anchor-id="max-pooling-operation">3. Max Pooling Operation</h2>
-<section id="definition-1" class="level3">
-<h3 class="anchored" data-anchor-id="definition-1">Definition</h3>
-<p><strong>Max pooling</strong> is the most common pooling operation, which selects the maximum activation within each local neighborhood.</p>
-<p>For a pooling region of size <span class="math inline">\(k \times k\)</span> with stride <span class="math inline">\(s\)</span>, max pooling computes:</p>
-<p><span class="math display">\[
-y_{i,j} = \max_{p=0,\ldots,k-1} \max_{q=0,\ldots,k-1} x_{si+p, sj+q}
-\]</span></p>
-<p>where: - <span class="math inline">\(x\)</span> is the input feature map - <span class="math inline">\(y\)</span> is the output (pooled) feature map - <span class="math inline">\((i, j)\)</span> are the output coordinates - <span class="math inline">\((p, q)\)</span> index within the pooling window</p>
-</section>
-<section id="common-configurations" class="level3">
-<h3 class="anchored" data-anchor-id="common-configurations">Common Configurations</h3>
-<p><strong>Typical pooling settings</strong>:</p>
-<ol type="1">
-<li><strong>2×2 pooling with stride 2</strong>: Non-overlapping windows, reduces spatial dimensions by half
-<ul>
-<li>Input: <span class="math inline">\(H \times W\)</span></li>
-<li>Output: <span class="math inline">\(\frac{H}{2} \times \frac{W}{2}\)</span></li>
-</ul></li>
-<li><strong>3×3 pooling with stride 2</strong>: Overlapping windows, smoother downsampling
-<ul>
-<li>Input: <span class="math inline">\(H \times W\)</span></li>
-<li>Output: <span class="math inline">\(\lfloor\frac{H-1}{2}\rfloor + 1 \times \lfloor\frac{W-1}{2}\rfloor + 1\)</span></li>
-</ul></li>
-</ol>
-<p><img src="maxpooling.png" class="img-fluid" alt="Max pooling visualization"> <em>Figure: Max pooling operation - the pooling window slides over the feature map, selecting the maximum value in each neighborhood. This preserves the strongest activations while discarding weaker responses.</em></p>
-</section>
-<section id="properties-of-max-pooling" class="level3">
-<h3 class="anchored" data-anchor-id="properties-of-max-pooling">Properties of Max Pooling</h3>
-<ol type="1">
-<li><strong>Selects strongest evidence</strong>: Keeps only the most activated detector in each region</li>
-<li><strong>Non-linear</strong>: Max is a non-linear operation (unlike average pooling)</li>
-<li><strong>Position-dependent gradient</strong>: During backpropagation, gradient flows only to the position with maximum value</li>
-<li><strong>Sparse activations</strong>: Only one position per pool contributes to the output</li>
-</ol>
-</section>
-<section id="downsampling-effect" class="level3">
-<h3 class="anchored" data-anchor-id="downsampling-effect">Downsampling Effect</h3>
+<section id="max-pooling" class="level2">
+<h2 class="anchored" data-anchor-id="max-pooling">2. Max Pooling</h2>
+<p><strong>Pooling reduces the spatial resolution of feature maps by summarizing local neighborhoods</strong> (e.g., via max or average). It makes the representation more robust to small translations, reduces sensitivity to exact pixel locations, and improves computational and statistical efficiency.</p>
+<p><img src="maxpooling.png" class="img-fluid" alt="Max pooling operation"> <em>Figure: Max pooling operation - the pooling window slides over the feature map, selecting the maximum value in each local neighborhood.</em></p>
 <p><strong>“Max pooling downsamples the activations by summarizing each local neighborhood, so there are fewer pooling units than activation units.”</strong></p>
-<p><img src="downsample.png" class="img-fluid" alt="Downsampling through pooling"> <em>Figure: Spatial downsampling - max pooling reduces the number of activations by summarizing local regions. Each pooling unit aggregates information from multiple detector units, creating a more compact representation.</em></p>
-<p><strong>Example</strong>: For a <span class="math inline">\(28 \times 28\)</span> feature map with <span class="math inline">\(2 \times 2\)</span> pooling (stride 2): - <strong>Before pooling</strong>: <span class="math inline">\(28 \times 28 = 784\)</span> activations - <strong>After pooling</strong>: <span class="math inline">\(14 \times 14 = 196\)</span> activations - <strong>Reduction factor</strong>: <span class="math inline">\(4\times\)</span> fewer activations</p>
-<p>This reduction cascades through the network: - <strong>Memory savings</strong>: Fewer activations to store during training - <strong>Computational savings</strong>: Fewer inputs for subsequent convolution layers - <strong>Parameter savings</strong>: If followed by fully connected layers, much smaller input dimension</p>
+<p><img src="downsample.png" class="img-fluid" alt="Downsampling effect"> <em>Figure: Downsampling through max pooling - each pooling unit aggregates information from multiple detector units in the feature map, creating a more compact representation.</em></p>
 <hr>
 </section>
-</section>
-<section id="alternative-pooling-operations" class="level2">
-<h2 class="anchored" data-anchor-id="alternative-pooling-operations">4. Alternative Pooling Operations</h2>
-<p>While max pooling is most common, other pooling strategies exist:</p>
-<section id="average-pooling" class="level3">
-<h3 class="anchored" data-anchor-id="average-pooling">Average Pooling</h3>
-<p><span class="math display">\[
-y_{i,j} = \frac{1}{k^2} \sum_{p=0}^{k-1} \sum_{q=0}^{k-1} x_{si+p, sj+q}
-\]</span></p>
-<p><strong>Properties</strong>: - Smoother than max pooling - All positions contribute equally - Better for preserving overall magnitude - Less commonly used in modern CNNs (except for global pooling)</p>
-</section>
-<section id="l²-pooling" class="level3">
-<h3 class="anchored" data-anchor-id="l²-pooling">L² Pooling</h3>
-<p><span class="math display">\[
-y_{i,j} = \sqrt{\sum_{p=0}^{k-1} \sum_{q=0}^{k-1} x_{si+p, sj+q}^2}
-\]</span></p>
-<p><strong>Properties</strong>: - Emphasizes larger activations (but less extreme than max) - Differentiable everywhere (unlike max) - Rarely used in practice</p>
-</section>
-<section id="weighted-average-pooling" class="level3">
-<h3 class="anchored" data-anchor-id="weighted-average-pooling">Weighted Average Pooling</h3>
-<p><span class="math display">\[
-y_{i,j} = \sum_{p=0}^{k-1} \sum_{q=0}^{k-1} w_{p,q} \cdot x_{si+p, sj+q}
-\]</span></p>
-<p>where <span class="math inline">\(w_{p,q}\)</span> are learned or predefined weights.</p>
-<p><strong>Properties</strong>: - Can learn which positions to emphasize - More flexible but more parameters - Used in some attention-based architectures</p>
+<section id="cnn-architecture-structures" class="level2">
+<h2 class="anchored" data-anchor-id="cnn-architecture-structures">3. CNN Architecture Structures</h2>
+<p><img src="structure.png" class="img-fluid" alt="Three CNN architectures"> <em>Figure: Comparison of three CNN architectures - (left) strided convolutions without pooling, (middle) traditional max pooling network, (right) global average pooling network without fully connected layers.</em></p>
+<section id="left-no-pooling-stride-based-downsampling" class="level3">
+<h3 class="anchored" data-anchor-id="left-no-pooling-stride-based-downsampling">Left: No Pooling (Stride-Based Downsampling)</h3>
+<p>This architecture removes pooling entirely and relies on <strong>strided convolutions</strong> to reduce spatial resolution.</p>
+<p>Each convolution layer computes features while simultaneously downsampling the image.</p>
+<p>After a few strided convolutions, the feature maps are flattened and fed into a fully connected classifier.</p>
+<p><strong>Key characteristic</strong>: This design keeps the structure simple but usually requires more parameters in the classifier, since the flattened representation can be relatively large.</p>
 <hr>
 </section>
-</section>
-<section id="cnn-architectures-pooling-strategies" class="level2">
-<h2 class="anchored" data-anchor-id="cnn-architectures-pooling-strategies">5. CNN Architectures: Pooling Strategies</h2>
-<p>Different CNN architectures use different approaches to spatial downsampling. The figure below compares three common strategies:</p>
-<p><img src="structure.png" class="img-fluid" alt="CNN architecture comparison"> <em>Figure: Three CNN architectures with different downsampling strategies - (left) strided convolutions only, (middle) traditional max pooling, (right) global average pooling with no fully connected layers.</em></p>
-<section id="architecture-1-no-pooling-stride-based-downsampling" class="level3">
-<h3 class="anchored" data-anchor-id="architecture-1-no-pooling-stride-based-downsampling">Architecture 1: No Pooling (Stride-Based Downsampling)</h3>
-<p><strong>Structure</strong>: Convolution → Strided Convolution → Strided Convolution → Flatten → FC → Output</p>
-<p><strong>Key characteristics</strong>: - <strong>No explicit pooling layers</strong>: Spatial reduction achieved entirely through strided convolutions - <strong>Learnable downsampling</strong>: Stride in convolution serves dual purpose (feature extraction + downsampling) - <strong>More parameters</strong>: Fully connected layers operate on larger flattened features</p>
-<p><strong>Advantages</strong>: - Simpler architecture (fewer layer types) - Downsampling is learned, not fixed - No information loss from pooling operation</p>
-<p><strong>Disadvantages</strong>: - More parameters in final fully connected layers - Less explicit control over invariance properties - May require more data to learn effective downsampling</p>
-<p><strong>Modern usage</strong>: Increasingly popular in architectures like ResNet (which uses stride-2 convolutions) and fully convolutional networks.</p>
+<section id="middle-max-pooling-network" class="level3">
+<h3 class="anchored" data-anchor-id="middle-max-pooling-network">Middle: Max Pooling Network</h3>
+<p>This is the <strong>classic CNN architecture</strong> where pooling layers follow convolution layers.</p>
+<p>Max pooling discards precise spatial information while keeping the strongest local responses, reducing spatial resolution and achieving some translation invariance.</p>
+<p>After several conv-pool stages, the final feature maps are flattened and passed through fully connected layers.</p>
+<p><strong>Key characteristic</strong>: This design is statistically efficient and was widely used in early CNNs, including LeNet and AlexNet.</p>
 <hr>
 </section>
-<section id="architecture-2-max-pooling-network" class="level3">
-<h3 class="anchored" data-anchor-id="architecture-2-max-pooling-network">Architecture 2: Max Pooling Network</h3>
-<p><strong>Structure</strong>: Convolution → Max Pool → Convolution → Max Pool → Flatten → FC → Output</p>
-<p><strong>Key characteristics</strong>: - <strong>Traditional CNN design</strong>: Alternating convolution and pooling layers - <strong>Fixed downsampling</strong>: Max pooling operation is not learned - <strong>Translation invariance</strong>: Explicit pooling provides robustness to small translations</p>
-<p><strong>Advantages</strong>: - Statistically efficient (fewer parameters after pooling) - Strong translation invariance - Proven track record (LeNet, AlexNet, early VGG)</p>
-<p><strong>Disadvantages</strong>: - Fixed pooling operation (not adaptive) - Some information loss (discards non-maximum activations) - Still requires large fully connected layers</p>
-<p><strong>Classic examples</strong>: LeNet-5, AlexNet, VGG-16 (early pooling layers)</p>
-<p><strong>How it works</strong>: 1. Convolution layers detect features (edges, textures, patterns) 2. Max pooling reduces spatial resolution while keeping strongest responses 3. After several conv-pool stages, feature maps are small but deep 4. Flatten and feed into fully connected classifier 5. Output layer produces class probabilities</p>
-<hr>
-</section>
-<section id="architecture-3-global-average-pooling-gap-network" class="level3">
-<h3 class="anchored" data-anchor-id="architecture-3-global-average-pooling-gap-network">Architecture 3: Global Average Pooling (GAP) Network</h3>
-<p><strong>Structure</strong>: Convolution → Convolution → Conv (C filters) → Global Avg Pool → Output</p>
-<p><strong>Key characteristics</strong>: - <strong>No fully connected layers</strong>: Directly from features to predictions - <strong>Class-specific feature maps</strong>: Final convolution has one channel per class - <strong>Global average pooling</strong>: Each feature map becomes a single scalar</p>
-<p><strong>Advantages</strong>: - <strong>Drastically fewer parameters</strong>: No large fully connected layers - <strong>Inherent regularization</strong>: Less prone to overfitting - <strong>Spatial correspondence</strong>: Each feature map directly corresponds to a class - <strong>Fully convolutional</strong>: Can handle variable input sizes</p>
-<p><strong>Disadvantages</strong>: - May require deeper networks to achieve same capacity - Less flexible than fully connected layers - Can be harder to train initially</p>
-<p><strong>How it works</strong>:</p>
-<ol type="1">
-<li><strong>Final convolution</strong>: Produces <span class="math inline">\(C\)</span> feature maps (one per class) of size <span class="math inline">\(h \times w\)</span></li>
-</ol>
-<p><span class="math display">\[
-F_c \in \mathbb{R}^{h \times w} \quad \text{for } c = 1, \ldots, C
-\]</span></p>
-<ol start="2" type="1">
-<li><strong>Global average pooling</strong>: Averages each feature map to a single value</li>
-</ol>
-<p><span class="math display">\[
-y_c = \frac{1}{hw} \sum_{i=1}^h \sum_{j=1}^w F_c(i, j)
-\]</span></p>
-<ol start="3" type="1">
-<li><strong>Output</strong>: Vector <span class="math inline">\([y_1, y_2, \ldots, y_C]\)</span> gives class scores directly</li>
-</ol>
-<p><strong>Why it works</strong>: - Each feature map learns to detect class-specific patterns - Global averaging provides translation invariance over the entire image - No parameters in this layer (purely aggregation)</p>
-<p><strong>Modern examples</strong>: - <strong>Network-in-Network</strong> (NiN): Introduced GAP - <strong>GoogLeNet/Inception</strong>: Uses GAP before final classifier - <strong>ResNet variants</strong>: Many use GAP instead of fully connected layers - <strong>MobileNet</strong>: Efficient architectures with GAP</p>
-<hr>
-</section>
-</section>
-<section id="pooling-vs-strided-convolutions" class="level2">
-<h2 class="anchored" data-anchor-id="pooling-vs-strided-convolutions">6. Pooling vs Strided Convolutions</h2>
-<p>Modern deep learning research has questioned whether explicit pooling is necessary.</p>
-<section id="comparison-table" class="level3">
-<h3 class="anchored" data-anchor-id="comparison-table">Comparison Table</h3>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 16%">
-<col style="width: 44%">
-<col style="width: 38%">
-</colgroup>
-<thead>
-<tr class="header">
-<th><strong>Aspect</strong></th>
-<th><strong>Pooling (e.g., Max Pool)</strong></th>
-<th><strong>Strided Convolutions</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><strong>Learnable</strong></td>
-<td>No (fixed operation)</td>
-<td>Yes (learned filters)</td>
-</tr>
-<tr class="even">
-<td><strong>Parameters</strong></td>
-<td>0</td>
-<td><span class="math inline">\(k^2 \times c_{\text{in}} \times c_{\text{out}}\)</span></td>
-</tr>
-<tr class="odd">
-<td><strong>Information loss</strong></td>
-<td>Discards non-max values</td>
-<td>Learns what to discard</td>
-</tr>
-<tr class="even">
-<td><strong>Translation invariance</strong></td>
-<td>Strong (by design)</td>
-<td>Depends on learned filters</td>
-</tr>
-<tr class="odd">
-<td><strong>Computational cost</strong></td>
-<td>Low (no parameters)</td>
-<td>Higher (more multiply-adds)</td>
-</tr>
-<tr class="even">
-<td><strong>Gradient flow</strong></td>
-<td>Sparse (only max position)</td>
-<td>Dense (all positions)</td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="current-trends" class="level3">
-<h3 class="anchored" data-anchor-id="current-trends">Current Trends</h3>
-<p><strong>Shift toward strided convolutions</strong>: - Modern architectures (ResNet, EfficientNet) use fewer or no pooling layers - Strided convolutions can learn better downsampling strategies - Fully convolutional designs enable variable input sizes</p>
-<p><strong>When pooling still helps</strong>: - Small datasets (fewer parameters = less overfitting) - When strong translation invariance is desired - Global average pooling for parameter reduction</p>
-<hr>
-</section>
-</section>
-<section id="summary" class="level2">
-<h2 class="anchored" data-anchor-id="summary">Summary</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 46%">
-<col style="width: 53%">
-</colgroup>
-<thead>
-<tr class="header">
-<th><strong>Concept</strong></th>
-<th><strong>Key Idea</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><strong>Pooling Operation</strong></td>
-<td>Aggregates activations over local neighborhoods to reduce spatial resolution</td>
-</tr>
-<tr class="even">
-<td><strong>Max Pooling</strong></td>
-<td>Selects maximum value in each region; most common pooling type</td>
-</tr>
-<tr class="odd">
-<td><strong>Translation Invariance</strong></td>
-<td>Pooling makes outputs approximately unchanged under small input shifts</td>
-</tr>
-<tr class="even">
-<td><strong>Downsampling</strong></td>
-<td>Reduces spatial dimensions, lowering computation and memory requirements</td>
-</tr>
-<tr class="odd">
-<td><strong>Typical Configuration</strong></td>
-<td><span class="math inline">\(2 \times 2\)</span> pooling with stride 2 (halves each spatial dimension)</td>
-</tr>
-<tr class="even">
-<td><strong>Architecture Types</strong></td>
-<td>No pooling (strided conv), max pooling networks, global average pooling</td>
-</tr>
-<tr class="odd">
-<td><strong>GAP Advantage</strong></td>
-<td>Eliminates fully connected layers, drastically reducing parameters</td>
-</tr>
-<tr class="even">
-<td><strong>Modern Trend</strong></td>
-<td>Shift toward strided convolutions over explicit pooling</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Key takeaway</strong>: Pooling provides a simple, parameter-free way to achieve spatial downsampling and approximate translation invariance. While modern architectures increasingly use learnable downsampling (strided convolutions), pooling remains valuable for its statistical efficiency and strong invariance properties. Global average pooling, in particular, has become a standard technique for parameter reduction in modern CNNs.</p>
+<section id="right-global-average-pooling-gap-network" class="level3">
+<h3 class="anchored" data-anchor-id="right-global-average-pooling-gap-network">Right: Global Average Pooling (GAP) Network</h3>
+<p>Instead of flattening or using dense layers, this architecture uses a <strong>final convolution with as many channels as there are classes</strong>.</p>
+<p>Each channel then becomes a class-specific activation map.</p>
+<p><strong>Global average pooling</strong> collapses each map into a single scalar, producing one score per class.</p>
+<p><strong>Key advantage</strong>: This removes the need for fully connected layers, greatly reducing parameters and improving robustness.</p>
+<p>GAP-based designs are common in modern architectures such as Network-in-Network and many variants of ResNet.</p>
 
 
 <!-- -->
 
+</section>
 </section>
 
 </main> <!-- /main -->
