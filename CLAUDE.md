@@ -76,16 +76,63 @@ The site is automatically deployed from the `docs/` directory. After rendering, 
 **ALWAYS verify locally before pushing to prevent broken images on production:**
 
 1. **Run full render**: `quarto render` (not individual file renders)
-2. **Check git status**: `git status` - verify all `*_files/` directories are staged
-   - Look for `docs/**/*_files/figure-html/*.png` files
-   - These contain code-generated images from Jupyter notebooks and Python code blocks
-3. **Local preview**: Open `docs/` HTML files in browser to verify images load
-   - Check pages with Jupyter notebooks (e.g., `mit1806-lecture1-geometry.html`)
-   - Verify matplotlib/plotly figures appear correctly
-4. **Commit ALL generated files**: Don't commit `.html` without their `*_files/` directories
-5. **Only then push**: `git push`
 
-**Why this matters**: GitHub Pages serves from the `docs/` directory. If code-generated images aren't committed, the HTML will reference missing files, causing broken images on production even though they work locally.
+2. **CRITICAL: Restore ALL deleted images after full render**
+
+   Full site renders delete images from multiple locations. You MUST restore them:
+
+   ```bash
+   # 1. Restore *_files/ directories (code-generated matplotlib/plotly figures)
+   cp -r ML/*_files docs/ML/ 2>/dev/null
+   cp -r Math/*_files docs/Math/ 2>/dev/null
+   cp -r Algorithm/*_files docs/Algorithm/ 2>/dev/null
+
+   # 2. Restore static images in ML/ and Math/
+   cp ML/*.png docs/ML/ 2>/dev/null
+   cp Math/MIT18.06/*.png docs/Math/MIT18.06/ 2>/dev/null
+
+   # 3. Restore media/ directory images (referenced with ../media/image.png)
+   mkdir -p docs/media
+   cp media/*.png docs/media/ 2>/dev/null
+
+   # 4. Restore imgs/ directory images (referenced with ../imgs/image.png)
+   mkdir -p docs/imgs
+   cp imgs/*.png docs/imgs/ 2>/dev/null
+
+   # 5. Move any HTML files that failed to move
+   find ML -maxdepth 1 -name "*.html" -exec mv {} docs/ML/ \; 2>/dev/null
+   find Math/MIT18.06 -maxdepth 1 -name "*.html" -exec mv {} docs/Math/MIT18.06/ \; 2>/dev/null
+   find Algorithm -maxdepth 1 -name "*.html" -exec mv {} docs/Algorithm/ \; 2>/dev/null
+
+   # 6. Move index files
+   mv Algorithm/index.html docs/Algorithm/ 2>/dev/null
+   mv Math/index.html docs/Math/ 2>/dev/null
+   mv index-backup.html docs/ 2>/dev/null
+   ```
+
+3. **Check git status**: `git status` - verify all image files are staged
+   - Look for `docs/**/*_files/figure-html/*.png` files (code-generated)
+   - Look for `docs/media/*.png` files (media directory)
+   - Look for `docs/imgs/*.png` files (imgs directory)
+   - Look for `docs/ML/*.png` and `docs/Math/MIT18.06/*.png` files (static images)
+
+4. **Local preview**: Open `docs/` HTML files in browser to verify images load
+   - Check pages with Jupyter notebooks (e.g., `mit1806-lecture1-geometry.html`)
+   - Check pages with media references (e.g., `dropout.html`)
+   - Verify matplotlib/plotly figures appear correctly
+
+5. **Commit ALL generated files**: Don't commit `.html` without their images
+
+6. **Only then push**: `git push`
+
+**Why this matters**: GitHub Pages serves from the `docs/` directory. Quarto's full render deletes images from docs/ but keeps them in source directories. If images aren't copied back to docs/, the HTML will reference missing files, causing broken images on production even though they work locally.
+
+**Image locations that get deleted:**
+- `docs/**/*_files/` - Code-generated figures from Python/matplotlib
+- `docs/media/` - Shared media referenced with `../media/`
+- `docs/imgs/` - Shared images referenced with `../imgs/`
+- `docs/ML/*.png` - Static chapter images
+- `docs/Math/MIT18.06/*.png` - Static lecture images
 
 ## LinkedIn Post Guidelines
 
