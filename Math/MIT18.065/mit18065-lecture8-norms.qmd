@@ -1,0 +1,168 @@
+---
+title: "Lecture 8: Norms of Vectors and Matrices"
+author: "Chao Ma"
+date: "2025-11-29"
+categories: [Matrix Methods, Norms, MIT 18.065, Data Analysis]
+---
+
+## Overview
+
+This lecture covers vector and matrix norms with applications to regularization and sparsity:
+
+- Review vector p-norms and the geometry of unit balls
+- Explain when norms are valid (triangle inequality) and the S-norm defined by $v^T S v$
+- Compare $\ell_1$, $\ell_2$, and the "$\frac{1}{2}$-norm" as regularizers when solving $Ax = b$
+- Introduce matrix norms (spectral, Frobenius, nuclear) and relate them to singular values
+
+{{< video https://www.youtube.com/watch?v=NcPUI7aPFhA >}}
+
+---
+
+## Vector Norms
+
+### Definition
+
+The **p-norm** of a vector $v \in \mathbb{R}^n$ is defined as:
+
+$$
+\|v\|_p = \sqrt[p]{|v_1|^p + |v_2|^p + \cdots + |v_n|^p}
+$$
+
+Common values: $p = 0, 1, 2, \infty$
+
+- $\|v\|_0$: Number of nonzero components (not a true norm)
+- $\|v\|_1$: Sum of absolute values (Manhattan norm)
+- $\|v\|_2$: Euclidean length
+- $\|v\|_\infty$: Maximum absolute value
+
+---
+
+## Geometry of Unit Balls
+
+The unit ball $\|v\|_p = 1$ in $\mathbb{R}^2$ has different shapes for different $p$:
+
+![Unit balls for different p-norms](norm.png)
+*Figure: Unit balls $\|v\|_p = 1$ in $\mathbb{R}^2$ for different values of $p$. As $p$ increases, the unit ball transitions from diamond ($p=1$) to circle ($p=2$) to square ($p=\infty$).*
+
+---
+
+## When Is It a True Norm?
+
+**Triangle inequality requirement**: $\|x + y\| \leq \|x\| + \|y\|$
+
+- When $p \geq 1$: $\|\cdot\|_p$ is a valid norm
+- When $p < 1$: **Not a true norm** (triangle inequality fails)
+
+### The "$\frac{1}{2}$-Norm"
+
+For $\|x\|_{1/2}$, this is **not a true norm** since $p < 1$, but it provides a very strong **sparsity penalty** that pushes many components of $x$ to zero when minimized.
+
+**Intuition**: A norm must satisfy the triangle inequality (going straight is never longer than going in two steps). For $p < 1$, the unit ball is not convex, so the triangle inequality fails.
+
+![The 1/2-norm unit ball](half_norm.png)
+*Figure: The "$\frac{1}{2}$-norm" unit ball is non-convex. The triangle inequality fails because the straight path between two points can be longer than the sum of their norms.*
+
+---
+
+## S-Norm
+
+Let $S$ be a **symmetric positive definite matrix**. The **S-norm** is defined as:
+
+$$
+\|v\|_S = \sqrt{v^T S v}
+$$
+
+**Special case**: When $S = I$ (identity matrix), we get $\|v\|_2$ (Euclidean norm).
+
+### Example
+
+$$
+S = \begin{bmatrix}
+2 & 1 \\
+1 & 3
+\end{bmatrix}
+$$
+
+The unit ball $v^T S v = 1$ forms an **ellipse** whose axes are determined by the eigenvectors of $S$.
+
+![S-norm ellipse](eclipse.png)
+*Figure: The unit ball for the S-norm $\sqrt{v^T S v} = 1$ forms an ellipse. The shape and orientation depend on the eigenvalues and eigenvectors of the symmetric positive definite matrix $S$.*
+
+---
+
+## Minimizing Norms: Regularization
+
+When solving $Ax = b$, we often want to minimize $\|x\|_p$ to prefer certain solutions:
+
+### $\ell_1$ Regularization
+
+- **Property**: Sparse solutions
+- **Winner**: Solution has many zero components (e.g., $[0, b]$ or $[a, 0]$)
+- **Use case**: Feature selection, compressed sensing
+
+### $\ell_2$ Regularization
+
+- **Property**: Smooth, distributed solutions
+- **Geometric interpretation**: Find the point on the constraint line $c_1 x_1 + c_2 x_2 = 0$ that intersects the smallest $\|v\|_2 = c$ level set (circle)
+- **Use case**: Ridge regression, preventing overfitting
+
+---
+
+## Matrix Norms
+
+### Spectral Norm: $\|A\|_2 = \sigma_1$
+
+The **spectral norm** measures the maximum "blow-up" of a vector:
+
+$$
+\|A\|_2 = \max_x \frac{\|Ax\|_2}{\|x\|_2} = \sigma_1
+$$
+
+where $\sigma_1$ is the largest singular value of $A$.
+
+**Winner**: $x = v_1$ (first right singular vector)
+
+---
+
+### Frobenius Norm: $\|A\|_F$
+
+The **Frobenius norm** is the square root of the sum of all squared entries:
+
+$$
+\|A\|_F = \sqrt{a_{11}^2 + a_{12}^2 + \cdots + a_{mn}^2}
+$$
+
+**Connection to SVD**:
+
+$$
+\|A\|_F = \sqrt{\sigma_1^2 + \sigma_2^2 + \cdots + \sigma_r^2}
+$$
+
+**Why?** Because $A = U \Sigma V^T$, and both $U$ and $V$ are orthonormal matrices (they preserve $\ell_2$ norm).
+
+---
+
+### Nuclear Norm: $\|A\|_N$
+
+The **nuclear norm** (also called **trace norm**) is the sum of singular values:
+
+$$
+\|A\|_N = \sigma_1 + \sigma_2 + \cdots + \sigma_r
+$$
+
+**Use case**: Low-rank matrix completion (convex relaxation of rank minimization)
+
+---
+
+## Summary of Matrix Norms
+
+![Matrix norms comparison](matrix_norm.png)
+*Figure: Comparison of matrix norms - spectral norm $\|A\|_2$ (largest singular value), Frobenius norm $\|A\|_F$ (root sum of squared singular values), and nuclear norm $\|A\|_N$ (sum of singular values).*
+
+| **Norm** | **Formula** | **Geometric Meaning** |
+|----------|-------------|----------------------|
+| **Spectral** | $\|A\|_2 = \sigma_1$ | Maximum amplification |
+| **Frobenius** | $\|A\|_F = \sqrt{\sigma_1^2 + \cdots + \sigma_r^2}$ | Root mean square of entries |
+| **Nuclear** | $\|A\|_N = \sigma_1 + \cdots + \sigma_r$ | Convex surrogate for rank |
+
+**Key insight**: All three matrix norms can be expressed in terms of singular values, connecting them to the fundamental SVD decomposition.

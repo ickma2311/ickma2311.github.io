@@ -423,6 +423,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="./Math/MIT18.06/mit1806-lecture33-left-right-inverse.html">
  <span class="dropdown-text">Lecture 33: Left &amp; Right Inverse</span></a>
   </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.065 Matrix Methods</li>
+        <li>
+    <a class="dropdown-item" href="./Math/MIT18.065/mit18065-lecture8-norms.html">
+ <span class="dropdown-text">Lecture 8: Norms</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -587,21 +593,53 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="pre-push-checklist-critical">Pre-Push Checklist (CRITICAL)</h3>
 <p><strong>ALWAYS verify locally before pushing to prevent broken images on production:</strong></p>
 <ol type="1">
-<li><strong>Run full render</strong>: <code>quarto render</code> (not individual file renders)</li>
-<li><strong>Check git status</strong>: <code>git status</code> - verify all <code>*_files/</code> directories are staged
+<li><p><strong>Run full render</strong>: <code>quarto render</code> (not individual file renders)</p></li>
+<li><p><strong>CRITICAL: Restore ALL deleted images after full render</strong></p>
+<p>Full site renders delete images from multiple locations. You MUST restore them:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Restore *_files/ directories (code-generated matplotlib/plotly figures)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="at">-r</span> ML/<span class="pp">*</span>_files docs/ML/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="at">-r</span> Math/<span class="pp">*</span>_files docs/Math/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="at">-r</span> Algorithm/<span class="pp">*</span>_files docs/Algorithm/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Restore static images in ML/ and Math/</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> ML/<span class="pp">*</span>.png docs/ML/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> Math/MIT18.06/<span class="pp">*</span>.png docs/Math/MIT18.06/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Restore media/ directory images (referenced with ../media/image.png)</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> docs/media</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> media/<span class="pp">*</span>.png docs/media/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Restore imgs/ directory images (referenced with ../imgs/image.png)</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> docs/imgs</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> imgs/<span class="pp">*</span>.png docs/imgs/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Move any HTML files that failed to move</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> ML <span class="at">-maxdepth</span> 1 <span class="at">-name</span> <span class="st">"*.html"</span> <span class="at">-exec</span> mv {} docs/ML/ <span class="dt">\;</span> <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> Math/MIT18.06 <span class="at">-maxdepth</span> 1 <span class="at">-name</span> <span class="st">"*.html"</span> <span class="at">-exec</span> mv {} docs/Math/MIT18.06/ <span class="dt">\;</span> <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> Algorithm <span class="at">-maxdepth</span> 1 <span class="at">-name</span> <span class="st">"*.html"</span> <span class="at">-exec</span> mv {} docs/Algorithm/ <span class="dt">\;</span> <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. Move index files</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="fu">mv</span> Algorithm/index.html docs/Algorithm/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="fu">mv</span> Math/index.html docs/Math/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="fu">mv</span> index-backup.html docs/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Check git status</strong>: <code>git status</code> - verify all image files are staged</p>
 <ul>
-<li>Look for <code>docs/**/*_files/figure-html/*.png</code> files</li>
-<li>These contain code-generated images from Jupyter notebooks and Python code blocks</li>
+<li>Look for <code>docs/**/*_files/figure-html/*.png</code> files (code-generated)</li>
+<li>Look for <code>docs/media/*.png</code> files (media directory)</li>
+<li>Look for <code>docs/imgs/*.png</code> files (imgs directory)</li>
+<li>Look for <code>docs/ML/*.png</code> and <code>docs/Math/MIT18.06/*.png</code> files (static images)</li>
 </ul></li>
-<li><strong>Local preview</strong>: Open <code>docs/</code> HTML files in browser to verify images load
+<li><p><strong>Local preview</strong>: Open <code>docs/</code> HTML files in browser to verify images load</p>
 <ul>
 <li>Check pages with Jupyter notebooks (e.g., <code>mit1806-lecture1-geometry.html</code>)</li>
+<li>Check pages with media references (e.g., <code>dropout.html</code>)</li>
 <li>Verify matplotlib/plotly figures appear correctly</li>
 </ul></li>
-<li><strong>Commit ALL generated files</strong>: Don’t commit <code>.html</code> without their <code>*_files/</code> directories</li>
-<li><strong>Only then push</strong>: <code>git push</code></li>
+<li><p><strong>Commit ALL generated files</strong>: Don’t commit <code>.html</code> without their images</p></li>
+<li><p><strong>Only then push</strong>: <code>git push</code></p></li>
 </ol>
-<p><strong>Why this matters</strong>: GitHub Pages serves from the <code>docs/</code> directory. If code-generated images aren’t committed, the HTML will reference missing files, causing broken images on production even though they work locally.</p>
+<p><strong>Why this matters</strong>: GitHub Pages serves from the <code>docs/</code> directory. Quarto’s full render deletes images from docs/ but keeps them in source directories. If images aren’t copied back to docs/, the HTML will reference missing files, causing broken images on production even though they work locally.</p>
+<p><strong>Image locations that get deleted:</strong> - <code>docs/**/*_files/</code> - Code-generated figures from Python/matplotlib - <code>docs/media/</code> - Shared media referenced with <code>../media/</code> - <code>docs/imgs/</code> - Shared images referenced with <code>../imgs/</code> - <code>docs/ML/*.png</code> - Static chapter images - <code>docs/Math/MIT18.06/*.png</code> - Static lecture images</p>
 </section>
 </section>
 <section id="linkedin-post-guidelines" class="level2">
@@ -1121,117 +1159,164 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
   loadGiscus();
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># CLAUDE.md</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">## Project Overview</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>This is a Quarto-based technical blog hosted on GitHub Pages (ickma2311.github.io). The site covers machine learning, algorithms, and technical tutorials with a focus on mathematical foundations and practical implementations.</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">## Common Commands</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="fu">### Development Workflow</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`quarto render`</span> - Build the entire website (outputs to <span class="in">`docs/`</span> directory)</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`quarto preview`</span> - Start local development server with live reload</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`quarto render &lt;file.qmd&gt;`</span> - Render a specific document</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`quarto check`</span> - Verify Quarto installation and project setup</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="fu">### Content Management</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Create new ML content in <span class="in">`ML/`</span> directory</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Create new algorithm content in <span class="in">`Algorithm/`</span> directory</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Update navigation by editing <span class="in">`_quarto.yml`</span> navbar section</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Add new content to respective index.qmd files for discoverability</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="fu">## Project Structure</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="in">├── _quarto.yml          # Main configuration file</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="in">├── docs/                # Generated output (GitHub Pages source)</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="in">├── index.qmd            # Homepage</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="in">├── about.qmd            # About page</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="in">├── ML/                  # Machine Learning content</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── index.qmd        # ML topics overview</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── *.qmd            # ML articles</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="in">│   └── *.ipynb          # Jupyter notebooks</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="in">├── Algorithm/           # Algorithm content</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── index.qmd        # Algorithm topics overview</span></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="in">│   └── *.qmd            # Algorithm articles</span></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="in">├── imgs/                # Image assets</span></span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="in">├── media/               # Media files</span></span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="in">└── styles.css           # Custom CSS styles</span></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="fu">## Content Organization</span></span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>The site uses a hierarchical navigation structure defined in <span class="in">`_quarto.yml`</span>:</span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Two main sections: "ML" and "Algorithm"</span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Each section has an index page that serves as a directory</span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Content is categorized by topic (e.g., "NumPy Fundamentals", "Clustering Algorithms")</span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="fu">### Adding New Content</span></span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Create the content file in the appropriate directory (<span class="in">`ML/`</span> or <span class="in">`Math/`</span> or <span class="in">`Algorithm/`</span>)</span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Update the corresponding index.qmd file to include the new content</span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Add navigation entry to <span class="in">`_quarto.yml`</span> if it should appear in the navbar dropdown</span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Use consistent frontmatter with <span class="in">`title`</span> field</span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Set publication date**: Always use the current date from the system for the <span class="in">`date`</span> field in frontmatter</span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Get current date with: <span class="in">`date +"%Y-%m-%d"`</span> (format: YYYY-MM-DD)</span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Example: <span class="in">`date: "2025-10-26"`</span></span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="ss">6. </span>**Important**: After adding new navbar items, run <span class="in">`quarto render`</span> (full site render) to update the navbar on ALL existing pages. Individual file renders only update that specific page.</span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="fu">## Configuration Notes</span></span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Output directory is set to <span class="in">`docs/`</span> for GitHub Pages compatibility</span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Theme: Cosmo with custom branding</span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>All pages include table of contents (<span class="in">`toc: true`</span>)</span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Site uses custom CSS from <span class="in">`styles.css`</span></span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Jupyter notebooks are supported alongside Quarto markdown</span>
-<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="fu">## GitHub Pages Deployment</span></span>
-<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>The site is automatically deployed from the <span class="in">`docs/`</span> directory. After rendering, commit and push the <span class="in">`docs/`</span> folder to trigger GitHub Pages rebuild.</span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Author is Chao Ma</span>
-<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>GitHub Pages URL: https://ickma2311.github.io/</span>
-<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="fu">### Pre-Push Checklist (CRITICAL)</span></span>
-<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>**ALWAYS verify locally before pushing to prevent broken images on production:**</span>
-<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Run full render**: <span class="in">`quarto render`</span> (not individual file renders)</span>
-<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Check git status**: <span class="in">`git status`</span> - verify all <span class="in">`*_files/`</span> directories are staged</span>
-<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Look for <span class="in">`docs/**/*_files/figure-html/*.png`</span> files</span>
-<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>These contain code-generated images from Jupyter notebooks and Python code blocks</span>
-<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Local preview**: Open <span class="in">`docs/`</span> HTML files in browser to verify images load</span>
-<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Check pages with Jupyter notebooks (e.g., <span class="in">`mit1806-lecture1-geometry.html`</span>)</span>
-<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Verify matplotlib/plotly figures appear correctly</span>
-<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Commit ALL generated files**: Don't commit <span class="in">`.html`</span> without their <span class="in">`*_files/`</span> directories</span>
-<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Only then push**: <span class="in">`git push`</span></span>
-<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>**Why this matters**: GitHub Pages serves from the <span class="in">`docs/`</span> directory. If code-generated images aren't committed, the HTML will reference missing files, causing broken images on production even though they work locally.</span>
-<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="fu">## LinkedIn Post Guidelines</span></span>
-<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="fu">### Emoji Usage</span></span>
-<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>When drafting LinkedIn posts for blog content, use these emojis:</span>
-<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Deep Learning topics**: ∇ (delta/nabla symbol) - represents gradients and optimization</span>
-<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Linear Algebra topics**: 📐 (triangle/ruler) - represents geometric and matrix concepts</span>
-<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="fu">### Writing Process</span></span>
-<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Identify the key insight**: Focus on the main conceptual connection or "aha moment" from the blog post</span>
-<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Use "connecting the dots" tone**: Emphasize how concepts link together (e.g., "how linear algebra connects to machine learning")</span>
-<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Structure (Knowledge Card Format)**:</span>
-<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Start with emoji and chapter reference (e.g., "∇ **Deep Learning Book (Chapter 8.1)**" or "📐 **MIT 18.06SC Linear Algebra (Lecture 19)**")</span>
-<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Clear statement or equation (e.g., "Learning ≠ Optimization")</span>
-<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>2-4 bullet points (🔹) with key insights</span>
-<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Philosophical closing line (💡)</span>
-<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Link to full blog post (📖)</span>
-<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Source attribution at the end (e.g., "My notes on Deep Learning (Ian Goodfellow) Chapter X.X" or "My notes on MIT 18.06SC Linear Algebra - Lecture XX")</span>
-<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Keep it concise**: Aim for clarity over comprehensiveness - use knowledge card format for quick, digestible insights</span>
-<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Course naming**:</span>
-<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Always use "MIT 18.06SC" (not just "MIT 18.06") for linear algebra posts</span>
-<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Use full course titles to maintain consistency</span>
-<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a><span class="ss">6. </span>**Include relevant hashtags**: #MachineLearning #LinearAlgebra #DeepLearning</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># CLAUDE.md</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">## Project Overview</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>This is a Quarto-based technical blog hosted on GitHub Pages (ickma2311.github.io). The site covers machine learning, algorithms, and technical tutorials with a focus on mathematical foundations and practical implementations.</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">## Common Commands</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="fu">### Development Workflow</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`quarto render`</span> - Build the entire website (outputs to <span class="in">`docs/`</span> directory)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`quarto preview`</span> - Start local development server with live reload</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`quarto render &lt;file.qmd&gt;`</span> - Render a specific document</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`quarto check`</span> - Verify Quarto installation and project setup</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="fu">### Content Management</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Create new ML content in <span class="in">`ML/`</span> directory</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Create new algorithm content in <span class="in">`Algorithm/`</span> directory</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Update navigation by editing <span class="in">`_quarto.yml`</span> navbar section</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Add new content to respective index.qmd files for discoverability</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="fu">## Project Structure</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="in">├── _quarto.yml          # Main configuration file</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="in">├── docs/                # Generated output (GitHub Pages source)</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="in">├── index.qmd            # Homepage</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="in">├── about.qmd            # About page</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="in">├── ML/                  # Machine Learning content</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── index.qmd        # ML topics overview</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── *.qmd            # ML articles</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="in">│   └── *.ipynb          # Jupyter notebooks</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="in">├── Algorithm/           # Algorithm content</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="in">│   ├── index.qmd        # Algorithm topics overview</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="in">│   └── *.qmd            # Algorithm articles</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="in">├── imgs/                # Image assets</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="in">├── media/               # Media files</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="in">└── styles.css           # Custom CSS styles</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a><span class="fu">## Content Organization</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>The site uses a hierarchical navigation structure defined in <span class="in">`_quarto.yml`</span>:</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Two main sections: "ML" and "Algorithm"</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Each section has an index page that serves as a directory</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Content is categorized by topic (e.g., "NumPy Fundamentals", "Clustering Algorithms")</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a><span class="fu">### Adding New Content</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Create the content file in the appropriate directory (<span class="in">`ML/`</span> or <span class="in">`Math/`</span> or <span class="in">`Algorithm/`</span>)</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Update the corresponding index.qmd file to include the new content</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Add navigation entry to <span class="in">`_quarto.yml`</span> if it should appear in the navbar dropdown</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Use consistent frontmatter with <span class="in">`title`</span> field</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Set publication date**: Always use the current date from the system for the <span class="in">`date`</span> field in frontmatter</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Get current date with: <span class="in">`date +"%Y-%m-%d"`</span> (format: YYYY-MM-DD)</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Example: <span class="in">`date: "2025-10-26"`</span></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="ss">6. </span>**Important**: After adding new navbar items, run <span class="in">`quarto render`</span> (full site render) to update the navbar on ALL existing pages. Individual file renders only update that specific page.</span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a><span class="fu">## Configuration Notes</span></span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Output directory is set to <span class="in">`docs/`</span> for GitHub Pages compatibility</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Theme: Cosmo with custom branding</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>All pages include table of contents (<span class="in">`toc: true`</span>)</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Site uses custom CSS from <span class="in">`styles.css`</span></span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Jupyter notebooks are supported alongside Quarto markdown</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a><span class="fu">## GitHub Pages Deployment</span></span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>The site is automatically deployed from the <span class="in">`docs/`</span> directory. After rendering, commit and push the <span class="in">`docs/`</span> folder to trigger GitHub Pages rebuild.</span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Author is Chao Ma</span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>GitHub Pages URL: https://ickma2311.github.io/</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a><span class="fu">### Pre-Push Checklist (CRITICAL)</span></span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>**ALWAYS verify locally before pushing to prevent broken images on production:**</span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Run full render**: <span class="in">`quarto render`</span> (not individual file renders)</span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**CRITICAL: Restore ALL deleted images after full render**</span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>   Full site renders delete images from multiple locations. You MUST restore them:</span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>   <span class="in">```bash</span></span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>   <span class="co"># 1. Restore *_files/ directories (code-generated matplotlib/plotly figures)</span></span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>   <span class="fu">cp</span> <span class="at">-r</span> ML/<span class="pp">*</span>_files docs/ML/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>   <span class="fu">cp</span> <span class="at">-r</span> Math/<span class="pp">*</span>_files docs/Math/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>   <span class="fu">cp</span> <span class="at">-r</span> Algorithm/<span class="pp">*</span>_files docs/Algorithm/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>   <span class="co"># 2. Restore static images in ML/ and Math/</span></span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>   <span class="fu">cp</span> ML/<span class="pp">*</span>.png docs/ML/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>   <span class="fu">cp</span> Math/MIT18.06/<span class="pp">*</span>.png docs/Math/MIT18.06/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>   <span class="co"># 3. Restore media/ directory images (referenced with ../media/image.png)</span></span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mkdir</span> <span class="at">-p</span> docs/media</span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>   <span class="fu">cp</span> media/<span class="pp">*</span>.png docs/media/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>   <span class="co"># 4. Restore imgs/ directory images (referenced with ../imgs/image.png)</span></span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mkdir</span> <span class="at">-p</span> docs/imgs</span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>   <span class="fu">cp</span> imgs/<span class="pp">*</span>.png docs/imgs/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>   <span class="co"># 5. Move any HTML files that failed to move</span></span>
+<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a>   <span class="fu">find</span> ML <span class="at">-maxdepth</span> 1 <span class="at">-name</span> <span class="st">"*.html"</span> <span class="at">-exec</span> mv {} docs/ML/ <span class="dt">\;</span> <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a>   <span class="fu">find</span> Math/MIT18.06 <span class="at">-maxdepth</span> 1 <span class="at">-name</span> <span class="st">"*.html"</span> <span class="at">-exec</span> mv {} docs/Math/MIT18.06/ <span class="dt">\;</span> <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a>   <span class="fu">find</span> Algorithm <span class="at">-maxdepth</span> 1 <span class="at">-name</span> <span class="st">"*.html"</span> <span class="at">-exec</span> mv {} docs/Algorithm/ <span class="dt">\;</span> <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a>   <span class="co"># 6. Move index files</span></span>
+<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mv</span> Algorithm/index.html docs/Algorithm/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mv</span> Math/index.html docs/Math/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mv</span> index-backup.html docs/ <span class="dv">2</span><span class="op">&gt;</span>/dev/null</span>
+<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a>   <span class="in">```</span></span>
+<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Check git status**: <span class="in">`git status`</span> - verify all image files are staged</span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Look for <span class="in">`docs/**/*_files/figure-html/*.png`</span> files (code-generated)</span>
+<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Look for <span class="in">`docs/media/*.png`</span> files (media directory)</span>
+<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Look for <span class="in">`docs/imgs/*.png`</span> files (imgs directory)</span>
+<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Look for <span class="in">`docs/ML/*.png`</span> and <span class="in">`docs/Math/MIT18.06/*.png`</span> files (static images)</span>
+<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Local preview**: Open <span class="in">`docs/`</span> HTML files in browser to verify images load</span>
+<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Check pages with Jupyter notebooks (e.g., <span class="in">`mit1806-lecture1-geometry.html`</span>)</span>
+<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Check pages with media references (e.g., <span class="in">`dropout.html`</span>)</span>
+<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Verify matplotlib/plotly figures appear correctly</span>
+<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Commit ALL generated files**: Don't commit <span class="in">`.html`</span> without their images</span>
+<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a><span class="ss">6. </span>**Only then push**: <span class="in">`git push`</span></span>
+<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a>**Why this matters**: GitHub Pages serves from the <span class="in">`docs/`</span> directory. Quarto's full render deletes images from docs/ but keeps them in source directories. If images aren't copied back to docs/, the HTML will reference missing files, causing broken images on production even though they work locally.</span>
+<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a>**Image locations that get deleted:**</span>
+<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`docs/**/*_files/`</span> - Code-generated figures from Python/matplotlib</span>
+<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`docs/media/`</span> - Shared media referenced with <span class="in">`../media/`</span></span>
+<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`docs/imgs/`</span> - Shared images referenced with <span class="in">`../imgs/`</span></span>
+<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`docs/ML/*.png`</span> - Static chapter images</span>
+<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`docs/Math/MIT18.06/*.png`</span> - Static lecture images</span>
+<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a><span class="fu">## LinkedIn Post Guidelines</span></span>
+<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a><span class="fu">### Emoji Usage</span></span>
+<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a>When drafting LinkedIn posts for blog content, use these emojis:</span>
+<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Deep Learning topics**: ∇ (delta/nabla symbol) - represents gradients and optimization</span>
+<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Linear Algebra topics**: 📐 (triangle/ruler) - represents geometric and matrix concepts</span>
+<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a><span class="fu">### Writing Process</span></span>
+<span id="cb3-145"><a href="#cb3-145" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Identify the key insight**: Focus on the main conceptual connection or "aha moment" from the blog post</span>
+<span id="cb3-146"><a href="#cb3-146" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Use "connecting the dots" tone**: Emphasize how concepts link together (e.g., "how linear algebra connects to machine learning")</span>
+<span id="cb3-147"><a href="#cb3-147" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Structure (Knowledge Card Format)**:</span>
+<span id="cb3-148"><a href="#cb3-148" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Start with emoji and chapter reference (e.g., "∇ **Deep Learning Book (Chapter 8.1)**" or "📐 **MIT 18.06SC Linear Algebra (Lecture 19)**")</span>
+<span id="cb3-149"><a href="#cb3-149" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Clear statement or equation (e.g., "Learning ≠ Optimization")</span>
+<span id="cb3-150"><a href="#cb3-150" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>2-4 bullet points (🔹) with key insights</span>
+<span id="cb3-151"><a href="#cb3-151" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Philosophical closing line (💡)</span>
+<span id="cb3-152"><a href="#cb3-152" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Link to full blog post (📖)</span>
+<span id="cb3-153"><a href="#cb3-153" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Source attribution at the end (e.g., "My notes on Deep Learning (Ian Goodfellow) Chapter X.X" or "My notes on MIT 18.06SC Linear Algebra - Lecture XX")</span>
+<span id="cb3-154"><a href="#cb3-154" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Keep it concise**: Aim for clarity over comprehensiveness - use knowledge card format for quick, digestible insights</span>
+<span id="cb3-155"><a href="#cb3-155" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Course naming**:</span>
+<span id="cb3-156"><a href="#cb3-156" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Always use "MIT 18.06SC" (not just "MIT 18.06") for linear algebra posts</span>
+<span id="cb3-157"><a href="#cb3-157" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Use full course titles to maintain consistency</span>
+<span id="cb3-158"><a href="#cb3-158" aria-hidden="true" tabindex="-1"></a><span class="ss">6. </span>**Include relevant hashtags**: #MachineLearning #LinearAlgebra #DeepLearning</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
