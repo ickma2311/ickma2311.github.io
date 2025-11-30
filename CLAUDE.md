@@ -60,7 +60,7 @@ The site uses a hierarchical navigation structure defined in `_quarto.yml`:
 
 ### Maintaining the Homepage
 
-The homepage (`index.qmd`) shows the **latest 3 items** from each section with a count badge.
+The homepage (`index.qmd`) shows the **latest 4 items** from each section with a count badge.
 
 **CRITICAL: When adding new content, you MUST:**
 
@@ -70,8 +70,8 @@ The homepage (`index.qmd`) shows the **latest 3 items** from each section with a
    - MIT 18.065: `Math/MIT18.065/lectures.qmd`
 
 2. **Update the homepage manually** by editing `index.qmd`:
-   - Replace the oldest item in the "Latest 3" with the new item
-   - Keep the 3 most recent items visible
+   - Replace the oldest item in the "Latest 4" with the new item
+   - Keep the 4 most recent items visible
    - Order: newest first (top), oldest last (bottom)
 
 3. **Update section counts automatically:**
@@ -85,16 +85,16 @@ The homepage (`index.qmd`) shows the **latest 3 items** from each section with a
    quarto render index.qmd
    ```
 
-**Example workflow when adding Chapter 9.6:**
+**Example workflow when adding Chapter 9.8:**
 ```bash
 # 1. Create the new content file
-vim ML/chapter-9-6.qmd
+vim ML/chapter-9-8.qmd
 
 # 2. Add to list page
-vim ML/deep-learning-book.qmd  # Add Chapter 9.6 entry
+vim ML/deep-learning-book.qmd  # Add Chapter 9.8 entry
 
 # 3. Update homepage
-vim index.qmd  # Replace Chapter 9.3 with 9.6, keep 9.4 and 9.5
+vim index.qmd  # Replace Chapter 9.4 with 9.8, keep 9.7, 9.6, and 9.5
 
 # 4. Update counts automatically
 ./update-counts.sh
@@ -103,7 +103,7 @@ vim index.qmd  # Replace Chapter 9.3 with 9.6, keep 9.4 and 9.5
 quarto render index.qmd
 ```
 
-**Warning**: The homepage will NOT automatically update when you add new content. You must manually update `index.qmd` to show the latest 3 items.
+**Warning**: The homepage will NOT automatically update when you add new content. You must manually update `index.qmd` to show the latest 4 items.
 
 ## Configuration Notes
 
