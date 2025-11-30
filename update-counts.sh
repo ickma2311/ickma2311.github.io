@@ -27,4 +27,11 @@ sed -i.bak "s/MIT 18.065 Matrix Methods <span class=\"section-count\">[0-9]* lec
 rm index.qmd.bak
 
 echo ""
-echo "Updated index.qmd with new counts!"
+echo "✅ Updated index.qmd with new counts!"
+echo ""
+echo "⚠️  REMINDER: Did you update the 'Latest 3' items on the homepage?"
+echo "   If you added new content, manually edit index.qmd to:"
+echo "   1. Replace the oldest item with the new item"
+echo "   2. Keep the 3 most recent items visible (newest first)"
+echo "   3. Then run: quarto render index.qmd"
+echo ""

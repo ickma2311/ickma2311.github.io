@@ -49,13 +49,61 @@ The site uses a hierarchical navigation structure defined in `_quarto.yml`:
 ### Adding New Content
 
 1. Create the content file in the appropriate directory (`ML/` or `Math/` or `Algorithm/`)
-2. Update the corresponding index.qmd file to include the new content
-3. Add navigation entry to `_quarto.yml` if it should appear in the navbar dropdown
-4. Use consistent frontmatter with `title` field
-5. **Set publication date**: Always use the current date from the system for the `date` field in frontmatter
+2. **Add to list page**: Update the corresponding list page (e.g., `ML/deep-learning-book.qmd`, `Math/MIT18.06/lectures.qmd`)
+3. **Update homepage automatically**: Run `./update-counts.sh` to update section counts on homepage
+4. Add navigation entry to `_quarto.yml` if it should appear in the navbar dropdown
+5. Use consistent frontmatter with `title` field
+6. **Set publication date**: Always use the current date from the system for the `date` field in frontmatter
    - Get current date with: `date +"%Y-%m-%d"` (format: YYYY-MM-DD)
    - Example: `date: "2025-10-26"`
-6. **Important**: After adding new navbar items, run `quarto render` (full site render) to update the navbar on ALL existing pages. Individual file renders only update that specific page.
+7. **Important**: After adding new navbar items, run `quarto render` (full site render) to update the navbar on ALL existing pages. Individual file renders only update that specific page.
+
+### Maintaining the Homepage
+
+The homepage (`index.qmd`) shows the **latest 3 items** from each section with a count badge.
+
+**CRITICAL: When adding new content, you MUST:**
+
+1. **Add the new item to the appropriate list page:**
+   - Deep Learning: `ML/deep-learning-book.qmd`
+   - MIT 18.06SC: `Math/MIT18.06/lectures.qmd`
+   - MIT 18.065: `Math/MIT18.065/lectures.qmd`
+
+2. **Update the homepage manually** by editing `index.qmd`:
+   - Replace the oldest item in the "Latest 3" with the new item
+   - Keep the 3 most recent items visible
+   - Order: newest first (top), oldest last (bottom)
+
+3. **Update section counts automatically:**
+   ```bash
+   ./update-counts.sh
+   ```
+   This script automatically counts items in list pages and updates the count badges in `index.qmd`.
+
+4. **Render and verify:**
+   ```bash
+   quarto render index.qmd
+   ```
+
+**Example workflow when adding Chapter 9.6:**
+```bash
+# 1. Create the new content file
+vim ML/chapter-9-6.qmd
+
+# 2. Add to list page
+vim ML/deep-learning-book.qmd  # Add Chapter 9.6 entry
+
+# 3. Update homepage
+vim index.qmd  # Replace Chapter 9.3 with 9.6, keep 9.4 and 9.5
+
+# 4. Update counts automatically
+./update-counts.sh
+
+# 5. Render
+quarto render index.qmd
+```
+
+**Warning**: The homepage will NOT automatically update when you add new content. You must manually update `index.qmd` to show the latest 3 items.
 
 ## Configuration Notes
 

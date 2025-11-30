@@ -668,6 +668,7 @@ S = \begin{bmatrix}
 <li><strong>Geometric interpretation</strong>: Find the point on the constraint line <span class="math inline">\(c_1 x_1 + c_2 x_2 = 0\)</span> that intersects the smallest <span class="math inline">\(\|v\|_2 = c\)</span> level set (circle)</li>
 <li><strong>Use case</strong>: Ridge regression, preventing overfitting</li>
 </ul>
+<p><img src="minimizex.png" class="img-fluid" alt="Minimizing different norms"> <em>Figure: Comparison of minimizing <span class="math inline">\(\ell_1\)</span> norm (diamond-shaped level sets, leading to sparse solutions at axes) versus <span class="math inline">\(\ell_2\)</span> norm (circular level sets, leading to distributed solutions). The constraint line intersects different norms at different points, illustrating why <span class="math inline">\(\ell_1\)</span> regularization produces sparsity.</em></p>
 <hr>
 </section>
 </section>
@@ -1336,66 +1337,69 @@ S = \begin{bmatrix}
 <span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Geometric interpretation**: Find the point on the constraint line $c_1 x_1 + c_2 x_2 = 0$ that intersects the smallest $<span class="sc">\|</span>v<span class="sc">\|</span>_2 = c$ level set (circle)</span>
 <span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Use case**: Ridge regression, preventing overfitting</span>
 <span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a><span class="fu">## Matrix Norms</span></span>
-<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a><span class="fu">### Spectral Norm: $\|A\|_2 = \sigma_1$</span></span>
-<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>The **spectral norm** measures the maximum "blow-up" of a vector:</span>
-<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>A<span class="sc">\|</span>_2 = \max_x \frac{<span class="sc">\|</span>Ax<span class="sc">\|</span>_2}{<span class="sc">\|</span>x<span class="sc">\|</span>_2} = \sigma_1</span>
-<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a>where $\sigma_1$ is the largest singular value of $A$.</span>
-<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>**Winner**: $x = v_1$ (first right singular vector)</span>
-<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a><span class="fu">### Frobenius Norm: $\|A\|_F$</span></span>
-<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>The **Frobenius norm** is the square root of the sum of all squared entries:</span>
-<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>A<span class="sc">\|</span>_F = \sqrt{a_{11}^2 + a_{12}^2 + \cdots + a_{mn}^2}</span>
-<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>**Connection to SVD**:</span>
-<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>A<span class="sc">\|</span>_F = \sqrt{\sigma_1^2 + \sigma_2^2 + \cdots + \sigma_r^2}</span>
-<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>**Why?** Because $A = U \Sigma V^T$, and both $U$ and $V$ are orthonormal matrices (they preserve $\ell_2$ norm).</span>
-<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a><span class="fu">### Nuclear Norm: $\|A\|_N$</span></span>
-<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a>The **nuclear norm** (also called **trace norm**) is the sum of singular values:</span>
-<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>A<span class="sc">\|</span>_N = \sigma_1 + \sigma_2 + \cdots + \sigma_r</span>
-<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>**Use case**: Low-rank matrix completion (convex relaxation of rank minimization)</span>
-<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary of Matrix Norms</span></span>
-<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a><span class="al">![Matrix norms comparison](matrix_norm.png)</span></span>
-<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>*Figure: Comparison of matrix norms - spectral norm $\|A\|_2$ (largest singular value), Frobenius norm $\|A\|_F$ (root sum of squared singular values), and nuclear norm $\|A\|_N$ (sum of singular values).*</span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a><span class="al">![Minimizing different norms](minimizex.png)</span></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>*Figure: Comparison of minimizing $\ell_1$ norm (diamond-shaped level sets, leading to sparse solutions at axes) versus $\ell_2$ norm (circular level sets, leading to distributed solutions). The constraint line intersects different norms at different points, illustrating why $\ell_1$ regularization produces sparsity.*</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a><span class="fu">## Matrix Norms</span></span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a><span class="fu">### Spectral Norm: $\|A\|_2 = \sigma_1$</span></span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>The **spectral norm** measures the maximum "blow-up" of a vector:</span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>A<span class="sc">\|</span>_2 = \max_x \frac{<span class="sc">\|</span>Ax<span class="sc">\|</span>_2}{<span class="sc">\|</span>x<span class="sc">\|</span>_2} = \sigma_1</span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>where $\sigma_1$ is the largest singular value of $A$.</span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>**Winner**: $x = v_1$ (first right singular vector)</span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a><span class="fu">### Frobenius Norm: $\|A\|_F$</span></span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>The **Frobenius norm** is the square root of the sum of all squared entries:</span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>A<span class="sc">\|</span>_F = \sqrt{a_{11}^2 + a_{12}^2 + \cdots + a_{mn}^2}</span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>**Connection to SVD**:</span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>A<span class="sc">\|</span>_F = \sqrt{\sigma_1^2 + \sigma_2^2 + \cdots + \sigma_r^2}</span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>**Why?** Because $A = U \Sigma V^T$, and both $U$ and $V$ are orthonormal matrices (they preserve $\ell_2$ norm).</span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a><span class="fu">### Nuclear Norm: $\|A\|_N$</span></span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>The **nuclear norm** (also called **trace norm**) is the sum of singular values:</span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>A<span class="sc">\|</span>_N = \sigma_1 + \sigma_2 + \cdots + \sigma_r</span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>**Use case**: Low-rank matrix completion (convex relaxation of rank minimization)</span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary of Matrix Norms</span></span>
 <span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Norm** | **Formula** | **Geometric Meaning** <span class="pp">|</span></span>
-<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------|-------------|----------------------|</span></span>
-<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Spectral** <span class="pp">|</span> $<span class="sc">\|</span>A<span class="sc">\|</span>_2 = \sigma_1$ <span class="pp">|</span> Maximum amplification <span class="pp">|</span></span>
-<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Frobenius** <span class="pp">|</span> $<span class="sc">\|</span>A<span class="sc">\|</span>_F = \sqrt{\sigma_1^2 + \cdots + \sigma_r^2}$ <span class="pp">|</span> Root mean square of entries <span class="pp">|</span></span>
-<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Nuclear** <span class="pp">|</span> $<span class="sc">\|</span>A<span class="sc">\|</span>_N = \sigma_1 + \cdots + \sigma_r$ <span class="pp">|</span> Convex surrogate for rank <span class="pp">|</span></span>
-<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>**Key insight**: All three matrix norms can be expressed in terms of singular values, connecting them to the fundamental SVD decomposition.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a><span class="al">![Matrix norms comparison](matrix_norm.png)</span></span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a>*Figure: Comparison of matrix norms - spectral norm $\|A\|_2$ (largest singular value), Frobenius norm $\|A\|_F$ (root sum of squared singular values), and nuclear norm $\|A\|_N$ (sum of singular values).*</span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Norm** | **Formula** | **Geometric Meaning** <span class="pp">|</span></span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------|-------------|----------------------|</span></span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Spectral** <span class="pp">|</span> $<span class="sc">\|</span>A<span class="sc">\|</span>_2 = \sigma_1$ <span class="pp">|</span> Maximum amplification <span class="pp">|</span></span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Frobenius** <span class="pp">|</span> $<span class="sc">\|</span>A<span class="sc">\|</span>_F = \sqrt{\sigma_1^2 + \cdots + \sigma_r^2}$ <span class="pp">|</span> Root mean square of entries <span class="pp">|</span></span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Nuclear** <span class="pp">|</span> $<span class="sc">\|</span>A<span class="sc">\|</span>_N = \sigma_1 + \cdots + \sigma_r$ <span class="pp">|</span> Convex surrogate for rank <span class="pp">|</span></span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a>**Key insight**: All three matrix norms can be expressed in terms of singular values, connecting them to the fundamental SVD decomposition.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
