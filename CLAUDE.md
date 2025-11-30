@@ -9,7 +9,9 @@ This is a Quarto-based technical blog hosted on GitHub Pages (ickma2311.github.i
 ## Common Commands
 
 ### Development Workflow
+- `./render-site.sh` - **Recommended**: Clean build of entire website (handles cleanup automatically)
 - `quarto render` - Build the entire website (outputs to `docs/` directory)
+  - ⚠️ May encounter file movement errors; use `render-site.sh` instead for reliable builds
 - `quarto preview` - Start local development server with live reload
 - `quarto render <file.qmd>` - Render a specific document
 - `quarto check` - Verify Quarto installation and project setup
@@ -123,7 +125,7 @@ The site is automatically deployed from the `docs/` directory. After rendering, 
 
 **ALWAYS verify locally before pushing to prevent broken images on production:**
 
-1. **Run full render**: `quarto render` (not individual file renders)
+1. **Run full render**: Use `./render-site.sh` for automatic cleanup, or `quarto render` (not individual file renders)
 
 2. **CRITICAL: Restore ALL deleted images after full render**
 

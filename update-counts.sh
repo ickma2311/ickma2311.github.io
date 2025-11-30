@@ -21,7 +21,7 @@ sed -i.bak "s/Deep Learning Book <span class=\"section-count\">[0-9]* chapters/D
 
 sed -i.bak "s/MIT 18.06SC Linear Algebra <span class=\"section-count\">[0-9]* lectures/MIT 18.06SC Linear Algebra <span class=\"section-count\">$MIT1806_COUNT lectures/" index.qmd
 
-sed -i.bak "s/MIT 18.065 Matrix Methods <span class=\"section-count\">[0-9]* lectures/MIT 18.065 Matrix Methods <span class=\"section-count\">$MIT18065_COUNT lectures/" index.qmd
+sed -i.bak "s/MIT 18.065: Linear Algebra Applications <span class=\"section-count\">[0-9]* lectures\{0,1\}/MIT 18.065: Linear Algebra Applications <span class=\"section-count\">$MIT18065_COUNT lectures/" index.qmd
 
 # Remove backup file
 rm index.qmd.bak
