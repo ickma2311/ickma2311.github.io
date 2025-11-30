@@ -23,8 +23,8 @@ if [ $? -ne 0 ]; then
     echo ""
     echo "⚠️  Render completed with errors. Restoring images..."
 
-    # Restore deleted images from git
-    git checkout docs/
+    # Restore deleted images from git (images only, not HTML files)
+    git checkout docs/**/*.png docs/**/*.jpg docs/**/*.gif docs/**/*.svg 2>/dev/null
 
     # Move any HTML files that ended up in wrong places
     find . -maxdepth 3 -name "*.html" ! -path "./docs/*" -type f -exec mv {} docs/ \; 2>/dev/null
