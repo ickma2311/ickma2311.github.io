@@ -1,0 +1,21 @@
+---
+title: "Chapter 9.8: Efficient Convolution Algorithms"
+author: "Chao Ma"
+date: "2025-11-30"
+categories: [Deep Learning, CNN, Separable Convolution, Efficiency]
+---
+
+## Separable Convolution
+
+A convolution kernel is **separable** when its multi-dimensional weights can be written as the outer product of several one-dimensional filters. In this case, a 2D convolution with a $k \times k$ kernel can be executed as two sequential 1D convolutions: first applying a vertical filter, then a horizontal one. This decomposition does not change the output—each pixel still aggregates information from the full $k \times k$ neighborhood—but it significantly reduces computational cost.
+
+Standard 2D convolution requires $O(HWk^2)$ operations, while separable convolution reduces this to $O(HWk)$. Parameter storage also shrinks from $k^2$ to $2k$. When such a factorization exists, it enables faster and more memory-efficient models without sacrificing accuracy, and is therefore an important strategy for designing efficient convolutional networks.
+
+---
+
+![Separable convolution visualization](separable_convolution.png)
+*Figure: Separable convolution decomposes a 2D kernel into two 1D filters (vertical and horizontal), reducing computational complexity from O(HWk²) to O(HWk) while maintaining the same receptive field.*
+
+## Key Insight
+
+**Separable convolution achieves the same output as standard 2D convolution but with dramatically reduced computational cost.** By factorizing a $k \times k$ kernel into two $k \times 1$ filters, we transform an $O(k^2)$ operation into $O(k)$—a massive speedup for large kernels. This decomposition is particularly valuable in mobile and edge deployments where computational resources are limited, and forms the foundation of efficient architectures like MobileNet.
