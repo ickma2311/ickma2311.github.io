@@ -1,0 +1,86 @@
+---
+title: "Chapter 10.1: Unfold Computation Graph"
+author: "Chao Ma"
+date: "2025-12-03"
+categories: [Deep Learning, RNN, Sequence Modeling, Recurrent Networks]
+---
+
+Recurrent Model (RNN) is specified for sequence data processing. While CNN is specified for grid data (images), RNN is designed to process sequences $(x^{(1)},x^{(2)},...,x^{(t)})$.
+
+## Parameter Sharing Through Unfolding
+
+Unfolding the computation graph results in the parameters to be shared.
+
+$$
+s^{(t)}=f(s^{(t-1)};\theta) \tag{10.1}
+$$
+
+where $s^{(t)}$ is the system state.
+
+The definition of $s$ at time $t$ depends on the moment of $t-1$, so Equation 10.1 is recurrent.
+
+$$
+s^{(3)}=f(s^{(2)};\theta) \tag{10.2}
+$$
+
+$$
+s^{(3)}=f(f(s^{(1)};\theta);\theta) \tag{10.3}
+$$
+
+![RNN with output at each timestep](rnn-sequence-to-sequence.png)
+
+## Dynamic Systems with External Input
+
+Another example is a dynamic system driven by external signal $x^{(t)}$:
+
+$$
+s^{(t)}=f(s^{(t-1)}, x^{(t)};\theta) \tag{10.4}
+$$
+
+**A real case:** Consider the sentence "I love deep learning". When $t=3$:
+
+- $s^{(t-1)}$ is the memory of "I love"
+- $x^{(t)}$ is the embedding of "deep"
+
+## Hidden States
+
+In deep learning, we usually name $s^{(t)}, s^{(t-1)}$ as **hidden units**:
+
+$$
+h^{(t)}=f(h^{(t-1)}, x^{(t)};\theta) \tag{10.5}
+$$
+
+![RNN unfolded computation graph](rnn-unfold.png)
+
+**Key insight:** When training an RNN to use past information to predict the future, the network must learn a compressed, lossy summary of the history. It is unnecessary—and usually impossible—to store the entire past sequence. Instead, the hidden state learns to retain only the **task-relevant information** needed for future predictions.
+
+## The Function $g^{(t)}$
+
+$g^{(t)}$ is the **composed transformation** of the past $t$ steps, not the loop itself:
+
+$$
+h^{(t)}=g^{(t)}(x^{(t)},x^{(t-1)},x^{(t-2)},...,x^{(2)},x^{(1)}) \tag{10.6}
+$$
+
+This is equivalent to Equation 10.5.
+
+**The function** $g^{(t)}$ takes the entire history of inputs $(x^{(t)}, x^{(t-1)}, \ldots, x^{(1)})$ as its argument.
+
+**The unrolled recurrent architecture allows us to express** $g^{(t)}$ as a repeated composition of the same transition function $f$.
+
+### Two Key Advantages
+
+This formulation offers two key advantages:
+
+1. **Arbitrary input length:** It allows inputs of arbitrary length to be mapped to a fixed-size hidden state
+2. **Parameter sharing:** It enables parameter sharing, since the same transition function $f$ with the same parameters is reused at every time step
+
+RNN models can also be generalized to unseen input lengths.
+
+![Different RNN architectures](rnn-architectures.png)
+
+---
+
+## Key Insight
+
+**Unfolding computation graphs in RNNs enables parameter sharing across time steps.** The same function $f$ with parameters $\theta$ is applied repeatedly, allowing the model to process sequences of any length while maintaining a fixed number of parameters. The hidden state $h^{(t)}$ compresses the entire input history into a fixed-size representation, learning to retain only task-relevant information. This architecture generalizes naturally to unseen sequence lengths and enables three fundamental patterns: sequence-to-sequence (many-to-many), sequence-to-vector (many-to-one), and vector-to-sequence (one-to-many) mappings.
