@@ -126,6 +126,27 @@
     "text": "Interpreting Hessian at Critical Points\nAt a critical point where \\(\\nabla f = 0\\), the Hessian determines the nature of the point:\n\n\n\n\n\n\n\n\n\nHessian Type\nEigenvalues\nSurface Shape\nPoint Type\n\n\n\n\nPositive definite\nall positive\nBowl (convex)\nLocal minimum\n\n\nNegative definite\nall negative\nDome (concave)\nLocal maximum\n\n\nIndefinite\nmixed signs\nSaddle\nNeither min nor max\n\n\nSemi-definite\nsome zero\nFlat in some directions\nInconclusive\n\n\n\n\nVisualization: Different Surface Types\n\n\nShow code\n# Create grid for plotting\nx_grid = np.linspace(-2, 2, 100)\ny_grid = np.linspace(-2, 2, 100)\nX, Y = np.meshgrid(x_grid, y_grid)\n\n# Define different functions with different Hessian types\ndef positive_definite(x, y):\n    \"\"\"Minimum: f = x² + y²\"\"\"\n    return x**2 + y**2\n\ndef negative_definite(x, y):\n    \"\"\"Maximum: f = -x² - y²\"\"\"\n    return -x**2 - y**2\n\ndef indefinite(x, y):\n    \"\"\"Saddle: f = x² - y²\"\"\"\n    return x**2 - y**2\n\ndef semi_definite(x, y):\n    \"\"\"Flat direction: f = x²\"\"\"\n    return x**2\n\n# Create 3D surface plots in 2x2 grid\nfig = plt.figure(figsize=(12, 10))\n\nfunctions = [\n    (positive_definite, \"Positive Definite\\n(Bowl - Minimum)\", \"Greens\"),\n    (negative_definite, \"Negative Definite\\n(Dome - Maximum)\", \"Reds\"),\n    (indefinite, \"Indefinite\\n(Saddle Point)\", \"RdBu\"),\n    (semi_definite, \"Semi-Definite\\n(Flat Direction)\", \"YlOrRd\")\n]\n\nfor idx, (func, title, cmap) in enumerate(functions, 1):\n    ax = fig.add_subplot(2, 2, idx, projection='3d')\n    Z = func(X, Y)\n\n    surf = ax.plot_surface(X, Y, Z, cmap=cmap, alpha=0.8,\n                           linewidth=0, antialiased=True)\n\n    ax.set_xlabel('x', fontsize=9)\n    ax.set_ylabel('y', fontsize=9)\n    ax.set_zlabel('f(x,y)', fontsize=9)\n    ax.set_title(title, fontsize=10)\n    ax.view_init(elev=25, azim=45)\n\nplt.tight_layout()\nplt.show()\n\n\n\n\n\n\n\n\n\nContour plots for better understanding:\n\n\nShow code\n# Contour plots in 2x2 grid\nfig, axes = plt.subplots(2, 2, figsize=(10, 10))\naxes = axes.flatten()\n\nfor idx, (func, title, cmap) in enumerate(functions):\n    ax = axes[idx]\n    Z = func(X, Y)\n\n    contour = ax.contour(X, Y, Z, levels=15, cmap=cmap)\n    ax.clabel(contour, inline=True, fontsize=7)\n\n    # Mark the critical point at origin\n    ax.plot(0, 0, 'r*', markersize=12, label='Critical point')\n\n    ax.set_xlabel('x', fontsize=9)\n    ax.set_ylabel('y', fontsize=9)\n    ax.set_title(title, fontsize=10)\n    ax.grid(True, alpha=0.3)\n    ax.legend(fontsize=8)\n    ax.set_aspect('equal')\n\nplt.tight_layout()\nplt.show()"
   },
   {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "ickma.dev",
+    "section": "",
+    "text": "A growing collection of structured study notes and visual explanations — written for clarity, reproducibility, and long-term memory."
+  },
+  {
+    "objectID": "index.html#latest-updates",
+    "href": "index.html#latest-updates",
+    "title": "ickma.dev",
+    "section": "Latest Updates",
+    "text": "Latest Updates\n\n∇ Deep Learning Book 39 chapters\nMy notes on the Deep Learning book by Ian Goodfellow, Yoshua Bengio, and Aaron Courville.\n\n\nChapter 10.1: Unfold Computation Graph Unfolding computation graphs in RNNs enables parameter sharing across time steps. The same function with fixed parameters processes sequences of any length, compressing input history into fixed-size hidden states that retain only task-relevant information for predictions.\n\n\nChapter 9.10: Neuroscientific Basis for Convolutional Networks V1 simple cells act like Gabor filters detecting oriented edges, complex cells pool for translation invariance—inspiring CNNs. But biological vision includes saccadic attention, multisensory integration, top-down feedback, and adaptive receptive fields that CNNs lack, making animal vision far richer than feed-forward object recognition.\n\n\nChapter 9.9: Unsupervised or Semi-Supervised Feature Learning Before CNNs, computer vision relied on hand-crafted kernels (Sobel, Laplacian) and unsupervised methods (sparse coding, autoencoders, k-means). Modern CNNs surpass both by learning hierarchical features end-to-end—from edges to semantic concepts—optimized for the task, making hand-crafted filters largely obsolete.\n\n\n\nSee all Deep Learning chapters →\n\n\n\n📐 MIT 18.06SC Linear Algebra 36 lectures\nMy journey through MIT’s Linear Algebra course, focusing on building intuition and making connections between fundamental concepts.\n\n\nLecture 27: Positive Definite Matrices and Minima Connecting positive definite matrices to multivariable calculus and optimization: the Hessian matrix, second derivative tests, and the geometric interpretation of quadratic forms as ellipsoids.\n\n\nLecture 26: Complex Matrices and Fast Fourier Transform Extending linear algebra to complex vectors: Hermitian matrices, unitary matrices, and the Fast Fourier Transform algorithm that reduces DFT complexity from O(N²) to O(N log N).\n\n\nLecture 28: Similar Matrices and Jordan Form When matrices share eigenvalues but differ in structure: similar matrices represent the same transformation in different bases, and Jordan form reveals the canonical structure when diagonalization fails.\n\n\nLecture 25: Symmetric Matrices and Positive Definiteness The beautiful structure of symmetric matrices: real eigenvalues, orthogonal eigenvectors, spectral decomposition, and the important concept of positive definiteness.\n\n\n\nSee all MIT 18.06SC lectures →\n\n\n\n📐 MIT 18.065: Linear Algebra Applications 2 lectures\nMy notes from MIT 18.065 Matrix Methods in Data Analysis, Signal Processing, and Machine Learning—exploring how linear algebra powers modern applications.\n\n\nLecture 9: Four Ways to Solve Least Squares Problems Four equivalent methods for solving \\(Ax = b\\) when \\(A\\) has no inverse: pseudo-inverse, normal equations, algebraic minimization, and geometric projection—all converging to the same optimal solution.\n\n\nLecture 8: Norms of Vectors and Matrices Understanding vector p-norms (\\(\\|v\\|_p\\)) and when they satisfy the triangle inequality (only for \\(p \\geq 1\\)). The “\\(\\frac{1}{2}\\)-norm” creates non-convex unit balls for strong sparsity.\n\n\n\nSee all MIT 18.065 lectures →\n\n\n\n📐 Stanford EE 364A: Convex Optimization 3 lectures\nMy notes from Stanford EE 364A: Convex Optimization—theory and applications of optimization problems.\n\n\nLecture 3: Convex Functions Separating and supporting hyperplane theorems, dual cones, convex function definition and examples, first-order condition (tangent underestimates), second-order condition (Hessian PSD), epigraph and sublevel sets, Jensen’s inequality, and operations preserving convexity.\n\n\nLecture 2: Convex Sets Convex sets (affine combinations, convex hull, convex cone), hyperplanes and halfspaces, Euclidean balls and ellipsoids, norm balls and norm cones, polyhedra, positive semidefinite cone. Operations that preserve convexity: intersection, affine functions, perspective, linear-fractional.\n\n\nLecture 1: Introduction to Convex Optimization Introduction to constraint optimization: least squares (\\(\\|Ax-b\\|_2^2\\)), linear programming, and convex optimization. Convex problems generalize both while maintaining polynomial-time solvability through interior-point methods.\n\n\n\nSee all EE 364A lectures →"
+  },
+  {
+    "objectID": "index.html#more-topics",
+    "href": "index.html#more-topics",
+    "title": "ickma.dev",
+    "section": "More Topics",
+    "text": "More Topics\n\n\nMachine Learning\n\nK-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\nAlgorithms\n\nDP Regex"
+  },
+  {
     "objectID": "ML/xor-deep-learning.html",
     "href": "ML/xor-deep-learning.html",
     "title": "Deep Learning Book 6.1: XOR Problem & ReLU Networks",
@@ -166,6 +187,111 @@
     "title": "Deep Learning Book 6.1: XOR Problem & ReLU Networks",
     "section": "Conclusion",
     "text": "Conclusion\nThe XOR problem demonstrates several fundamental principles in deep learning:\n\nNecessity of Nonlinearity: Linear models cannot solve XOR, establishing the critical role of nonlinear activation functions.\nUniversal Approximation: Even simple architectures with sufficient nonlinearity can solve complex classification problems."
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html",
+    "title": "Lecture 3: Convex Functions",
+    "section": "",
+    "text": "If C and D are nonempty disjoint convex sets, then there exists \\(a \\neq 0, b\\) such that:\n\\[\na^\\top x \\leq b \\quad \\text{for } x \\in C, \\quad a^\\top x \\geq b \\quad \\text{for } x \\in D\n\\]\nThe hyperplane \\(a^\\top x = b\\) separates C and D.\n\n\n\nSeparating hyperplane between two convex sets"
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#separating-hyperplane-theorem",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#separating-hyperplane-theorem",
+    "title": "Lecture 3: Convex Functions",
+    "section": "",
+    "text": "If C and D are nonempty disjoint convex sets, then there exists \\(a \\neq 0, b\\) such that:\n\\[\na^\\top x \\leq b \\quad \\text{for } x \\in C, \\quad a^\\top x \\geq b \\quad \\text{for } x \\in D\n\\]\nThe hyperplane \\(a^\\top x = b\\) separates C and D.\n\n\n\nSeparating hyperplane between two convex sets"
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#supporting-hyperplane-theorem",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#supporting-hyperplane-theorem",
+    "title": "Lecture 3: Convex Functions",
+    "section": "Supporting Hyperplane Theorem",
+    "text": "Supporting Hyperplane Theorem\nSupporting hyperplane to set C (doesn’t have to be a convex set) at boundary point \\(x_0\\):\n\\[\n\\{x \\mid a^\\top x = a^\\top x_0\\}\n\\]\nwhere \\(a\\) is the normal vector that determines the hyperplane tangent to C at point \\(x_0\\), with \\(a \\neq 0\\) and \\(a^\\top x \\leq a^\\top x_0\\) for \\(x \\in C\\).\n\n\n\nSupporting hyperplane at boundary point\n\n\nIf C is convex, then there is a supporting hyperplane at every point of its boundary.\n\n\n\nSupporting hyperplanes exist at every boundary point for convex sets"
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#dual-cones-and-generalized-inequalities",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#dual-cones-and-generalized-inequalities",
+    "title": "Lecture 3: Convex Functions",
+    "section": "Dual Cones and Generalized Inequalities",
+    "text": "Dual Cones and Generalized Inequalities\nDual cone of a cone K:\n\\[\nK^* = \\{y \\mid y^\\top x \\geq 0 \\quad \\forall x \\in K\\}\n\\]\nThe inner product of any vector in \\(K^*\\) and K is nonnegative.\n\n\n\nDual cone visualization\n\n\n\nExamples\n\n\\(K = \\{0\\}\\): the dual cone is \\(K^* = \\mathbb{R}^n\\)\nK is a ray: the dual cone is a half space\nSelf-dual cones:\n\n\\(K = \\mathbb{R}_+^n\\): dual cone \\(K^* = K\\)\n\\(K = S_+^n\\) (positive semidefinite cone)\n\\(K = \\{(x,t) \\mid \\|x\\|_2 \\leq t\\}\\) (second-order cone)\n\n\\(K = \\{(x,t) \\mid \\|x\\|_\\infty \\leq t\\}\\): dual cone \\(K^* = \\{(y,\\tau) \\mid \\|y\\|_1 \\leq \\tau\\}\\)\n\nThe dual cone of a proper cone is proper."
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#minimum-and-minimal-elements-via-dual-inequalities",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#minimum-and-minimal-elements-via-dual-inequalities",
+    "title": "Lecture 3: Convex Functions",
+    "section": "Minimum and Minimal Elements via Dual Inequalities",
+    "text": "Minimum and Minimal Elements via Dual Inequalities\n\nMinimum Element\n\\(x\\) is the minimum element of S if and only if for all \\(\\lambda \\succ_{K^*} 0\\), \\(x\\) is the unique minimizer of \\(\\lambda^\\top z\\) over S.\n\n\nMinimal Element\nIf \\(x\\) minimizes \\(\\lambda^\\top z\\) over S for some \\(\\lambda \\succ_{K^*} 0\\), then \\(x\\) is minimal.\nIf \\(x\\) is a minimal element of a convex set S, then there exists a nonzero \\(\\lambda \\succ_{K^*} 0\\) such that \\(x\\) minimizes \\(\\lambda^\\top z\\) over S."
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#examples-on-mathbbr",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#examples-on-mathbbr",
+    "title": "Lecture 3: Convex Functions",
+    "section": "Examples on \\(\\mathbb{R}\\)",
+    "text": "Examples on \\(\\mathbb{R}\\)\nConvex:\n\nAffine: \\(ax + b\\) for any \\(a, b \\in \\mathbb{R}\\)\nExponential: \\(e^{ax}\\) for any \\(a \\in \\mathbb{R}\\)\nPowers: \\(x^a\\) on \\(\\mathbb{R}_{++}\\) for \\(a \\geq 1\\) or \\(a \\leq 0\\)\nPowers of absolute value: \\(|x|^p\\) on \\(\\mathbb{R}\\) for \\(p \\geq 1\\)\nNegative entropy: \\(x \\log x\\) on \\(\\mathbb{R}_{++}\\)\n\nConcave:\n\nAffine: \\(ax + b\\)\nPowers: \\(x^a\\) on \\(\\mathbb{R}_{++}\\) for \\(0 \\leq a \\leq 1\\)\nLogarithm: \\(\\log x\\) on \\(\\mathbb{R}_{++}\\)"
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#examples-on-mathbbrn-and-mathbbrm-times-n",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#examples-on-mathbbrn-and-mathbbrm-times-n",
+    "title": "Lecture 3: Convex Functions",
+    "section": "Examples on \\(\\mathbb{R}^n\\) and \\(\\mathbb{R}^{m \\times n}\\)",
+    "text": "Examples on \\(\\mathbb{R}^n\\) and \\(\\mathbb{R}^{m \\times n}\\)\nOn \\(\\mathbb{R}^n\\):\n\nAffine function: \\(a^\\top x + b\\)\nNorms: \\(\\|x\\|_p = \\sqrt[p]{\\sum_i |x_i|^p}\\); \\(\\|x\\|_\\infty = \\max_k |x_k|\\)\n\nOn \\(\\mathbb{R}^{m \\times n}\\):\n\nAffine function: \\(f(X) = \\text{tr}(A^\\top X) + b = \\sum_{i,j} A_{ij} X_{ij} + b\\)\nSpectral norm: \\(f(X) = \\|X\\|_2 = \\sigma_{\\max}(X)\\)"
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#restriction-of-a-convex-function-to-a-line",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#restriction-of-a-convex-function-to-a-line",
+    "title": "Lecture 3: Convex Functions",
+    "section": "Restriction of a Convex Function to a Line",
+    "text": "Restriction of a Convex Function to a Line\n\\(f: \\mathbb{R}^n \\rightarrow \\mathbb{R}\\) is convex if and only if the function \\(g: \\mathbb{R} \\rightarrow \\mathbb{R}\\):\n\\[\ng(t) = f(x + tv), \\quad \\text{dom } g = \\{t \\mid x + tv \\in \\text{dom } f\\}\n\\]\nis convex for any \\(x \\in \\text{dom } f\\), \\(v \\in \\mathbb{R}^n\\).\nThis allows checking convexity of \\(f\\) by checking convexity of functions of one variable.\n\nExample\n\\(f: S^n \\rightarrow \\mathbb{R}\\) with \\(f(X) = \\log \\det X\\), \\(\\text{dom } f = S_{++}^n\\)\n\\[\ng(t) = \\log \\det(X + tV) = \\log \\det X + \\log \\det(I + tX^{-1/2}VX^{-1/2}) = \\log \\det X + \\sum_{i=1}^n \\log(1 + t\\lambda_i)\n\\]\nwhere \\(\\lambda_i\\) are the eigenvalues of \\(X^{-1/2}VX^{-1/2}\\). Since \\(g\\) is concave, \\(f\\) is concave."
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#extended-value-extension",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#extended-value-extension",
+    "title": "Lecture 3: Convex Functions",
+    "section": "Extended Value Extension",
+    "text": "Extended Value Extension\n\\[\n\\tilde{f}(x) = \\begin{cases} f(x) & x \\in \\text{dom } f \\\\ +\\infty & x \\notin \\text{dom } f \\end{cases}\n\\]\nThis extends the output domain of \\(f\\) to \\(\\mathbb{R} \\cup \\{+\\infty\\}\\).\nConvexity of \\(\\tilde{f}(\\theta x + (1-\\theta)y) \\leq \\theta \\tilde{f}(x) + (1-\\theta)\\tilde{f}(y)\\) still holds because:\n\nFor \\(x, y \\in \\text{dom } f\\): \\(f(x)\\) is convex, and \\(\\theta x + (1-\\theta)y \\in \\text{dom } f\\) (domain of convex function is convex)\nFor \\(x \\notin \\text{dom } f\\) or \\(y \\notin \\text{dom } f\\): \\(\\tilde{f}(\\theta x + (1-\\theta)y) \\leq +\\infty\\)\n\n\n\n\nExtended value extension"
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#first-order-condition",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#first-order-condition",
+    "title": "Lecture 3: Convex Functions",
+    "section": "First-Order Condition",
+    "text": "First-Order Condition\n\\(f\\) is differentiable if \\(\\text{dom } f\\) is open and the gradient exists at each \\(x \\in \\text{dom } f\\):\n\\[\n\\nabla f(x) = \\left(\\frac{\\partial f(x)}{\\partial x_1}, \\frac{\\partial f(x)}{\\partial x_2}, \\ldots, \\frac{\\partial f(x)}{\\partial x_n}\\right)\n\\]\nFirst-order condition: Differentiable \\(f\\) with convex domain is convex if and only if:\n\\[\nf(y) \\geq f(x) + \\nabla f(x)^\\top (y - x) \\quad \\forall x, y \\in \\text{dom } f\n\\]\n\n\n\nFirst-order condition: tangent always underestimates\n\n\nKey insight: For a convex function, the tangent (first-order linear approximation) always underestimates the function."
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#second-order-conditions",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#second-order-conditions",
+    "title": "Lecture 3: Convex Functions",
+    "section": "Second-Order Conditions",
+    "text": "Second-Order Conditions\n\\(f\\) is twice differentiable if \\(\\text{dom } f\\) is open and the Hessian \\(\\nabla^2 f(x) \\in S^n\\) exists at each \\(x \\in \\text{dom } f\\):\n\\[\n\\nabla^2 f(x)_{ij} = \\frac{\\partial^2 f(x)}{\\partial x_i \\partial x_j}, \\quad i, j = 1, \\ldots, n\n\\]\nSecond-order conditions: For twice differentiable \\(f\\) with convex domain:\n\n\\(f\\) is convex if and only if \\(\\nabla^2 f(x) \\succeq 0\\) for all \\(x \\in \\text{dom } f\\)\nIf \\(\\nabla^2 f(x) \\succ 0\\), then \\(f\\) is strictly convex\n\n\n\n\nSecond-order condition visualization\n\n\n\nExamples\nQuadratic function: \\(f(x) = \\frac{1}{2}x^\\top P x + q^\\top x + r\\) (with \\(P \\in S^n\\))\n\\[\n\\nabla f(x) = Px + q, \\quad \\nabla^2 f(x) = P\n\\]\nIf \\(P \\succeq 0\\), then \\(f(x)\\) is convex.\nLeast-squares objective: \\(f(x) = \\|Ax - b\\|_2^2\\)\n\\[\n\\nabla f(x) = 2A^\\top(Ax - b), \\quad \\nabla^2 f(x) = 2A^\\top A\n\\]\nConvex for any \\(A\\), because \\(A^\\top A\\) is always positive semidefinite.\nQuadratic-over-linear: \\(f(x, y) = x^2/y\\) is convex if \\(y &gt; 0\\)\n\\[\n\\nabla^2 f(x, y) = \\frac{2}{y^3} \\begin{bmatrix} y \\\\ -x \\end{bmatrix} \\begin{bmatrix} y & -x \\end{bmatrix} \\succeq 0\n\\]\nLog-sum-exp: \\(f(x) = \\log \\sum_{k=1}^n \\exp x_k\\) is convex\nLet \\(T = \\sum_{k=1}^n \\exp x_k\\) and \\(z_k = \\exp x_k\\):\n\\[\nH = \\nabla^2 f(x) = \\frac{1}{T}\\text{diag}(z) - \\frac{1}{T^2}zz^\\top\n\\]\nTo verify H is PSD, check \\(v^\\top H v \\geq 0\\) for all \\(v\\):\n\\[\nv^\\top \\nabla^2 f(x) v = \\frac{\\sum_k z_k v_k^2}{\\sum_k z_k} - \\frac{(\\sum_k v_k z_k)^2}{(\\sum_k z_k)^2}\n\\]\nBy Cauchy-Schwarz inequality: \\((\\sum_k v_k z_k)^2 \\leq (\\sum_k z_k v_k^2)(\\sum_k z_k)\\), so \\(v^\\top \\nabla^2 f(x) v \\geq 0\\).\nGeometric mean: \\(f(x) = \\sqrt[n]{\\prod_{k=1}^n x_k}\\) on \\(\\mathbb{R}_{++}^n\\) is concave."
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#epigraph-and-sub-level-sets",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#epigraph-and-sub-level-sets",
+    "title": "Lecture 3: Convex Functions",
+    "section": "Epigraph and Sub-level Sets",
+    "text": "Epigraph and Sub-level Sets\n\nSub-level Sets\n\\(\\alpha\\)-sublevel set of \\(f: \\mathbb{R}^n \\rightarrow \\mathbb{R}\\):\n\\[\nC_\\alpha = \\{x \\in \\text{dom } f \\mid f(x) \\leq \\alpha\\}\n\\]\nSub-level sets of convex functions are convex (converse is false).\n\n\nEpigraph\nEpigraph of \\(f: \\mathbb{R}^n \\rightarrow \\mathbb{R}\\):\n\\[\n\\text{epi } f = \\{(x, t) \\in \\mathbb{R}^{n+1} \\mid f(x) \\leq t, \\; x \\in \\text{dom } f\\}\n\\]\n\\(f\\) is convex if and only if \\(\\text{epi } f\\) is a convex set.\n\n\n\nEpigraph of a convex function"
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#jensens-inequality",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#jensens-inequality",
+    "title": "Lecture 3: Convex Functions",
+    "section": "Jensen’s Inequality",
+    "text": "Jensen’s Inequality\nIf \\(f\\) is convex:\n\\[\nf(\\mathbb{E}[z]) \\leq \\mathbb{E}[f(z)]\n\\]\nfor any random variable \\(z\\).\nThe function of the expectation is less than or equal to the expectation of the function.\nThe basic convexity inequality is a special case with discrete distribution:\n\n\\(\\text{prob}(z = x) = \\theta\\)\n\\(\\text{prob}(z = y) = 1 - \\theta\\)\n\n\n\n\nJensen’s inequality visualization"
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#operations-that-preserve-convexity",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#operations-that-preserve-convexity",
+    "title": "Lecture 3: Convex Functions",
+    "section": "Operations that Preserve Convexity",
+    "text": "Operations that Preserve Convexity\nWays to establish convexity:\n\nVerify definition directly\nFor twice differentiable functions, show \\(\\nabla^2 f(x) \\succeq 0\\)\nCombine simple convex functions using operations that preserve convexity:\n\nNonnegative weighted sum: \\(f_1 + f_2\\) is convex if \\(f_1, f_2\\) are convex\nNonnegative multiplication: \\(\\alpha f\\) is convex if \\(f\\) is convex and \\(\\alpha &gt; 0\\)\nComposition with affine function: \\(f(Ax + b)\\) is convex if \\(f\\) is convex\nPointwise maximum and supremum\nComposition\nMinimization\nPerspective\n\nExamples\nLog barrier for linear inequalities: \\[\nf(x) = -\\sum_{i=1}^m \\log(b_i - a_i^\\top x), \\quad \\text{dom } f = \\{x \\mid a_i^\\top x &lt; b_i, \\; i = 1, \\ldots, m\\}\n\\]\nNorm of affine function: \\[\nf(x) = \\|Ax + b\\|\n\\]"
+  },
+  {
+    "objectID": "Math/EE364A/ee364a-lecture3-convex-functions.html#key-insights",
+    "href": "Math/EE364A/ee364a-lecture3-convex-functions.html#key-insights",
+    "title": "Lecture 3: Convex Functions",
+    "section": "Key Insights",
+    "text": "Key Insights\nConvex functions are fundamental to optimization. The first-order condition shows that local information (gradient) provides a global lower bound. The second-order condition connects convexity to positive semidefiniteness of the Hessian. Jensen’s inequality generalizes the basic convexity definition to expectations, with applications throughout probability and machine learning. Operations preserving convexity allow building complex convex functions from simpler ones."
   },
   {
     "objectID": "ML/likelihood-loss-functions.html",
