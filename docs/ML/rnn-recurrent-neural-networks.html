@@ -573,7 +573,7 @@ window.Quarto = {
   <li><a href="#back-propagation-from-tau-1-to-1" id="toc-back-propagation-from-tau-1-to-1" class="nav-link" data-scroll-target="#back-propagation-from-tau-1-to-1">Back-Propagation from <span class="math inline">\(\tau-1\)</span> to 1</a></li>
   <li><a href="#gradients-of-parameters" id="toc-gradients-of-parameters" class="nav-link" data-scroll-target="#gradients-of-parameters">Gradients of Parameters</a></li>
   </ul></li>
-  <li><a href="#rnn-as-directed-graph" id="toc-rnn-as-directed-graph" class="nav-link" data-scroll-target="#rnn-as-directed-graph">RNN as Directed Graph</a></li>
+  <li><a href="#rnn-as-directed-graphical-model" id="toc-rnn-as-directed-graphical-model" class="nav-link" data-scroll-target="#rnn-as-directed-graphical-model">RNN as Directed Graphical Model</a></li>
   <li><a href="#context-based-rnn-model" id="toc-context-based-rnn-model" class="nav-link" data-scroll-target="#context-based-rnn-model">Context-Based RNN Model</a></li>
   <li><a href="#key-insights" id="toc-key-insights" class="nav-link" data-scroll-target="#key-insights">Key Insights</a></li>
   </ul>
@@ -723,7 +723,7 @@ L = L^{(1)} + ... + L^{(\tau)}, \quad \frac{\partial L}{\partial L^{(t)}} = 1 \t
 </ul></li>
 </ul>
 <p><span class="math display">\[
-\nabla_{h^{(t)}} L = W^\top \operatorname{diag}(1-(h^{(t+1)})^2) \nabla_{h^{(t+1)}} L + V^\top \nabla_{o^{(t)}} L \tag{10.21}
+= W^\top \nabla_{h^{(t+1)}} L \cdot \text{diag}(1 - (h^{(t+1)})^2) + V^\top \nabla_{o^{(t)}} L \tag{10.21}
 \]</span></p>
 </section>
 <section id="gradients-of-parameters" class="level3">
@@ -757,8 +757,8 @@ L = L^{(1)} + ... + L^{(\tau)}, \quad \frac{\partial L}{\partial L^{(t)}} = 1 \t
 <hr>
 </section>
 </section>
-<section id="rnn-as-directed-graph" class="level2">
-<h2 class="anchored" data-anchor-id="rnn-as-directed-graph">RNN as Directed Graph</h2>
+<section id="rnn-as-directed-graphical-model" class="level2">
+<h2 class="anchored" data-anchor-id="rnn-as-directed-graphical-model">RNN as Directed Graphical Model</h2>
 <p>The objective of RNN is to maximize the log-likelihood:</p>
 <p><span class="math display">\[
 \log p(y^{(t)} | x^{(1)}, ..., x^{(t)}) \tag{10.29}
@@ -779,7 +779,8 @@ L = \sum_t L^{(t)} \tag{10.32}
 L^{(t)} = -\log P(y^{(t)} | y^{(t-1)}, ..., y^{(1)}) \tag{10.33}
 \]</span></p>
 <p><strong>Parameter Complexity:</strong></p>
-<p>A naive fully-connected model would need <span class="math inline">\(O(k^\tau)\)</span> parameters. An RNN uses a fixed-size hidden state, so the number of parameters is independent of <span class="math inline">\(\tau\)</span>.</p>
+<p>In a fully-connected directed graph, each node has a connection to each node in its downstream. If we have <span class="math inline">\(k\)</span> labels of <span class="math inline">\(y\)</span>, then we need to maintain <span class="math inline">\(O(k^\tau)\)</span> parameters.</p>
+<p><strong>RNN uses hidden states to reduce this to <span class="math inline">\(O(\tau)\)</span>.</strong></p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="full_graph_vs_rnn.png" class="img-fluid figure-img"></p>
