@@ -337,6 +337,10 @@ window.Quarto = {
     <a class="dropdown-item" href="../ML/rnn-recurrent-neural-networks.html">
  <span class="dropdown-text">Chapter 10.2: Recurrent Neural Networks</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../ML/rnn-bidirectional.html">
+ <span class="dropdown-text">Chapter 10.3: Bidirectional RNN</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -515,6 +519,10 @@ window.Quarto = {
     <a class="dropdown-item" href="../Math/EE364A/ee364a-lecture3-convex-functions.html">
  <span class="dropdown-text">Lecture 3: Convex Functions</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../Math/EE364A/ee364a-lecture4-part1-operations-preserving-convexity.html">
+ <span class="dropdown-text">Lecture 4.1: Operations Preserving Convexity</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -573,7 +581,7 @@ window.Quarto = {
   <li><a href="#back-propagation-from-tau-1-to-1" id="toc-back-propagation-from-tau-1-to-1" class="nav-link" data-scroll-target="#back-propagation-from-tau-1-to-1">Back-Propagation from <span class="math inline">\(\tau-1\)</span> to 1</a></li>
   <li><a href="#gradients-of-parameters" id="toc-gradients-of-parameters" class="nav-link" data-scroll-target="#gradients-of-parameters">Gradients of Parameters</a></li>
   </ul></li>
-  <li><a href="#rnn-as-directed-graphical-model" id="toc-rnn-as-directed-graphical-model" class="nav-link" data-scroll-target="#rnn-as-directed-graphical-model">RNN as Directed Graphical Model</a></li>
+  <li><a href="#rnn-as-directed-graph" id="toc-rnn-as-directed-graph" class="nav-link" data-scroll-target="#rnn-as-directed-graph">RNN as Directed Graph</a></li>
   <li><a href="#context-based-rnn-model" id="toc-context-based-rnn-model" class="nav-link" data-scroll-target="#context-based-rnn-model">Context-Based RNN Model</a></li>
   <li><a href="#key-insights" id="toc-key-insights" class="nav-link" data-scroll-target="#key-insights">Key Insights</a></li>
   </ul>
@@ -723,7 +731,7 @@ L = L^{(1)} + ... + L^{(\tau)}, \quad \frac{\partial L}{\partial L^{(t)}} = 1 \t
 </ul></li>
 </ul>
 <p><span class="math display">\[
-= W^\top \nabla_{h^{(t+1)}} L \cdot \text{diag}(1 - (h^{(t+1)})^2) + V^\top \nabla_{o^{(t)}} L \tag{10.21}
+\nabla_{h^{(t)}} L = W^\top \operatorname{diag}(1-(h^{(t+1)})^2) \nabla_{h^{(t+1)}} L + V^\top \nabla_{o^{(t)}} L \tag{10.21}
 \]</span></p>
 </section>
 <section id="gradients-of-parameters" class="level3">
@@ -757,8 +765,8 @@ L = L^{(1)} + ... + L^{(\tau)}, \quad \frac{\partial L}{\partial L^{(t)}} = 1 \t
 <hr>
 </section>
 </section>
-<section id="rnn-as-directed-graphical-model" class="level2">
-<h2 class="anchored" data-anchor-id="rnn-as-directed-graphical-model">RNN as Directed Graphical Model</h2>
+<section id="rnn-as-directed-graph" class="level2">
+<h2 class="anchored" data-anchor-id="rnn-as-directed-graph">RNN as Directed Graph</h2>
 <p>The objective of RNN is to maximize the log-likelihood:</p>
 <p><span class="math display">\[
 \log p(y^{(t)} | x^{(1)}, ..., x^{(t)}) \tag{10.29}
@@ -779,8 +787,7 @@ L = \sum_t L^{(t)} \tag{10.32}
 L^{(t)} = -\log P(y^{(t)} | y^{(t-1)}, ..., y^{(1)}) \tag{10.33}
 \]</span></p>
 <p><strong>Parameter Complexity:</strong></p>
-<p>In a fully-connected directed graph, each node has a connection to each node in its downstream. If we have <span class="math inline">\(k\)</span> labels of <span class="math inline">\(y\)</span>, then we need to maintain <span class="math inline">\(O(k^\tau)\)</span> parameters.</p>
-<p><strong>RNN uses hidden states to reduce this to <span class="math inline">\(O(\tau)\)</span>.</strong></p>
+<p>A naive fully-connected model would need <span class="math inline">\(O(k^\tau)\)</span> parameters. An RNN uses a fixed-size hidden state, so the number of parameters is independent of <span class="math inline">\(\tau\)</span>.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="full_graph_vs_rnn.png" class="img-fluid figure-img"></p>
@@ -1418,7 +1425,7 @@ L^{(t)} = -\log P(y^{(t)} | y^{(t-1)}, ..., y^{(1)}) \tag{10.33}
 <span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>From: $o^{(t)} = Vh^{(t)} + c$</span>
 <span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>= W^\top \nabla_{h^{(t+1)}} L \cdot \text{diag}(1 - (h^{(t+1)})^2) + V^\top \nabla_{o^{(t)}} L \tag{10.21}</span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>\nabla_{h^{(t)}} L = W^\top \operatorname{diag}(1-(h^{(t+1)})^2) \nabla_{h^{(t+1)}} L + V^\top \nabla_{o^{(t)}} L \tag{10.21}</span>
 <span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a><span class="fu">### Gradients of Parameters</span></span>
@@ -1457,7 +1464,7 @@ L^{(t)} = -\log P(y^{(t)} | y^{(t-1)}, ..., y^{(1)}) \tag{10.33}
 <span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a><span class="fu">## RNN as Directed Graphical Model</span></span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a><span class="fu">## RNN as Directed Graph</span></span>
 <span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>The objective of RNN is to maximize the log-likelihood:</span>
 <span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a></span>
@@ -1489,33 +1496,31 @@ L^{(t)} = -\log P(y^{(t)} | y^{(t-1)}, ..., y^{(1)}) \tag{10.33}
 <span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a>**Parameter Complexity:**</span>
 <span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a>In a fully-connected directed graph, each node has a connection to each node in its downstream. If we have $k$ labels of $y$, then we need to maintain $O(k^\tau)$ parameters.</span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a>A naive fully-connected model would need $O(k^\tau)$ parameters. An RNN uses a fixed-size hidden state, so the number of parameters is independent of $\tau$.</span>
 <span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a>**RNN uses hidden states to reduce this to $O(\tau)$.**</span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a><span class="al">![Full graph vs RNN: parameter efficiency](full_graph_vs_rnn.png)</span></span>
 <span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a><span class="al">![Full graph vs RNN: parameter efficiency](full_graph_vs_rnn.png)</span></span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a><span class="fu">## Context-Based RNN Model</span></span>
 <span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a><span class="fu">## Context-Based RNN Model</span></span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>Sometimes we need a fixed context $x$ as the input (e.g., an image embedding), and we want the RNN to generate a sequence that describes the image.</span>
 <span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a>Sometimes we need a fixed context $x$ as the input (e.g., an image embedding), and we want the RNN to generate a sequence that describes the image.</span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a>More generally, the context itself can be an input sequence $\mathbf{X} = (x^{(1)}, ..., x^{(\tau_x)})$, and the RNN models a conditional distribution over an output sequence $\mathbf{Y} = (y^{(1)}, ..., y^{(\tau_y)})$ of possibly different length.</span>
 <span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a>More generally, the context itself can be an input sequence $\mathbf{X} = (x^{(1)}, ..., x^{(\tau_x)})$, and the RNN models a conditional distribution over an output sequence $\mathbf{Y} = (y^{(1)}, ..., y^{(\tau_y)})$ of possibly different length.</span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a>**Example:** In machine translation, the source sentence serves as the context for generating the target sentence.</span>
 <span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a>**Example:** In machine translation, the source sentence serves as the context for generating the target sentence.</span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a><span class="al">![Three types of context-based RNN models](3types.png)</span></span>
 <span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a><span class="al">![Three types of context-based RNN models](3types.png)</span></span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Insights</span></span>
 <span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Insights</span></span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a>**RNNs enable sequence modeling through parameter sharing.** The same weights $(W, U, V)$ are reused across all time steps, making RNNs efficient for variable-length sequences. However, this comes at the cost of sequential computation—forward and backward passes cannot be parallelized across time.</span>
 <span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a>**RNNs enable sequence modeling through parameter sharing.** The same weights $(W, U, V)$ are reused across all time steps, making RNNs efficient for variable-length sequences. However, this comes at the cost of sequential computation—forward and backward passes cannot be parallelized across time.</span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a>**Teacher forcing accelerates training** by using ground-truth outputs instead of model predictions, enabling parallel computation during training. The tradeoff is exposure bias: during inference, the model must use its own predictions, which may differ from the training distribution.</span>
 <span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a>**Teacher forcing accelerates training** by using ground-truth outputs instead of model predictions, enabling parallel computation during training. The tradeoff is exposure bias: during inference, the model must use its own predictions, which may differ from the training distribution.</span>
-<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a>**BPTT computes gradients by unfolding the network through time.** The gradient at each hidden state combines contributions from both the immediate output and all future time steps, enabling the network to learn long-range dependencies (though vanishing/exploding gradients remain a challenge).</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a>**BPTT computes gradients by unfolding the network through time.** The gradient at each hidden state combines contributions from both the immediate output and all future time steps, enabling the network to learn long-range dependencies (though vanishing/exploding gradients remain a challenge).</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
