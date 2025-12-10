@@ -184,6 +184,18 @@ The site is automatically deployed from the `docs/` directory. After rendering, 
 - `docs/ML/*.png` - Static chapter images
 - `docs/Math/MIT18.06/*.png` - Static lecture images
 
+### Post-Deployment Cleanup
+
+After successfully pushing changes to GitHub:
+
+1. **Archive source images**: Move original images from Downloads to the banana folder for organization
+   ```bash
+   mv ~/Downloads/<image-name>.png ~/Documents/banana/
+   ```
+   Example: `mv ~/Downloads/seq2seq.png ~/Documents/banana/`
+
+2. **Verify deployment**: Check GitHub Pages to ensure the site deployed successfully and images load correctly
+
 ## LinkedIn Post Guidelines
 
 ### Emoji Usage
