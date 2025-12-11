@@ -1,0 +1,57 @@
+---
+title: "Chapter 10.6: Recursive Neural Network"
+author: "Chao Ma"
+date: "2025-12-10"
+categories: [Deep Learning, RNN, Recursive Networks, Tree Structures]
+---
+
+Recursive neural networks (RvNNs) are an extension of recurrent neural networks in which the computation is carried out over a **tree structure** rather than a linear chain.
+
+Instead of applying the same transition function along time, RvNNs apply a **shared composition function** at every internal node of a tree, combining the representations of its children into a representation of the parent.
+
+---
+
+## **1. Basic Idea (as described in the book)**
+
+An RvNN performs **bottom-up computation** on a fixed tree:
+
+$$h_{\text{parent}} = f_{\theta}(h_{c_1}, h_{c_2}, \ldots)$$
+
+Leaf nodes obtain their representation directly from the input, and internal nodes recursively build higher-level representations. Figure 10.14 in the book illustrates this process with shared parameters (U, W, V) applied at different nodes of the tree.
+
+---
+
+## **2. Origins and Applications (based on book citations)**
+
+The book notes that:
+
+- Recursive networks were introduced by **Pollack (1990)**.
+- **Bottou (2011)** discussed their potential for general learning and inference tasks.
+- **Frasconi et al. (1997, 1998)** applied recursive networks to data given as trees.
+- **Socher et al. (2011a, 2011c)** successfully used RvNNs to process syntactic trees in natural language.
+- Recursive models have also been applied to computational vision (Socher et al., 2011b).
+
+These examples highlight that RvNNs are suitable for tasks where the input naturally exhibits a **hierarchical tree structure**.
+
+---
+
+## **3. Key Advantage (explicitly stated in the book)**
+
+For sequences of length τ, the **depth of computation** in an RvNN can be drastically reduced:
+
+- RNN chain → depth = τ
+- Recursive tree (e.g., balanced binary tree) → depth = **O(log τ)**
+
+Thus, when a hierarchical structure is available, recursive networks can provide **shorter effective paths** between distant elements, potentially helping with long-term dependencies.
+
+---
+
+## **4. A Major Challenge (as the book highlights)**
+
+A critical difficulty remains:
+
+> In many applications, the tree structure is **not given**
+
+The model must rely on an external source (e.g., a syntactic parser) to provide the structure, or one must design a suitable hierarchy manually.
+
+The book notes that an ideal learning system would **automatically discover the appropriate tree structure**, but this remains an unsolved problem.
