@@ -9,12 +9,24 @@ This is a Quarto-based technical blog hosted on GitHub Pages (ickma2311.github.i
 ## Common Commands
 
 ### Development Workflow
-- `./render-site.sh` - **Recommended**: Clean build of entire website (handles cleanup automatically)
-- `quarto render` - Build the entire website (outputs to `docs/` directory)
-  - ⚠️ May encounter file movement errors; use `render-site.sh` instead for reliable builds
+- `./publish.sh` - **RECOMMENDED**: Safe publishing script that handles everything automatically
+  - Backs up critical files before render
+  - Runs full site render
+  - Restores ALL images and assets
+  - Verifies no files were lost
+  - Shows changes for review
 - `quarto preview` - Start local development server with live reload
-- `quarto render <file.qmd>` - Render a specific document
+- `quarto render <file.qmd>` - Render a specific document (navbar won't update on other pages)
 - `quarto check` - Verify Quarto installation and project setup
+
+### CRITICAL: Publishing New Content
+**ALWAYS use `./publish.sh` instead of `quarto render` or `./render-site.sh`**
+
+The `publish.sh` script prevents these common problems:
+1. Images getting deleted (backs up and restores automatically)
+2. Homepage/about page disappearing (backs up critical files)
+3. Navbar not updating (runs full site render)
+4. Duplicate HTML files in wrong locations (cleans up automatically)
 
 ### Content Management
 - Create new ML content in `ML/` directory
@@ -123,66 +135,35 @@ The site is automatically deployed from the `docs/` directory. After rendering, 
 
 ### Pre-Push Checklist (CRITICAL)
 
-**ALWAYS verify locally before pushing to prevent broken images on production:**
+**The `./publish.sh` script handles everything automatically. Just follow these steps:**
 
-1. **Run full render**: Use `./render-site.sh` for automatic cleanup, or `quarto render` (not individual file renders)
-
-2. **CRITICAL: Restore ALL deleted images after full render**
-
-   Full site renders delete images from multiple locations. You MUST restore them:
-
+1. **Run the publish script**:
    ```bash
-   # 1. Restore *_files/ directories (code-generated matplotlib/plotly figures)
-   cp -r ML/*_files docs/ML/ 2>/dev/null
-   cp -r Math/*_files docs/Math/ 2>/dev/null
-   cp -r Algorithm/*_files docs/Algorithm/ 2>/dev/null
-
-   # 2. Restore static images in ML/ and Math/
-   cp ML/*.png docs/ML/ 2>/dev/null
-   cp Math/MIT18.06/*.png docs/Math/MIT18.06/ 2>/dev/null
-
-   # 3. Restore media/ directory images (referenced with ../media/image.png)
-   mkdir -p docs/media
-   cp media/*.png docs/media/ 2>/dev/null
-
-   # 4. Restore imgs/ directory images (referenced with ../imgs/image.png)
-   mkdir -p docs/imgs
-   cp imgs/*.png docs/imgs/ 2>/dev/null
-
-   # 5. Move any HTML files that failed to move
-   find ML -maxdepth 1 -name "*.html" -exec mv {} docs/ML/ \; 2>/dev/null
-   find Math/MIT18.06 -maxdepth 1 -name "*.html" -exec mv {} docs/Math/MIT18.06/ \; 2>/dev/null
-   find Algorithm -maxdepth 1 -name "*.html" -exec mv {} docs/Algorithm/ \; 2>/dev/null
-
-   # 6. Move index files
-   mv Algorithm/index.html docs/Algorithm/ 2>/dev/null
-   mv Math/index.html docs/Math/ 2>/dev/null
-   mv index-backup.html docs/ 2>/dev/null
+   ./publish.sh
    ```
 
-3. **Check git status**: `git status` - verify all image files are staged
-   - Look for `docs/**/*_files/figure-html/*.png` files (code-generated)
-   - Look for `docs/media/*.png` files (media directory)
-   - Look for `docs/imgs/*.png` files (imgs directory)
-   - Look for `docs/ML/*.png` and `docs/Math/MIT18.06/*.png` files (static images)
+   The script automatically:
+   - Backs up critical files (index.html, about.html, reflection images)
+   - Runs full site render
+   - Restores ALL images from all locations
+   - Fixes misplaced HTML files
+   - Removes duplicates
+   - Verifies nothing was lost
 
-4. **Local preview**: Open `docs/` HTML files in browser to verify images load
-   - Check pages with Jupyter notebooks (e.g., `mit1806-lecture1-geometry.html`)
-   - Check pages with media references (e.g., `dropout.html`)
-   - Verify matplotlib/plotly figures appear correctly
+2. **Review the output**: The script shows file counts before/after and lists any errors
 
-5. **Commit ALL generated files**: Don't commit `.html` without their images
+3. **Check git status**: `git status` to see what changed
 
-6. **Only then push**: `git push`
+4. **Local preview**: Open `docs/index.html` in browser to verify
 
-**Why this matters**: GitHub Pages serves from the `docs/` directory. Quarto's full render deletes images from docs/ but keeps them in source directories. If images aren't copied back to docs/, the HTML will reference missing files, causing broken images on production even though they work locally.
+5. **Commit and push**:
+   ```bash
+   git add -A
+   git commit -m "Add new content"
+   git push
+   ```
 
-**Image locations that get deleted:**
-- `docs/**/*_files/` - Code-generated figures from Python/matplotlib
-- `docs/media/` - Shared media referenced with `../media/`
-- `docs/imgs/` - Shared images referenced with `../imgs/`
-- `docs/ML/*.png` - Static chapter images
-- `docs/Math/MIT18.06/*.png` - Static lecture images
+**Why this matters**: GitHub Pages serves from `docs/`. Quarto's render recreates `docs/` and deletes images. The publish script ensures all images are restored before you commit.
 
 ### Post-Deployment Cleanup
 

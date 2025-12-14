@@ -5,5 +5,222 @@
     "title": "K-means Clustering",
     "section": "",
     "text": "Setup points and K\nwe will implement a KNN algorithm to cluster the points\n\n\nX=[[1,1],[2,2.1],[3,2.5],[6,7],[7,7.1],[9,7.5]]\nk=2\n\nmax_iter=3\n\n\n# Visualize the data\n\n\nimport matplotlib.pyplot as plt\n\nplt.scatter([x[0] for x in X],[x[1] for x in X])\nplt.show()\n\n\n\n\n\n\n\n\n\n# Pure python implementation of K-means clustering\ndef knn_iter(X,centroids):\n    # set up new clusters\n    new_clusters=[[] for _ in range(len(centroids))]\n    # k=len(centroids)\n    # assign each point to the nearest centroid\n    for x in X:\n        k,distance=0,(x[0]-centroids[0][0])**2+(x[1]-centroids[0][1])**2\n        for i,c in enumerate(centroids[1:],1):\n            if (x[0]-c[0])**2+(x[1]-c[1])**2&lt;distance:\n                k=i\n                distance=(x[0]-c[0])**2+(x[1]-c[1])**2\n        new_clusters[k].append(x)\n    \n    # calculate new centroids\n    new_centroids=[[\n        sum([x[0] for x in cluster])/len(cluster),\n        sum([x[1] for x in cluster])/len(cluster)\n    ] if cluster else centroids[i] for i,cluster in enumerate(new_clusters)]\n    return new_centroids\n\n\n\n\n\n\n\n\ndef iter_and_draw(X,k,max_iter):\n    centroids=X[:k]  # Randomly select 2 centroids\n    fig, axes = plt.subplots(max_iter//3+(1 if max_iter%3!=0 else 0),\n        3, figsize=(15, 10))\n    axes=axes.flatten()\n    for i in range(max_iter):\n        \n        # Plot points and centroids\n\n\n        # Assign each point to nearest centroid and plot with corresponding color\n        colors = ['blue', 'green', 'purple', 'orange', 'brown', 'pink', 'gray', 'olive', 'cyan']\n        for j, x in enumerate(X):\n            # Find nearest centroid\n            min_dist = float('inf')\n            nearest_centroid = 0\n            for k, c in enumerate(centroids):\n                dist = (x[0]-c[0])**2 + (x[1]-c[1])**2\n                if dist &lt; min_dist:\n                    min_dist = dist\n                    nearest_centroid = k\n            # Plot point with color corresponding to its cluster\n            axes[i].scatter(x[0], x[1], c=colors[nearest_centroid % len(colors)], label=f'Cluster {nearest_centroid+1}' if j==0 else \"\")\n        axes[i].scatter([c[0] for c in centroids], [c[1] for c in centroids], c='red', marker='*', s=200, label='Centroids')\n        axes[i].set_title(f'Iteration {i}')\n        centroids = knn_iter(X, centroids)\n\n    plt.tight_layout()\n    plt.show()\n\niter_and_draw(X,k,max_iter)\n# print(centroids)\n\n\n\n\n\n\n\n\n\n# A 3 clusters example\n\nimport numpy as np\n\nX1=np.random.rand(20,2)+5 # Some points in the upper right corner\nX2=np.random.rand(20,2)+3 # Some points in the middle\nX3=np.random.rand(20,2) # Some points in the lower left corner\n\niter_and_draw(np.concatenate((X1,X2,X3)),3,5)\n\n\n\n\n\n\n\n\n\n\nA question?\n\nWhat to do if one cluster has no assigned points during iteration?\n\n\n\nFormula Derivation\nThe goal is to minimize the loss of inertia which is sum of the points to cluster centroids.\n\\[\nLoss= \\sum_{i=1}^n \\sum_{x \\in C_i} ||x-\\mu_i||^2\n\\]\nTo iter \\(\\mu\\) for each cluster, let us find the derivative of the following function. \\[\nf(\\mu)=\\sum_{i=1}^n ||x_i-\\mu||^2 =\n\\sum_{i=1}^n {x_i}^2+\\mu^2-2x_i\\mu\n\\]\nGiven a \\(\\nabla \\mu\\), \\[\nf(\\mu + \\nabla \\mu)=\\sum_{i=1}^n ||x_i+\\nabla \\mu -\\mu||^2 =\n\\sum_{i=1}^n  {x_i}^2+\\mu^2+{\\nabla \\mu}^2-2{x_i \\mu}-2{\\mu \\nabla \\mu}+2{x_i \\nabla \\mu}\n\\]\n\\[\nf(\\mu + \\nabla \\mu)-f(\\mu)=\n\\sum_{i=1}^n {\\nabla \\mu}^2-2{\\mu \\nabla \\mu}+2{x_i \\nabla \\mu}\n\\]\n\\[\n\\frac {f(\\mu + \\nabla \\mu)-f(\\mu)}{\\nabla \\mu}=\\sum_{i=1}^n {\\nabla \\mu} -2 \\mu +2{x_i} = 2\\sum_{i=1}^n x_i - 2n\\mu\n\\]\nNow we can see if \\(n\\mu = \\sum_{i=1}^n x_i\\), then the derivative is 0, this is why in each iteration, we need to set the center of the cluster as centroid."
+  },
+  {
+    "objectID": "Math/reflections/taylor-euler-fourier.html",
+    "href": "Math/reflections/taylor-euler-fourier.html",
+    "title": "From Taylor Expansion to Euler’s Formula: The Mathematical Foundation of Fourier Series",
+    "section": "",
+    "text": "This reflection explores the beautiful mathematical journey from Taylor expansions to Euler’s formula and ultimately to Fourier series. We’ll see how these concepts naturally build upon each other, revealing deep connections between polynomials, exponentials, and trigonometric functions."
+  },
+  {
+    "objectID": "Math/reflections/taylor-euler-fourier.html#complex-numbers-foundation",
+    "href": "Math/reflections/taylor-euler-fourier.html#complex-numbers-foundation",
+    "title": "From Taylor Expansion to Euler’s Formula: The Mathematical Foundation of Fourier Series",
+    "section": "Complex Numbers: Foundation",
+    "text": "Complex Numbers: Foundation\nComplex numbers provide the foundation for understanding Euler’s formula.\nDefinition: \\(i^2 = -1\\)\nCyclic behavior: - \\(i^1 = i\\) - \\(i^2 = -1\\) - \\(i^3 = -i\\) - \\(i^4 = 1\\) - \\(i^n = i^{n-4} \\cdot i^4 = i^{n-4}\\) (the pattern repeats every 4 powers)\nVisualization of the periodic behavior:\n\n\nYour browser does not support the video tag. \n\nChain Rule of Derivatives\nTwo fundamental rules we’ll use throughout:\n\\[\n\\frac{d}{dx}(f(x) + g(x)) = f'(x) + g'(x)\n\\]\n\\[\n\\frac{d}{dx}(c \\cdot f(x)) = c \\cdot f'(x)\n\\]"
+  },
+  {
+    "objectID": "Math/reflections/taylor-euler-fourier.html#taylor-expansion",
+    "href": "Math/reflections/taylor-euler-fourier.html#taylor-expansion",
+    "title": "From Taylor Expansion to Euler’s Formula: The Mathematical Foundation of Fourier Series",
+    "section": "Taylor Expansion",
+    "text": "Taylor Expansion\n\nThe Formula\nAny analytic function can be expressed as an infinite polynomial around a point \\(a\\):\n\\[\nf(x) = \\sum_{n=0}^{\\infty} \\frac{f^{(n)}(a)}{n!}(x-a)^n\n\\]\nKey insight: A function can be written as a power series if and only if it is analytic. Analyticity means that all derivatives exist and the Taylor remainder goes to zero, so the infinite polynomial determined by the derivatives reconstructs the function exactly.\n\n\nProof: Finding the Coefficients\nWe want to approximate \\(f(x)\\) using a polynomial:\n\\[\nP(x) = c_0 + c_1(x-a) + c_2(x-a)^2 + c_3(x-a)^3 + \\cdots\n\\]\nOur goal is to match all derivatives at point \\(a\\): - \\(P(a) = f(a)\\) - \\(P'(a) = f'(a)\\) - \\(P''(a) = f''(a)\\) - \\(P^{(n)}(a) = f^{(n)}(a)\\)\nLet’s find the coefficients by taking derivatives:\n0th-order (evaluating at \\(x = a\\)):\n\\[\nP(a) = c_0 = f(a)\n\\]\n1st-order:\n\\[\nP'(x) = c_1 + 2c_2(x-a) + 3c_3(x-a)^2 + \\cdots\n\\]\n\\[\nP'(a) = c_1 = f'(a)\n\\]\n2nd-order:\n\\[\nP''(x) = 2c_2 + 6c_3(x-a) + \\cdots\n\\]\n\\[\nP''(a) = 2c_2 = f''(a)\n\\]\n\\[\nc_2 = \\frac{f''(a)}{2!}\n\\]\nnth-order:\n\\[\nP^{(n)}(a) = n! \\cdot c_n = f^{(n)}(a)\n\\]\n\\[\nc_n = \\frac{f^{(n)}(a)}{n!}\n\\]\nCrucial observation: Every lower-order derivative still contains a factor \\((x-a)\\). For any \\(m &lt; n\\):\n\\[\n\\frac{d^m}{dx^m}(x-a)^n = \\text{(some constant)} \\cdot (x-a)^{n-m}\n\\]\nAt \\(x = a\\), this becomes \\((x-a)^{n-m} = 0\\). So all lower-order derivatives vanish at \\(x = a\\), which is why each derivative gives us exactly one coefficient.\n\n\nVisualization: Approximating \\(e^x\\)\nLet’s visualize how different order Taylor polynomials approximate \\(e^x\\) around \\(x = 0\\):\nFirst-order approximation: \\(P(x) = c_0 + c_1(x-a) = 1 + x\\)\n\n\n\nFirst Order\n\n\nSecond-order approximation: \\(P(x) = c_0 + c_1(x-a) + c_2(x-a)^2 = 1 + x + \\frac{x^2}{2}\\)\n\n\n\nSecond Order\n\n\nThird-order approximation: \\(P(x) = c_0 + c_1(x-a) + c_2(x-a)^2 + c_3(x-a)^3 = 1 + x + \\frac{x^2}{2} + \\frac{x^3}{6}\\)\n\n\n\nThird Order\n\n\nFourth-order approximation: \\(P(x) = 1 + x + \\frac{x^2}{2} + \\frac{x^3}{6} + \\frac{x^4}{24}\\)\n\n\n\nFourth Order\n\n\nAs we add more terms, the polynomial approximation becomes increasingly accurate over a wider range."
+  },
+  {
+    "objectID": "Math/reflections/taylor-euler-fourier.html#deriving-the-taylor-series-of-three-fundamental-functions",
+    "href": "Math/reflections/taylor-euler-fourier.html#deriving-the-taylor-series-of-three-fundamental-functions",
+    "title": "From Taylor Expansion to Euler’s Formula: The Mathematical Foundation of Fourier Series",
+    "section": "Deriving the Taylor Series of Three Fundamental Functions",
+    "text": "Deriving the Taylor Series of Three Fundamental Functions\n\nMaclaurin Series of \\(e^x\\)\nFor \\(f(x) = e^x\\), we have a remarkable property: every derivative equals the function itself:\n\n\\(f'(x) = e^x\\)\n\\(f''(x) = e^x\\)\n\\(f^{(n)}(x) = e^x\\)\n\nAt \\(a = 0\\) (Maclaurin series):\n\n\\(c_0 = e^0 = 1\\)\n\\(c_1 = e^0 = 1\\)\n\\(c_2 = \\frac{e^0}{2!} = \\frac{1}{2!}\\)\n\\(c_n = \\frac{e^0}{n!} = \\frac{1}{n!}\\)\n\nTaylor expansion:\n\\[\ne^x = 1 + x + \\frac{x^2}{2!} + \\frac{x^3}{3!} + \\cdots = \\sum_{k=0}^{\\infty} \\frac{x^k}{k!}\n\\]\n\n\nMaclaurin Series of \\(\\sin x\\)\nFor \\(f(x) = \\sin x\\), the derivatives follow a cycle of period 4:\n\n\\(f'(x) = \\cos x\\)\n\\(f''(x) = -\\sin x\\)\n\\(f'''(x) = -\\cos x\\)\n\\(f^{(4)}(x) = \\sin x\\)\n\\(f^{(n+4)}(x) = f^{(n)}(x)\\)\n\nAt \\(a = 0\\):\n\n\\(c_0 = \\sin 0 = 0\\)\n\\(c_1 = \\cos 0 = 1\\)\n\\(c_2 = \\frac{-\\sin 0}{2!} = 0\\)\n\\(c_3 = \\frac{-\\cos 0}{3!} = -\\frac{1}{3!}\\)\n\\(c_4 = \\frac{\\sin 0}{4!} = 0\\)\n\nPattern: Only odd powers survive, with alternating signs.\nTaylor expansion:\n\\[\n\\boxed{\\sin x = \\sum_{k=0}^{\\infty} (-1)^k \\frac{x^{2k+1}}{(2k+1)!} = x - \\frac{x^3}{3!} + \\frac{x^5}{5!} - \\frac{x^7}{7!} + \\cdots}\n\\]\n\n\nMaclaurin Series of \\(\\cos x\\)\nFor \\(f(x) = \\cos x\\), the derivatives also follow a cycle of period 4:\n\n\\(f'(x) = -\\sin x\\)\n\\(f''(x) = -\\cos x\\)\n\\(f'''(x) = \\sin x\\)\n\\(f^{(4)}(x) = \\cos x\\)\n\nAt \\(a = 0\\):\n\n\\(c_0 = \\cos 0 = 1\\)\n\\(c_1 = -\\sin 0 = 0\\)\n\\(c_2 = \\frac{-\\cos 0}{2!} = -\\frac{1}{2!}\\)\n\\(c_3 = \\frac{\\sin 0}{3!} = 0\\)\n\\(c_4 = \\frac{\\cos 0}{4!} = \\frac{1}{4!}\\)\n\nPattern: Only even powers survive, with alternating signs. We have \\(c_{2k} = \\frac{(-1)^k}{(2k)!}\\) and \\(c_{2k+1} = 0\\).\nTaylor expansion:\n\\[\n\\cos x = \\sum_{k=0}^{\\infty} (-1)^k \\frac{x^{2k}}{(2k)!} = 1 - \\frac{x^2}{2!} + \\frac{x^4}{4!} - \\frac{x^6}{6!} + \\cdots\n\\]"
+  },
+  {
+    "objectID": "Math/reflections/taylor-euler-fourier.html#eulers-formula-the-bridge",
+    "href": "Math/reflections/taylor-euler-fourier.html#eulers-formula-the-bridge",
+    "title": "From Taylor Expansion to Euler’s Formula: The Mathematical Foundation of Fourier Series",
+    "section": "Euler’s Formula: The Bridge",
+    "text": "Euler’s Formula: The Bridge\nNow comes one of the most beautiful formulas in mathematics:\n\\[\ne^{i\\theta} = \\cos\\theta + i\\sin\\theta\n\\]\n\nProof\nStep 1: Start with the Maclaurin series of the exponential function, which is valid for complex arguments:\n\\[\ne^z = \\sum_{n=0}^{\\infty} \\frac{z^n}{n!}\n\\]\nStep 2: Split into even and odd terms:\n\\[\ne^z = \\sum_{k=0}^{\\infty} \\frac{z^{2k}}{(2k)!} + \\sum_{k=0}^{\\infty} \\frac{z^{2k+1}}{(2k+1)!}\n\\]\nStep 3: Substitute \\(z = i\\theta\\):\n\\[\ne^{i\\theta} = \\sum_{k=0}^{\\infty} \\frac{(i\\theta)^{2k}}{(2k)!} + \\sum_{k=0}^{\\infty} \\frac{(i\\theta)^{2k+1}}{(2k+1)!}\n\\]\nStep 4: Simplify even powers:\nFor even powers: \\((i\\theta)^{2k} = i^{2k} \\theta^{2k}\\)\nSince \\(i^{2k} = (i^2)^k = (-1)^k\\), the first sum becomes:\n\\[\n\\sum_{k=0}^{\\infty} \\frac{(-1)^k \\theta^{2k}}{(2k)!} = \\cos\\theta\n\\]\nThis is exactly the Taylor series of \\(\\cos\\theta\\)!\nStep 5: Simplify odd powers:\nFor odd powers: \\((i\\theta)^{2k+1} = i^{2k+1} \\theta^{2k+1} = i \\cdot i^{2k} \\theta^{2k+1} = i(-1)^k \\theta^{2k+1}\\)\nThe second sum becomes:\n\\[\ni \\sum_{k=0}^{\\infty} \\frac{(-1)^k \\theta^{2k+1}}{(2k+1)!} = i\\sin\\theta\n\\]\nConclusion:\n\\[\ne^{i\\theta} = \\cos\\theta + i\\sin\\theta\n\\]\nThis formula reveals that exponentials and trigonometric functions are intimately connected through complex numbers."
+  },
+  {
+    "objectID": "Math/reflections/taylor-euler-fourier.html#fourier-series-the-application",
+    "href": "Math/reflections/taylor-euler-fourier.html#fourier-series-the-application",
+    "title": "From Taylor Expansion to Euler’s Formula: The Mathematical Foundation of Fourier Series",
+    "section": "Fourier Series: The Application",
+    "text": "Fourier Series: The Application\nThe Fourier series allows us to represent any periodic function as an infinite sum of sines and cosines:\n\\[\nf(x) = \\frac{a_0}{2} + \\sum_{n=1}^{\\infty} \\left(a_n \\cos nx + b_n \\sin nx\\right)\n\\]\n\nConverting to Complex Form Using Euler’s Formula\nStep 1: Recall key properties of trigonometric functions:\n\n\\(\\cos(-x) = \\cos(x)\\) (even function)\n\\(\\sin(-x) = -\\sin(x)\\) (odd function)\n\nStep 2: From Euler’s formula and its complex conjugate:\n\\[\ne^{ix} = \\cos x + i\\sin x\n\\]\n\\[\ne^{-ix} = \\cos x - i\\sin x\n\\]\nStep 3: Solve for \\(\\cos\\) and \\(\\sin\\):\nAdding the two equations:\n\\[\n\\cos(nx) = \\frac{e^{inx} + e^{-inx}}{2}\n\\]\nSubtracting the two equations:\n\\[\n\\sin(nx) = \\frac{e^{inx} - e^{-inx}}{2i}\n\\]\nStep 4: Substitute into the Fourier series:\n\\[\na_n\\cos(nx) + b_n\\sin(nx) = a_n\\frac{e^{inx} + e^{-inx}}{2} + b_n\\frac{e^{inx} - e^{-inx}}{2i}\n\\]\nStep 5: Define complex coefficients:\nFor positive frequencies (\\(n &gt; 0\\)):\n\\[\nc_n = \\frac{a_n}{2} + \\frac{b_n}{2i} = \\frac{a_n - ib_n}{2}\n\\]\n(Note: \\(\\frac{1}{i} = -i\\) because \\(i \\cdot (-i) = -i^2 = 1\\))\nFor negative frequencies (\\(n &lt; 0\\)):\n\\[\nc_{-n} = \\frac{a_n}{2} - \\frac{b_n}{2i} = \\frac{a_n + ib_n}{2}\n\\]\nThe complex form of the Fourier series:\n\\[\nf(x) = \\sum_{n=-\\infty}^{\\infty} c_n e^{inx}\n\\]\nThis elegant form shows that periodic functions can be decomposed into complex exponentials, which are easier to manipulate mathematically than sines and cosines."
+  },
+  {
+    "objectID": "Math/reflections/taylor-euler-fourier.html#the-beautiful-chain-of-ideas",
+    "href": "Math/reflections/taylor-euler-fourier.html#the-beautiful-chain-of-ideas",
+    "title": "From Taylor Expansion to Euler’s Formula: The Mathematical Foundation of Fourier Series",
+    "section": "The Beautiful Chain of Ideas",
+    "text": "The Beautiful Chain of Ideas\nLet’s trace the entire journey:\n\nTaylor Expansion: Any analytic function can be represented as an infinite polynomial\nExponential and Trigonometric Series: We derive the series for \\(e^x\\), \\(\\sin x\\), and \\(\\cos x\\)\nEuler’s Formula: By substituting \\(i\\theta\\) into the exponential series and using the cyclic properties of \\(i\\), we discover that \\(e^{i\\theta} = \\cos\\theta + i\\sin\\theta\\)\nFourier Series: Using Euler’s formula, we can express any periodic function as a sum of complex exponentials, revealing the fundamental frequencies that compose the function\n\nThis chain illustrates a profound truth in mathematics: seemingly different concepts (polynomials, exponentials, trigonometric functions, complex numbers) are all deeply interconnected. The bridge between them—Euler’s formula—is not just a computational tool but a revelation of the underlying unity of mathematical structures."
+  },
+  {
+    "objectID": "Math/reflections/taylor-euler-fourier.html#why-this-matters",
+    "href": "Math/reflections/taylor-euler-fourier.html#why-this-matters",
+    "title": "From Taylor Expansion to Euler’s Formula: The Mathematical Foundation of Fourier Series",
+    "section": "Why This Matters",
+    "text": "Why This Matters\nUnderstanding this progression is crucial for:\n\nSignal Processing: Fourier analysis decomposes signals into frequency components\nQuantum Mechanics: Wave functions are expressed using complex exponentials\nDifferential Equations: Many solutions involve exponentials and trigonometric functions\nControl Theory: System responses are analyzed in the frequency domain\n\nThe mathematical beauty lies not just in the formulas themselves, but in how naturally they flow from one another, each building on the foundation of the previous concept."
+  },
+  {
+    "objectID": "Math/reflections/mit1806-invertibility-connections.html",
+    "href": "Math/reflections/mit1806-invertibility-connections.html",
+    "title": "Deep Connections: Invertibility, Null Space, Independence, Rank, and Pivots",
+    "section": "",
+    "text": "In linear algebra, concepts like invertibility, null space, linear independence, rank, and pivots often seem like separate topics. However, they are deeply interconnected - different views of the same mathematical reality. This post synthesizes these fundamental concepts and reveals how they all tell the same story about whether a linear transformation preserves information."
+  },
+  {
+    "objectID": "Math/reflections/mit1806-invertibility-connections.html#introduction",
+    "href": "Math/reflections/mit1806-invertibility-connections.html#introduction",
+    "title": "Deep Connections: Invertibility, Null Space, Independence, Rank, and Pivots",
+    "section": "",
+    "text": "In linear algebra, concepts like invertibility, null space, linear independence, rank, and pivots often seem like separate topics. However, they are deeply interconnected - different views of the same mathematical reality. This post synthesizes these fundamental concepts and reveals how they all tell the same story about whether a linear transformation preserves information."
+  },
+  {
+    "objectID": "Math/reflections/mit1806-invertibility-connections.html#invertibility-the-foundation",
+    "href": "Math/reflections/mit1806-invertibility-connections.html#invertibility-the-foundation",
+    "title": "Deep Connections: Invertibility, Null Space, Independence, Rank, and Pivots",
+    "section": "Invertibility: The Foundation",
+    "text": "Invertibility: The Foundation\nReference: Lecture 3: Matrix Multiplication and Inverse\n\nDefinition\nA square matrix \\(A\\) is invertible if there exists a matrix \\(A^{-1}\\) such that:\n\\[\nAA^{-1} = A^{-1}A = I_n\n\\]\n\n\nProperties of Invertible Matrices\nAn invertible matrix \\(A\\) must satisfy:\n\nSquare: \\(m = n\\) (same number of rows and columns)\nFull rank: \\(\\text{rank}(A) = n\\)\nAll pivot variables: \\(r = n\\) pivot positions\nNo free variables: \\(n - r = 0\\) free variables\nIndependent rows: All rows are linearly independent\n\n\n\nSolving Systems with Invertible Matrices\nWhen \\(A\\) is invertible, solving \\(Ax = b\\) becomes straightforward:\n\\[\n\\begin{aligned}\nAx &= b \\\\\nA^{-1}Ax &= A^{-1}b \\\\\nx &= A^{-1}b\n\\end{aligned}\n\\]\nThe solution is unique and exists for every \\(b\\)."
+  },
+  {
+    "objectID": "Math/reflections/mit1806-invertibility-connections.html#null-space-a-direct-test-for-invertibility",
+    "href": "Math/reflections/mit1806-invertibility-connections.html#null-space-a-direct-test-for-invertibility",
+    "title": "Deep Connections: Invertibility, Null Space, Independence, Rank, and Pivots",
+    "section": "Null Space: A Direct Test for Invertibility",
+    "text": "Null Space: A Direct Test for Invertibility\nReference: Lecture 7: Solving Ax=0\n\nThe Connection\nThe null space \\(N(A)\\) provides a direct test for invertibility:\n\nIf \\(N(A) = \\{\\mathbf{0}\\}\\): Matrix is invertible\nIf \\(N(A) \\neq \\{\\mathbf{0}\\}\\): Matrix is NOT invertible\n\n\n\nWhy Non-Trivial Null Space Prevents Invertibility\nProof by contradiction:\nSuppose \\(N(A) \\neq \\{\\mathbf{0}\\}\\) and \\(A^{-1}\\) exists. Let \\(v_1 \\in N(A)\\) with \\(v_1 \\neq \\mathbf{0}\\).\nThen:\n\\[\n\\begin{aligned}\nAv_1 &= \\mathbf{0} \\quad \\text{(by definition of null space)} \\\\\nA^{-1}(Av_1) &= A^{-1}\\mathbf{0} \\quad \\text{(multiply both sides by } A^{-1}\\text{)} \\\\\n(A^{-1}A)v_1 &= \\mathbf{0} \\\\\nI_n v_1 &= \\mathbf{0} \\\\\nv_1 &= \\mathbf{0}\n\\end{aligned}\n\\]\nContradiction! We assumed \\(v_1 \\neq \\mathbf{0}\\), but our logic forces \\(v_1 = \\mathbf{0}\\).\nTherefore, \\(A^{-1}\\) cannot exist when \\(N(A)\\) contains non-zero vectors.\n\n\n\n\n\n\nTipKey Insight\n\n\n\nA non-trivial null space means information is lost in the transformation \\(A\\), making it impossible to uniquely reverse."
+  },
+  {
+    "objectID": "Math/reflections/mit1806-invertibility-connections.html#linear-independence-the-geometric-view",
+    "href": "Math/reflections/mit1806-invertibility-connections.html#linear-independence-the-geometric-view",
+    "title": "Deep Connections: Invertibility, Null Space, Independence, Rank, and Pivots",
+    "section": "Linear Independence: The Geometric View",
+    "text": "Linear Independence: The Geometric View\nReference: Lecture 8: Solving Ax=b\n\nConnection to Invertibility\nIf the rows (or columns) of a matrix are not all linearly independent, the matrix cannot be invertible.\nFor a square matrix:\n\nIndependent rows/columns ⟺ \\(\\text{rank}(A) = n\\)\nDependent rows/columns ⟺ \\(\\text{rank}(A) &lt; n\\)\n\n\n\nWhy Dependence Prevents Invertibility\nWhen rows are dependent:\n\nRank: \\(r &lt; n\\) (not full rank)\nPivots: Only \\(r &lt; n\\) pivot positions\nFree variables: \\(n - r &gt; 0\\) free variables exist\n\n\nTwo Perspectives on Dependence\n1. Algebraic Perspective\nWhen free variables exist:\n\\[\nR_{\\text{rref}} = [I_r \\mid F]\n\\]\nwhere \\(F\\) is the \\((n-r)\\)-dimensional free variable matrix.\nThe null space \\(N(A)\\) has dimension \\(n - r &gt; 0\\), containing infinitely many vectors. By our earlier proof, this means \\(A\\) is not invertible.\n2. Geometric Perspective\nIf rows are dependent, the transformation \\(A\\) collapses the \\(n\\)-dimensional space down to an \\(r\\)-dimensional subspace (where \\(r &lt; n\\)).\n\nInformation loss: The transformation maps multiple distinct inputs to the same output\nCannot invert: We cannot uniquely recover the original \\(n\\)-dimensional vector from its \\(r\\)-dimensional image\nMissing dimensions: The \\((n-r)\\) dimensions of information are permanently lost\n\n\n\n\n\n\n\nNoteExample: Dimensional Collapse\n\n\n\nA \\(3 \\times 3\\) matrix with rank 2 maps all of \\(\\mathbb{R}^3\\) onto a 2-dimensional plane. Infinitely many points in 3D space map to each point on the plane. There’s no way to uniquely invert this mapping."
+  },
+  {
+    "objectID": "Math/reflections/mit1806-invertibility-connections.html#the-big-picture-everything-is-connected",
+    "href": "Math/reflections/mit1806-invertibility-connections.html#the-big-picture-everything-is-connected",
+    "title": "Deep Connections: Invertibility, Null Space, Independence, Rank, and Pivots",
+    "section": "The Big Picture: Everything is Connected",
+    "text": "The Big Picture: Everything is Connected\nAll these concepts are different views of the same mathematical reality:\n\n\n\n\n\n\n\n\nPerspective\nInvertible (\\(A^{-1}\\) exists)\nNot Invertible (\\(A^{-1}\\) doesn’t exist)\n\n\n\n\nNull Space\n\\(N(A) = \\{\\mathbf{0}\\}\\)\n\\(N(A) \\neq \\{\\mathbf{0}\\}\\)\n\n\nRank\n\\(\\text{rank}(A) = n\\) (full rank)\n\\(\\text{rank}(A) &lt; n\\) (rank deficient)\n\n\nPivots\n\\(n\\) pivots (all columns)\n\\(r &lt; n\\) pivots\n\n\nFree Variables\n0 free variables\n\\(n - r &gt; 0\\) free variables\n\n\nIndependence\nRows/columns independent\nRows/columns dependent\n\n\nDimension\n\\(\\dim(N(A)) = 0\\)\n\\(\\dim(N(A)) = n - r &gt; 0\\)\n\n\nSolutions to \\(Ax = 0\\)\nOnly \\(x = \\mathbf{0}\\)\nInfinitely many solutions\n\n\nDeterminant\n\\(\\det(A) \\neq 0\\)\n\\(\\det(A) = 0\\)"
+  },
+  {
+    "objectID": "Math/reflections/mit1806-invertibility-connections.html#fundamental-theorem-of-invertible-matrices",
+    "href": "Math/reflections/mit1806-invertibility-connections.html#fundamental-theorem-of-invertible-matrices",
+    "title": "Deep Connections: Invertibility, Null Space, Independence, Rank, and Pivots",
+    "section": "Fundamental Theorem of Invertible Matrices",
+    "text": "Fundamental Theorem of Invertible Matrices\nFor a square \\(n \\times n\\) matrix \\(A\\), the following are equivalent (all true or all false):\n\n\\(A\\) is invertible\n\\(A^{-1}\\) exists\n\\(\\text{rank}(A) = n\\)\n\\(N(A) = \\{\\mathbf{0}\\}\\)\nColumns of \\(A\\) are linearly independent\nRows of \\(A\\) are linearly independent\n\\(\\det(A) \\neq 0\\)\n\\(Ax = 0\\) has only the trivial solution\n\\(Ax = b\\) has a unique solution for every \\(b\\)\n\\(A\\) has \\(n\\) pivot positions\n\n\n\n\n\n\n\nImportantThe Core Insight\n\n\n\nAll these conditions are testing whether the linear transformation preserves information. If any information is lost (through dimensional collapse, non-trivial null space, or linear dependence), the transformation cannot be inverted."
+  },
+  {
+    "objectID": "Math/reflections/mit1806-invertibility-connections.html#related-posts",
+    "href": "Math/reflections/mit1806-invertibility-connections.html#related-posts",
+    "title": "Deep Connections: Invertibility, Null Space, Independence, Rank, and Pivots",
+    "section": "Related Posts",
+    "text": "Related Posts\n\nLecture 3: Matrix Multiplication and Inverse\nLecture 7: Solving Ax=0 - Finding the Null Space\nLecture 8: Solving Ax=b - Complete Solution to Linear Systems\nLecture 9: Independence, Basis, and Dimension"
+  },
+  {
+    "objectID": "CLAUDE.html",
+    "href": "CLAUDE.html",
+    "title": "",
+    "section": "",
+    "text": "Code"
+  },
+  {
+    "objectID": "CLAUDE.html#project-overview",
+    "href": "CLAUDE.html#project-overview",
+    "title": "",
+    "section": "Project Overview",
+    "text": "Project Overview\nThis is a Quarto-based technical blog hosted on GitHub Pages (ickma2311.github.io). The site covers machine learning, algorithms, and technical tutorials with a focus on mathematical foundations and practical implementations."
+  },
+  {
+    "objectID": "CLAUDE.html#common-commands",
+    "href": "CLAUDE.html#common-commands",
+    "title": "",
+    "section": "Common Commands",
+    "text": "Common Commands\n\nDevelopment Workflow\n\n./publish.sh - RECOMMENDED: Safe publishing script that handles everything automatically\n\nBacks up critical files before render\nRuns full site render\nRestores ALL images and assets\nVerifies no files were lost\nShows changes for review\n\nquarto preview - Start local development server with live reload\nquarto render &lt;file.qmd&gt; - Render a specific document (navbar won’t update on other pages)\nquarto check - Verify Quarto installation and project setup\n\n\n\nCRITICAL: Publishing New Content\nALWAYS use ./publish.sh instead of quarto render or ./render-site.sh\nThe publish.sh script prevents these common problems: 1. Images getting deleted (backs up and restores automatically) 2. Homepage/about page disappearing (backs up critical files) 3. Navbar not updating (runs full site render) 4. Duplicate HTML files in wrong locations (cleans up automatically)\n\n\nContent Management\n\nCreate new ML content in ML/ directory\nCreate new algorithm content in Algorithm/ directory\nUpdate navigation by editing _quarto.yml navbar section\nAdd new content to respective index.qmd files for discoverability"
+  },
+  {
+    "objectID": "CLAUDE.html#project-structure",
+    "href": "CLAUDE.html#project-structure",
+    "title": "",
+    "section": "Project Structure",
+    "text": "Project Structure\n├── _quarto.yml          # Main configuration file\n├── docs/                # Generated output (GitHub Pages source)\n├── index.qmd            # Homepage\n├── about.qmd            # About page\n├── ML/                  # Machine Learning content\n│   ├── index.qmd        # ML topics overview\n│   ├── *.qmd            # ML articles\n│   └── *.ipynb          # Jupyter notebooks\n├── Algorithm/           # Algorithm content\n│   ├── index.qmd        # Algorithm topics overview\n│   └── *.qmd            # Algorithm articles\n├── imgs/                # Image assets\n├── media/               # Media files\n└── styles.css           # Custom CSS styles"
+  },
+  {
+    "objectID": "CLAUDE.html#content-organization",
+    "href": "CLAUDE.html#content-organization",
+    "title": "",
+    "section": "Content Organization",
+    "text": "Content Organization\nThe site uses a hierarchical navigation structure defined in _quarto.yml: - Two main sections: “ML” and “Algorithm” - Each section has an index page that serves as a directory - Content is categorized by topic (e.g., “NumPy Fundamentals”, “Clustering Algorithms”)\n\nAdding New Content\n\nCreate the content file in the appropriate directory (ML/ or Math/ or Algorithm/)\nAdd to list page: Update the corresponding list page (e.g., ML/deep-learning-book.qmd, Math/MIT18.06/lectures.qmd)\nUpdate homepage automatically: Run ./update-counts.sh to update section counts on homepage\nAdd navigation entry to _quarto.yml if it should appear in the navbar dropdown\nUse consistent frontmatter with title field\nSet publication date: Always use the current date from the system for the date field in frontmatter\n\nGet current date with: date +\"%Y-%m-%d\" (format: YYYY-MM-DD)\nExample: date: \"2025-10-26\"\n\nImportant: After adding new navbar items, run quarto render (full site render) to update the navbar on ALL existing pages. Individual file renders only update that specific page.\n\n\n\nMaintaining the Homepage\nThe homepage (index.qmd) shows the latest 4 items from each section with a count badge.\nCRITICAL: When adding new content, you MUST:\n\nAdd the new item to the appropriate list page:\n\nDeep Learning: ML/deep-learning-book.qmd\nMIT 18.06SC: Math/MIT18.06/lectures.qmd\nMIT 18.065: Math/MIT18.065/lectures.qmd\n\nUpdate the homepage manually by editing index.qmd:\n\nReplace the oldest item in the “Latest 4” with the new item\nKeep the 4 most recent items visible\nOrder: newest first (top), oldest last (bottom)\n\nUpdate section counts automatically:\n./update-counts.sh\nThis script automatically counts items in list pages and updates the count badges in index.qmd.\nRender and verify:\nquarto render index.qmd\n\nExample workflow when adding Chapter 9.8:\n# 1. Create the new content file\nvim ML/chapter-9-8.qmd\n\n# 2. Add to list page\nvim ML/deep-learning-book.qmd  # Add Chapter 9.8 entry\n\n# 3. Update homepage\nvim index.qmd  # Replace Chapter 9.4 with 9.8, keep 9.7, 9.6, and 9.5\n\n# 4. Update counts automatically\n./update-counts.sh\n\n# 5. Render\nquarto render index.qmd\nWarning: The homepage will NOT automatically update when you add new content. You must manually update index.qmd to show the latest 4 items."
+  },
+  {
+    "objectID": "CLAUDE.html#configuration-notes",
+    "href": "CLAUDE.html#configuration-notes",
+    "title": "",
+    "section": "Configuration Notes",
+    "text": "Configuration Notes\n\nOutput directory is set to docs/ for GitHub Pages compatibility\nTheme: Cosmo with custom branding\nAll pages include table of contents (toc: true)\nSite uses custom CSS from styles.css\nJupyter notebooks are supported alongside Quarto markdown"
+  },
+  {
+    "objectID": "CLAUDE.html#github-pages-deployment",
+    "href": "CLAUDE.html#github-pages-deployment",
+    "title": "",
+    "section": "GitHub Pages Deployment",
+    "text": "GitHub Pages Deployment\nThe site is automatically deployed from the docs/ directory. After rendering, commit and push the docs/ folder to trigger GitHub Pages rebuild. - Author is Chao Ma - GitHub Pages URL: https://ickma2311.github.io/\n\nPre-Push Checklist (CRITICAL)\nThe ./publish.sh script handles everything automatically. Just follow these steps:\n\nRun the publish script:\n./publish.sh\nThe script automatically:\n\nBacks up critical files (index.html, about.html, reflection images)\nRuns full site render\nRestores ALL images from all locations\nFixes misplaced HTML files\nRemoves duplicates\nVerifies nothing was lost\n\nReview the output: The script shows file counts before/after and lists any errors\nCheck git status: git status to see what changed\nLocal preview: Open docs/index.html in browser to verify\nCommit and push:\ngit add -A\ngit commit -m \"Add new content\"\ngit push\n\nWhy this matters: GitHub Pages serves from docs/. Quarto’s render recreates docs/ and deletes images. The publish script ensures all images are restored before you commit.\n\n\nPost-Deployment Cleanup\nAfter successfully pushing changes to GitHub:\n\nArchive source images: Move original images from Downloads to the banana folder for organization\nmv ~/Downloads/&lt;image-name&gt;.png ~/Documents/banana/\nExample: mv ~/Downloads/seq2seq.png ~/Documents/banana/\nVerify deployment: Check GitHub Pages to ensure the site deployed successfully and images load correctly"
+  },
+  {
+    "objectID": "CLAUDE.html#linkedin-post-guidelines",
+    "href": "CLAUDE.html#linkedin-post-guidelines",
+    "title": "",
+    "section": "LinkedIn Post Guidelines",
+    "text": "LinkedIn Post Guidelines\n\nEmoji Usage\nWhen drafting LinkedIn posts for blog content, use these emojis: - Deep Learning topics: ∇ (delta/nabla symbol) - represents gradients and optimization - Linear Algebra topics: 📐 (triangle/ruler) - represents geometric and matrix concepts\n\n\nWriting Process\n\nIdentify the key insight: Focus on the main conceptual connection or “aha moment” from the blog post\nUse “connecting the dots” tone: Emphasize how concepts link together (e.g., “how linear algebra connects to machine learning”)\nStructure (Knowledge Card Format):\n\nStart with emoji and chapter reference (e.g., “∇ Deep Learning Book (Chapter 8.1)” or “📐 MIT 18.06SC Linear Algebra (Lecture 19)”)\nClear statement or equation (e.g., “Learning ≠ Optimization”)\n2-4 bullet points (🔹) with key insights\nPhilosophical closing line (💡)\nLink to full blog post (📖)\nSource attribution at the end (e.g., “My notes on Deep Learning (Ian Goodfellow) Chapter X.X” or “My notes on MIT 18.06SC Linear Algebra - Lecture XX”)\n\nKeep it concise: Aim for clarity over comprehensiveness - use knowledge card format for quick, digestible insights\nCourse naming:\n\nAlways use “MIT 18.06SC” (not just “MIT 18.06”) for linear algebra posts\nUse full course titles to maintain consistency\n\nInclude relevant hashtags: #MachineLearning #LinearAlgebra #DeepLearning"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "ickma.dev",
+    "section": "",
+    "text": "A growing collection of structured study notes and visual explanations — written for clarity, reproducibility, and long-term memory."
+  },
+  {
+    "objectID": "index.html#latest-updates",
+    "href": "index.html#latest-updates",
+    "title": "ickma.dev",
+    "section": "Latest Updates",
+    "text": "Latest Updates\n\n∇ Deep Learning Book 46 chapters\nMy notes on the Deep Learning book by Ian Goodfellow, Yoshua Bengio, and Aaron Courville.\n\n\nChapter 10.8: Echo State Networks ESNs fix recurrent weights and train only output weights, viewing the network as a dynamical reservoir. Setting spectral radius near one enables long-term memory retention. Learning reduces to linear regression on hidden states, avoiding backpropagation through time—showing that carefully designed dynamics can capture temporal structure.\n\n\nChapter 10.7: The Challenge of Long-Term Dependencies The fundamental challenge of long-term dependencies in RNNs is training difficulty: gradients propagated across many time steps either vanish exponentially (common) or explode (rare but severe). Eigenvalue analysis shows how powers of the transition matrix govern this instability.\n\n\nChapter 10.6: Recursive Neural Network Recursive neural networks compute over tree structures rather than linear chains, applying shared composition functions at internal nodes to build hierarchical representations bottom-up. This reduces computation depth from O(τ) to O(log τ), but requires external tree structure specification.\n\n\nChapter 10.5: Deep Recurrent Networks Three architectural patterns for adding depth to RNNs: hierarchical hidden states (vertical stacking), deep transition RNNs (MLPs replace transformations), and deep transition with skip connections (residual paths for gradient flow).\n\n\n\nSee all Deep Learning chapters →\n\n\n\n📐 MIT 18.06SC Linear Algebra 36 lectures\nMy journey through MIT’s Linear Algebra course, focusing on building intuition and making connections between fundamental concepts.\n\n\nLecture 27: Positive Definite Matrices and Minima Connecting positive definite matrices to multivariable calculus and optimization: the Hessian matrix, second derivative tests, and the geometric interpretation of quadratic forms as ellipsoids.\n\n\nLecture 26: Complex Matrices and Fast Fourier Transform Extending linear algebra to complex vectors: Hermitian matrices, unitary matrices, and the Fast Fourier Transform algorithm that reduces DFT complexity from O(N²) to O(N log N).\n\n\nLecture 28: Similar Matrices and Jordan Form When matrices share eigenvalues but differ in structure: similar matrices represent the same transformation in different bases, and Jordan form reveals the canonical structure when diagonalization fails.\n\n\nLecture 25: Symmetric Matrices and Positive Definiteness The beautiful structure of symmetric matrices: real eigenvalues, orthogonal eigenvectors, spectral decomposition, and the important concept of positive definiteness.\n\n\n\nSee all MIT 18.06SC lectures →\n\n\n\n📐 MIT 18.065: Linear Algebra Applications 2 lectures\nMy notes from MIT 18.065 Matrix Methods in Data Analysis, Signal Processing, and Machine Learning—exploring how linear algebra powers modern applications.\n\n\nLecture 9: Four Ways to Solve Least Squares Problems Four equivalent methods for solving \\(Ax = b\\) when \\(A\\) has no inverse: pseudo-inverse, normal equations, algebraic minimization, and geometric projection—all converging to the same optimal solution.\n\n\nLecture 8: Norms of Vectors and Matrices Understanding vector p-norms (\\(\\|v\\|_p\\)) and when they satisfy the triangle inequality (only for \\(p \\geq 1\\)). The “\\(\\frac{1}{2}\\)-norm” creates non-convex unit balls for strong sparsity.\n\n\n\nSee all MIT 18.065 lectures →\n\n\n\n📐 Stanford EE 364A: Convex Optimization 7 lectures\nMy notes from Stanford EE 364A: Convex Optimization—theory and applications of optimization problems.\n\n\nLecture 5.2: Monotonicity with Generalized Inequalities K-nondecreasing functions satisfy \\(x \\preceq_K y \\Rightarrow f(x)\\le f(y)\\). Gradient condition: \\(\\nabla f(x) \\succeq_{K^*} 0\\) (dual inequality). Matrix monotone examples: \\(\\mathrm{tr}(WX)\\), \\(\\mathrm{det}X\\). K-convexity extends convexity to generalized inequalities with dual characterization and composition theorems.\n\n\nLecture 5.1: Log-Concave and Log-Convex Functions Log-concave functions satisfy \\(f(\\theta x+(1-\\theta)y)\\ge f(x)^\\theta f(y)^{1-\\theta}\\). Powers \\(x^a\\) are log-concave for \\(a \\ge 0\\) and log-convex for \\(a \\le 0\\). Key properties: products preserve log-concavity, but sums do not. Integration of log-concave functions preserves log-concavity.\n\n\nLecture 4 Part 2: Conjugate and Quasiconvex Functions Conjugate functions \\(f^*(y) = \\sup_x (y^\\top x - f(x))\\) are always convex, with examples including negative logarithm and quadratic functions. Quasiconvex functions have convex sublevel sets with modified Jensen inequality \\(f(\\theta x + (1-\\theta)y) \\leq \\max\\{f(x), f(y)\\}\\). Examples include linear-fractional functions and distance ratios.\n\n\nLecture 4 Part 1: Operations preserving Convexity Pointwise maximum and supremum (support function, distance to farthest point, maximum eigenvalue), composition with scalar functions (exponential, reciprocal), vector composition (log-sum-exp), minimization over convex sets (Schur complement, distance to set), and perspective functions with examples.\n\n\n\nSee all EE 364A lectures →"
+  },
+  {
+    "objectID": "index.html#more-topics",
+    "href": "index.html#more-topics",
+    "title": "ickma.dev",
+    "section": "More Topics",
+    "text": "More Topics\n\n\nMachine Learning\n\nK-Means Clustering\nLogistic Regression\nAxis Operations\n\n\n\nAlgorithms\n\nDP Regex"
+  },
+  {
+    "objectID": "index.html#numpy-fundamentals",
+    "href": "index.html#numpy-fundamentals",
+    "title": "Machine Learning Topics",
+    "section": "NumPy Fundamentals",
+    "text": "NumPy Fundamentals\n\nUnderstanding Axis(Dim) Operations"
+  },
+  {
+    "objectID": "index.html#clustering-algorithms",
+    "href": "index.html#clustering-algorithms",
+    "title": "Machine Learning Topics",
+    "section": "Clustering Algorithms",
+    "text": "Clustering Algorithms\n\nK-Means Clustering"
+  },
+  {
+    "objectID": "index.html#deep-learning-fundamentals",
+    "href": "index.html#deep-learning-fundamentals",
+    "title": "Machine Learning Topics",
+    "section": "Deep Learning Fundamentals",
+    "text": "Deep Learning Fundamentals\n\nThe XOR Problem: Nonlinearity in Deep Learning\nLikelihood-Based Loss Functions\nHidden Units and Activation Functions\nArchitecture Design: Depth vs Width\nBack-Propagation and Other Differentiation Algorithms\nChapter 7.11: Bagging and Other Ensemble Methods\nChapter 7.12: Dropout\nChapter 7.13: Adversarial Training\nChapter 7.14: Tangent Distance, Tangent Prop and Manifold Tangent Classifier\nChapter 8.1: How Learning Differs from Pure Optimization"
+  },
+  {
+    "objectID": "index.html#classification-algorithms",
+    "href": "index.html#classification-algorithms",
+    "title": "Machine Learning Topics",
+    "section": "Classification Algorithms",
+    "text": "Classification Algorithms\n\nLogistic Regression"
   }
 ]
