@@ -1,0 +1,30 @@
+---
+title: "Chapter 10.9: Leaky Units and Multiple Time Scales"
+author: "Chao Ma"
+date: "2025-12-14"
+categories: [Deep Learning, RNN, Leaky Units, Multiple Time Scales]
+---
+
+[**Deep Learning Book** - Chapter 10.9 (page 398)](https://www.deeplearningbook.org/contents/rnn.html)
+
+To address the long-term dependency problem, models can be designed to operate on **multiple time scales**, allowing some components to process information at **fine temporal resolution**, while others operate at **coarser time scales** to effectively propagate information from the distant past.
+
+# Leaky Unit
+
+Leaky units introduce an explicit separation between instantaneous state computation and long-term state integration. By using a candidate state $v^{(t)}$ and a time constant $\alpha$, the model can operate on multiple time scales, alleviating long-term dependency issues without relying solely on recurrent weight dynamics.
+
+$$
+u^t \leftarrow \alpha u^{t-1}+(1-\alpha)v^t
+$$
+
+In a leaky RNN, the candidate state $v^{(t)}$ replaces the instantaneous hidden update, while the leaky state $\mu^{(t)}$ replaces the true hidden state. The relation between them is temporal integration, not a learned transformation.
+
+![Leaky unit architecture](leaky_unit.png)
+
+# Temporal Skip Connection
+
+**Temporal skip connections address long-term dependencies by introducing direct pathways across multiple time steps, allowing information and gradients to propagate over longer temporal distances without relying solely on step-by-step recurrence.**
+
+# Removing Connection
+
+**Removing connections addresses long-term dependencies by eliminating length-1 temporal connections, forcing information to propagate only through longer-range pathways and thereby biasing the model toward coarser time scales.**
