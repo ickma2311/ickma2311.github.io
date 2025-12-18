@@ -1,0 +1,264 @@
+---
+title: "Chapter 12.1: Large-Scale Deep Learning"
+author: "Chao Ma"
+date: "2025-12-17"
+categories: [Deep Learning, Distributed Training, GPU, Model Compression]
+---
+
+[**Deep Learning Book** - Chapter 12.1 (page 440)](https://www.deeplearningbook.org/contents/applications.html)
+
+Scaling deep learning to large models and datasets requires specialized hardware, distributed training strategies, and efficiency optimizations. This chapter covers the hardware, algorithms, and techniques that enable modern large-scale deep learning.
+
+## CPU vs. GPU
+
+### CPU: Sequential Excellence
+
+CPUs are designed for **low-latency execution, complex control flow, and heavy use of branching and caching**.
+
+**Strengths:**
+- Excel at sequential logic
+- Handle irregular memory access efficiently
+- Strong performance with data dependencies
+
+**Limitations for Deep Learning:**
+- Limited parallelism
+- Relatively low memory bandwidth
+- Inefficient for dense numerical computation
+
+**Usage in Deep Learning:**
+- Orchestration and coordination
+- Data preprocessing
+- Small-scale experiments
+- Inference for small models
+
+### GPU: Massively Parallel Computation
+
+GPUs were originally designed for graphics rendering, where **the same operation must be applied independently to many pixels or vertices**.
+
+This design makes them ideal for deep learning, which consists largely of **massive numbers of identical numerical operations** across neurons, activations, and gradients.
+
+**Strengths:**
+- Extremely high parallelism (thousands of cores)
+- High memory bandwidth
+- Efficient matrix and tensor operations
+- Ideal for SIMD (Single Instruction, Multiple Data) workloads
+
+**Limitations:**
+- Expensive branching (control flow divergence)
+- Sensitive to memory access patterns
+- Requires careful program design to avoid inefficiencies
+
+::: {.callout-note icon="💡"}
+## Why GPUs Dominate Deep Learning
+
+Deep learning training is dominated by matrix multiplications and element-wise operations that can be parallelized across millions of parameters. GPUs execute these operations orders of magnitude faster than CPUs, making them the standard hardware for training large neural networks.
+:::
+
+## Parallelism in Deep Learning
+
+Parallelism is essential for scaling deep learning to large models and datasets.
+
+### Data Parallelism
+
+**Distribute different mini-batches across multiple machines or devices.**
+
+- Each device has a complete copy of the model
+- Different devices process different mini-batches simultaneously
+- Gradients are averaged across devices after each batch
+- **Easier to implement** than model parallelism
+- Scales well for moderate model sizes
+
+**Example:**
+- 4 GPUs, each processing a different batch of 64 examples
+- Effective batch size: 256
+- Each GPU computes gradients independently
+- Gradients are synchronized before parameter update
+
+### Model Parallelism
+
+**Split the model itself across devices.**
+
+- Different devices hold different parts of the model
+- Necessary for **very large models** that don't fit in single-device memory
+- More complex to implement due to inter-device communication
+- Can introduce computational bottlenecks if not carefully designed
+
+**Example:**
+- A transformer with 175B parameters split across 8 GPUs
+- Each GPU holds different layers or attention heads
+- Activations must be transferred between devices during forward/backward passes
+
+### Asynchronous SGD
+
+Training introduces additional challenges because **gradient computation is inherently sequential across steps**.
+
+**Asynchronous SGD** mitigates this by allowing workers to compute and apply gradients **without strict synchronization**.
+
+**How it works:**
+- Multiple workers compute gradients on different mini-batches simultaneously
+- Each worker reads current parameters, computes gradients, and updates immediately
+- No waiting for other workers to finish
+- Trades some gradient accuracy for faster overall training
+
+**Trade-offs:**
+- **Advantage:** Higher throughput, better hardware utilization
+- **Disadvantage:** "Stale gradients" from outdated parameters can slow convergence
+- Works best when updates are small relative to parameter magnitudes
+
+### Parameter Servers
+
+Parameter servers are often used to **manage shared model parameters in distributed settings**.
+
+- Central servers store and update model parameters
+- Workers fetch parameters, compute gradients, and send updates
+- Servers aggregate gradient updates and apply them to parameters
+- Enables fault tolerance and dynamic scaling
+
+## Model Compression
+
+Model compression aims to reduce **memory, storage, and inference cost** while maintaining predictive performance.
+
+### Motivation
+
+**Training is done once, but inference is executed millions of times.**
+
+Deployment scenarios prioritize:
+- Low latency
+- Small memory footprint
+- Energy efficiency
+- Deployment on resource-constrained devices (mobile, embedded)
+
+### Compression Strategies
+
+**1. Knowledge Distillation**
+
+Train a small "student" model to mimic a large "teacher" model:
+- Teacher model is large, accurate, but expensive
+- Student model is compact and efficient
+- Student learns from teacher's soft outputs (probability distributions), not just hard labels
+- Often achieves comparable accuracy with much lower cost
+
+**2. Pruning**
+
+Remove redundant parameters from over-parameterized networks:
+- Identify and remove weights with small magnitudes
+- Can remove entire neurons or channels
+- May require fine-tuning after pruning
+- Structured pruning (removing entire filters) is more hardware-friendly
+
+**3. Quantization**
+
+Reduce numerical precision:
+- Use 8-bit or 16-bit instead of 32-bit floating point
+- Minimal accuracy loss for many models
+- Significantly reduces memory and computation
+- Specialized hardware (e.g., TPUs) optimized for low-precision arithmetic
+
+**4. Low-Rank Factorization**
+
+Approximate large weight matrices with products of smaller matrices:
+- Exploit redundancy in over-parameterized networks
+- Replace $W \in \mathbb{R}^{m \times n}$ with $UV^T$ where $U \in \mathbb{R}^{m \times k}, V \in \mathbb{R}^{n \times k}, k \ll \min(m,n)$
+
+::: {.callout-important icon="💡"}
+## When Compression Works Best
+
+Compression is most effective when **the original model is large relative to the task complexity**, allowing a smaller model to approximate the learned function with minimal loss in accuracy. Over-parameterized models trained on limited data are ideal candidates.
+:::
+
+## Dynamic Structure
+
+Dynamic structure refers to models that **adapt their computation graph based on the input**.
+
+Instead of executing all components for every example, the system **selectively activates only relevant parts of the network**.
+
+### Conditional Computation
+
+In neural networks, this is known as **conditional computation**, where different hidden units, sub-networks, or experts are used depending on the input.
+
+**Examples:**
+
+**1. Cascaded Classifiers**
+- Easy examples processed by small, fast model
+- Only hard examples sent to larger, more expensive model
+- Trades accuracy for average computational cost
+
+**2. Mixture of Experts**
+- Multiple specialized sub-networks ("experts")
+- Gating network decides which experts to activate for each input
+- Only activated experts participate in computation
+- Enables massive model capacity with bounded computational cost
+
+**3. Attention Mechanisms**
+- Dynamically focus on relevant parts of the input
+- Skip irrelevant regions or time steps
+- Transformers are a form of dynamic computation (though fully differentiable)
+
+### Trade-offs
+
+**Advantages:**
+- **Computational efficiency:** Only pay for what you use
+- Model capacity can exceed what fits in memory (because not all is active simultaneously)
+
+**Challenges:**
+- Dynamic control flow reduces parallelism
+- Complicates implementation, especially on GPUs
+- Load imbalance across devices
+- Synchronization challenges in distributed settings
+- Harder to optimize with standard backpropagation (requires special techniques like Gumbel-Softmax or reinforcement learning for discrete gating)
+
+## Specialized Hardware for Deep Networks
+
+Specialized hardware aims to accelerate deep learning by **tailoring computation, memory, and precision** to neural network workloads.
+
+### Beyond CPUs and GPUs
+
+**ASICs (Application-Specific Integrated Circuits):**
+- Chips designed specifically for neural network inference or training
+- Examples: Google TPU, Tesla Dojo
+- Optimized for specific operations (matrix multiplication, convolution)
+- Higher performance and energy efficiency than general-purpose hardware
+
+**FPGAs (Field-Programmable Gate Arrays):**
+- Reconfigurable hardware that can be customized for specific workloads
+- Lower latency than GPUs for certain operations
+- More flexible than ASICs (can be reprogrammed)
+- Used in low-latency inference applications
+
+### Key Optimizations
+
+**1. Massive Parallelism**
+- Thousands of simple arithmetic units operating simultaneously
+- Optimized for matrix operations
+
+**2. High Memory Bandwidth**
+- Fast data movement between compute units and memory
+- Reduces bottlenecks in memory-bound operations
+
+**3. Reduced Numerical Precision**
+- 8-bit or 16-bit arithmetic instead of 32-bit
+- Minimal accuracy loss for inference
+- Significantly faster and more energy-efficient
+- Enables larger batch sizes and more parallelism
+
+### Why Specialized Hardware Matters
+
+As **general-purpose CPU/GPU performance gains slow down** (Moore's Law slowing), specialized accelerators become increasingly important.
+
+Critical for:
+- **Deployment on resource-constrained devices** (mobile phones, embedded systems)
+- **Edge computing** where low latency and energy efficiency are paramount
+- **Large-scale cloud inference** where cost and throughput matter
+
+## Summary
+
+Large-scale deep learning requires:
+
+1. **Hardware specialization**: GPUs for training, specialized accelerators for inference
+2. **Distributed training**: Data parallelism for scalability, model parallelism for very large models
+3. **Asynchronous methods**: Trade gradient accuracy for throughput in distributed settings
+4. **Model compression**: Distillation, pruning, quantization for efficient deployment
+5. **Dynamic computation**: Conditional execution to reduce computational cost
+6. **Specialized accelerators**: ASICs and FPGAs optimized for neural network operations
+
+The field continues to evolve as models grow larger and deployment scenarios become more diverse.
