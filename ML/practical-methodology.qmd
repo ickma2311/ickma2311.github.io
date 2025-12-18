@@ -1,0 +1,168 @@
+---
+title: "Chapter 11: Practical Methodology"
+author: "Chao Ma"
+date: "2025-12-17"
+categories: [Deep Learning, Practical Methodology, Hyperparameters, Debugging]
+---
+
+[**Deep Learning Book** - Chapter 11 (page 416)](https://www.deeplearningbook.org/contents/guidelines.html)
+
+Machine learning systems succeed through systematic engineering, not intuition alone. This chapter provides practical guidelines for building, diagnosing, and improving deep learning systems.
+
+## Performance Measurement
+
+The first step in applying machine learning is to **define an appropriate performance metric**, which determines all subsequent design and optimization decisions.
+
+### Setting Realistic Expectations
+
+- In most real-world problems, **zero error is unattainable** due to Bayes error, randomness in the system, and limited data
+- Reasonable performance expectations must be set based on **practical constraints** such as safety, cost, and user experience, not solely on academic benchmarks
+- **Training loss functions are often different from application-level performance metrics** and should not be conflated
+
+### Beyond Accuracy
+
+When errors have **asymmetric costs** or target events are rare, **accuracy is an inadequate measure**.
+
+In such cases, **precision, recall, PR curves, and F-score** are used to characterize the trade-off between false positives and false negatives:
+
+$$
+F=\frac{2pr}{p+r}
+$$
+
+- Adjusting the decision threshold allows control over this trade-off to meet application requirements
+- Some systems must also consider **coverage**, measuring the fraction of inputs for which the system produces reliable outputs
+
+## Default Baseline Models
+
+After defining the performance metric, the next step is to **quickly build a reasonable end-to-end baseline system**.
+
+### Architecture Selection
+
+The initial model choice should be guided by the **structure of the data**:
+
+- **Fixed-size vectors** → fully connected networks
+- **Images** → convolutional networks
+- **Sequences** → recurrent networks (LSTM or GRU)
+
+### Training Configuration
+
+- Simple activation functions such as **ReLU and its variants** are reliable default choices
+- **SGD with momentum and learning-rate decay**, or **Adam**, are generally effective optimization algorithms
+- **Batch normalization** often improves optimization and should be used when training becomes unstable
+- Unless extremely large datasets are available, **regularization** (e.g., weight decay, dropout) should be included early
+- When possible, **reuse architectures or pretrained models** that have worked well on closely related tasks
+
+### When to Use Deep Learning
+
+- Deep learning is most appropriate for **AI-complete problems** (e.g., vision, speech, machine translation)
+- Simpler models may suffice for less complex tasks
+- Unsupervised or semi-supervised learning should generally be considered **only when supervised baselines fail or labeled data is scarce**
+
+## Deciding Whether to Collect More Data
+
+After building an initial end-to-end system, evaluate whether **training and test performance are acceptable**.
+
+### Diagnostic Framework
+
+**If both training and test performance are poor:**
+- Collecting more data is unlikely to help
+- **Model capacity or optimization must be improved first**
+
+**If training performance is good but test performance is significantly worse:**
+- **Collecting more training data is often the most effective way to reduce generalization error**
+
+### Practical Considerations
+
+- The decision to collect more data should consider **cost, feasibility, and expected performance gains**
+- In large-scale commercial settings, collecting more labeled data is often cheaper and more effective than designing new algorithms
+- When data collection is infeasible, alternatives include **reducing model size or increasing regularization**
+- Learning curves are useful for estimating **how much additional data is needed** to achieve target performance
+- If neither more data nor regularization improves performance, the limitation may lie in **data quality rather than data quantity**
+
+## Hyperparameter Selection
+
+Hyperparameters control **model capacity, optimization behavior, generalization error, and computational cost**.
+
+### The Most Important Hyperparameter
+
+The **learning rate** is the single most important hyperparameter. If only one can be tuned, it should be the learning rate.
+
+### Understanding Hyperparameter Effects
+
+- Many hyperparameters affect performance through their impact on **effective model capacity**, often producing a **U-shaped relationship** with generalization error
+- Manual tuning aims to **minimize validation error under time and resource constraints** by balancing training error and generalization gap
+
+### Tuning Strategy
+
+**If training error is too high:**
+- Increase model capacity
+
+**If the generalization gap is too large:**
+- **Increase regularization** (e.g., weight decay, dropout)
+
+### Search Methods
+
+**Grid Search:**
+- Becomes infeasible as the number of hyperparameters grows due to **exponential computational cost**
+
+**Random Search:**
+- More efficient than grid search because it explores important hyperparameters more effectively, especially when only a few dimensions matter
+- Hyperparameters should often be sampled on **logarithmic scales** (e.g., learning rate, number of hidden units)
+
+**Model-Based Optimization:**
+- **Bayesian optimization** treats hyperparameter tuning as an optimization problem over validation error
+- Remains expensive and not always reliable
+- Despite automation, **human intuition and early stopping** often make manual or hybrid approaches competitive in practice
+
+## Debugging Strategy
+
+Debugging machine learning systems is difficult because poor performance may come from either flawed algorithms or implementation errors. Since model behavior is often unintuitive, practitioners must rely on systematic diagnostic tests rather than intuition.
+
+### Key Debugging Techniques
+
+**1. Inspect Model Behavior Directly**
+
+Visualize predictions, generated samples, activations, and confidence scores to ensure outputs are qualitatively reasonable.
+
+**2. Use Training vs. Test Error Patterns**
+
+Distinguish optimization failure, underfitting, overfitting, and data or evaluation bugs.
+
+**3. Overfit Very Small Datasets**
+
+Verify that the model, loss, and optimization pipeline are implemented correctly. Failure here strongly suggests a software error.
+
+**4. Check Gradient Computations**
+
+Especially when implementing models or layers manually, compare backpropagated gradients with numerical approximations (finite differences or complex-step methods).
+
+**5. Monitor Numerical Behavior**
+
+Track:
+- Gradient magnitudes
+- Activation saturation
+- Exploding/vanishing gradients
+- Parameter update scales
+
+**6. Leverage Algorithmic Guarantees**
+
+Use monotonic loss decrease as sanity checks, while allowing for numerical tolerance.
+
+### General Principles
+
+Effective debugging relies on:
+- **Isolating components** to identify failure points
+- **Validating assumptions** with controlled experiments
+- **Verifying gradients and numerical stability** before attempting architectural or algorithmic improvements
+
+## Summary
+
+Practical methodology for deep learning systems:
+
+1. **Define metrics** that align with application goals, not just training loss
+2. **Build baselines quickly** using architecture patterns matched to data structure
+3. **Diagnose performance** by comparing training and test error to decide next steps
+4. **Tune the learning rate first**, then other hyperparameters using random search
+5. **Debug systematically** by isolating components, checking gradients, and monitoring numerical behavior
+
+Success comes from iteration and empirical validation, not from theoretical understanding alone.
