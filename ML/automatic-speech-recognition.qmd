@@ -1,0 +1,222 @@
+---
+title: "Chapter 12.3: Automatic Speech Recognition"
+author: "Chao Ma"
+date: "2025-12-18"
+categories: [Deep Learning, Speech Recognition, ASR, RNN, LSTM, CTC]
+---
+
+[**Deep Learning Book** - Chapter 12.3 (page 450)](https://www.deeplearningbook.org/contents/applications.html)
+
+Automatic Speech Recognition (ASR) transforms acoustic signals into text by modeling conditional sequence distributions. This chapter traces the evolution of ASR from classical statistical methods through neural network breakthroughs to modern end-to-end systems.
+
+## Problem Formulation
+
+ASR aims to **model a conditional sequence distribution**:
+
+$$
+\hat{y} = \arg\max_y P(y \mid X)
+$$
+
+where:
+- $X$ is the **acoustic feature sequence** (e.g., spectrograms, MFCCs)
+- $y$ is the **linguistic symbol sequence** (phonemes, words, or characters)
+
+**Core challenge:** Acoustic sequences and linguistic sequences have different lengths and no simple alignment between them.
+
+## Classical Approach: GMM–HMM (1980s–2000s)
+
+The **Gaussian Mixture Model–Hidden Markov Model (GMM–HMM)** framework dominated industrial ASR for decades.
+
+### Architecture
+
+**GMM (Gaussian Mixture Model):**
+- Models the relationship between acoustic features and phoneme states
+- Provides emission probabilities: $P(\text{acoustic} \mid \text{phoneme state})$
+
+**HMM (Hidden Markov Model):**
+- Models temporal dynamics of phoneme states
+- Captures transition probabilities between states
+
+### Why It Worked
+
+- Strong generative modeling framework
+- Efficient decoding algorithms (Viterbi, forward-backward)
+- Well-understood statistical theory
+- Modular design: acoustic model, language model, and pronunciation lexicon
+
+### Limitations
+
+- GMMs have limited capacity to model complex acoustic patterns
+- Hand-crafted feature engineering required
+- Separate training of components leads to suboptimal global performance
+
+::: {.callout-note icon="💡"}
+## TIMIT Benchmark
+
+**TIMIT** became the standard phoneme recognition benchmark, enabling controlled comparison of ASR algorithms. Early neural network systems achieved competitive performance but were not adopted due to engineering complexity.
+:::
+
+## First Breakthrough: DNN–HMM (2009–2012)
+
+**Deep feedforward networks** replaced GMMs for acoustic modeling while retaining the HMM framework.
+
+### Architecture
+
+**Input:** Fixed-size windows of spectral features (e.g., 11 frames of 40-dimensional MFCCs)
+
+**Network:** Deep feedforward network with multiple hidden layers
+
+**Output:** Posterior probabilities of HMM states (thousands of output units)
+
+### Training Strategy
+
+**Early systems (2009–2011):**
+- Unsupervised pretraining with **Restricted Boltzmann Machines (RBMs)**
+- Layer-wise greedy training followed by supervised fine-tuning
+- Essential for training deep networks before modern techniques
+
+**Modern approach (2012+):**
+- Direct supervised training with:
+  - **Better initialization** (Xavier, He initialization)
+  - **Regularization** (Dropout, weight decay)
+  - **Larger labeled datasets**
+- Unsupervised pretraining became unnecessary
+
+### Performance Gains
+
+- **~30% relative improvement** on TIMIT phoneme error rate
+- Large improvements on large-vocabulary continuous speech recognition (LVCSR)
+- DNN–HMM became the industry standard by 2012
+
+## Architectural Advances
+
+As DNN–HMM systems matured, several architectural innovations emerged:
+
+### ReLU and Dropout
+
+**ReLU activation:**
+- Replaced sigmoid/tanh activations
+- Eliminated vanishing gradient problem
+- Enabled training of much deeper networks
+
+**Dropout regularization:**
+- Prevented overfitting on large-vocabulary tasks
+- Essential for generalizing to diverse speakers and acoustic conditions
+
+### Convolutional Neural Networks (CNNs)
+
+CNNs brought structured inductive biases to acoustic modeling:
+
+**Key insight:** Spectrograms are 2D structures (time × frequency), not just long vectors.
+
+**Weight sharing strategies:**
+1. **Temporal only:** Share weights across time (standard practice in early DNNs)
+2. **Time–frequency (CNNs):** Share weights across both time and frequency dimensions
+
+**Why CNNs work better:**
+- Spectral patterns (e.g., formants) appear at different frequencies for different speakers
+- Frequency-invariant features improve robustness
+- Reduced parameters enable training on smaller datasets
+
+::: {.callout-important icon="💡"}
+## 2D vs 1D Convolution
+
+CNNs that treat spectrograms as 2D images (time × frequency) outperform models that only share weights across time. This demonstrates the value of exploiting domain structure rather than treating all inputs as generic sequences.
+:::
+
+## Second Breakthrough: End-to-End ASR (2013– )
+
+**End-to-end models** eliminate the explicit HMM component by directly learning sequence-to-sequence mappings.
+
+### Connectionist Temporal Classification (CTC)
+
+**CTC** enables training RNNs/LSTMs to produce variable-length outputs from variable-length inputs **without frame-level alignment labels**.
+
+**How CTC works:**
+1. RNN produces a probability distribution over output symbols at each time step
+2. CTC loss function sums over all valid alignments between input and output
+3. Dynamic programming (forward-backward algorithm) computes gradients efficiently
+
+**Advantages:**
+- No need for phoneme-level labels (only word/character transcriptions)
+- Learns alignment implicitly during training
+- Simpler pipeline: acoustic features → text directly
+
+### Deep RNNs and LSTMs
+
+**Network depth in end-to-end ASR comes from two sources:**
+
+1. **Spatial depth:** Stacking multiple LSTM layers
+   - 3–7 layers common in modern systems
+   - Each layer learns increasingly abstract representations
+
+2. **Temporal depth:** Recurrent unrolling across time
+   - Hundreds or thousands of time steps
+   - LSTMs handle long-term dependencies (e.g., coarticulation effects)
+
+**Performance:**
+- Further reductions in phoneme error rates beyond DNN–HMM
+- Simpler training pipeline (no forced alignment required)
+- Better handling of rare words and out-of-vocabulary terms
+
+### Architecture Variants
+
+**Bidirectional LSTMs:**
+- Process input sequence forward and backward
+- Use future context for better predictions
+- Essential for offline ASR (non-streaming)
+
+**Attention mechanisms:**
+- Learn soft alignment between acoustic and linguistic sequences
+- Enable direct character/word prediction without phoneme intermediate representation
+- Foundation for modern encoder-decoder architectures
+
+## Emerging Directions
+
+Modern ASR research explores hybrid representations and hierarchical modeling:
+
+### Joint Acoustic-Phonetic Modeling
+
+Instead of treating acoustic features and phonetic structure as separate levels, **jointly model** how phonetic structure organizes acoustic representations:
+
+- Phonemes impose structural constraints on acoustic features
+- Acoustic variability informs phonetic categories
+- Multi-task learning: predict both phonemes and words simultaneously
+
+### Hierarchical Representations
+
+Learn multiple levels of abstraction:
+- **Low-level:** Acoustic frames → phonetic features
+- **Mid-level:** Phonemes → syllables
+- **High-level:** Words → sentences
+
+This mirrors linguistic structure and improves sample efficiency.
+
+### Multimodal Integration
+
+Combine audio with other modalities:
+- **Audio-visual speech recognition:** Use lip movements to disambiguate similar-sounding phonemes
+- **Audio-text alignment:** Leverage large text corpora for language modeling
+
+## Summary
+
+Automatic Speech Recognition has evolved through three major paradigms:
+
+1. **GMM–HMM (1980s–2000s):** Classical statistical approach with hand-crafted features and separate acoustic/language models
+
+2. **DNN–HMM (2009–2012):** Deep feedforward networks replaced GMMs, achieving ~30% error rate reductions with better feature learning
+
+3. **End-to-End (2013+):** RNNs/LSTMs with CTC eliminate HMM, learning direct acoustic-to-text mappings without forced alignment
+
+**Key architectural innovations:**
+- ReLU and Dropout for training deeper networks
+- CNNs for frequency-invariant acoustic modeling
+- Bidirectional LSTMs for exploiting future context
+- CTC for alignment-free sequence modeling
+
+Modern ASR systems continue to improve through:
+- Joint acoustic-phonetic modeling
+- Hierarchical multi-level representations
+- Multimodal integration (audio-visual, audio-text)
+
+The field demonstrates how deep learning transforms classical pipelines: from hand-crafted feature engineering and modular systems to end-to-end learned representations.
