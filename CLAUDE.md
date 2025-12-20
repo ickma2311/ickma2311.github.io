@@ -18,6 +18,11 @@ This is a Quarto-based technical blog hosted on GitHub Pages (ickma2311.github.i
 - `quarto preview` - Start local development server with live reload
 - `quarto render <file.qmd>` - Render a specific document (navbar won't update on other pages)
 - `quarto check` - Verify Quarto installation and project setup
+  
+### Restart Quarto Preview
+When the user says "restart quarto", it means:
+1. Kill any running `quarto preview`/`quarto serve` processes.
+2. Start a new preview server on port 4200: `quarto preview --no-browser --port 4200`.
 
 ### CRITICAL: Publishing New Content
 **ALWAYS use `./publish.sh` instead of `quarto render` or `./render-site.sh`**

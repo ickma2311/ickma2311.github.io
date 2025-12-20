@@ -548,6 +548,10 @@ window.Quarto = {
         <li><hr class="dropdown-divider"></li>
         <li class="dropdown-header">MIT 18.065: Linear Algebra Applications</li>
         <li>
+    <a class="dropdown-item" href="../Math/MIT18.065/mit18065-lecture1-column-space.html">
+ <span class="dropdown-text">Lecture 1: Column Space</span></a>
+  </li>  
+        <li>
     <a class="dropdown-item" href="../Math/MIT18.065/mit18065-lecture8-norms.html">
  <span class="dropdown-text">Lecture 8: Norms</span></a>
   </li>  
@@ -650,7 +654,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">K-means Clustering</h1>
+<div class="quarto-title-block"><div><h1 class="title">K-means Clustering</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 </div>
 
 
@@ -670,14 +674,13 @@ window.Quarto = {
 <section id="setup-points-and-k" class="level1">
 <h1>Setup points and K</h1>
 <p>we will implement a KNN algorithm to cluster the points</p>
-<div id="cell-2" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a></span>
-<span id="cb1-2"><a href="#cb1-2"></a>X<span class="op">=</span>[[<span class="dv">1</span>,<span class="dv">1</span>],[<span class="dv">2</span>,<span class="fl">2.1</span>],[<span class="dv">3</span>,<span class="fl">2.5</span>],[<span class="dv">6</span>,<span class="dv">7</span>],[<span class="dv">7</span>,<span class="fl">7.1</span>],[<span class="dv">9</span>,<span class="fl">7.5</span>]]</span>
-<span id="cb1-3"><a href="#cb1-3"></a>k<span class="op">=</span><span class="dv">2</span></span>
-<span id="cb1-4"><a href="#cb1-4"></a></span>
-<span id="cb1-5"><a href="#cb1-5"></a>max_iter<span class="op">=</span><span class="dv">3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="881cedc3" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1"></a>X<span class="op">=</span>[[<span class="dv">1</span>,<span class="dv">1</span>],[<span class="dv">2</span>,<span class="fl">2.1</span>],[<span class="dv">3</span>,<span class="fl">2.5</span>],[<span class="dv">6</span>,<span class="dv">7</span>],[<span class="dv">7</span>,<span class="fl">7.1</span>],[<span class="dv">9</span>,<span class="fl">7.5</span>]]</span>
+<span id="cb1-2"><a href="#cb1-2"></a>k<span class="op">=</span><span class="dv">2</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a></span>
+<span id="cb1-4"><a href="#cb1-4"></a>max_iter<span class="op">=</span><span class="dv">3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-3" class="cell" data-execution_count="2">
+<div id="4568bc06" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># Visualize the data</span></span>
 <span id="cb2-2"><a href="#cb2-2"></a></span>
 <span id="cb2-3"><a href="#cb2-3"></a></span>
@@ -693,7 +696,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<div id="cell-4" class="cell" data-execution_count="3">
+<div id="4f0672af" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># Pure python implementation of K-means clustering</span></span>
 <span id="cb3-2"><a href="#cb3-2"></a><span class="kw">def</span> knn_iter(X,centroids):</span>
 <span id="cb3-3"><a href="#cb3-3"></a>    <span class="co"># set up new clusters</span></span>
@@ -713,47 +716,41 @@ window.Quarto = {
 <span id="cb3-17"><a href="#cb3-17"></a>        <span class="bu">sum</span>([x[<span class="dv">0</span>] <span class="cf">for</span> x <span class="kw">in</span> cluster])<span class="op">/</span><span class="bu">len</span>(cluster),</span>
 <span id="cb3-18"><a href="#cb3-18"></a>        <span class="bu">sum</span>([x[<span class="dv">1</span>] <span class="cf">for</span> x <span class="kw">in</span> cluster])<span class="op">/</span><span class="bu">len</span>(cluster)</span>
 <span id="cb3-19"><a href="#cb3-19"></a>    ] <span class="cf">if</span> cluster <span class="cf">else</span> centroids[i] <span class="cf">for</span> i,cluster <span class="kw">in</span> <span class="bu">enumerate</span>(new_clusters)]</span>
-<span id="cb3-20"><a href="#cb3-20"></a>    <span class="cf">return</span> new_centroids</span>
-<span id="cb3-21"><a href="#cb3-21"></a></span>
-<span id="cb3-22"><a href="#cb3-22"></a></span>
-<span id="cb3-23"><a href="#cb3-23"></a></span>
-<span id="cb3-24"><a href="#cb3-24"></a></span>
-<span id="cb3-25"><a href="#cb3-25"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-20"><a href="#cb3-20"></a>    <span class="cf">return</span> new_centroids</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-5" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1"></a></span>
-<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">def</span> iter_and_draw(X,k,max_iter):</span>
-<span id="cb4-3"><a href="#cb4-3"></a>    centroids<span class="op">=</span>X[:k]  <span class="co"># Randomly select 2 centroids</span></span>
-<span id="cb4-4"><a href="#cb4-4"></a>    fig, axes <span class="op">=</span> plt.subplots(max_iter<span class="op">//</span><span class="dv">3</span><span class="op">+</span>(<span class="dv">1</span> <span class="cf">if</span> max_iter<span class="op">%</span><span class="dv">3</span><span class="op">!=</span><span class="dv">0</span> <span class="cf">else</span> <span class="dv">0</span>),</span>
-<span id="cb4-5"><a href="#cb4-5"></a>        <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="dv">10</span>))</span>
-<span id="cb4-6"><a href="#cb4-6"></a>    axes<span class="op">=</span>axes.flatten()</span>
-<span id="cb4-7"><a href="#cb4-7"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(max_iter):</span>
-<span id="cb4-8"><a href="#cb4-8"></a>        </span>
-<span id="cb4-9"><a href="#cb4-9"></a>        <span class="co"># Plot points and centroids</span></span>
+<div id="5c8710c9" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">def</span> iter_and_draw(X,k,max_iter):</span>
+<span id="cb4-2"><a href="#cb4-2"></a>    centroids<span class="op">=</span>X[:k]  <span class="co"># Randomly select 2 centroids</span></span>
+<span id="cb4-3"><a href="#cb4-3"></a>    fig, axes <span class="op">=</span> plt.subplots(max_iter<span class="op">//</span><span class="dv">3</span><span class="op">+</span>(<span class="dv">1</span> <span class="cf">if</span> max_iter<span class="op">%</span><span class="dv">3</span><span class="op">!=</span><span class="dv">0</span> <span class="cf">else</span> <span class="dv">0</span>),</span>
+<span id="cb4-4"><a href="#cb4-4"></a>        <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="dv">10</span>))</span>
+<span id="cb4-5"><a href="#cb4-5"></a>    axes<span class="op">=</span>axes.flatten()</span>
+<span id="cb4-6"><a href="#cb4-6"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(max_iter):</span>
+<span id="cb4-7"><a href="#cb4-7"></a>        </span>
+<span id="cb4-8"><a href="#cb4-8"></a>        <span class="co"># Plot points and centroids</span></span>
+<span id="cb4-9"><a href="#cb4-9"></a></span>
 <span id="cb4-10"><a href="#cb4-10"></a></span>
-<span id="cb4-11"><a href="#cb4-11"></a></span>
-<span id="cb4-12"><a href="#cb4-12"></a>        <span class="co"># Assign each point to nearest centroid and plot with corresponding color</span></span>
-<span id="cb4-13"><a href="#cb4-13"></a>        colors <span class="op">=</span> [<span class="st">'blue'</span>, <span class="st">'green'</span>, <span class="st">'purple'</span>, <span class="st">'orange'</span>, <span class="st">'brown'</span>, <span class="st">'pink'</span>, <span class="st">'gray'</span>, <span class="st">'olive'</span>, <span class="st">'cyan'</span>]</span>
-<span id="cb4-14"><a href="#cb4-14"></a>        <span class="cf">for</span> j, x <span class="kw">in</span> <span class="bu">enumerate</span>(X):</span>
-<span id="cb4-15"><a href="#cb4-15"></a>            <span class="co"># Find nearest centroid</span></span>
-<span id="cb4-16"><a href="#cb4-16"></a>            min_dist <span class="op">=</span> <span class="bu">float</span>(<span class="st">'inf'</span>)</span>
-<span id="cb4-17"><a href="#cb4-17"></a>            nearest_centroid <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb4-18"><a href="#cb4-18"></a>            <span class="cf">for</span> k, c <span class="kw">in</span> <span class="bu">enumerate</span>(centroids):</span>
-<span id="cb4-19"><a href="#cb4-19"></a>                dist <span class="op">=</span> (x[<span class="dv">0</span>]<span class="op">-</span>c[<span class="dv">0</span>])<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> (x[<span class="dv">1</span>]<span class="op">-</span>c[<span class="dv">1</span>])<span class="op">**</span><span class="dv">2</span></span>
-<span id="cb4-20"><a href="#cb4-20"></a>                <span class="cf">if</span> dist <span class="op">&lt;</span> min_dist:</span>
-<span id="cb4-21"><a href="#cb4-21"></a>                    min_dist <span class="op">=</span> dist</span>
-<span id="cb4-22"><a href="#cb4-22"></a>                    nearest_centroid <span class="op">=</span> k</span>
-<span id="cb4-23"><a href="#cb4-23"></a>            <span class="co"># Plot point with color corresponding to its cluster</span></span>
-<span id="cb4-24"><a href="#cb4-24"></a>            axes[i].scatter(x[<span class="dv">0</span>], x[<span class="dv">1</span>], c<span class="op">=</span>colors[nearest_centroid <span class="op">%</span> <span class="bu">len</span>(colors)], label<span class="op">=</span><span class="ss">f'Cluster </span><span class="sc">{</span>nearest_centroid<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">'</span> <span class="cf">if</span> j<span class="op">==</span><span class="dv">0</span> <span class="cf">else</span> <span class="st">""</span>)</span>
-<span id="cb4-25"><a href="#cb4-25"></a>        axes[i].scatter([c[<span class="dv">0</span>] <span class="cf">for</span> c <span class="kw">in</span> centroids], [c[<span class="dv">1</span>] <span class="cf">for</span> c <span class="kw">in</span> centroids], c<span class="op">=</span><span class="st">'red'</span>, marker<span class="op">=</span><span class="st">'*'</span>, s<span class="op">=</span><span class="dv">200</span>, label<span class="op">=</span><span class="st">'Centroids'</span>)</span>
-<span id="cb4-26"><a href="#cb4-26"></a>        axes[i].set_title(<span class="ss">f'Iteration </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb4-27"><a href="#cb4-27"></a>        centroids <span class="op">=</span> knn_iter(X, centroids)</span>
-<span id="cb4-28"><a href="#cb4-28"></a></span>
-<span id="cb4-29"><a href="#cb4-29"></a>    plt.tight_layout()</span>
-<span id="cb4-30"><a href="#cb4-30"></a>    plt.show()</span>
-<span id="cb4-31"><a href="#cb4-31"></a></span>
-<span id="cb4-32"><a href="#cb4-32"></a>iter_and_draw(X,k,max_iter)</span>
-<span id="cb4-33"><a href="#cb4-33"></a><span class="co"># print(centroids)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-11"><a href="#cb4-11"></a>        <span class="co"># Assign each point to nearest centroid and plot with corresponding color</span></span>
+<span id="cb4-12"><a href="#cb4-12"></a>        colors <span class="op">=</span> [<span class="st">'blue'</span>, <span class="st">'green'</span>, <span class="st">'purple'</span>, <span class="st">'orange'</span>, <span class="st">'brown'</span>, <span class="st">'pink'</span>, <span class="st">'gray'</span>, <span class="st">'olive'</span>, <span class="st">'cyan'</span>]</span>
+<span id="cb4-13"><a href="#cb4-13"></a>        <span class="cf">for</span> j, x <span class="kw">in</span> <span class="bu">enumerate</span>(X):</span>
+<span id="cb4-14"><a href="#cb4-14"></a>            <span class="co"># Find nearest centroid</span></span>
+<span id="cb4-15"><a href="#cb4-15"></a>            min_dist <span class="op">=</span> <span class="bu">float</span>(<span class="st">'inf'</span>)</span>
+<span id="cb4-16"><a href="#cb4-16"></a>            nearest_centroid <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb4-17"><a href="#cb4-17"></a>            <span class="cf">for</span> k, c <span class="kw">in</span> <span class="bu">enumerate</span>(centroids):</span>
+<span id="cb4-18"><a href="#cb4-18"></a>                dist <span class="op">=</span> (x[<span class="dv">0</span>]<span class="op">-</span>c[<span class="dv">0</span>])<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> (x[<span class="dv">1</span>]<span class="op">-</span>c[<span class="dv">1</span>])<span class="op">**</span><span class="dv">2</span></span>
+<span id="cb4-19"><a href="#cb4-19"></a>                <span class="cf">if</span> dist <span class="op">&lt;</span> min_dist:</span>
+<span id="cb4-20"><a href="#cb4-20"></a>                    min_dist <span class="op">=</span> dist</span>
+<span id="cb4-21"><a href="#cb4-21"></a>                    nearest_centroid <span class="op">=</span> k</span>
+<span id="cb4-22"><a href="#cb4-22"></a>            <span class="co"># Plot point with color corresponding to its cluster</span></span>
+<span id="cb4-23"><a href="#cb4-23"></a>            axes[i].scatter(x[<span class="dv">0</span>], x[<span class="dv">1</span>], c<span class="op">=</span>colors[nearest_centroid <span class="op">%</span> <span class="bu">len</span>(colors)], label<span class="op">=</span><span class="ss">f'Cluster </span><span class="sc">{</span>nearest_centroid<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">'</span> <span class="cf">if</span> j<span class="op">==</span><span class="dv">0</span> <span class="cf">else</span> <span class="st">""</span>)</span>
+<span id="cb4-24"><a href="#cb4-24"></a>        axes[i].scatter([c[<span class="dv">0</span>] <span class="cf">for</span> c <span class="kw">in</span> centroids], [c[<span class="dv">1</span>] <span class="cf">for</span> c <span class="kw">in</span> centroids], c<span class="op">=</span><span class="st">'red'</span>, marker<span class="op">=</span><span class="st">'*'</span>, s<span class="op">=</span><span class="dv">200</span>, label<span class="op">=</span><span class="st">'Centroids'</span>)</span>
+<span id="cb4-25"><a href="#cb4-25"></a>        axes[i].set_title(<span class="ss">f'Iteration </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb4-26"><a href="#cb4-26"></a>        centroids <span class="op">=</span> knn_iter(X, centroids)</span>
+<span id="cb4-27"><a href="#cb4-27"></a></span>
+<span id="cb4-28"><a href="#cb4-28"></a>    plt.tight_layout()</span>
+<span id="cb4-29"><a href="#cb4-29"></a>    plt.show()</span>
+<span id="cb4-30"><a href="#cb4-30"></a></span>
+<span id="cb4-31"><a href="#cb4-31"></a>iter_and_draw(X,k,max_iter)</span>
+<span id="cb4-32"><a href="#cb4-32"></a><span class="co"># print(centroids)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -762,7 +759,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<div id="cell-6" class="cell" data-execution_count="5">
+<div id="052c41c7" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1"></a><span class="co"># A 3 clusters example</span></span>
 <span id="cb5-2"><a href="#cb5-2"></a></span>
 <span id="cb5-3"><a href="#cb5-3"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -810,6 +807,8 @@ f(\mu + \nabla \mu)-f(\mu)=
 \]</span></p>
 <p>Now we can see if <span class="math inline">\(n\mu = \sum_{i=1}^n x_i\)</span>, then the derivative is 0, this is why in each iteration, we need to set the center of the cluster as centroid.</p>
 
+
+<!-- -->
 
 </section>
 
@@ -1293,7 +1292,147 @@ f(\mu + \nabla \mu)-f(\mu)=
     document.getElementById("quarto-content").appendChild(script);
   }
   loadGiscus();
-</script>
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-shortcodes="false"><pre class="sourceCode numberSource markdown number-lines code-with-copy"><code class="sourceCode markdown"><span id="cb6-1"><a href="#cb6-1"></a><span class="co">---</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="an">title:</span><span class="co"> 'K-means Clustering '</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="an">format:</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a><span class="co">  html:</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a><span class="co">    code-fold: false</span></span>
+<span id="cb6-6"><a href="#cb6-6"></a><span class="co">    code-line-numbers: true</span></span>
+<span id="cb6-7"><a href="#cb6-7"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
+<span id="cb6-8"><a href="#cb6-8"></a><span class="co">---</span></span>
+<span id="cb6-9"><a href="#cb6-9"></a></span>
+<span id="cb6-10"><a href="#cb6-10"></a></span>
+<span id="cb6-11"><a href="#cb6-11"></a><span class="fu"># Setup points and K</span></span>
+<span id="cb6-12"><a href="#cb6-12"></a>we will implement a KNN algorithm to cluster the points </span>
+<span id="cb6-13"><a href="#cb6-13"></a></span>
+<span id="cb6-16"><a href="#cb6-16"></a><span class="in">```{python}</span></span>
+<span id="cb6-17"><a href="#cb6-17"></a>X<span class="op">=</span>[[<span class="dv">1</span>,<span class="dv">1</span>],[<span class="dv">2</span>,<span class="fl">2.1</span>],[<span class="dv">3</span>,<span class="fl">2.5</span>],[<span class="dv">6</span>,<span class="dv">7</span>],[<span class="dv">7</span>,<span class="fl">7.1</span>],[<span class="dv">9</span>,<span class="fl">7.5</span>]]</span>
+<span id="cb6-18"><a href="#cb6-18"></a>k<span class="op">=</span><span class="dv">2</span></span>
+<span id="cb6-19"><a href="#cb6-19"></a></span>
+<span id="cb6-20"><a href="#cb6-20"></a>max_iter<span class="op">=</span><span class="dv">3</span></span>
+<span id="cb6-21"><a href="#cb6-21"></a><span class="in">```</span></span>
+<span id="cb6-22"><a href="#cb6-22"></a></span>
+<span id="cb6-25"><a href="#cb6-25"></a><span class="in">```{python}</span></span>
+<span id="cb6-26"><a href="#cb6-26"></a><span class="co"># Visualize the data</span></span>
+<span id="cb6-27"><a href="#cb6-27"></a></span>
+<span id="cb6-28"><a href="#cb6-28"></a></span>
+<span id="cb6-29"><a href="#cb6-29"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb6-30"><a href="#cb6-30"></a></span>
+<span id="cb6-31"><a href="#cb6-31"></a>plt.scatter([x[<span class="dv">0</span>] <span class="cf">for</span> x <span class="kw">in</span> X],[x[<span class="dv">1</span>] <span class="cf">for</span> x <span class="kw">in</span> X])</span>
+<span id="cb6-32"><a href="#cb6-32"></a>plt.show()</span>
+<span id="cb6-33"><a href="#cb6-33"></a><span class="in">```</span></span>
+<span id="cb6-34"><a href="#cb6-34"></a></span>
+<span id="cb6-37"><a href="#cb6-37"></a><span class="in">```{python}</span></span>
+<span id="cb6-38"><a href="#cb6-38"></a><span class="co"># Pure python implementation of K-means clustering</span></span>
+<span id="cb6-39"><a href="#cb6-39"></a><span class="kw">def</span> knn_iter(X,centroids):</span>
+<span id="cb6-40"><a href="#cb6-40"></a>    <span class="co"># set up new clusters</span></span>
+<span id="cb6-41"><a href="#cb6-41"></a>    new_clusters<span class="op">=</span>[[] <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(centroids))]</span>
+<span id="cb6-42"><a href="#cb6-42"></a>    <span class="co"># k=len(centroids)</span></span>
+<span id="cb6-43"><a href="#cb6-43"></a>    <span class="co"># assign each point to the nearest centroid</span></span>
+<span id="cb6-44"><a href="#cb6-44"></a>    <span class="cf">for</span> x <span class="kw">in</span> X:</span>
+<span id="cb6-45"><a href="#cb6-45"></a>        k,distance<span class="op">=</span><span class="dv">0</span>,(x[<span class="dv">0</span>]<span class="op">-</span>centroids[<span class="dv">0</span>][<span class="dv">0</span>])<span class="op">**</span><span class="dv">2</span><span class="op">+</span>(x[<span class="dv">1</span>]<span class="op">-</span>centroids[<span class="dv">0</span>][<span class="dv">1</span>])<span class="op">**</span><span class="dv">2</span></span>
+<span id="cb6-46"><a href="#cb6-46"></a>        <span class="cf">for</span> i,c <span class="kw">in</span> <span class="bu">enumerate</span>(centroids[<span class="dv">1</span>:],<span class="dv">1</span>):</span>
+<span id="cb6-47"><a href="#cb6-47"></a>            <span class="cf">if</span> (x[<span class="dv">0</span>]<span class="op">-</span>c[<span class="dv">0</span>])<span class="op">**</span><span class="dv">2</span><span class="op">+</span>(x[<span class="dv">1</span>]<span class="op">-</span>c[<span class="dv">1</span>])<span class="op">**</span><span class="dv">2</span><span class="op">&lt;</span>distance:</span>
+<span id="cb6-48"><a href="#cb6-48"></a>                k<span class="op">=</span>i</span>
+<span id="cb6-49"><a href="#cb6-49"></a>                distance<span class="op">=</span>(x[<span class="dv">0</span>]<span class="op">-</span>c[<span class="dv">0</span>])<span class="op">**</span><span class="dv">2</span><span class="op">+</span>(x[<span class="dv">1</span>]<span class="op">-</span>c[<span class="dv">1</span>])<span class="op">**</span><span class="dv">2</span></span>
+<span id="cb6-50"><a href="#cb6-50"></a>        new_clusters[k].append(x)</span>
+<span id="cb6-51"><a href="#cb6-51"></a>    </span>
+<span id="cb6-52"><a href="#cb6-52"></a>    <span class="co"># calculate new centroids</span></span>
+<span id="cb6-53"><a href="#cb6-53"></a>    new_centroids<span class="op">=</span>[[</span>
+<span id="cb6-54"><a href="#cb6-54"></a>        <span class="bu">sum</span>([x[<span class="dv">0</span>] <span class="cf">for</span> x <span class="kw">in</span> cluster])<span class="op">/</span><span class="bu">len</span>(cluster),</span>
+<span id="cb6-55"><a href="#cb6-55"></a>        <span class="bu">sum</span>([x[<span class="dv">1</span>] <span class="cf">for</span> x <span class="kw">in</span> cluster])<span class="op">/</span><span class="bu">len</span>(cluster)</span>
+<span id="cb6-56"><a href="#cb6-56"></a>    ] <span class="cf">if</span> cluster <span class="cf">else</span> centroids[i] <span class="cf">for</span> i,cluster <span class="kw">in</span> <span class="bu">enumerate</span>(new_clusters)]</span>
+<span id="cb6-57"><a href="#cb6-57"></a>    <span class="cf">return</span> new_centroids</span>
+<span id="cb6-58"><a href="#cb6-58"></a></span>
+<span id="cb6-59"><a href="#cb6-59"></a></span>
+<span id="cb6-60"><a href="#cb6-60"></a></span>
+<span id="cb6-61"><a href="#cb6-61"></a></span>
+<span id="cb6-62"><a href="#cb6-62"></a></span>
+<span id="cb6-63"><a href="#cb6-63"></a><span class="in">```</span></span>
+<span id="cb6-64"><a href="#cb6-64"></a></span>
+<span id="cb6-67"><a href="#cb6-67"></a><span class="in">```{python}</span></span>
+<span id="cb6-68"><a href="#cb6-68"></a><span class="kw">def</span> iter_and_draw(X,k,max_iter):</span>
+<span id="cb6-69"><a href="#cb6-69"></a>    centroids<span class="op">=</span>X[:k]  <span class="co"># Randomly select 2 centroids</span></span>
+<span id="cb6-70"><a href="#cb6-70"></a>    fig, axes <span class="op">=</span> plt.subplots(max_iter<span class="op">//</span><span class="dv">3</span><span class="op">+</span>(<span class="dv">1</span> <span class="cf">if</span> max_iter<span class="op">%</span><span class="dv">3</span><span class="op">!=</span><span class="dv">0</span> <span class="cf">else</span> <span class="dv">0</span>),</span>
+<span id="cb6-71"><a href="#cb6-71"></a>        <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="dv">10</span>))</span>
+<span id="cb6-72"><a href="#cb6-72"></a>    axes<span class="op">=</span>axes.flatten()</span>
+<span id="cb6-73"><a href="#cb6-73"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(max_iter):</span>
+<span id="cb6-74"><a href="#cb6-74"></a>        </span>
+<span id="cb6-75"><a href="#cb6-75"></a>        <span class="co"># Plot points and centroids</span></span>
+<span id="cb6-76"><a href="#cb6-76"></a></span>
+<span id="cb6-77"><a href="#cb6-77"></a></span>
+<span id="cb6-78"><a href="#cb6-78"></a>        <span class="co"># Assign each point to nearest centroid and plot with corresponding color</span></span>
+<span id="cb6-79"><a href="#cb6-79"></a>        colors <span class="op">=</span> [<span class="st">'blue'</span>, <span class="st">'green'</span>, <span class="st">'purple'</span>, <span class="st">'orange'</span>, <span class="st">'brown'</span>, <span class="st">'pink'</span>, <span class="st">'gray'</span>, <span class="st">'olive'</span>, <span class="st">'cyan'</span>]</span>
+<span id="cb6-80"><a href="#cb6-80"></a>        <span class="cf">for</span> j, x <span class="kw">in</span> <span class="bu">enumerate</span>(X):</span>
+<span id="cb6-81"><a href="#cb6-81"></a>            <span class="co"># Find nearest centroid</span></span>
+<span id="cb6-82"><a href="#cb6-82"></a>            min_dist <span class="op">=</span> <span class="bu">float</span>(<span class="st">'inf'</span>)</span>
+<span id="cb6-83"><a href="#cb6-83"></a>            nearest_centroid <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb6-84"><a href="#cb6-84"></a>            <span class="cf">for</span> k, c <span class="kw">in</span> <span class="bu">enumerate</span>(centroids):</span>
+<span id="cb6-85"><a href="#cb6-85"></a>                dist <span class="op">=</span> (x[<span class="dv">0</span>]<span class="op">-</span>c[<span class="dv">0</span>])<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> (x[<span class="dv">1</span>]<span class="op">-</span>c[<span class="dv">1</span>])<span class="op">**</span><span class="dv">2</span></span>
+<span id="cb6-86"><a href="#cb6-86"></a>                <span class="cf">if</span> dist <span class="op">&lt;</span> min_dist:</span>
+<span id="cb6-87"><a href="#cb6-87"></a>                    min_dist <span class="op">=</span> dist</span>
+<span id="cb6-88"><a href="#cb6-88"></a>                    nearest_centroid <span class="op">=</span> k</span>
+<span id="cb6-89"><a href="#cb6-89"></a>            <span class="co"># Plot point with color corresponding to its cluster</span></span>
+<span id="cb6-90"><a href="#cb6-90"></a>            axes[i].scatter(x[<span class="dv">0</span>], x[<span class="dv">1</span>], c<span class="op">=</span>colors[nearest_centroid <span class="op">%</span> <span class="bu">len</span>(colors)], label<span class="op">=</span><span class="ss">f'Cluster </span><span class="sc">{</span>nearest_centroid<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">'</span> <span class="cf">if</span> j<span class="op">==</span><span class="dv">0</span> <span class="cf">else</span> <span class="st">""</span>)</span>
+<span id="cb6-91"><a href="#cb6-91"></a>        axes[i].scatter([c[<span class="dv">0</span>] <span class="cf">for</span> c <span class="kw">in</span> centroids], [c[<span class="dv">1</span>] <span class="cf">for</span> c <span class="kw">in</span> centroids], c<span class="op">=</span><span class="st">'red'</span>, marker<span class="op">=</span><span class="st">'*'</span>, s<span class="op">=</span><span class="dv">200</span>, label<span class="op">=</span><span class="st">'Centroids'</span>)</span>
+<span id="cb6-92"><a href="#cb6-92"></a>        axes[i].set_title(<span class="ss">f'Iteration </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb6-93"><a href="#cb6-93"></a>        centroids <span class="op">=</span> knn_iter(X, centroids)</span>
+<span id="cb6-94"><a href="#cb6-94"></a></span>
+<span id="cb6-95"><a href="#cb6-95"></a>    plt.tight_layout()</span>
+<span id="cb6-96"><a href="#cb6-96"></a>    plt.show()</span>
+<span id="cb6-97"><a href="#cb6-97"></a></span>
+<span id="cb6-98"><a href="#cb6-98"></a>iter_and_draw(X,k,max_iter)</span>
+<span id="cb6-99"><a href="#cb6-99"></a><span class="co"># print(centroids)</span></span>
+<span id="cb6-100"><a href="#cb6-100"></a><span class="in">```</span></span>
+<span id="cb6-101"><a href="#cb6-101"></a></span>
+<span id="cb6-104"><a href="#cb6-104"></a><span class="in">```{python}</span></span>
+<span id="cb6-105"><a href="#cb6-105"></a><span class="co"># A 3 clusters example</span></span>
+<span id="cb6-106"><a href="#cb6-106"></a></span>
+<span id="cb6-107"><a href="#cb6-107"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb6-108"><a href="#cb6-108"></a></span>
+<span id="cb6-109"><a href="#cb6-109"></a>X1<span class="op">=</span>np.random.rand(<span class="dv">20</span>,<span class="dv">2</span>)<span class="op">+</span><span class="dv">5</span> <span class="co"># Some points in the upper right corner</span></span>
+<span id="cb6-110"><a href="#cb6-110"></a>X2<span class="op">=</span>np.random.rand(<span class="dv">20</span>,<span class="dv">2</span>)<span class="op">+</span><span class="dv">3</span> <span class="co"># Some points in the middle</span></span>
+<span id="cb6-111"><a href="#cb6-111"></a>X3<span class="op">=</span>np.random.rand(<span class="dv">20</span>,<span class="dv">2</span>) <span class="co"># Some points in the lower left corner</span></span>
+<span id="cb6-112"><a href="#cb6-112"></a></span>
+<span id="cb6-113"><a href="#cb6-113"></a>iter_and_draw(np.concatenate((X1,X2,X3)),<span class="dv">3</span>,<span class="dv">5</span>)</span>
+<span id="cb6-114"><a href="#cb6-114"></a><span class="in">```</span></span>
+<span id="cb6-115"><a href="#cb6-115"></a></span>
+<span id="cb6-116"><a href="#cb6-116"></a><span class="fu"># A question?</span></span>
+<span id="cb6-117"><a href="#cb6-117"></a><span class="ss">+ </span>What to do if one cluster has no assigned points during iteration?</span>
+<span id="cb6-118"><a href="#cb6-118"></a></span>
+<span id="cb6-119"><a href="#cb6-119"></a><span class="fu"># Formula Derivation</span></span>
+<span id="cb6-120"><a href="#cb6-120"></a></span>
+<span id="cb6-121"><a href="#cb6-121"></a>The goal is to minimize the loss of inertia which is sum of the points to cluster centroids.</span>
+<span id="cb6-122"><a href="#cb6-122"></a></span>
+<span id="cb6-123"><a href="#cb6-123"></a>$$</span>
+<span id="cb6-124"><a href="#cb6-124"></a>Loss= \sum_{i=1}^n \sum_{x \in C_i} ||x-\mu_i||^2</span>
+<span id="cb6-125"><a href="#cb6-125"></a>$$</span>
+<span id="cb6-126"><a href="#cb6-126"></a></span>
+<span id="cb6-127"><a href="#cb6-127"></a>To iter $\mu$ for each cluster, let us find the derivative of the following function.</span>
+<span id="cb6-128"><a href="#cb6-128"></a>$$</span>
+<span id="cb6-129"><a href="#cb6-129"></a>f(\mu)=\sum_{i=1}^n ||x_i-\mu||^2 = </span>
+<span id="cb6-130"><a href="#cb6-130"></a>\sum_{i=1}^n {x_i}^2+\mu^2-2x_i\mu</span>
+<span id="cb6-131"><a href="#cb6-131"></a>$$</span>
+<span id="cb6-132"><a href="#cb6-132"></a></span>
+<span id="cb6-133"><a href="#cb6-133"></a>Given a $\nabla \mu$, </span>
+<span id="cb6-134"><a href="#cb6-134"></a>$$</span>
+<span id="cb6-135"><a href="#cb6-135"></a>f(\mu + \nabla \mu)=\sum_{i=1}^n ||x_i+\nabla \mu -\mu||^2 = </span>
+<span id="cb6-136"><a href="#cb6-136"></a>\sum_{i=1}^n  {x_i}^2+\mu^2+{\nabla \mu}^2-2{x_i \mu}-2{\mu \nabla \mu}+2{x_i \nabla \mu}</span>
+<span id="cb6-137"><a href="#cb6-137"></a>$$</span>
+<span id="cb6-138"><a href="#cb6-138"></a></span>
+<span id="cb6-139"><a href="#cb6-139"></a>$$</span>
+<span id="cb6-140"><a href="#cb6-140"></a>f(\mu + \nabla \mu)-f(\mu)=</span>
+<span id="cb6-141"><a href="#cb6-141"></a>\sum_{i=1}^n {\nabla \mu}^2-2{\mu \nabla \mu}+2{x_i \nabla \mu}</span>
+<span id="cb6-142"><a href="#cb6-142"></a>$$</span>
+<span id="cb6-143"><a href="#cb6-143"></a></span>
+<span id="cb6-144"><a href="#cb6-144"></a>$$</span>
+<span id="cb6-145"><a href="#cb6-145"></a>\frac {f(\mu + \nabla \mu)-f(\mu)}{\nabla \mu}=\sum_{i=1}^n {\nabla \mu} -2 \mu +2{x_i} = 2\sum_{i=1}^n x_i - 2n\mu</span>
+<span id="cb6-146"><a href="#cb6-146"></a>$$</span>
+<span id="cb6-147"><a href="#cb6-147"></a></span>
+<span id="cb6-148"><a href="#cb6-148"></a>Now we can see if $n\mu = \sum_{i=1}^n x_i$, then the derivative is 0, this is why in each iteration, we need to set the center of the cluster as centroid.</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
 </div> <!-- /content -->
 
 

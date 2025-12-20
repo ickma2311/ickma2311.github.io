@@ -1,0 +1,254 @@
+---
+title: "Lecture 1: The Column Space of A Contains All Vectors Ax"
+author: "Chao Ma"
+date: "2025-12-20"
+categories: [Matrix Methods, Column Space, Rank, MIT 18.065]
+---
+
+## Overview
+
+This lecture builds the geometric meaning of column space and rank:
+
+- $Ax$ is always a linear combination of the columns of $A$
+- The column space $C(A)$ contains every vector of the form $Ax$
+- Rank counts independent columns (and independent rows)
+- CR factorization separates basis columns from how they combine
+- Row-by-column vs column-by-row views of matrix multiplication
+
+{{< video https://www.youtube.com/watch?v=YiqIkSHSmyc&list=PLUl4u3cNGP63oMNUHXqIUcrkS2PivhN3k&index=3 >}}
+
+---
+
+## Ax and the Column Space
+
+Let
+$$
+A =
+\begin{bmatrix}
+2 & 1 & 3 \\
+3 & 1 & 4 \\
+5 & 7 & 12
+\end{bmatrix},
+\quad
+x =
+\begin{bmatrix}
+x_1 \\
+x_2 \\
+x_3
+\end{bmatrix}
+$$
+
+Then
+$$
+Ax =
+x_1 \begin{bmatrix}2\\3\\5\end{bmatrix}
++ x_2 \begin{bmatrix}1\\1\\7\end{bmatrix}
++ x_3 \begin{bmatrix}3\\4\\12\end{bmatrix}
+$$
+
+So **every** $Ax$ is a linear combination of the columns of $A$.
+
+**Key idea:** The set of all vectors $Ax$ equals the column space $C(A)$.
+
+### Examples
+
+**Rank 1 matrix (column space is a line):**
+$$
+\begin{bmatrix}
+1 & 3 & 8 \\
+1 & 3 & 8 \\
+1 & 3 & 8
+\end{bmatrix}
+=
+\begin{bmatrix}
+1 \\ 1 \\ 1
+\end{bmatrix}
+\begin{bmatrix}
+1 & 3 & 8
+\end{bmatrix}
+= uv^T
+$$
+
+**Rank 2 matrix (column space is a plane):**
+If $c_1 + c_2 = c_3$, then the three columns lie in the same plane.
+
+---
+
+## Independent Columns and Rank
+
+The number of independent columns is the **rank** of $A$.
+
+---
+
+## Basis and CR Factorization
+
+Using the same matrix:
+$$
+A =
+\begin{bmatrix}
+2 & 1 & 3 \\
+3 & 1 & 4 \\
+5 & 7 & 12
+\end{bmatrix}
+=
+\begin{bmatrix}
+2 & 1 \\
+3 & 1 \\
+5 & 7
+\end{bmatrix}
+\begin{bmatrix}
+1 & 0 & 1 \\
+0 & 1 & 1
+\end{bmatrix}
+= CR
+$$
+
+- Two independent columns in $\mathbb{R}^3$ span the column space
+- Two independent rows span the row space
+- **Column rank = row rank = matrix rank = 2**
+
+Shape check: $A_{3 \times 3} = C_{3 \times 2} R_{2 \times 3}$.
+
+---
+
+## Column Space of a Product
+
+Is $ABCDx$ in the column space of $A$? **Yes.**
+
+$$
+ABCDx = A(BCDx)
+$$
+
+So it is always a linear combination of the columns of $A$.
+
+---
+
+## Matrix Multiplication: Rows vs Columns
+
+Let $A$ be $m \times n$ and $B$ be $n \times p$.
+
+### Row by Column (Inner Product)
+
+- Each entry is a dot product (row of $A$ with column of $B$)
+- There are $m$ rows and $p$ columns, so $m \cdot p$ dot products
+- Each dot product uses $n$ multiplications and additions
+- Complexity: $m \cdot p \cdot n$
+
+### Column by Row (Outer Product)
+
+The $k$-th column of $A$ times the $k$-th row of $B$ gives an $m \times p$ matrix.
+Summing those outer products:
+
+$$
+AB = \sum_{k=1}^n (\text{col}_k(A))(\text{row}_k(B))
+$$
+
+Each outer product builds an $m \times p$ matrix, and we do this for $n$ columns:
+$n \cdot m \cdot p$ total multiplications and additions.
+
+**Therefore, every column of $AB$ lies in the column space of $A$.**
+
+---
+
+## Exercises
+
+### 1. A Nontrivial Combination to Zero
+
+Give three nonzero vectors in $\mathbb{R}^4$ whose combination is zero, then write it as $Ax = 0$.
+
+$$
+v_1=\begin{bmatrix}1\\1\\0\\0\end{bmatrix},\quad
+v_2=\begin{bmatrix}-1\\0\\0\\0\end{bmatrix},\quad
+v_3=\begin{bmatrix}0\\-1\\0\\0\end{bmatrix}
+$$
+
+$$
+1 \cdot v_1 + 1 \cdot v_2 + 1 \cdot v_3 = \mathbb{0}
+$$
+
+$$
+A=
+\begin{bmatrix}
+1 & -1 & 0 \\
+1 & 0 & -1 \\
+0 & 0 & 0 \\
+0 & 0 & 0
+\end{bmatrix},
+\quad
+x=
+\begin{bmatrix}
+1\\1\\1
+\end{bmatrix},
+\quad
+Ax=0
+$$
+
+Shapes: $A$ is $4 \times 3$, $x$ is $3 \times 1$, $0$ is $4 \times 1$.
+
+![Exercise 1 solution](lecture1-ex1.png)
+
+### 2. Null Space of the All-Ones Matrix
+
+Let
+$$
+A=
+\begin{bmatrix}
+1 & 1 & 1 \\
+1 & 1 & 1 \\
+1 & 1 & 1
+\end{bmatrix}
+$$
+
+Find two independent vectors $x$ and $y$ that solve $Ax=0$ and $Ay=0$.
+
+$$
+x=\begin{bmatrix}1\\-1\\0\end{bmatrix},\quad
+y=\begin{bmatrix}0\\1\\-1\end{bmatrix}
+$$
+
+Column combination for $Ax=0$:
+$$
+Ax=
+1 \cdot \begin{bmatrix}1\\1\\1\end{bmatrix}
+-1 \cdot \begin{bmatrix}1\\1\\1\end{bmatrix}
+0 \cdot \begin{bmatrix}1\\1\\1\end{bmatrix}
+=\mathbb{0}
+$$
+
+Only two independent vectors exist because $A$ has rank 1, so the null space dimension is $3-1=2$.
+
+![Exercise 2 solution](lecture1-ex2.png)
+
+### 3. Column Space Equals $\mathbb{R}^3$
+
+If the column space of an $m \times n$ matrix is all of $\mathbb{R}^3$, what can you say about $m$, $n$, and the rank?
+
+- $m=3$
+- $n \ge 3$
+- $\text{rank}(A)=3$
+
+![Exercise 3 solution](lecture1-ex3.png)
+
+### 4. CR Factorization Block Matrix
+
+If $A=CR$, find the CR factors of
+$$
+B=\begin{bmatrix}0 & A\\ 0 & A\end{bmatrix}.
+$$
+
+$$
+B=
+\begin{bmatrix}0 & CR\\ 0 & CR\end{bmatrix}
+=
+\begin{bmatrix}C\\ C\end{bmatrix}
+\begin{bmatrix}0 & R\end{bmatrix}
+$$
+
+So
+$$
+C_B=\begin{bmatrix}C\\ C\end{bmatrix},
+\quad
+R_B=\begin{bmatrix}0 & R\end{bmatrix}
+$$
+
+![Exercise 4 solution](lecture1-ex4.png)
