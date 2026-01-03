@@ -11,8 +11,8 @@ MIT1806_COUNT=$(grep -c "^\*\*\[Lecture\|^\*\*\[Deep\|^\*\*\[From" Math/MIT18.06
 # Count MIT 18.065 lectures
 MIT18065_COUNT=$(grep -c "^\*\*\[Lecture" Math/MIT18.065/lectures.qmd)
 
-# Count EE 364A lectures
-EE364A_COUNT=$(grep -c "^\*\*\[Lecture" Math/EE364A/lectures.qmd)
+# Count EE 364A lectures and chapters
+EE364A_COUNT=$(grep -c "^\*\*\[Lecture\|^\*\*\[Chapter" Math/EE364A/lectures.qmd)
 
 echo "Content counts:"
 echo "  Deep Learning: $DL_COUNT chapters"
