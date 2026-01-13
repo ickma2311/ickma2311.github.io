@@ -1,0 +1,101 @@
+---
+title: "Chapter 17: Monte Carlo Methods"
+author: "Chao Ma"
+date: "2026-01-12"
+categories: [Deep Learning, Monte Carlo, Sampling, Importance Sampling, MCMC]
+---
+
+[**Source**: Deep Learning Book (Ian Goodfellow, Yoshua Bengio, Aaron Courville) - Chapter 17](https://www.deeplearningbook.org/contents/monte_carlo.html)
+
+Many quantities in machine learning reduce to expectations over high-dimensional distributions. Monte Carlo methods replace intractable sums and integrals with sample averages, enabling approximate inference and learning when exact computation is impossible.
+
+## Monte Carlo estimation
+
+A generic expectation can be written as
+$$
+s = \sum_x p(x) f(x) = \mathbb{E}_p[f(x)] \quad \text{or} \quad s = \int p(x) f(x) \, dx.
+$$
+
+Monte Carlo replaces the expectation with an empirical mean:
+$$
+\hat{s} = \frac{1}{n} \sum_{i=1}^n f\bigl(x^{(i)}\bigr), \quad x^{(i)} \sim p(x).
+$$
+As $n \to \infty$, the estimate converges to the true expectation.
+
+### Dice example
+
+For a fair die $X \in \{1,2,3,4,5,6\}$ with $p(x)=1/6$,
+$$
+\mathbb{E}[X] = \sum_x x p(x) = 3.5.
+$$
+Sampling $x^{(1)},\dots,x^{(n)}$ from $p(x)$ gives
+$$
+\hat{\mu} = \frac{1}{n}\sum_{i=1}^n x^{(i)},
+$$
+which approaches 3.5 as $n$ grows.
+
+![Monte Carlo estimation](../imgs/dlbook-ch17-monte-carlo.png)
+
+### Variance scaling
+
+The variance of a Monte Carlo estimator decreases like $1/n$:
+$$
+\mathrm{Var}[\hat{s}] = \frac{1}{n^2} \sum_{i=1}^n \mathrm{Var}[f(x)] = \frac{\mathrm{Var}[f(x)]}{n}.
+$$
+More samples reduce noise, but each extra digit of accuracy costs exponentially more samples.
+
+## Importance sampling
+
+When sampling directly from $p(x)$ is difficult, importance sampling draws samples from a proposal $q(x)$ and reweights them:
+$$
+\mathbb{E}_p[f(x)] = \mathbb{E}_q\left[f(x) \frac{p(x)}{q(x)}\right].
+$$
+
+The estimator stays unbiased, but the variance depends on how well $q(x)$ matches $p(x)$. Poor proposals create extreme weights and high variance; good proposals concentrate mass where $p(x)$ is large.
+
+![Importance sampling](../imgs/dlbook-ch17-importance-sampling.png)
+
+## Markov chains
+
+When neither direct sampling nor a good proposal is available, Markov chains provide a way to generate dependent samples.
+A Markov chain uses a transition operator
+$$
+x^{(t+1)} \sim T(x^{(t+1)} \mid x^{(t)}),
+$$
+so the next state depends only on the current state.
+
+### Distribution dynamics
+
+Let $q^{(t)}(x)$ be the distribution at step $t$. The evolution is
+$$
+q^{(t+1)}(x') = \sum_x q^{(t)}(x)\, T(x'\mid x),
+$$
+or in matrix form $\mathbf{q}^{(t+1)} = A\mathbf{q}^{(t)}$.
+
+### Stationary distribution
+
+Under mild conditions, the chain converges to a stationary distribution $q^*$:
+$$
+q^* = A q^*.
+$$
+If $q^* = p(x)$, then long-run samples approximate the target distribution.
+
+## Gibbs sampling
+
+Gibbs sampling updates one variable at a time using its conditional distribution given all others. Repeated sweeps define a Markov chain whose stationary distribution matches the target model $p_{\text{model}}(x)$, making it effective for undirected graphical models and energy-based models.
+
+## Mixing and tempering
+
+MCMC can mix slowly when the target distribution is multimodal. Local transitions tend to stay within one mode, yielding highly correlated samples.
+
+**Tempering** introduces a temperature parameter:
+$$
+p_\beta(x) \propto \exp(-\beta E(x)).
+$$
+Lower $\beta$ (higher temperature) flattens the energy landscape and improves mixing; higher $\beta$ yields more accurate samples. Parallel tempering combines both to balance exploration and accuracy.
+
+Empirically, deep representations can improve mixing because the latent space is often smoother and less multimodal than the original data space.
+
+## Summary
+
+Monte Carlo methods replace intractable expectations with sample averages, trade accuracy for computation, and rely on variance reduction strategies to be practical. Importance sampling improves efficiency when a good proposal is available, while MCMC methods like Gibbs sampling handle cases where only local transitions are feasible.
