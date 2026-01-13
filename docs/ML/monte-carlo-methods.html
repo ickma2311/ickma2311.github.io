@@ -776,7 +776,7 @@ window.Quarto = {
 
 
 <p><a href="https://www.deeplearningbook.org/contents/monte_carlo.html"><strong>Source</strong>: Deep Learning Book (Ian Goodfellow, Yoshua Bengio, Aaron Courville) - Chapter 17</a></p>
-<p>Many quantities in machine learning reduce to expectations over high-dimensional distributions. Monte Carlo methods replace intractable sums and integrals with sample averages, enabling approximate inference and learning when exact computation is impossible.</p>
+<p>Many quantities in machine learning reduce to expectations over high-dimensional distributions. These sums or integrals often contain exponentially many terms or lack closed-form solutions. Monte Carlo methods replace intractable expectations with sample averages, enabling approximate inference and learning when exact computation is impossible.</p>
 <section id="monte-carlo-estimation" class="level2">
 <h2 class="anchored" data-anchor-id="monte-carlo-estimation">Monte Carlo estimation</h2>
 <p>A generic expectation can be written as <span class="math display">\[
@@ -784,7 +784,7 @@ s = \sum_x p(x) f(x) = \mathbb{E}_p[f(x)] \quad \text{or} \quad s = \int p(x) f(
 \]</span></p>
 <p>Monte Carlo replaces the expectation with an empirical mean: <span class="math display">\[
 \hat{s} = \frac{1}{n} \sum_{i=1}^n f\bigl(x^{(i)}\bigr), \quad x^{(i)} \sim p(x).
-\]</span> As <span class="math inline">\(n \to \infty\)</span>, the estimate converges to the true expectation.</p>
+\]</span> By the law of large numbers, as <span class="math inline">\(n \to \infty\)</span> the estimate converges to the true expectation. The estimator is unbiased when the samples are independent and identically distributed, and its typical error scales like <span class="math inline">\(O(1/\sqrt{n})\)</span>.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="../imgs/dlbook-ch17-monte-carlo.png" class="img-fluid figure-img"></p>
@@ -794,10 +794,15 @@ s = \sum_x p(x) f(x) = \mathbb{E}_p[f(x)] \quad \text{or} \quad s = \int p(x) f(
 <section id="dice-example" class="level3">
 <h3 class="anchored" data-anchor-id="dice-example">Dice example</h3>
 <p>For a fair die <span class="math inline">\(X \in \{1,2,3,4,5,6\}\)</span> with <span class="math inline">\(p(x)=1/6\)</span>, <span class="math display">\[
-\mathbb{E}[X] = \sum_x x p(x) = 3.5.
-\]</span> Sampling <span class="math inline">\(x^{(1)},\dots,x^{(n)}\)</span> from <span class="math inline">\(p(x)\)</span> gives <span class="math display">\[
+\begin{aligned}
+\mathbb{E}[X] &amp;= \sum_x x p(x) \\
+&amp;= \frac{1}{6} + \frac{2}{6} + \frac{3}{6} + \frac{4}{6} + \frac{5}{6} + \frac{6}{6} \\
+&amp;= 3.5.
+\end{aligned}
+\]</span> Expanded sum: <span class="math inline">\(\frac{1}{6} + \frac{2}{6} + \frac{3}{6} + \frac{4}{6} + \frac{5}{6} + \frac{6}{6} = 3.5\)</span>.</p>
+<p>Sampling <span class="math inline">\(x^{(1)},\dots,x^{(n)}\)</span> from <span class="math inline">\(p(x)\)</span> gives <span class="math display">\[
 \hat{\mu} = \frac{1}{n}\sum_{i=1}^n x^{(i)},
-\]</span> which approaches 3.5 as <span class="math inline">\(n\)</span> grows.</p>
+\]</span> which approaches 3.5 as <span class="math inline">\(n\)</span> grows. In practice, this is just the average of <span class="math inline">\(n\)</span> dice rolls, and the law of large numbers guarantees it concentrates near 3.5.</p>
 </section>
 <section id="variance-scaling" class="level3">
 <h3 class="anchored" data-anchor-id="variance-scaling">Variance scaling</h3>
@@ -810,8 +815,10 @@ s = \sum_x p(x) f(x) = \mathbb{E}_p[f(x)] \quad \text{or} \quad s = \int p(x) f(
 <h2 class="anchored" data-anchor-id="importance-sampling">Importance sampling</h2>
 <p>When sampling directly from <span class="math inline">\(p(x)\)</span> is difficult, importance sampling draws samples from a proposal <span class="math inline">\(q(x)\)</span> and reweights them: <span class="math display">\[
 \mathbb{E}_p[f(x)] = \mathbb{E}_q\left[f(x) \frac{p(x)}{q(x)}\right].
-\]</span></p>
-<p>The estimator stays unbiased, but the variance depends on how well <span class="math inline">\(q(x)\)</span> matches <span class="math inline">\(p(x)\)</span>. Poor proposals create extreme weights and high variance; good proposals concentrate mass where <span class="math inline">\(p(x)\)</span> is large.</p>
+\]</span> The proposal <span class="math inline">\(q(x)\)</span> should be easy to sample from and should cover the support of <span class="math inline">\(p(x)\)</span>. If <span class="math inline">\(q\)</span> puts too little mass where <span class="math inline">\(p\)</span> is large, the weights explode and variance becomes unstable.</p>
+<p>A practical estimator is <span class="math display">\[
+\hat{s} = \frac{1}{n}\sum_{i=1}^n f(x^{(i)})\,\frac{p(x^{(i)})}{q(x^{(i)})}, \quad x^{(i)} \sim q(x).
+\]</span> The estimator stays unbiased, but the variance depends on how well <span class="math inline">\(q(x)\)</span> matches <span class="math inline">\(p(x)\)</span>. Poor proposals create extreme weights and high variance; good proposals concentrate mass where <span class="math inline">\(p(x)\)</span> is large and reduce variance dramatically.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="../imgs/dlbook-ch17-importance-sampling.png" class="img-fluid figure-img"></p>
@@ -823,31 +830,33 @@ s = \sum_x p(x) f(x) = \mathbb{E}_p[f(x)] \quad \text{or} \quad s = \int p(x) f(
 <h2 class="anchored" data-anchor-id="markov-chains">Markov chains</h2>
 <p>When neither direct sampling nor a good proposal is available, Markov chains provide a way to generate dependent samples. A Markov chain uses a transition operator <span class="math display">\[
 x^{(t+1)} \sim T(x^{(t+1)} \mid x^{(t)}),
-\]</span> so the next state depends only on the current state.</p>
+\]</span> so the next state depends only on the current state (the Markov property). The samples are correlated, but they can still be used once the chain has mixed and reached its stationary distribution.</p>
 <section id="distribution-dynamics" class="level3">
 <h3 class="anchored" data-anchor-id="distribution-dynamics">Distribution dynamics</h3>
 <p>Let <span class="math inline">\(q^{(t)}(x)\)</span> be the distribution at step <span class="math inline">\(t\)</span>. The evolution is <span class="math display">\[
 q^{(t+1)}(x') = \sum_x q^{(t)}(x)\, T(x'\mid x),
-\]</span> or in matrix form <span class="math inline">\(\mathbf{q}^{(t+1)} = A\mathbf{q}^{(t)}\)</span>.</p>
+\]</span> or in matrix form <span class="math inline">\(\mathbf{q}^{(t+1)} = A\mathbf{q}^{(t)}\)</span>, where <span class="math inline">\(A\)</span> is a stochastic transition matrix whose columns sum to 1.</p>
 </section>
 <section id="stationary-distribution" class="level3">
 <h3 class="anchored" data-anchor-id="stationary-distribution">Stationary distribution</h3>
-<p>Under mild conditions, the chain converges to a stationary distribution <span class="math inline">\(q^*\)</span>: <span class="math display">\[
+<p>Under mild conditions (irreducibility and aperiodicity), the chain converges to a stationary distribution <span class="math inline">\(q^*\)</span>: <span class="math display">\[
 q^* = A q^*.
-\]</span> If <span class="math inline">\(q^* = p(x)\)</span>, then long-run samples approximate the target distribution.</p>
+\]</span> If <span class="math inline">\(q^* = p(x)\)</span>, then long-run samples approximate the target distribution. In practice we discard an initial burn-in period and then use the correlated samples for estimation. This is the foundation of Markov Chain Monte Carlo (MCMC), especially for energy-based models where the normalization constant is unknown.</p>
 </section>
 </section>
 <section id="gibbs-sampling" class="level2">
 <h2 class="anchored" data-anchor-id="gibbs-sampling">Gibbs sampling</h2>
-<p>Gibbs sampling updates one variable at a time using its conditional distribution given all others. Repeated sweeps define a Markov chain whose stationary distribution matches the target model <span class="math inline">\(p_{\text{model}}(x)\)</span>, making it effective for undirected graphical models and energy-based models.</p>
+<p>Gibbs sampling updates one variable (or a block of variables) at a time using its conditional distribution given all others: <span class="math display">\[
+x_i^{(t+1)} \sim p(x_i \mid x_{-i}^{(t)}).
+\]</span> Cycling through all variables defines a Markov chain whose stationary distribution matches the target model <span class="math inline">\(p_{\text{model}}(x)\)</span>, making it effective for undirected graphical models and energy-based models such as RBMs. It is simple to implement when the conditionals are easy to sample.</p>
 </section>
 <section id="mixing-and-tempering" class="level2">
 <h2 class="anchored" data-anchor-id="mixing-and-tempering">Mixing and tempering</h2>
-<p>MCMC can mix slowly when the target distribution is multimodal. Local transitions tend to stay within one mode, yielding highly correlated samples.</p>
+<p>MCMC can mix slowly when the target distribution is multimodal. Local transitions tend to stay within one mode, yielding highly correlated samples and slow exploration of the full support. This behavior is often described as noisy gradient descent on the energy landscape, where moving between modes requires climbing energy barriers.</p>
 <p><strong>Tempering</strong> introduces a temperature parameter: <span class="math display">\[
 p_\beta(x) \propto \exp(-\beta E(x)).
-\]</span> Lower <span class="math inline">\(\beta\)</span> (higher temperature) flattens the energy landscape and improves mixing; higher <span class="math inline">\(\beta\)</span> yields more accurate samples. Parallel tempering combines both to balance exploration and accuracy.</p>
-<p>Empirically, deep representations can improve mixing because the latent space is often smoother and less multimodal than the original data space.</p>
+\]</span> Lower <span class="math inline">\(\beta\)</span> (higher temperature) flattens the energy landscape and improves mixing; higher <span class="math inline">\(\beta\)</span> yields more accurate samples. Parallel tempering and tempered transitions run chains at multiple temperatures, allowing high-temperature chains to explore while low-temperature chains retain fidelity.</p>
+<p>Empirically, deep representations can improve mixing because the latent space is often smoother and less multimodal than the original data space, making transitions between modes more likely.</p>
 </section>
 <section id="summary" class="level2">
 <h2 class="anchored" data-anchor-id="summary">Summary</h2>
@@ -1348,7 +1357,7 @@ p_\beta(x) \propto \exp(-\beta E(x)).
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">**Source**: Deep Learning Book (Ian Goodfellow, Yoshua Bengio, Aaron Courville) - Chapter 17</span><span class="co">](https://www.deeplearningbook.org/contents/monte_carlo.html)</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>Many quantities in machine learning reduce to expectations over high-dimensional distributions. Monte Carlo methods replace intractable sums and integrals with sample averages, enabling approximate inference and learning when exact computation is impossible.</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>Many quantities in machine learning reduce to expectations over high-dimensional distributions. These sums or integrals often contain exponentially many terms or lack closed-form solutions. Monte Carlo methods replace intractable expectations with sample averages, enabling approximate inference and learning when exact computation is impossible.</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## Monte Carlo estimation</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
@@ -1361,7 +1370,7 @@ p_\beta(x) \propto \exp(-\beta E(x)).
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>\hat{s} = \frac{1}{n} \sum_{i=1}^n f\bigl(x^{(i)}\bigr), \quad x^{(i)} \sim p(x).</span>
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>As $n \to \infty$, the estimate converges to the true expectation.</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>By the law of large numbers, as $n \to \infty$ the estimate converges to the true expectation. The estimator is unbiased when the samples are independent and identically distributed, and its typical error scales like $O(1/\sqrt{n})$.</span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="al">![Monte Carlo estimation](../imgs/dlbook-ch17-monte-carlo.png)</span></span>
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
@@ -1369,77 +1378,92 @@ p_\beta(x) \propto \exp(-\beta E(x)).
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>For a fair die $X \in <span class="sc">\{</span>1,2,3,4,5,6<span class="sc">\}</span>$ with $p(x)=1/6$,</span>
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>\mathbb{E}<span class="co">[</span><span class="ot">X</span><span class="co">]</span> = \sum_x x p(x) = 3.5.</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>Sampling $x^{(1)},\dots,x^{(n)}$ from $p(x)$ gives</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>\hat{\mu} = \frac{1}{n}\sum_{i=1}^n x^{(i)},</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>\mathbb{E}<span class="co">[</span><span class="ot">X</span><span class="co">]</span> &amp;= \sum_x x p(x) <span class="sc">\\</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>&amp;= \frac{1}{6} + \frac{2}{6} + \frac{3}{6} + \frac{4}{6} + \frac{5}{6} + \frac{6}{6} <span class="sc">\\</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>&amp;= 3.5.</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
 <span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>which approaches 3.5 as $n$ grows.</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>Expanded sum: $\frac{1}{6} + \frac{2}{6} + \frac{3}{6} + \frac{4}{6} + \frac{5}{6} + \frac{6}{6} = 3.5$.</span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="fu">### Variance scaling</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>The variance of a Monte Carlo estimator decreases like $1/n$:</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>Sampling $x^{(1)},\dots,x^{(n)}$ from $p(x)$ gives</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>\hat{\mu} = \frac{1}{n}\sum_{i=1}^n x^{(i)},</span>
 <span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>\mathrm{Var}<span class="co">[</span><span class="ot">\hat{s}</span><span class="co">]</span> = \frac{1}{n^2} \sum_{i=1}^n \mathrm{Var}<span class="co">[</span><span class="ot">f(x)</span><span class="co">]</span> = \frac{\mathrm{Var}<span class="co">[</span><span class="ot">f(x)</span><span class="co">]</span>}{n}.</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>More samples reduce noise, but each extra digit of accuracy costs exponentially more samples.</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>which approaches 3.5 as $n$ grows. In practice, this is just the average of $n$ dice rolls, and the law of large numbers guarantees it concentrates near 3.5.</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="fu">### Variance scaling</span></span>
 <span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="fu">## Importance sampling</span></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>When sampling directly from $p(x)$ is difficult, importance sampling draws samples from a proposal $q(x)$ and reweights them:</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>The variance of a Monte Carlo estimator decreases like $1/n$:</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>\mathrm{Var}<span class="co">[</span><span class="ot">\hat{s}</span><span class="co">]</span> = \frac{1}{n^2} \sum_{i=1}^n \mathrm{Var}<span class="co">[</span><span class="ot">f(x)</span><span class="co">]</span> = \frac{\mathrm{Var}<span class="co">[</span><span class="ot">f(x)</span><span class="co">]</span>}{n}.</span>
 <span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_p<span class="co">[</span><span class="ot">f(x)</span><span class="co">]</span> = \mathbb{E}_q\left<span class="co">[</span><span class="ot">f(x) \frac{p(x)}{q(x)}\right</span><span class="co">]</span>.</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>The estimator stays unbiased, but the variance depends on how well $q(x)$ matches $p(x)$. Poor proposals create extreme weights and high variance; good proposals concentrate mass where $p(x)$ is large.</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="al">![Importance sampling](../imgs/dlbook-ch17-importance-sampling.png)</span></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a><span class="fu">## Markov chains</span></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>When neither direct sampling nor a good proposal is available, Markov chains provide a way to generate dependent samples.</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>A Markov chain uses a transition operator</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>More samples reduce noise, but each extra digit of accuracy costs exponentially more samples.</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="fu">## Importance sampling</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>When sampling directly from $p(x)$ is difficult, importance sampling draws samples from a proposal $q(x)$ and reweights them:</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_p<span class="co">[</span><span class="ot">f(x)</span><span class="co">]</span> = \mathbb{E}_q\left<span class="co">[</span><span class="ot">f(x) \frac{p(x)}{q(x)}\right</span><span class="co">]</span>.</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>The proposal $q(x)$ should be easy to sample from and should cover the support of $p(x)$. If $q$ puts too little mass where $p$ is large, the weights explode and variance becomes unstable.</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>A practical estimator is</span>
 <span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>x^{(t+1)} \sim T(x^{(t+1)} \mid x^{(t)}),</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>\hat{s} = \frac{1}{n}\sum_{i=1}^n f(x^{(i)})\,\frac{p(x^{(i)})}{q(x^{(i)})}, \quad x^{(i)} \sim q(x).</span>
 <span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>so the next state depends only on the current state.</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>The estimator stays unbiased, but the variance depends on how well $q(x)$ matches $p(x)$. Poor proposals create extreme weights and high variance; good proposals concentrate mass where $p(x)$ is large and reduce variance dramatically.</span>
 <span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="fu">### Distribution dynamics</span></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="al">![Importance sampling](../imgs/dlbook-ch17-importance-sampling.png)</span></span>
 <span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>Let $q^{(t)}(x)$ be the distribution at step $t$. The evolution is</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>q^{(t+1)}(x') = \sum_x q^{(t)}(x)\, T(x'\mid x),</span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>or in matrix form $\mathbf{q}^{(t+1)} = A\mathbf{q}^{(t)}$.</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="fu">### Stationary distribution</span></span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>Under mild conditions, the chain converges to a stationary distribution $q^*$:</span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>q^* = A q^*.</span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>If $q^* = p(x)$, then long-run samples approximate the target distribution.</span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a><span class="fu">## Gibbs sampling</span></span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>Gibbs sampling updates one variable at a time using its conditional distribution given all others. Repeated sweeps define a Markov chain whose stationary distribution matches the target model $p_{\text{model}}(x)$, making it effective for undirected graphical models and energy-based models.</span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mixing and tempering</span></span>
-<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>MCMC can mix slowly when the target distribution is multimodal. Local transitions tend to stay within one mode, yielding highly correlated samples.</span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>**Tempering** introduces a temperature parameter:</span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>p_\beta(x) \propto \exp(-\beta E(x)).</span>
-<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>Lower $\beta$ (higher temperature) flattens the energy landscape and improves mixing; higher $\beta$ yields more accurate samples. Parallel tempering combines both to balance exploration and accuracy.</span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>Empirically, deep representations can improve mixing because the latent space is often smoother and less multimodal than the original data space.</span>
-<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary</span></span>
-<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>Monte Carlo methods replace intractable expectations with sample averages, trade accuracy for computation, and rely on variance reduction strategies to be practical. Importance sampling improves efficiency when a good proposal is available, while MCMC methods like Gibbs sampling handle cases where only local transitions are feasible.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="fu">## Markov chains</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>When neither direct sampling nor a good proposal is available, Markov chains provide a way to generate dependent samples.</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>A Markov chain uses a transition operator</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>x^{(t+1)} \sim T(x^{(t+1)} \mid x^{(t)}),</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>so the next state depends only on the current state (the Markov property). The samples are correlated, but they can still be used once the chain has mixed and reached its stationary distribution.</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="fu">### Distribution dynamics</span></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>Let $q^{(t)}(x)$ be the distribution at step $t$. The evolution is</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>q^{(t+1)}(x') = \sum_x q^{(t)}(x)\, T(x'\mid x),</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>or in matrix form $\mathbf{q}^{(t+1)} = A\mathbf{q}^{(t)}$, where $A$ is a stochastic transition matrix whose columns sum to 1.</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="fu">### Stationary distribution</span></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>Under mild conditions (irreducibility and aperiodicity), the chain converges to a stationary distribution $q^*$:</span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>q^* = A q^*.</span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>If $q^* = p(x)$, then long-run samples approximate the target distribution. In practice we discard an initial burn-in period and then use the correlated samples for estimation. This is the foundation of Markov Chain Monte Carlo (MCMC), especially for energy-based models where the normalization constant is unknown.</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a><span class="fu">## Gibbs sampling</span></span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>Gibbs sampling updates one variable (or a block of variables) at a time using its conditional distribution given all others:</span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>x_i^{(t+1)} \sim p(x_i \mid x_{-i}^{(t)}).</span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>Cycling through all variables defines a Markov chain whose stationary distribution matches the target model $p_{\text{model}}(x)$, making it effective for undirected graphical models and energy-based models such as RBMs. It is simple to implement when the conditionals are easy to sample.</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mixing and tempering</span></span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a>MCMC can mix slowly when the target distribution is multimodal. Local transitions tend to stay within one mode, yielding highly correlated samples and slow exploration of the full support. This behavior is often described as noisy gradient descent on the energy landscape, where moving between modes requires climbing energy barriers.</span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>**Tempering** introduces a temperature parameter:</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>p_\beta(x) \propto \exp(-\beta E(x)).</span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>Lower $\beta$ (higher temperature) flattens the energy landscape and improves mixing; higher $\beta$ yields more accurate samples. Parallel tempering and tempered transitions run chains at multiple temperatures, allowing high-temperature chains to explore while low-temperature chains retain fidelity.</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>Empirically, deep representations can improve mixing because the latent space is often smoother and less multimodal than the original data space, making transitions between modes more likely.</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary</span></span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>Monte Carlo methods replace intractable expectations with sample averages, trade accuracy for computation, and rely on variance reduction strategies to be practical. Importance sampling improves efficiency when a good proposal is available, while MCMC methods like Gibbs sampling handle cases where only local transitions are feasible.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
