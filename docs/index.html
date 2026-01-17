@@ -631,6 +631,10 @@ window.Quarto = {
     <a class="dropdown-item" href="./Math/MIT18.065/mit18065-lecture13-randomized-matrix-multiplication.html">
  <span class="dropdown-text">Lecture 13: Randomized Matrix Multiplication</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="./Math/MIT18.065/mit18065-lecture14-low-rank-changes-inverse.html">
+ <span class="dropdown-text">Lecture 14: Low Rank Changes</span></a>
+  </li>  
         <li><hr class="dropdown-divider"></li>
         <li class="dropdown-header">Stanford EE 364A: Convex Optimization</li>
         <li>
@@ -732,7 +736,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#deep-learning-book-62-chapters" id="toc-deep-learning-book-62-chapters" class="nav-link" data-scroll-target="#deep-learning-book-62-chapters">∇ Deep Learning Book <span class="section-count">62 chapters</span></a></li>
   <li><a href="#mit-18.06sc-linear-algebra-36-lectures" id="toc-mit-18.06sc-linear-algebra-36-lectures" class="nav-link" data-scroll-target="#mit-18.06sc-linear-algebra-36-lectures">📐 MIT 18.06SC Linear Algebra <span class="section-count">36 lectures</span></a></li>
-  <li><a href="#mit-18.065-linear-algebra-applications-13-lectures" id="toc-mit-18.065-linear-algebra-applications-13-lectures" class="nav-link" data-scroll-target="#mit-18.065-linear-algebra-applications-13-lectures">📐 MIT 18.065: Linear Algebra Applications <span class="section-count">13 lectures</span></a></li>
+  <li><a href="#mit-18.065-linear-algebra-applications-14-lectures" id="toc-mit-18.065-linear-algebra-applications-14-lectures" class="nav-link" data-scroll-target="#mit-18.065-linear-algebra-applications-14-lectures">📐 MIT 18.065: Linear Algebra Applications <span class="section-count">14 lectures</span></a></li>
   <li><a href="#stanford-ee-364a-convex-optimization-11-lectures" id="toc-stanford-ee-364a-convex-optimization-11-lectures" class="nav-link" data-scroll-target="#stanford-ee-364a-convex-optimization-11-lectures">📐 Stanford EE 364A: Convex Optimization <span class="section-count">11 lectures</span></a></li>
   </ul></li>
   <li><a href="#more-topics" id="toc-more-topics" class="nav-link" data-scroll-target="#more-topics">More Topics</a></li>
@@ -809,10 +813,13 @@ window.Quarto = {
 <p><a href="./Math/MIT18.06/lectures.html" class="btn btn-primary">See all MIT 18.06SC lectures →</a></p>
 </div>
 </section>
-<section id="mit-18.065-linear-algebra-applications-13-lectures" class="level3 section-block">
-<h3 class="anchored" data-anchor-id="mit-18.065-linear-algebra-applications-13-lectures">📐 MIT 18.065: Linear Algebra Applications <span class="section-count">13 lectures</span></h3>
+<section id="mit-18.065-linear-algebra-applications-14-lectures" class="level3 section-block">
+<h3 class="anchored" data-anchor-id="mit-18.065-linear-algebra-applications-14-lectures">📐 MIT 18.065: Linear Algebra Applications <span class="section-count">14 lectures</span></h3>
 <p>My notes from MIT 18.065 Matrix Methods in Data Analysis, Signal Processing, and Machine Learning—exploring how linear algebra powers modern applications.</p>
 <div class="content-grid">
+<div class="content-card">
+<p><strong><a href="./Math/MIT18.065/mit18065-lecture14-low-rank-changes-inverse.html">Lecture 14: Low Rank Changes and Their Inverse</a></strong> Low-rank updates reuse an existing inverse via the Sherman–Morrison–Woodbury identity. Rank-1 updates power recursive least squares; the full SMW formula updates <span class="math inline">\((A-UV^\top)^{-1}\)</span> in terms of <span class="math inline">\(A^{-1}\)</span>, avoiding a full recomputation.</p>
+</div>
 <div class="content-card">
 <p><strong><a href="./Math/MIT18.065/mit18065-lecture13-randomized-matrix-multiplication.html">Lecture 13: Randomized Matrix Multiplication</a></strong> Randomized matrix multiplication approximates <span class="math inline">\(AB\)</span> by sampling rank-1 outer products. The estimator remains unbiased, and the variance is minimized by sampling indices proportional to <span class="math inline">\(\|a_j\|\,\|b_j\|\)</span>. This yields a low-rank approximation with predictable error decay in <span class="math inline">\(1/\sqrt{s}\)</span>.</p>
 </div>
@@ -821,9 +828,6 @@ window.Quarto = {
 </div>
 <div class="content-card">
 <p><strong><a href="./Math/MIT18.065/lecture-11-minimize-norm-subject-to-constraint.html">Lecture 11: Minimize ||x|| subject to Ax=b</a></strong> Three norms produce different solution geometries: L1 promotes sparsity (diamond touches constraint at corner), L2 yields smooth isotropic solutions (circle tangency), and L∞ balances components (square equalization). QR factorization via Gram–Schmidt computes minimum-norm solutions; column pivoting improves numerical stability. Krylov subspace methods solve large sparse systems via matrix–vector products.</p>
-</div>
-<div class="content-card">
-<p><strong><a href="./Math/MIT18.065/mit18065-lecture10-axb-difficulties.html">Lecture 10: Survey of Difficulties of Ax=b</a></strong> Comprehensive survey of challenges in solving <span class="math inline">\(Ax=b\)</span>: overdetermined systems require least squares, underdetermined systems select minimum-norm solutions via <span class="math inline">\(A^+b\)</span>, ill-conditioned problems add ridge penalty <span class="math inline">\(\min ||Ax-b||^2+\delta^2||x||^2\)</span>, large systems use Krylov methods, and massive-scale problems employ randomized linear algebra. Moore-Penrose pseudo-inverse unifies all regimes: exact inverse when square, least-squares when overdetermined, minimum-norm when underdetermined, and the zero-regularization limit of ridge regression. Deep learning operates in underdetermined regime where gradient descent implicitly biases toward low-norm solutions.</p>
 </div>
 </div>
 <div class="see-all-button">
@@ -1442,30 +1446,30 @@ window.Quarto = {
 <span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>::: {.section-block}</span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="fu">### 📐 MIT 18.065: Linear Algebra Applications &lt;span class="section-count"&gt;13 lectures&lt;/span&gt;</span></span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="fu">### 📐 MIT 18.065: Linear Algebra Applications &lt;span class="section-count"&gt;14 lectures&lt;/span&gt;</span></span>
 <span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>My notes from MIT 18.065 Matrix Methods in Data Analysis, Signal Processing, and Machine Learning—exploring how linear algebra powers modern applications.</span>
 <span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>::: {.content-grid}</span>
 <span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>::: {.content-card}</span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>**[Lecture 13: Randomized Matrix Multiplication](Math/MIT18.065/mit18065-lecture13-randomized-matrix-multiplication.qmd)**</span>
-<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>Randomized matrix multiplication approximates $AB$ by sampling rank-1 outer products. The estimator remains unbiased, and the variance is minimized by sampling indices proportional to $<span class="sc">\|</span>a_j<span class="sc">\|</span>\,<span class="sc">\|</span>b_j<span class="sc">\|</span>$. This yields a low-rank approximation with predictable error decay in $1/\sqrt{s}$.</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>**[Lecture 14: Low Rank Changes and Their Inverse](Math/MIT18.065/mit18065-lecture14-low-rank-changes-inverse.qmd)**</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>Low-rank updates reuse an existing inverse via the Sherman–Morrison–Woodbury identity. Rank-1 updates power recursive least squares; the full SMW formula updates $(A-UV^\top)^{-1}$ in terms of $A^{-1}$, avoiding a full recomputation.</span>
 <span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>::: {.content-card}</span>
-<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>**[Lecture 12: Computing Eigenvalues and Eigenvectors](Math/MIT18.065/mit18065-lecture12-eigenvalue-algorithms.qmd)**</span>
-<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>Eigenvalues are defined by $\det(A-\lambda I)=0$ but computed by stable similarity transformations. QR iteration transforms matrices toward triangular form where eigenvalues appear on the diagonal; shifted QR with Wilkinson shifts accelerates convergence. Reduction to Hessenberg (or tridiagonal for symmetric matrices) enables efficient iteration. For large sparse problems, Krylov subspace methods (Arnoldi/Lanczos) approximate eigenvalues using only matrix-vector products.</span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>**[Lecture 13: Randomized Matrix Multiplication](Math/MIT18.065/mit18065-lecture13-randomized-matrix-multiplication.qmd)**</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>Randomized matrix multiplication approximates $AB$ by sampling rank-1 outer products. The estimator remains unbiased, and the variance is minimized by sampling indices proportional to $<span class="sc">\|</span>a_j<span class="sc">\|</span>\,<span class="sc">\|</span>b_j<span class="sc">\|</span>$. This yields a low-rank approximation with predictable error decay in $1/\sqrt{s}$.</span>
 <span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>::: {.content-card}</span>
-<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>**[Lecture 11: Minimize ||x|| subject to Ax=b](Math/MIT18.065/lecture-11-minimize-norm-subject-to-constraint.qmd)**</span>
-<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>Three norms produce different solution geometries: L1 promotes sparsity (diamond touches constraint at corner), L2 yields smooth isotropic solutions (circle tangency), and L∞ balances components (square equalization). QR factorization via Gram–Schmidt computes minimum-norm solutions; column pivoting improves numerical stability. Krylov subspace methods solve large sparse systems via matrix–vector products.</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>**[Lecture 12: Computing Eigenvalues and Eigenvectors](Math/MIT18.065/mit18065-lecture12-eigenvalue-algorithms.qmd)**</span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>Eigenvalues are defined by $\det(A-\lambda I)=0$ but computed by stable similarity transformations. QR iteration transforms matrices toward triangular form where eigenvalues appear on the diagonal; shifted QR with Wilkinson shifts accelerates convergence. Reduction to Hessenberg (or tridiagonal for symmetric matrices) enables efficient iteration. For large sparse problems, Krylov subspace methods (Arnoldi/Lanczos) approximate eigenvalues using only matrix-vector products.</span>
 <span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>::: {.content-card}</span>
-<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>**[Lecture 10: Survey of Difficulties of Ax=b](Math/MIT18.065/mit18065-lecture10-axb-difficulties.qmd)**</span>
-<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>Comprehensive survey of challenges in solving $Ax=b$: overdetermined systems require least squares, underdetermined systems select minimum-norm solutions via $A^+b$, ill-conditioned problems add ridge penalty $\min ||Ax-b||^2+\delta^2||x||^2$, large systems use Krylov methods, and massive-scale problems employ randomized linear algebra. Moore-Penrose pseudo-inverse unifies all regimes: exact inverse when square, least-squares when overdetermined, minimum-norm when underdetermined, and the zero-regularization limit of ridge regression. Deep learning operates in underdetermined regime where gradient descent implicitly biases toward low-norm solutions.</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>**[Lecture 11: Minimize ||x|| subject to Ax=b](Math/MIT18.065/lecture-11-minimize-norm-subject-to-constraint.qmd)**</span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>Three norms produce different solution geometries: L1 promotes sparsity (diamond touches constraint at corner), L2 yields smooth isotropic solutions (circle tangency), and L∞ balances components (square equalization). QR factorization via Gram–Schmidt computes minimum-norm solutions; column pivoting improves numerical stability. Krylov subspace methods solve large sparse systems via matrix–vector products.</span>
 <span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>:::</span>
