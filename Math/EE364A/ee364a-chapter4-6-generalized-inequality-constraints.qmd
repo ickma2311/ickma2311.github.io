@@ -1,0 +1,86 @@
+---
+title: "EE 364A (Convex Optimization): Chapter 4.6 - Generalized Inequality Constraints"
+author: "Chao Ma"
+date: "2026-01-19"
+categories: [Convex Optimization, Generalized Inequalities, Cone Programming, SDP]
+---
+
+# Generalized Inequality Constraints
+
+Standard convex optimization uses componentwise inequalities (e.g., $f_i(x) \le 0$). A powerful generalization replaces componentwise order with a **cone-induced order**, letting inequality constraints be vector-valued and expressed with respect to a proper cone. This unifies LP, SOCP, and SDP under one framework.
+
+## Generalized inequality
+
+Let $K \subseteq \mathbb{R}^k$ be a **proper cone** (closed, convex, solid, pointed). Define the generalized inequality
+$$
+u \preceq_K w \quad \Longleftrightarrow \quad w-\nu \in K,$$
+with strict inequality $\nu \prec_K w$ meaning $w-\nu \in \mathrm{int}\,K$.
+
+When $K = \mathbb{R}_+^k$, this reduces to componentwise inequality.
+
+## Convex problems with generalized inequalities
+
+A standard-form convex problem with generalized inequalities is
+$$
+\begin{aligned}
+\text{minimize} &\quad f_0(x) \\
+\text{subject to} &\quad f_i(x) \preceq_{K_i} 0,\quad i=1,\dots,m \\
+&\quad Ax=b,
+\end{aligned}
+$$
+where each $K_i$ is a proper cone and each $f_i: \mathbb{R}^n \to \mathbb{R}^{k_i}$ is **$K_i$-convex**, i.e.
+$$
+ f_i(\theta x + (1-\theta)y) \preceq_{K_i} \theta f_i(x) + (1-\theta) f_i(y),\quad \theta\in[0,1].
+$$
+
+**Key properties** carry over from ordinary convex problems:
+- Feasible set, sublevel sets, and optimal set are convex.
+- Any local optimum is global.
+- First-order optimality conditions for differentiable $f_0$ remain valid.
+
+## Conic form problems (cone programs)
+
+A basic generalized-inequality problem is the **conic form**:
+$$
+\begin{aligned}
+\text{minimize} &\quad c^\top x \\
+\text{subject to} &\quad Fx+g \preceq_K 0 \\
+&\quad Ax=b.
+\end{aligned}
+$$
+
+If $K=\mathbb{R}_+^m$, this reduces to a linear program. The **standard form** is
+$$
+\begin{aligned}
+\text{minimize} &\quad c^\top x \\
+\text{subject to} &\quad x \succeq_K 0 \\
+&\quad Ax=b,
+\end{aligned}
+$$
+which generalizes LP standard form by replacing $x\ge 0$ with $x\in K$.
+
+## Semidefinite programming (SDP)
+
+When $K = S_+^k$ (the cone of positive semidefinite matrices), conic form becomes an SDP. A common formulation is
+$$
+\begin{aligned}
+\text{minimize} &\quad c^\top x \\
+\text{subject to} &\quad x_1 F_1 + \cdots + x_n F_n + G \succeq 0 \\
+&\quad Ax=b,
+\end{aligned}
+$$
+where $F_i, G \in S^k$.
+
+An equivalent **standard SDP form** uses a matrix variable $X \in S^k$:
+$$
+\begin{aligned}
+\text{minimize} &\quad \mathrm{tr}(CX) \\
+\text{subject to} &\quad \mathrm{tr}(A_i X)=b_i,\quad i=1,\dots,p \\
+&\quad X \succeq 0.
+\end{aligned}
+$$
+If all $F_i$ and $G$ are diagonal, the LMI reduces to componentwise inequalities, and the SDP collapses to an LP.
+
+## Why this matters
+
+Generalized inequalities let us express constraints in the *right geometry* for the problem. Conic form captures many convex models, and specialized cones (second-order cone, semidefinite cone, etc.) give efficient algorithms without sacrificing convexity or global optimality.
