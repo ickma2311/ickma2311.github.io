@@ -1,0 +1,259 @@
+---
+title: "Chapter 20: Deep Generative Models"
+author: "Chao Ma"
+date: "2026-01-22"
+categories: [Deep Learning, Generative Models, Latent Variables, Approximate Inference]
+---
+
+Deep generative models describe probability distributions over many variables. Some models give an explicit density that can be evaluated; others only support operations that imply a distribution (such as sampling). Chapter 20 surveys the families that can be built from the tools of Chapters 16–19: graphical models, energy-based models, approximate inference, and stochastic optimization. The common thread is that **exact inference is rarely tractable**, so training relies on approximate objectives, clever factorization, or implicit learning signals.
+
+Two complementary axes organize the landscape. First, **explicit vs implicit density**: energy-based models and autoregressive models define a normalized probability (or can estimate it), while adversarial or moment-matching models define a procedure that generates samples without an explicit likelihood. Second, **directed vs undirected structure**: directed models factorize via the chain rule, while undirected models encode dependencies symmetrically through energies. The chapter’s message is that every choice brings tradeoffs in tractability, sample quality, and optimization stability.
+
+## 20.1 Boltzmann machines
+
+Boltzmann machines are **energy-based models** for binary vectors. The model defines a probability mass function through an energy function:
+$$
+P(x)=\frac{\exp(-E(x))}{Z},
+$$
+where the partition function $Z=\sum_x \exp(-E(x))$ normalizes the distribution. For a binary vector $x\in\{0,1\}^d$, a basic Boltzmann machine uses a quadratic energy
+$$
+E(x)=-x^\top Ux-b^\top x,
+$$
+with parameters $U$ and $b$. This already defines a valid distribution, but it limits interactions to those expressible through a pairwise quadratic form.
+
+The model becomes much more expressive when we introduce **latent (hidden) units**. Splitting the variables into visible $v$ and hidden $h$, a general Boltzmann machine has energy
+$$
+E(v,h)=-v^\top Rv - v^\top Wh - h^\top Sh - b^\top v - c^\top h.
+$$
+With hidden units, the model can capture higher-order dependencies between visible variables and becomes a universal approximator of discrete distributions. The cost is that both the partition function and the posterior $p(h\mid v)$ are intractable in general, so exact learning and inference are not feasible.
+
+Learning typically follows **maximum likelihood**, which yields gradients in terms of differences between statistics under the data and the model. The intractable expectations require approximations (e.g., MCMC), and training depends on techniques from Chapter 18.
+Intuitively, the model increases probability mass near data points by decreasing energy in those regions, while the partition function pushes back by raising energy elsewhere. This tug-of-war is the “positive phase vs negative phase” structure shared by many energy-based models.
+
+## 20.2 Restricted Boltzmann machines (RBMs)
+
+Restricted Boltzmann machines simplify the structure by making the graph **bipartite**: visible units connect only to hidden units, and there are no lateral connections within a layer. This restriction creates a useful conditional independence structure while retaining expressive power.
+
+An RBM defines the joint distribution as
+$$
+P(v,h)=\frac{1}{Z}\exp\{-E(v,h)\},
+$$
+with energy
+$$
+E(v,h)=-b^\top v - c^\top h - v^\top Wh.
+$$
+Because of the bipartite graph, the conditional distributions factorize:
+$$
+P(h\mid v)=\prod_i P(h_i\mid v),\quad P(v\mid h)=\prod_j P(v_j\mid h).
+$$
+For binary units, each conditional is a sigmoid:
+$$
+P(h_i=1\mid v)=\sigma(c_i + W_i^\top v),\quad P(v_j=1\mid h)=\sigma(b_j + W_j h).
+$$
+This makes **inference and sampling** efficient via block Gibbs updates.
+
+### 20.2.1 Conditional distributions
+
+The key advantage of an RBM is that although $P(v)$ is intractable (because $Z$ is intractable), both conditionals are easy to compute and sample from. This enables a practical MCMC loop that alternates between sampling $h\sim P(h\mid v)$ and $v\sim P(v\mid h)$.
+
+### 20.2.2 Training RBMs
+
+RBMs are trained by maximum likelihood using approximate gradients. Because block Gibbs updates are efficient, standard methods from Chapter 18 are particularly convenient here:
+- **Contrastive divergence (CD)**
+- **Stochastic maximum likelihood / persistent CD (SML/PCD)**
+- **Ratio matching**
+
+The gradient of the log-likelihood involves a **data term** (expectation under $P(h\mid v)$ for data $v$) and a **model term** (expectation under the model distribution). The latter is approximated using the Markov chain. RBMs are among the most tractable undirected models used in deep learning because their conditionals are simple and their MCMC transitions mix relatively well compared to more general Boltzmann machines.
+CD uses short chains initialized at data to approximate the negative phase, which is biased but often effective; PCD keeps a persistent chain to reduce bias at the cost of additional state. In practice, training stability depends on learning rates, regularization, and ensuring the chain does not drift too far from the data manifold.
+
+## 20.3 Deep belief networks (DBNs)
+
+Deep belief networks were one of the first successful deep probabilistic models and played a major role in the 2006 deep learning renaissance. A DBN stacks multiple layers of latent variables. It is **hybrid**:
+- The top two layers form an undirected model (an RBM).
+- Lower layers are directed generative connections.
+
+DBNs are trained **greedily** by stacking RBMs: each layer learns to model the hidden representation of the layer below. This provides a strong initialization for deep architectures that were otherwise difficult to optimize. After greedy pretraining, the model can be fine-tuned with approximate likelihood or a recognition network.
+The greedy scheme can be understood as improving a variational lower bound on the data log-likelihood layer by layer. Even when the full model is not optimized end-to-end, the resulting latent hierarchy captures increasingly abstract features, which historically made DBNs useful for transfer and semi-supervised learning.
+
+## 20.4 Deep Boltzmann machines (DBMs)
+
+A DBM is a fully **undirected** model with multiple hidden layers. Like RBMs, it has a bipartite structure **between adjacent layers**, so units within a layer are conditionally independent given the neighboring layers. This yields a structured yet deep energy-based model.
+
+DBMs differ from DBNs in that **all layers are undirected**, and the posterior is closer to a factorial form, which enables richer variational approximations. The tradeoff is harder learning: both the partition function and the posterior are intractable.
+
+### 20.4.1 Interesting properties
+
+Compared to DBNs, DBMs have posterior distributions that are easier to approximate with mean-field methods, even though their graphical structure is deeper. This leads to more accurate approximate inference in some settings.
+
+### 20.4.2 Mean-field inference
+
+Mean-field inference approximates $p(h\mid v)$ with a factorized distribution $Q(h\mid v)=\prod_i q_i(h_i\mid v)$. The updates follow fixed-point equations derived from minimizing KL divergence. Because each layer is conditionally independent given its neighbors, the update for a unit depends only on expectations from adjacent layers, leading to iterative message passing.
+
+### 20.4.3 Parameter learning
+
+Learning combines two approximations:
+- **Stochastic maximum likelihood** to handle the intractable partition function.
+- **Variational inference** to handle the intractable posterior.
+
+The variational distribution provides an approximate “positive phase,” while MCMC provides the “negative phase.”
+DBMs are conceptually appealing because they define a single coherent undirected distribution over all layers, but in practice they are sensitive to initialization and require careful tuning to avoid poor local optima.
+
+### 20.4.4 Layer-wise pretraining
+
+Training a DBM from random initialization often fails: it can collapse to an RBM-like solution where upper layers are unused. Greedy layer-wise pretraining (via RBMs) helps initialize each layer with meaningful structure, preventing the model from ignoring deeper layers.
+
+### 20.4.5 Joint training
+
+Greedy pretraining has drawbacks (slow feedback, difficult hyperparameter tuning). Joint training attempts to optimize all layers together, often using a recognition network to initialize variational inference. This improves end-to-end learning but is more complex to implement.
+
+## 20.5 Boltzmann machines for real-valued data
+
+Many real-world data types are continuous. There are two strategies:
+1. Treat a real value in $[0,1]$ as the mean of a Bernoulli (approximation).
+2. Use **Gaussian visible units**, yielding Gaussian–Bernoulli RBMs.
+
+Gaussian–Bernoulli RBMs replace the binary visible distribution with a Gaussian conditional. The energy function is adjusted accordingly, leading to linear Gaussian conditionals for visibles and logistic conditionals for hiddens. This supports modeling real-valued data such as images and audio.
+When using Gaussian visibles, the variance can be fixed or learned. Fixing variance simplifies training but may underfit; learning variance increases flexibility but can destabilize optimization without appropriate constraints or priors.
+
+### 20.5.1 Gaussian–Bernoulli RBMs
+
+A Gaussian–Bernoulli RBM keeps hidden units binary but makes visible units Gaussian. This allows real-valued observations while preserving efficient conditional sampling.
+
+### 20.5.2 Conditional covariance models
+
+RBMs can be extended to model not only means but also **conditional covariance structure**. These models capture second-order dependencies in real-valued data by introducing interactions that change variance as a function of the hidden state.
+
+## 20.6 Convolutional Boltzmann machines
+
+Convolutional structure introduces **weight sharing and locality**, making the model more suitable for images. Convolutional RBMs learn filters that are applied across spatial locations, producing hidden feature maps. Pooling or subsampling operations can be used to gain translation invariance and reduce spatial resolution while maintaining probabilistic semantics.
+These models connect classical probabilistic learning with modern convolutional architectures: feature maps act like latent detectors, and shared filters encourage the model to reuse visual primitives. Training still relies on CD or PCD, but the convolutional structure reduces parameter count and tends to improve sample quality for image-like data.
+
+## 20.7 Boltzmann machines for structured or sequential data
+
+Boltzmann machines can be adapted to sequences or structured outputs by conditioning on context or introducing temporal connections. For example, conditional RBMs incorporate past observations, and structured RBMs can encode constraints that tie together multiple variables across time or spatial layouts.
+Temporal extensions treat each time step as a visible layer connected to hidden variables that summarize history. This makes the model suitable for motion capture or sequence prediction, where the latent state captures dynamics while the visible units represent observations.
+
+## 20.8 Other Boltzmann machines
+
+The Boltzmann framework supports many variants: different variable types, structured connectivity, and specialized energies. These variants aim to balance expressivity with tractable inference or efficient sampling.
+
+## 20.9 Back-propagation through random operations
+
+Training generative models often requires gradients through **stochastic nodes**. When outputs depend on random sampling, naive back-propagation fails. Two main ideas appear:
+
+- **Reparameterization-style gradients**: express a random variable as a deterministic function of noise, enabling gradients to pass through the deterministic transformation.
+- **Score-function estimators** (likelihood-ratio / REINFORCE): move the gradient inside the expectation using
+  $$
+  \nabla_\theta \mathbb{E}_{x\sim p_\theta}[f(x)] = \mathbb{E}_{x\sim p_\theta}[f(x)\nabla_\theta \log p_\theta(x)].
+  $$
+
+### 20.9.1 Discrete stochastic operations
+
+Discrete random variables make reparameterization difficult, so score-function estimators are common. These estimators are unbiased but can have high variance, motivating variance-reduction tricks such as baselines or control variates.
+Reparameterization is especially effective for continuous latent variables: sampling $z=\mu+\sigma\odot\epsilon$ with $\epsilon\sim\mathcal{N}(0,I)$ turns a stochastic node into a differentiable function of noise, which dramatically reduces gradient variance compared to score-function estimators.
+
+## 20.10 Directed generative networks
+
+Directed models represent joint distributions via the chain rule and conditional distributions defined by neural networks. These models became prominent in deep learning after 2013, complementing undirected approaches like RBMs.
+
+### 20.10.1 Sigmoid belief networks
+
+A sigmoid belief network (SBN) is a directed graphical model with binary units. Each unit’s activation is determined by a sigmoid of weighted inputs from its parents. This is a probabilistic analogue of a multilayer perceptron, but with latent randomness.
+
+### 20.10.2 Differentiable generator networks
+
+A general strategy for generative modeling is to map latent variables $z$ to data space using a differentiable function $g(z;\theta)$. Sampling is easy: draw $z\sim p(z)$ and compute $x=g(z;\theta)$. The challenge is learning $\theta$, which depends on the training criterion (ELBO, adversarial loss, moment matching, etc.).
+Depending on the loss, the same generator can behave very differently. Maximum-likelihood or ELBO objectives emphasize coverage of the data distribution (discouraging missing modes), while adversarial or moment-matching objectives may emphasize sharp, realistic samples even if some modes are dropped. This explains why different families are favored for different goals.
+
+### 20.10.3 Variational autoencoders (VAEs)
+
+A VAE combines a generator network with an **inference network** that approximates the posterior. Training maximizes the ELBO using reparameterization. The model defines
+$$
+ p(z)p(x\mid z),
+$$
+and learns an encoder $q(z\mid x)$ for approximate inference. VAEs provide a principled likelihood-based model with efficient training.
+The ELBO decomposes into a reconstruction term and a KL regularizer:
+$$
+\mathbb{E}_{q(z\mid x)}[\log p(x\mid z)] - D_{\mathrm{KL}}(q(z\mid x)\|p(z)).
+$$
+This highlights the tradeoff between fidelity to data and keeping the approximate posterior close to the prior. Variants such as $\beta$-VAE adjust this balance to encourage disentangled latents.
+
+### 20.10.4 Generative adversarial networks (GANs)
+
+GANs set up a two-player game between a generator and a discriminator. The generator tries to produce samples that fool the discriminator, while the discriminator learns to distinguish real from generated data. GANs avoid explicit likelihood evaluation and often produce sharp samples but can be unstable to train.
+The original GAN objective corresponds to minimizing the Jensen–Shannon divergence between model and data distributions. Instability issues like mode collapse motivate alternative losses (e.g., Wasserstein GAN) and regularization strategies that improve gradient behavior.
+
+### 20.10.5 Generative moment matching networks (GMMNs)
+
+GMMNs train a generator so that **statistics (moments)** of generated samples match those of real data. This is often done with kernel-based discrepancy measures (e.g., maximum mean discrepancy). No inference network or discriminator is required, but the choice of moments critically affects performance.
+
+### 20.10.6 Convolutional generative networks
+
+For images, generator networks benefit from convolutional structure and transpose convolutions. This leverages locality and parameter sharing, often improving sample quality and reducing parameter count.
+
+### 20.10.7 Auto-regressive networks
+
+Auto-regressive models factorize the joint distribution via the chain rule:
+$$
+P(x)=\prod_i P(x_i\mid x_{<i}).
+$$
+They can achieve exact likelihoods but require sequential sampling. They contain **no latent variables**, relying instead on conditional distributions modeled by neural networks.
+Examples like PixelRNN and PixelCNN demonstrate how autoregressive factorization can yield state-of-the-art density estimation for images, at the cost of slow sampling because each pixel must be generated in sequence.
+
+### 20.10.8 Linear auto-regressive networks
+
+The simplest auto-regressive models use linear predictors (e.g., logistic regression for binary data). They are conceptually straightforward but may lack capacity for complex data distributions.
+
+### 20.10.9 Neural auto-regressive networks
+
+Neural auto-regressive networks use nonlinear hidden layers and parameter sharing to improve expressivity. This creates powerful density estimators with tractable likelihoods.
+
+### 20.10.10 NADE
+
+The Neural Auto-Regressive Density Estimator (NADE) introduces a specific parameter-sharing scheme that makes training efficient while retaining strong modeling power. NADE is widely used as a tractable alternative to RBMs for certain data types.
+NADE’s main appeal is that it provides **exact log-likelihood** and efficient training via maximum likelihood, avoiding MCMC. It can be seen as an autoregressive model with shared weights that reuse hidden activations across conditional distributions, making it a practical density estimator for moderate-dimensional data.
+
+## 20.11 Drawing samples from autoencoders
+
+Autoencoders can define implicit generative models by constructing a Markov chain. For denoising autoencoders, the transition consists of corrupting a sample and then denoising it. Repeating this process yields samples from an implicit distribution.
+These models blur the line between encoder-decoder representation learning and generative modeling: the decoder learns to map noisy points back to the data manifold, and the resulting chain can be interpreted as sampling from that manifold.
+
+### 20.11.1 Associated Markov chain
+
+A denoising autoencoder defines a transition kernel that alternates between corruption and reconstruction. Under suitable conditions, this Markov chain has a stationary distribution related to the data distribution.
+
+### 20.11.2 Clamping and conditional sampling
+
+By clamping some variables and running the chain on the rest, the model can perform conditional generation or inpainting.
+
+### 20.11.3 Walk-back training
+
+Walk-back training improves denoising autoencoders by training them on samples drawn from the model’s own Markov chain, reducing spurious modes and encouraging the model to “walk back” toward the data manifold.
+
+## 20.12 Generative stochastic networks (GSNs)
+
+GSNs generalize denoising autoencoders by defining a stochastic transition operator for a Markov chain. The model is trained so that the chain’s stationary distribution matches the data distribution. Unlike RBMs, GSNs do not require an explicit energy function or partition function.
+Viewed through a modern lens, GSNs relate to **score matching** and diffusion-style ideas: learning to denoise implicitly estimates the score (the gradient of log density), and repeated denoising steps form a sampler that moves toward high-density regions.
+
+### 20.12.1 Discriminant GSNs
+
+Discriminant GSNs incorporate supervised signals while maintaining a generative interpretation, enabling semi-supervised or structured prediction tasks.
+
+## 20.13 Other generation schemes
+
+The chapter also highlights alternative generative strategies that do not fit neatly into RBM, VAE, or GAN categories. The unifying theme is trading off **tractability**, **sample quality**, and **training stability** depending on the model family and objective.
+
+## 20.14 Evaluating generative models
+
+Evaluating generative models is subtle. Sometimes we can compute exact log-likelihoods; other times we only have stochastic estimates or lower bounds. Comparing models under different evaluation criteria can be misleading. The key is to be explicit about what is measured:
+- Exact log-likelihood vs. approximate estimates
+- Lower bounds vs. unbiased estimators
+- Sample quality vs. density quality
+
+Evaluation should align with the intended use: density estimation, sampling quality, or downstream task performance.
+Common proxy metrics like the Inception Score or FID measure sample quality using pretrained classifiers, but they do not directly reflect likelihood. Recent work proposes precision/recall decompositions to characterize both fidelity and diversity, emphasizing that no single metric captures all desired properties.
+
+## 20.15 Conclusion
+
+Deep generative modeling spans a wide family: energy-based models (Boltzmann machines), directed models (SBNs, VAEs), implicit models (GANs, GMMNs), and tractable auto-regressive models. Each class embodies a different compromise between **expressivity**, **tractable inference**, and **trainability**. The modern toolbox mixes these ideas, with approximate inference and stochastic optimization as the central enabling technologies.
+The chapter’s broader lesson is that there is no single “best” generative model. Choosing among likelihood-based, implicit, or hybrid approaches depends on the task: density estimation, sample generation, representation learning, or downstream decision-making. Understanding these tradeoffs lets you match the model family to the problem rather than forcing the problem to fit the model.
