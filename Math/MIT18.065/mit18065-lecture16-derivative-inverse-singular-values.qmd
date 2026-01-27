@@ -1,0 +1,88 @@
+---
+title: "MIT 18.065: Lecture 16 - Derivative of Inverse and Singular Values"
+author: "Chao Ma"
+date: "2026-01-27"
+categories: [Linear Algebra, Matrix Calculus, Singular Values, Matrix Completion]
+---
+
+{{< video https://www.youtube.com/watch?v=AdTvkFsqcDc&t=1s >}}
+
+# Derivative of inverse and singular values
+
+This lecture connects matrix calculus with spectral properties. We differentiate matrix functions carefully (order matters), derive the singular value derivative formula, use **Weyl’s inequality** to control eigenvalue shifts, and finish with a convex relaxation for **matrix completion**.
+
+## Derivative of $A^2$
+
+For a matrix $A(t)$,
+$$
+\frac{d}{dt} A^2 = \frac{d}{dt}(A A) = \dot{A}A + A\dot{A}.
+$$
+The key point is **non-commutativity**: $A\dot{A} \neq \dot{A}A$ in general.
+
+Compare with the scalar case: if $f(x)=x^2$, then
+$$
+\frac{d}{dt} f(x) = 2x\dot{x}.
+$$
+For matrices, the correct analogue is the **product rule** with order preserved.
+
+## Derivative of a singular value
+
+Let $A(t)$ have SVD
+$$
+A = U\Sigma V^\top,
+$$
+with singular triplet $(\sigma, u, v)$ satisfying
+$$
+Av = \sigma u, \qquad A^\top u = \sigma v.
+$$
+Then the derivative of a simple singular value is
+$$
+\boxed{\dot{\sigma} = u^\top \dot{A} \, v.}
+$$
+
+**Sketch of proof.** Start from $\sigma = u^\top A v$. Differentiate:
+$$
+\dot{\sigma} = \dot{u}^\top A v + u^\top \dot{A} v + u^\top A \dot{v}.
+$$
+Use $Av=\sigma u$ and $A^\top u=\sigma v$ to rewrite the first and third terms:
+$$
+\dot{u}^\top A v = \sigma \dot{u}^\top u, \qquad
+u^\top A \dot{v} = \sigma v^\top \dot{v}.
+$$
+Since $u$ and $v$ have unit norm, $\dot{u}^\top u = 0$ and $v^\top \dot{v}=0$.
+Therefore, the first and third terms vanish, leaving $u^\top \dot{A} v$.
+
+## Weyl’s inequality
+
+For symmetric matrices $S$ and $T$, Weyl’s inequality bounds eigenvalue shifts:
+$$
+\lambda_{i+j-1}(S+T) \le \lambda_i(S) + \lambda_j(T).
+$$
+In particular, setting $j=1$ gives
+$$
+\lambda_i(S+T) \le \lambda_i(S) + \lambda_{\max}(T).
+$$
+These inequalities imply **interlacing** and quantify how much a low-rank or bounded perturbation can move eigenvalues.
+
+## Matrix completion and nuclear norm
+
+We observe a matrix with missing entries:
+$$
+\begin{bmatrix}
+3 & 2 & ? \\
+1 & ? & ? \\
+? & 4 & 6
+\end{bmatrix}
+$$
+Assume the true matrix is **low rank**.
+
+Direct rank minimization is intractable, so we use the **nuclear norm** as a convex surrogate:
+
+- $\|A\|_0$: rank (nonconvex)
+- $\|A\|_N = \sum_i \sigma_i$: nuclear norm (convex)
+
+This leads to a tractable convex program that often recovers low-rank structure from partial observations.
+
+---
+
+**Takeaway.** Matrix calculus rules are order-sensitive; singular values have clean first-order derivatives; Weyl’s inequality controls spectral shifts; and nuclear norm minimization provides a powerful convex relaxation for low-rank recovery.
