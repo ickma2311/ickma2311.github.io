@@ -93,11 +93,17 @@ cp -r Algorithm/*_files docs/Algorithm/ 2>/dev/null || true
 # 4b. Restore static PNG images in each directory
 echo "   → Restoring static PNG images..."
 cp ML/*.png docs/ML/ 2>/dev/null || true
+mkdir -p docs/ML/papers docs/Math/Calculus docs/Theory-to-Repro 2>/dev/null || true
+cp ML/papers/*.png docs/ML/papers/ 2>/dev/null || true
+cp ML/papers/*.jpg docs/ML/papers/ 2>/dev/null || true
 cp Math/MIT18.06/*.png docs/Math/MIT18.06/ 2>/dev/null || true
 cp Math/MIT18.065/*.png docs/Math/MIT18.065/ 2>/dev/null || true
 cp Math/EE364A/*.png docs/Math/EE364A/ 2>/dev/null || true
+cp Math/Calculus/*.png docs/Math/Calculus/ 2>/dev/null || true
 cp Math/reflections/*.png docs/Math/reflections/ 2>/dev/null || true
 cp Math/reflections/*.mp4 docs/Math/reflections/ 2>/dev/null || true
+cp Theory-to-Repro/*.png docs/Theory-to-Repro/ 2>/dev/null || true
+cp Theory-to-Repro/*.jpg docs/Theory-to-Repro/ 2>/dev/null || true
 
 # 4c. Restore media/ and imgs/ directories
 echo "   → Restoring media/ and imgs/..."
