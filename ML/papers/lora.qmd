@@ -1,0 +1,91 @@
+---
+title: "LoRA: Low-Rank Adaptation of Large Language Models"
+author: "Chao Ma"
+date: "2026-02-02"
+categories: [Deep Learning, Fine-Tuning, Efficient Training]
+---
+
+Paper: [LoRA: Low-Rank Adaptation of Large Language Models](https://arxiv.org/pdf/2106.09685)
+
+# Problem
+
+Full fine-tuning updates **all** parameters of a large model for each downstream task. That is expensive in compute and memory, and it is hard to store many fine‑tuned copies in production.
+
+# Key idea
+
+Freeze the pretrained weights and learn a **low‑rank update** to each selected weight matrix:
+
+$$
+W = W_0 + \Delta W, \qquad \Delta W = BA
+$$
+
+If $W_0\in\mathbb{R}^{d\times k}$, then $B\in\mathbb{R}^{d\times r}$ and $A\in\mathbb{R}^{r\times k}$ with $r\ll\min(d,k)$. This replaces $dk$ trainable parameters with $r(d+k)$.
+
+# Where LoRA plugs in
+
+LoRA is typically applied to **attention projections** (e.g., $W_q, W_k, W_v, W_o$) and sometimes to MLP layers. You choose *which* matrices get low‑rank updates and the rank $r$.
+
+### A compact block view
+
+Below is a small matrix block for one attention projection (same idea for $W_q, W_k, W_v, W_o$):
+
+$$
+\begin{aligned}
+\text{proj: } & y = (W_0 + \Delta W)x \\
+& \Delta W = BA,\quad B\in\mathbb{R}^{d\times r},\; A\in\mathbb{R}^{r\times k}
+\end{aligned}
+$$
+
+You can apply this to **Q/K/V/O**, and optionally to **MLP** layers (e.g., the up/down projections).
+
+![LoRA placement in a Transformer block](lora.png)
+
+# Intuition: why low rank is enough
+
+Many task‑specific updates live in a low‑dimensional subspace. LoRA assumes the weight update has **low intrinsic rank**, so a small $r$ can capture most of the task‑specific change.
+
+# Initialization and scaling
+
+- **Init**: $A=0$, $B$ random Gaussian → start from $\Delta W=0$ so the model begins exactly at $W_0$.
+- **Scaling**: use $\alpha/r$ to control update magnitude (similar in spirit to tuning learning rate).
+
+In forward pass (conceptually):
+
+```python
+# x: [batch, k]
+# A: [r, k], B: [d, r]
+scale = alpha / r
+lora_out = (x @ A.T @ B.T) * scale
+```
+
+# Inference cost
+
+At inference, **merge** $W_0$ and $\Delta W$:
+
+$$
+W = W_0 + BA
+$$
+
+This removes extra latency—the model runs as usual with the merged weight.
+
+# Benefits
+
+- **Large parameter savings**: train only $r(d+k)$ parameters per adapted matrix.
+- **Easy multi‑task deployment**: store a small LoRA adapter per task.
+- **Minimal inference overhead** after merging.
+
+# Comparison (high‑level)
+
+- **Adapters**: insert new layers → extra depth and potential latency.
+- **Prefix/Prompt tuning**: modify inputs; can work well but may be less expressive than weight updates.
+- **BitFit**: tune only bias terms; extremely cheap but less flexible.
+
+# Limitations
+
+- If $r$ is too small, LoRA may underfit the task.
+- Large domain shifts may need higher rank or full tuning.
+- You must choose **where** to apply LoRA and **what rank** to use.
+
+---
+
+**Takeaway.** LoRA keeps the base model frozen and learns a compact low‑rank update, giving strong performance with far fewer trainable parameters and lightweight deployment across many tasks.
