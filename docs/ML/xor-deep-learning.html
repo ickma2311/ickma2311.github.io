@@ -672,6 +672,10 @@ window.Quarto = {
     <a class="dropdown-item" href="../Math/MIT18.065/mit18065-lecture17-rapidly-decreasing-singular-values.html">
  <span class="dropdown-text">Lecture 17: Rapidly Decreasing Singular Values</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../Math/MIT18.065/mit18065-lecture18-counting-parameters-svd-lu-qr-saddle-points.html">
+ <span class="dropdown-text">Lecture 18: Counting Parameters in SVD, LU, QR, and Saddle Points</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -878,7 +882,7 @@ window.Quarto = {
 <p>XOR (Exclusive OR) returns 1 precisely when the two binary inputs differ:</p>
 <p><span class="math display">\[\text{XOR}(x_1, x_2) = \begin{pmatrix}0 &amp; 1\\1 &amp; 0\end{pmatrix}\]</span></p>
 <p>The XOR truth table shows why this is challenging for linear models - the positive class (1) appears at diagonally opposite corners, making it impossible to separate with any single straight line.</p>
-<div id="1836b615" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:30.598379Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:30.598193Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.470747Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.470471Z&quot;}}" data-execution_count="1">
+<div id="2ac920f5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:30.598379Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:30.598193Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.470747Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.470471Z&quot;}}" data-execution_count="1">
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -929,7 +933,7 @@ Notice: XOR = 1 when inputs differ, XOR = 0 when inputs match</code></pre>
 <section id="limitation-1-single-layer-linear-model" class="level2">
 <h2 class="anchored" data-anchor-id="limitation-1-single-layer-linear-model">Limitation 1: Single Layer Linear Model</h2>
 <p>A single layer perceptron can only create linear decision boundaries. Let’s see what happens when we try to solve XOR with logistic regression:</p>
-<div id="46839859" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.484460Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.484333Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.602964Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.602728Z&quot;}}" data-execution_count="2">
+<div id="1b532974" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.484460Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.484333Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.602964Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.602728Z&quot;}}" data-execution_count="2">
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demonstrate single layer linear model failure</span></span>
@@ -1013,7 +1017,7 @@ a = H w_2^{\top} + b_2 = \begin{bmatrix} -0.5 \\ 0.5 \\ 0.5 \\ -0.5 \end{bmatrix
 \text{sign}_+(a) = \begin{bmatrix} 0 \\ 1 \\ 1 \\ 0 \end{bmatrix}
 \]</span></p>
 <p>Here <span class="math inline">\(\text{sign}_+(a)\)</span> maps non-negative entries to 1 and negative entries to 0. Let’s see how ReLU transforms the XOR problem to make it solvable.</p>
-<div id="96b711e7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.606766Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.606684Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.609430Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.609252Z&quot;}}" data-execution_count="3">
+<div id="402fc1d4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.606766Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.606684Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.609430Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.609252Z&quot;}}" data-execution_count="3">
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Hand-crafted network weights and biases that solve XOR</span></span>
@@ -1107,7 +1111,7 @@ Key transformations:
 <section id="transformation-table-how-relu-solves-xor" class="level3">
 <h3 class="anchored" data-anchor-id="transformation-table-how-relu-solves-xor">Transformation Table: How ReLU Solves XOR</h3>
 <p>Let’s trace through exactly what happens to each input:</p>
-<div id="225dec17" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.610474Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.610406Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.612839Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.612631Z&quot;}}" data-execution_count="4">
+<div id="8650ba13" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.610474Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.610406Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.612839Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.612631Z&quot;}}" data-execution_count="4">
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create detailed transformation table</span></span>
@@ -1153,7 +1157,7 @@ This makes the XOR classes linearly separable in the hidden space!</code></pre>
 <section id="step-1-original-input-space" class="level3">
 <h3 class="anchored" data-anchor-id="step-1-original-input-space">Step 1: Original Input Space</h3>
 <p>The XOR problem in its raw form - notice how no single line can separate the classes:</p>
-<div id="b2b44d4b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.613767Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.613694Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.662273Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.662060Z&quot;}}" data-execution_count="5">
+<div id="6fa2878a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.613767Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.613694Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.662273Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.662060Z&quot;}}" data-execution_count="5">
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1 visualization: Original Input Space</span></span>
@@ -1192,7 +1196,7 @@ This makes the XOR classes linearly separable in the hidden space!</code></pre>
 <section id="step-2-linear-transformation-before-relu" class="level3">
 <h3 class="anchored" data-anchor-id="step-2-linear-transformation-before-relu">Step 2: Linear Transformation (Before ReLU)</h3>
 <p>The network applies weights W₁ and biases b₁ to transform the input space:</p>
-<div id="6830a5e6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.663340Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.663277Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.708246Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.708002Z&quot;}}" data-execution_count="6">
+<div id="b172e68c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.663340Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.663277Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.708246Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.708002Z&quot;}}" data-execution_count="6">
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 2 visualization: Pre-activation space</span></span>
@@ -1243,7 +1247,7 @@ This makes the XOR classes linearly separable in the hidden space!</code></pre>
 <section id="step-3-relu-transformation" class="level3">
 <h3 class="anchored" data-anchor-id="step-3-relu-transformation">Step 3: ReLU Transformation</h3>
 <p>ReLU clips negative values to zero, transforming the space to make it linearly separable:</p>
-<div id="f752aa89" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.709347Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.709277Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.779335Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.779115Z&quot;}}" data-execution_count="7">
+<div id="f8272694" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.709347Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.709277Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.779335Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.779115Z&quot;}}" data-execution_count="7">
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 3 visualization: ReLU transformation with arrows</span></span>
@@ -1292,7 +1296,7 @@ This makes the XOR classes linearly separable in the hidden space!</code></pre>
 <section id="step-4-final-classification" class="level3">
 <h3 class="anchored" data-anchor-id="step-4-final-classification">Step 4: Final Classification</h3>
 <p>With the transformed hidden representation, the network can now perfectly classify XOR:</p>
-<div id="50a8df61" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.780394Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.780330Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.835543Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.835279Z&quot;}}" data-execution_count="8">
+<div id="687b7dd0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2025-09-23T17:57:31.780394Z&quot;,&quot;iopub.status.busy&quot;:&quot;2025-09-23T17:57:31.780330Z&quot;,&quot;iopub.status.idle&quot;:&quot;2025-09-23T17:57:31.835543Z&quot;,&quot;shell.execute_reply&quot;:&quot;2025-09-23T17:57:31.835279Z&quot;}}" data-execution_count="8">
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 4 visualization: Final classification results</span></span>
