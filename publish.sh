@@ -64,7 +64,43 @@ echo ""
 echo "🔨 Step 3: Running quarto render..."
 echo ""
 
-quarto render || true  # Continue even if there are errors
+RENDER_LOG="$(mktemp -t quarto-render.XXXXXX)"
+set +e
+quarto render 2>&1 | tee "$RENDER_LOG"
+RENDER_STATUS=${PIPESTATUS[0]}
+set -e
+
+if [ $RENDER_STATUS -ne 0 ]; then
+    echo ""
+    echo "   ⚠️  quarto render reported errors; continuing."
+    if grep -q "NotFound: No such file or directory .* rename" "$RENDER_LOG"; then
+        echo "   ⚠️  Detected Quarto rename warning (output may still be fine)."
+    fi
+fi
+
+rm -f "$RENDER_LOG" 2>/dev/null || true
+
+echo ""
+
+# -----------------------------------------------------------------------------
+# Step 3b: Restore site_libs if needed
+# -----------------------------------------------------------------------------
+echo "🧩 Step 3b: Restoring site_libs if needed..."
+
+if [ ! -f "site_libs/quarto-nav/quarto-nav.js" ]; then
+    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        git checkout -- site_libs 2>/dev/null || true
+        if [ -f "site_libs/quarto-nav/quarto-nav.js" ]; then
+            echo "   ✅ site_libs restored from git"
+        else
+            echo "   ⚠️  site_libs missing; restore failed"
+        fi
+    else
+        echo "   ⚠️  Not a git repo; skipping site_libs restore"
+    fi
+else
+    echo "   ✅ site_libs intact"
+fi
 
 echo ""
 
