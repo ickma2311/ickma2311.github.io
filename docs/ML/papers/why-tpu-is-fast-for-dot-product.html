@@ -700,6 +700,10 @@ window.Quarto = {
     <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture20-probability-definitions-inequalities.html">
  <span class="dropdown-text">Lecture 20: Probability Definitions and Inequalities</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture21-minimizing-function.html">
+ <span class="dropdown-text">Lecture 21: Minimizing a Function</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -991,9 +995,9 @@ x = [x_0, x_1, x_2]
 <p>Matrix layout (weights are stationary):</p>
 <p><span class="math display">\[
 \begin{bmatrix}
-w_{00} &amp; w_{10} &amp; w_{20} \\
-w_{01} &amp; w_{11} &amp; w_{21} \\
-w_{02} &amp; w_{12} &amp; w_{22}
+w_{00} &amp; w_{01} &amp; w_{02} \\
+w_{10} &amp; w_{11} &amp; w_{12} \\
+w_{20} &amp; w_{21} &amp; w_{22}
 \end{bmatrix}
 \]</span></p>
 <p>Here <span class="math inline">\(w_{ij}\)</span> is the weight connecting input index <span class="math inline">\(i\)</span> to output index <span class="math inline">\(j\)</span>.</p>
@@ -1003,14 +1007,14 @@ y = x \cdot W
 \]</span></p>
 <p>Step-by-step execution:</p>
 <p>Clock cycle 1: - <span class="math inline">\(x_0\)</span> enters MAC(0,0). - Compute: partial sum <span class="math inline">\(p_0 = x_0 w_{00} + 0\)</span>. - Flow: <span class="math inline">\(p_0\)</span> moves down; <span class="math inline">\(x_0\)</span> moves right. - <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span> are staggered and wait outside.</p>
-<p>Clock cycle 2: - <span class="math inline">\(x_0\)</span> moves to MAC(0,1), generating <span class="math inline">\(p_1 = x_0 w_{10} + 0\)</span>. - <span class="math inline">\(x_1\)</span> enters MAC(1,0). - MAC(1,0) receives <span class="math inline">\(p_0\)</span> from above and updates:</p>
+<p>Clock cycle 2: - <span class="math inline">\(x_0\)</span> moves to MAC(0,1), generating <span class="math inline">\(p_1 = x_0 w_{01} + 0\)</span>. - <span class="math inline">\(x_1\)</span> enters MAC(1,0). - MAC(1,0) receives <span class="math inline">\(p_0\)</span> from above and updates:</p>
 <p><span class="math display">\[
-p_0 \leftarrow p_0 + x_1 w_{01}
+p_0 \leftarrow p_0 + x_1 w_{10}
 \]</span></p>
 <ul>
 <li>Updated <span class="math inline">\(p_0\)</span> moves down; <span class="math inline">\(p_1\)</span> also moves down.</li>
 </ul>
-<p>Clock cycle 3: - <span class="math inline">\(x_0\)</span> moves to MAC(0,2), generating <span class="math inline">\(p_2 = x_0 w_{20} + 0\)</span>. - <span class="math inline">\(x_1\)</span> moves to MAC(1,1), updating:</p>
+<p>Clock cycle 3: - <span class="math inline">\(x_0\)</span> moves to MAC(0,2), generating <span class="math inline">\(p_2 = x_0 w_{02} + 0\)</span>. - <span class="math inline">\(x_1\)</span> moves to MAC(1,1), updating:</p>
 <p><span class="math display">\[
 p_1 \leftarrow p_1 + x_1 w_{11}
 \]</span></p>
@@ -1019,7 +1023,7 @@ p_1 \leftarrow p_1 + x_1 w_{11}
 <li>MAC(2,0) receives <span class="math inline">\(p_0\)</span> from above and updates:</li>
 </ul>
 <p><span class="math display">\[
-p_0 \leftarrow p_0 + x_2 w_{02}
+p_0 \leftarrow p_0 + x_2 w_{20}
 \]</span></p>
 <ul>
 <li>The first output <span class="math inline">\(y_0\)</span> (final <span class="math inline">\(p_0\)</span>) is now ready at the bottom of column 0.</li>
