@@ -23,6 +23,9 @@ DL_PAPERS_COUNT=$(grep -c "^\*\*\[" ML/papers/index.qmd)
 # Count RL notes
 RL_COUNT=$(grep -c "^\*\*\[" ML/RL/index.qmd)
 
+# Count ML HW-SW codesign notes
+HWSW_COUNT=$(grep -c "^\*\*\[" ML/HW-SW-codesign/index.qmd)
+
 echo "Content counts:"
 echo "  Deep Learning: $DL_COUNT chapters"
 echo "  MIT 18.06SC: $MIT1806_COUNT lectures"
@@ -31,6 +34,7 @@ echo "  Stanford EE 364A: $EE364A_COUNT lectures"
 echo "  Calculus: $CALCULUS_COUNT notes"
 echo "  Deep Learning Papers: $DL_PAPERS_COUNT notes"
 echo "  RL: $RL_COUNT notes"
+echo "  ML HW-SW Codesign: $HWSW_COUNT notes"
 
 # Update index.qmd with the counts
 sed -i.bak "s/Goodfellow Deep Learning Book <span class=\"section-count\">[0-9]* chapters/Goodfellow Deep Learning Book <span class=\"section-count\">$DL_COUNT chapters/" index.qmd
@@ -46,6 +50,8 @@ sed -i.bak "s/Calculus <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/Cal
 sed -i.bak "s/Papers in Deep Learning <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/Papers in Deep Learning <span class=\\\"section-count\\\">$DL_PAPERS_COUNT note$( [ $DL_PAPERS_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
 sed -i.bak "s/RL <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/RL <span class=\\\"section-count\\\">$RL_COUNT note$( [ $RL_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
+
+sed -i.bak "s/ML HW-SW Codesign <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/ML HW-SW Codesign <span class=\\\"section-count\\\">$HWSW_COUNT note$( [ $HWSW_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
 # Remove backup file
 rm index.qmd.bak
