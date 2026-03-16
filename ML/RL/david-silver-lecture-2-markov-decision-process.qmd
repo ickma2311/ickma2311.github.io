@@ -12,7 +12,9 @@ description: "Lecture 2 notes on Markov property, Markov reward processes, retur
 
 This lecture moves from the general RL setup of Lecture 1 to the mathematical objects that make RL analyzable: Markov processes, Markov reward processes, and Markov decision processes. The Bellman equation is the central idea connecting them.
 
-## Markov Property
+## Markov Process
+
+### Markov Property
 
 The Markov property says: the future is independent of the past given the present.
 
@@ -27,7 +29,7 @@ Two key consequences:
 - the state captures all relevant information from history
 - once the state is known, the rest of the history can be discarded
 
-## State Transition Matrix
+### State Transition Matrix
 
 For a Markov state $s$ and successor state $s'$, define the transition probability
 
@@ -51,8 +53,6 @@ Each row sums to $1$:
 $$
 \sum_{s'} \mathcal{P}_{ss'} = 1.
 $$
-
-## Markov Process
 
 A Markov process, or Markov chain, is a memoryless stochastic process defined by:
 
@@ -98,7 +98,7 @@ Example episodes starting from Class 1:
 - C1 C2 C3 Pub C2 C3 Pass Sleep
 - C1 FB FB C1 C2 C3 Pub C1 FB FB FB C1 C2 C3 Pub C2 Sleep
 
-### Transition Matrix
+#### Transition Matrix
 
 Using the state order
 
@@ -163,7 +163,7 @@ graph LR
     Pub -->|0.4| C3
 ````
 
-## Return
+### Return
 
 The return from time $t$ is the discounted sum of future rewards:
 
@@ -180,7 +180,7 @@ Interpretation:
 - $\gamma$ close to $1$ gives far-sighted evaluation
 - a reward received $k$ steps later is weighted by $\gamma^k$
 
-## Why Discount?
+### Why Discount?
 
 Discounting is useful for several reasons:
 
@@ -194,7 +194,7 @@ If all episodes terminate, it is sometimes valid to use $\gamma = 1$.
 
 ![](lecture-2-discounting-example.png)
 
-## Value Function
+### Value Function
 
 The value function of a state is its long-term expected return:
 
@@ -204,7 +204,7 @@ $$
 
 For the student MRP, different discount factors produce different state values.
 
-### Example Values When $\gamma = 0.9$
+#### Example Values When $\gamma = 0.9$
 
 ````{mermaid}
 graph LR
@@ -237,7 +237,7 @@ graph LR
     style Sleep fill:#f9f,stroke:#333,stroke-width:2px
 ````
 
-### Example Values When $\gamma = 1.0$
+#### Example Values When $\gamma = 1.0$
 
 ````{mermaid}
 graph LR
@@ -270,7 +270,7 @@ graph LR
     style Sleep fill:#f9f,stroke:#333,stroke-width:2px
 ````
 
-## Bellman Equation
+### Bellman Equation
 
 The Bellman equation decomposes the value of a state into:
 
@@ -285,7 +285,7 @@ $$
 
 ![](lecture-2-bellman-equation.png)
 
-### Step-by-Step Derivation
+#### Step-by-Step Derivation
 
 Start from the definition of value:
 
@@ -319,7 +319,7 @@ $$
 
 ![](lecture-2-bellman-derivation.png)
 
-### Matrix Form
+#### Matrix Form
 
 For an MRP, the Bellman equation can be written compactly as
 
@@ -345,7 +345,7 @@ $$
 
 Now transitions and rewards depend on actions, not just on states.
 
-## Policy
+### Policy
 
 A policy is a distribution over actions conditioned on the current state:
 
@@ -355,9 +355,9 @@ $$
 
 In an MDP, the policy depends on the current state, not the full history.
 
-## Value Functions in an MDP
+### Value Functions in an MDP
 
-### State-Value Function
+#### State-Value Function
 
 The state-value function under policy $\pi$ is
 
@@ -365,7 +365,7 @@ $$
 v_\pi(s) = \mathbb{E}_\pi[G_t \mid S_t = s].
 $$
 
-### Action-Value Function
+#### Action-Value Function
 
 The action-value function under policy $\pi$ is
 
@@ -373,7 +373,7 @@ $$
 q_\pi(s,a) = \mathbb{E}_\pi[G_t \mid S_t = s, A_t = a].
 $$
 
-## Optimal Value Functions
+### Optimal Value Functions
 
 The optimal state-value function is
 
@@ -389,7 +389,7 @@ $$
 
 These define the best achievable long-term performance in the MDP.
 
-## Optimal Policy
+### Optimal Policy
 
 Define a partial order on policies:
 
@@ -415,7 +415,7 @@ $$
 
 So there is always a deterministic optimal policy for a finite MDP.
 
-## Why Optimal Control Is Harder
+### Why Optimal Control Is Harder
 
 For MRPs, the Bellman equation is linear:
 
@@ -431,7 +431,7 @@ $$
 
 That $\max$ makes the problem nonlinear, so the neat direct matrix-inverse solution disappears. This is why MDP control usually requires iterative algorithms such as value iteration, policy iteration, Q-learning, and SARSA.
 
-## Extensions
+## Extensions to MDPs
 
 ### Infinite MDPs
 
