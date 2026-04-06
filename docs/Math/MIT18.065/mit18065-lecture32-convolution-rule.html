@@ -7,10 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Chao Ma">
-<meta name="dcterms.date" content="2026-04-02">
-<meta name="description" content="How the cyclic shift matrix produces roots-of-unity eigenvalues, how its eigenvectors become the Fourier matrix, and why circulant matrices are diagonalized by Fourier modes.">
+<meta name="dcterms.date" content="2026-04-05">
+<meta name="description" content="Polynomial convolution, cyclic convolution, the convolution theorem, and the 2D Laplacian connection behind filtering, Fourier diagonalization, and FFT acceleration.">
 
-<title>Lecture 31: Eigenvectors of Circulant Matrices, Fourier Matrix – ∇ ickma.dev</title>
+<title>Lecture 32: The Convolution Rule – ∇ ickma.dev</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -990,17 +990,28 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#the-shift-matrix-p" id="toc-the-shift-matrix-p" class="nav-link active" data-scroll-target="#the-shift-matrix-p">The Shift Matrix P</a></li>
-  <li><a href="#eigenvalues-of-p" id="toc-eigenvalues-of-p" class="nav-link" data-scroll-target="#eigenvalues-of-p">Eigenvalues of P</a>
+  <li><a href="#polynomial-model-linear-algebra-view" id="toc-polynomial-model-linear-algebra-view" class="nav-link active" data-scroll-target="#polynomial-model-linear-algebra-view">Polynomial Model (Linear Algebra View)</a>
   <ul class="collapse">
-  <li><a href="#why-these-numbers-work" id="toc-why-these-numbers-work" class="nav-link" data-scroll-target="#why-these-numbers-work">Why These Numbers Work</a></li>
+  <li><a href="#discrete-form" id="toc-discrete-form" class="nav-link" data-scroll-target="#discrete-form">Discrete Form</a></li>
+  <li><a href="#continuous-form" id="toc-continuous-form" class="nav-link" data-scroll-target="#continuous-form">Continuous Form</a></li>
   </ul></li>
-  <li><a href="#eigenvectors-of-p" id="toc-eigenvectors-of-p" class="nav-link" data-scroll-target="#eigenvectors-of-p">Eigenvectors of P</a></li>
-  <li><a href="#the-fourier-matrix" id="toc-the-fourier-matrix" class="nav-link" data-scroll-target="#the-fourier-matrix">The Fourier Matrix</a></li>
-  <li><a href="#why-fourier-vectors-are-orthogonal" id="toc-why-fourier-vectors-are-orthogonal" class="nav-link" data-scroll-target="#why-fourier-vectors-are-orthogonal">Why Fourier Vectors Are Orthogonal</a></li>
-  <li><a href="#orthogonal-unitary-and-normal-structure" id="toc-orthogonal-unitary-and-normal-structure" class="nav-link" data-scroll-target="#orthogonal-unitary-and-normal-structure">Orthogonal, Unitary, and Normal Structure</a></li>
-  <li><a href="#circulant-matrices-and-fourier-diagonalization" id="toc-circulant-matrices-and-fourier-diagonalization" class="nav-link" data-scroll-target="#circulant-matrices-and-fourier-diagonalization">Circulant Matrices and Fourier Diagonalization</a></li>
-  <li><a href="#connection-to-cyclic-convolution" id="toc-connection-to-cyclic-convolution" class="nav-link" data-scroll-target="#connection-to-cyclic-convolution">Connection to Cyclic Convolution</a></li>
+  <li><a href="#cyclic-convolution" id="toc-cyclic-convolution" class="nav-link" data-scroll-target="#cyclic-convolution">Cyclic Convolution</a>
+  <ul class="collapse">
+  <li><a href="#eigenvalues-of-a-circulant-matrix" id="toc-eigenvalues-of-a-circulant-matrix" class="nav-link" data-scroll-target="#eigenvalues-of-a-circulant-matrix">Eigenvalues of a Circulant Matrix</a></li>
+  </ul></li>
+  <li><a href="#convolution-theorem" id="toc-convolution-theorem" class="nav-link" data-scroll-target="#convolution-theorem">Convolution Theorem</a></li>
+  <li><a href="#d-convolution-and-the-laplacian" id="toc-d-convolution-and-the-laplacian" class="nav-link" data-scroll-target="#d-convolution-and-the-laplacian">2D Convolution and the Laplacian</a>
+  <ul class="collapse">
+  <li><a href="#second-derivative-in-1d" id="toc-second-derivative-in-1d" class="nav-link" data-scroll-target="#second-derivative-in-1d">Second Derivative in 1D</a></li>
+  <li><a href="#d-laplacian-kernel" id="toc-d-laplacian-kernel" class="nav-link" data-scroll-target="#d-laplacian-kernel">2D Laplacian Kernel</a></li>
+  </ul></li>
+  <li><a href="#connections" id="toc-connections" class="nav-link" data-scroll-target="#connections">Connections</a>
+  <ul class="collapse">
+  <li><a href="#the-physical-action-2d-filters-and-convolution" id="toc-the-physical-action-2d-filters-and-convolution" class="nav-link" data-scroll-target="#the-physical-action-2d-filters-and-convolution">1. The Physical Action: 2D Filters and Convolution</a></li>
+  <li><a href="#the-boundary-problem-and-the-cyclic-assumption" id="toc-the-boundary-problem-and-the-cyclic-assumption" class="nav-link" data-scroll-target="#the-boundary-problem-and-the-cyclic-assumption">2. The Boundary Problem and the Cyclic Assumption</a></li>
+  <li><a href="#the-fourier-view" id="toc-the-fourier-view" class="nav-link" data-scroll-target="#the-fourier-view">3. The Fourier View</a></li>
+  <li><a href="#why-it-matters" id="toc-why-it-matters" class="nav-link" data-scroll-target="#why-it-matters">4. Why It Matters</a></li>
+  </ul></li>
   <li><a href="#takeaways" id="toc-takeaways" class="nav-link" data-scroll-target="#takeaways">Takeaways</a></li>
   </ul>
 </nav>
@@ -1010,20 +1021,19 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Lecture 31: Eigenvectors of Circulant Matrices, Fourier Matrix</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">Lecture 32: The Convolution Rule</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
   <div class="quarto-categories">
     <div class="quarto-category">MIT 18.065</div>
     <div class="quarto-category">Linear Algebra</div>
-    <div class="quarto-category">Circulant Matrices</div>
-    <div class="quarto-category">Fourier Matrix</div>
-    <div class="quarto-category">Eigenvectors</div>
-    <div class="quarto-category">Signal Processing</div>
+    <div class="quarto-category">Convolution</div>
+    <div class="quarto-category">Fourier Transform</div>
+    <div class="quarto-category">FFT</div>
   </div>
   </div>
 
 <div>
   <div class="description">
-    How the cyclic shift matrix produces roots-of-unity eigenvalues, how its eigenvectors become the Fourier matrix, and why circulant matrices are diagonalized by Fourier modes.
+    Polynomial convolution, cyclic convolution, the convolution theorem, and the 2D Laplacian connection behind filtering, Fourier diagonalization, and FFT acceleration.
   </div>
 </div>
 
@@ -1040,7 +1050,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 2, 2026</p>
+      <p class="date">April 5, 2026</p>
     </div>
   </div>
   
@@ -1052,246 +1062,179 @@ window.Quarto = {
 </header>
 
 
-<iframe width="100%" height="500" src="https://www.youtube.com/embed/1pFv7e9xtHo" title="MIT 18.065 Lecture 31" frameborder="0" allowfullscreen="">
+<iframe width="100%" height="500" src="https://www.youtube.com/embed/hwDRfkPSXng" title="MIT 18.065 Lecture 32" frameborder="0" allowfullscreen="">
 </iframe>
-<p>A circulant matrix is built by shifting the first row cyclically:</p>
+<section id="polynomial-model-linear-algebra-view" class="level2">
+<h2 class="anchored" data-anchor-id="polynomial-model-linear-algebra-view">Polynomial Model (Linear Algebra View)</h2>
+<section id="discrete-form" class="level3">
+<h3 class="anchored" data-anchor-id="discrete-form">Discrete Form</h3>
+<p>From the linear algebra view, polynomial multiplication is the cleanest model for convolution.</p>
+<p>If</p>
 <p><span class="math display">\[
-C =
-\begin{bmatrix}
-c_0 &amp; c_1 &amp; c_2 &amp; \cdots &amp; c_{N-1} \\
-c_{N-1} &amp; c_0 &amp; c_1 &amp; \cdots &amp; c_{N-2} \\
-c_{N-2} &amp; c_{N-1} &amp; c_0 &amp; \cdots &amp; c_{N-3} \\
-\vdots &amp; \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
-c_1 &amp; c_2 &amp; c_3 &amp; \cdots &amp; c_0
-\end{bmatrix}.
+c(x) = c_0 + c_1x + c_2x^2 + \cdots, \qquad d(x) = d_0 + d_1x + d_2x^2 + \cdots,
 \]</span></p>
-<p>The key idea of the lecture is that circulant matrices are governed by the cyclic shift matrix, and that shift matrix is diagonalized by Fourier vectors.</p>
-<section id="the-shift-matrix-p" class="level2">
-<h2 class="anchored" data-anchor-id="the-shift-matrix-p">The Shift Matrix P</h2>
+<p>then the coefficient of <span class="math inline">\(x^k\)</span> in the product comes from all pairs whose exponents add to <span class="math inline">\(k\)</span>:</p>
+<p><span class="math display">\[
+(c * d)_k = \sum_{i+j=k} c_i d_j = \sum_{i=0}^k c_i d_{k-i}.
+\]</span></p>
+<p>For example, the <span class="math inline">\(x^2\)</span> term is</p>
+<p><span class="math display">\[
+c_2d_0 + c_1d_1 + c_0d_2.
+\]</span></p>
+<p>That is exactly the convolution rule: fix the output index <span class="math inline">\(k\)</span>, then multiply-and-sum every pair whose indices add to <span class="math inline">\(k\)</span>.</p>
+</section>
+<section id="continuous-form" class="level3">
+<h3 class="anchored" data-anchor-id="continuous-form">Continuous Form</h3>
+<p>There are two equivalent notational views:</p>
+<ul>
+<li>temporal view: <span class="math inline">\(t\)</span> is fixed, <span class="math inline">\(x\)</span> is the integration variable</li>
+<li>spatial view: <span class="math inline">\(x\)</span> is fixed, <span class="math inline">\(t\)</span> is the integration variable</li>
+</ul>
+<p><span class="math display">\[
+(f * g)(t) = \int_{-\infty}^{\infty} f(x) g(t-x)\,dx
+\]</span></p>
+<p>and equivalently</p>
+<p><span class="math display">\[
+(f * g)(x) = \int_{-\infty}^{\infty} f(t) g(x-t)\,dt.
+\]</span></p>
+</section>
+</section>
+<section id="cyclic-convolution" class="level2">
+<h2 class="anchored" data-anchor-id="cyclic-convolution">Cyclic Convolution</h2>
+<p>In cyclic convolution, the shifts wrap around modulo <span class="math inline">\(N\)</span>. This is the discrete version that matches circulant matrices and the Fourier basis.</p>
 <p>Let</p>
 <p><span class="math display">\[
-P =
-\begin{bmatrix}
-0 &amp; 1 &amp; 0 &amp; 0 \\
-0 &amp; 0 &amp; 1 &amp; 0 \\
-0 &amp; 0 &amp; 0 &amp; 1 \\
-1 &amp; 0 &amp; 0 &amp; 0
-\end{bmatrix}.
+w = e^{2\pi i/N}, \qquad w^N = 1.
 \]</span></p>
-<p>Multiplying by <span class="math inline">\(P\)</span> shifts the entries of a vector upward by one position and wraps the first component to the bottom.</p>
-<p>Every circulant matrix can be written as a polynomial in <span class="math inline">\(P\)</span>:</p>
+<p>Then cyclic convolution is</p>
 <p><span class="math display">\[
-C = c_0 I + c_1 P + c_2 P^2 + \cdots + c_{N-1} P^{N-1}.
+(c \circledast d)_k = \sum_{i=0}^{N-1} c_i d_{(k-i) \bmod N}.
 \]</span></p>
-<p>So once the eigenvalues and eigenvectors of <span class="math inline">\(P\)</span> are known, the same structure extends to every circulant matrix.</p>
-</section>
-<section id="eigenvalues-of-p" class="level2">
-<h2 class="anchored" data-anchor-id="eigenvalues-of-p">Eigenvalues of P</h2>
-<p>To find the eigenvalues, solve</p>
-<p><span class="math display">\[
-Px = \lambda x.
-\]</span></p>
-<p>For the <span class="math inline">\(4 \times 4\)</span> shift matrix, this is equivalent to solving</p>
-<p><span class="math display">\[
-\det(\lambda I - P) = 0.
-\]</span></p>
-<p>The characteristic equation is</p>
-<p><span class="math display">\[
-\lambda^4 - 1 = 0,
-\]</span></p>
-<p>so the eigenvalues are the fourth roots of unity:</p>
+<p>The key difference from ordinary convolution is the output size:</p>
 <ul>
-<li><span class="math inline">\(1\)</span></li>
-<li><span class="math inline">\(i\)</span></li>
-<li><span class="math inline">\(-1\)</span></li>
-<li><span class="math inline">\(-i\)</span></li>
+<li>ordinary convolution of lengths <span class="math inline">\(p\)</span> and <span class="math inline">\(q\)</span> has <span class="math inline">\(p+q-1\)</span> terms</li>
+<li>cyclic convolution on length <span class="math inline">\(N\)</span> always has exactly <span class="math inline">\(N\)</span> terms</li>
 </ul>
-<p>Written in Euler form, these four values are</p>
+<section id="eigenvalues-of-a-circulant-matrix" class="level3">
+<h3 class="anchored" data-anchor-id="eigenvalues-of-a-circulant-matrix">Eigenvalues of a Circulant Matrix</h3>
+<p>For a <span class="math inline">\(4 \times 4\)</span> circulant matrix,</p>
 <p><span class="math display">\[
-e^{\pi i/2}=\cos(\pi/2)+i\sin(\pi/2)=i
+C = c_0 I + c_1 P + c_2 P^2 + c_3 P^3,
 \]</span></p>
+<p>where <span class="math inline">\(P\)</span> is the cyclic shift matrix.</p>
+<p>Its eigenvalues are obtained by evaluating the associated polynomial at powers of <span class="math inline">\(w\)</span>:</p>
 <p><span class="math display">\[
-e^{\pi i}=\cos(\pi)+i\sin(\pi)=-1
+\lambda_k = c_0 + c_1 w^k + c_2 (w^k)^2 + c_3 (w^k)^3.
 \]</span></p>
+<p>If <span class="math inline">\(F\)</span> is the Fourier matrix, then</p>
 <p><span class="math display">\[
-e^{3\pi i/2}=\cos(3\pi/2)+i\sin(3\pi/2)=-i
+FC = \Lambda F
 \]</span></p>
+<p>and therefore</p>
 <p><span class="math display">\[
-e^{2\pi i}=\cos(2\pi)+i\sin(2\pi)=1.
+C = F^{-1} \Lambda F.
 \]</span></p>
-<p>For the <span class="math inline">\(8 \times 8\)</span> shift matrix, the characteristic equation becomes</p>
+<p>This is the diagonalization that turns cyclic convolution into component-wise multiplication.</p>
+</section>
+</section>
+<section id="convolution-theorem" class="level2">
+<h2 class="anchored" data-anchor-id="convolution-theorem">Convolution Theorem</h2>
+<p>Convolve first and then transform, or transform separately and multiply component-wise: they give the same result.</p>
 <p><span class="math display">\[
-\lambda^8 = 1,
+F(c \circledast d) = (Fc) .* (Fd).
 \]</span></p>
-<p>so the eigenvalues are the eight roots of unity:</p>
+<p>This is the main computational reason Fourier analysis matters:</p>
 <ul>
-<li><span class="math inline">\(1\)</span></li>
-<li><span class="math inline">\(e^{\pi i/4}\)</span></li>
-<li><span class="math inline">\(i\)</span></li>
-<li><span class="math inline">\(e^{3\pi i/4}\)</span></li>
-<li><span class="math inline">\(-1\)</span></li>
-<li><span class="math inline">\(e^{5\pi i/4}\)</span></li>
-<li><span class="math inline">\(-i\)</span></li>
-<li><span class="math inline">\(e^{7\pi i/4}\)</span></li>
+<li>direct convolution costs about <span class="math inline">\(N^2\)</span></li>
+<li>FFT computes the transform in about <span class="math inline">\(N \log N\)</span></li>
 </ul>
-<p>For an <span class="math inline">\(N \times N\)</span> shift matrix, the same argument gives</p>
-<p><span class="math display">\[
-\lambda^N = 1,
-\]</span></p>
-<p>so the eigenvalues are the <span class="math inline">\(N\)</span>th roots of unity:</p>
-<p><span class="math display">\[
-1,\; \omega,\; \omega^2,\; \dots,\; \omega^{N-1},
-\qquad
-\omega = e^{2\pi i / N}.
-\]</span></p>
-<p>This is the general solution: every eigenvalue of the shift matrix is a root of unity.</p>
-<section id="why-these-numbers-work" class="level3">
-<h3 class="anchored" data-anchor-id="why-these-numbers-work">Why These Numbers Work</h3>
-<p>The proof is short:</p>
-<p><span class="math display">\[
-e^{2\pi i} = \cos(2\pi) + i\sin(2\pi) = 1.
-\]</span></p>
-<p>So for any integer <span class="math inline">\(k\)</span>,</p>
-<p><span class="math display">\[
-\left(e^{2\pi i k / N}\right)^N = e^{2\pi i k} = 1.
-\]</span></p>
-<p>That is exactly the condition <span class="math inline">\(\lambda^N = 1\)</span>.</p>
-<p><img src="mit18065-lecture31-1.png" class="img-fluid"></p>
-<p>These points lie evenly on the unit circle in the complex plane.</p>
+<p>So FFT-based convolution can be dramatically faster for large problems.</p>
 </section>
-</section>
-<section id="eigenvectors-of-p" class="level2">
-<h2 class="anchored" data-anchor-id="eigenvectors-of-p">Eigenvectors of P</h2>
-<p>Now solve the vector equation itself. For the <span class="math inline">\(4 \times 4\)</span> shift matrix,</p>
+<section id="d-convolution-and-the-laplacian" class="level2">
+<h2 class="anchored" data-anchor-id="d-convolution-and-the-laplacian">2D Convolution and the Laplacian</h2>
+<section id="second-derivative-in-1d" class="level3">
+<h3 class="anchored" data-anchor-id="second-derivative-in-1d">Second Derivative in 1D</h3>
+<p>The first discrete derivative is</p>
 <p><span class="math display">\[
-Px = \lambda x
+u_i - u_{i-1},
 \]</span></p>
-<p>gives the chain</p>
+<p>so the second discrete derivative is the change of that difference:</p>
 <p><span class="math display">\[
-x_2 = \lambda x_1, \qquad
-x_3 = \lambda x_2, \qquad
-x_4 = \lambda x_3, \qquad
-x_1 = \lambda x_4.
+(u_{i+1} - u_i) - (u_i - u_{i-1}) = u_{i+1} - 2u_i + u_{i-1}.
 \]</span></p>
-<p>If we choose <span class="math inline">\(x_1 = 1\)</span>, then the eigenvector must be</p>
+<p>This leads to the tridiagonal matrix</p>
 <p><span class="math display">\[
-x =
-\begin{bmatrix}
-1 \\
-\lambda \\
-\lambda^2 \\
-\lambda^3
-\end{bmatrix}.
+A = \begin{bmatrix}
+2 &amp; -1 &amp; 0 \\
+-1 &amp; 2 &amp; -1 \\
+0 &amp; -1 &amp; 2
+\end{bmatrix}
+\approx -\frac{d^2u}{dx^2}.
 \]</span></p>
-<p>Substituting the four eigenvalues gives four eigenvectors:</p>
+<p>The same stencil appears in the <span class="math inline">\(y\)</span>-direction:</p>
 <p><span class="math display">\[
-\begin{bmatrix}1\\1\\1\\1\end{bmatrix},
-\quad
-\begin{bmatrix}1\\i\\-1\\-i\end{bmatrix},
-\quad
-\begin{bmatrix}1\\-1\\1\\-1\end{bmatrix},
-\quad
-\begin{bmatrix}1\\-i\\-1\\i\end{bmatrix}.
-\]</span></p>
-<p>In general, for <span class="math inline">\(\lambda = \omega^k\)</span>, the eigenvector is</p>
-<p><span class="math display">\[
-v_k =
-\begin{bmatrix}
-1 \\
-\omega^k \\
-\omega^{2k} \\
-\vdots \\
-\omega^{(N-1)k}
-\end{bmatrix}.
+B = \begin{bmatrix}
+2 &amp; -1 &amp; 0 \\
+-1 &amp; 2 &amp; -1 \\
+0 &amp; -1 &amp; 2
+\end{bmatrix}
+\approx -\frac{d^2u}{dy^2}.
 \]</span></p>
 </section>
-<section id="the-fourier-matrix" class="level2">
-<h2 class="anchored" data-anchor-id="the-fourier-matrix">The Fourier Matrix</h2>
-<p>Placing these eigenvectors side by side gives the Fourier matrix:</p>
+<section id="d-laplacian-kernel" class="level3">
+<h3 class="anchored" data-anchor-id="d-laplacian-kernel">2D Laplacian Kernel</h3>
+<p>In two dimensions, the Laplacian stencil becomes</p>
 <p><span class="math display">\[
-F_N =
-\begin{bmatrix}
-1 &amp; 1 &amp; 1 &amp; \cdots &amp; 1 \\
-1 &amp; \omega &amp; \omega^2 &amp; \cdots &amp; \omega^{N-1} \\
-1 &amp; \omega^2 &amp; \omega^4 &amp; \cdots &amp; \omega^{2(N-1)} \\
-\vdots &amp; \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
-1 &amp; \omega^{N-1} &amp; \omega^{2(N-1)} &amp; \cdots &amp; \omega^{(N-1)^2}
-\end{bmatrix}.
+K = \begin{bmatrix}
+0 &amp; -1 &amp; 0 \\
+-1 &amp; 4 &amp; -1 \\
+0 &amp; -1 &amp; 0
+\end{bmatrix}
+\approx -\frac{d^2u}{dx^2} - \frac{d^2u}{dy^2}.
 \]</span></p>
-<p>For example, when <span class="math inline">\(N=8\)</span>,</p>
-<p><span class="math display">\[
-F_8 =
-\begin{bmatrix}
-1 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1 \\
-1 &amp; W &amp; W^2 &amp; W^3 &amp; W^4 &amp; W^5 &amp; W^6 &amp; W^7 \\
-1 &amp; W^2 &amp; W^4 &amp; W^6 &amp; W^8 &amp; W^{10} &amp; W^{12} &amp; W^{14} \\
-1 &amp; W^3 &amp; W^6 &amp; W^9 &amp; W^{12} &amp; W^{15} &amp; W^{18} &amp; W^{21} \\
-1 &amp; W^4 &amp; W^8 &amp; W^{12} &amp; W^{16} &amp; W^{20} &amp; W^{24} &amp; W^{28} \\
-1 &amp; W^5 &amp; W^{10} &amp; W^{15} &amp; W^{20} &amp; W^{25} &amp; W^{30} &amp; W^{35} \\
-1 &amp; W^6 &amp; W^{12} &amp; W^{18} &amp; W^{24} &amp; W^{30} &amp; W^{36} &amp; W^{42} \\
-1 &amp; W^7 &amp; W^{14} &amp; W^{21} &amp; W^{28} &amp; W^{35} &amp; W^{42} &amp; W^{49}
-\end{bmatrix},
-\]</span></p>
-<p>where <span class="math inline">\(W = e^{2\pi i/8}\)</span>.</p>
-<p><img src="mit18065-lecture31-2.png" class="img-fluid"></p>
+<p><img src="mit18065-lecture32-1.png" class="img-fluid"></p>
+<p>This kernel is the classical edge detector: flat regions mostly disappear, while rapid local changes become large.</p>
 </section>
-<section id="why-fourier-vectors-are-orthogonal" class="level2">
-<h2 class="anchored" data-anchor-id="why-fourier-vectors-are-orthogonal">Why Fourier Vectors Are Orthogonal</h2>
-<p>Two different Fourier vectors are orthogonal because their inner product becomes a geometric series:</p>
-<p><span class="math display">\[
-1 + \omega^m + \omega^{2m} + \cdots + \omega^{(N-1)m} = 0
-\qquad (m \not\equiv 0 \mod N).
-\]</span></p>
-<p>Geometrically, these terms are equally spaced points on the unit circle, so they cancel out.</p>
-<p>After normalization by <span class="math inline">\(1/\sqrt{N}\)</span>, the Fourier matrix becomes unitary:</p>
-<p><span class="math display">\[
-U_N = \frac{1}{\sqrt{N}} F_N,
-\qquad
-U_N^* U_N = I.
-\]</span></p>
-<p>So the Fourier basis is the orthonormal eigenbasis of the shift matrix.</p>
 </section>
-<section id="orthogonal-unitary-and-normal-structure" class="level2">
-<h2 class="anchored" data-anchor-id="orthogonal-unitary-and-normal-structure">Orthogonal, Unitary, and Normal Structure</h2>
-<p>This lecture also sits inside a bigger linear-algebra picture:</p>
+<section id="connections" class="level2">
+<h2 class="anchored" data-anchor-id="connections">Connections</h2>
+<section id="the-physical-action-2d-filters-and-convolution" class="level3">
+<h3 class="anchored" data-anchor-id="the-physical-action-2d-filters-and-convolution">1. The Physical Action: 2D Filters and Convolution</h3>
+<p>In a CNN, a small kernel slides over a large image. At each location it performs an element-wise multiply-and-sum, producing one output number.</p>
+<p>Mathematically, the same operation has two views:</p>
 <ul>
-<li>symmetric matrices have real eigenvalues and orthogonal eigenvectors</li>
-<li>diagonal matrices already use the standard basis as eigenvectors</li>
-<li>orthogonal matrices satisfy <span class="math inline">\(Q^\top Q = I\)</span>, so their eigenvalues lie on the unit circle</li>
-<li>skew-symmetric matrices push real vectors into perpendicular directions, which is why their eigenvalues are typically imaginary</li>
-<li>normal matrices are exactly the matrices that can be diagonalized by an orthonormal basis</li>
+<li>algebraically, it matches bivariate polynomial multiplication, where <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> represent spatial shifts</li>
+<li>in linear algebra, it can be written as a huge sparse matrix acting on a flattened image vector</li>
 </ul>
-<p>The Fourier matrix belongs to this picture after normalization: it is unitary, so its columns are orthonormal complex eigenvectors.</p>
 </section>
-<section id="circulant-matrices-and-fourier-diagonalization" class="level2">
-<h2 class="anchored" data-anchor-id="circulant-matrices-and-fourier-diagonalization">Circulant Matrices and Fourier Diagonalization</h2>
-<p>Since every circulant matrix is a polynomial in <span class="math inline">\(P\)</span>, and <span class="math inline">\(P\)</span> is diagonalized by the Fourier matrix, every circulant matrix is diagonalized by the same basis:</p>
-<p><span class="math display">\[
-C = F \Lambda F^{-1}.
-\]</span></p>
-<p>The eigenvalues of <span class="math inline">\(C\)</span> are obtained by evaluating the circulant polynomial at the roots of unity.</p>
-<p>This is the main structural fact behind fast convolution algorithms.</p>
+<section id="the-boundary-problem-and-the-cyclic-assumption" class="level3">
+<h3 class="anchored" data-anchor-id="the-boundary-problem-and-the-cyclic-assumption">2. The Boundary Problem and the Cyclic Assumption</h3>
+<p>Ordinary image boundaries break perfect shift symmetry.</p>
+<p>A common mathematical simplification is to impose periodic boundary conditions: the image wraps around, like Pac-Man leaving one side and re-entering from the other. With that assumption, the convolution matrix becomes circulant in 1D and doubly block circulant in 2D.</p>
+<p>That is the structure Fourier diagonalizes.</p>
 </section>
-<section id="connection-to-cyclic-convolution" class="level2">
-<h2 class="anchored" data-anchor-id="connection-to-cyclic-convolution">Connection to Cyclic Convolution</h2>
-<p>Multiplying a circulant matrix by a vector is the same as cyclic convolution:</p>
+<section id="the-fourier-view" class="level3">
+<h3 class="anchored" data-anchor-id="the-fourier-view">3. The Fourier View</h3>
+<p>The eigenvectors of circulant matrices are the Fourier basis vectors. So cyclic convolution becomes diagonal in the Fourier domain.</p>
+<p>That is the structural content of the convolution theorem:</p>
 <p><span class="math display">\[
-Cv = c \circledast v.
+F(c \circledast d) = (Fc) .* (Fd).
 \]</span></p>
-<p>Because circulant matrices are diagonalized by the Fourier matrix, cyclic convolution can be computed in the Fourier domain:</p>
-<p><span class="math display">\[
-Cv = F \Lambda F^{-1} v.
-\]</span></p>
-<p>That is the linear algebra reason the FFT makes convolution fast: convolution becomes diagonal multiplication after moving into the Fourier basis.</p>
+<p>Instead of one globally coupled convolution, the Fourier transform breaks the problem into many independent scalar multiplications.</p>
+</section>
+<section id="why-it-matters" class="level3">
+<h3 class="anchored" data-anchor-id="why-it-matters">4. Why It Matters</h3>
+<p>Even when practical CNN implementations use direct matrix-multiply kernels instead of FFT, the Fourier view is still the cleanest way to analyze what a filter is doing.</p>
+<p>For example, the Laplacian suppresses low frequencies and amplifies high frequencies. That is why it highlights edges.</p>
+</section>
 </section>
 <section id="takeaways" class="level2">
 <h2 class="anchored" data-anchor-id="takeaways">Takeaways</h2>
 <ul>
-<li>the cyclic shift matrix has eigenvalues equal to the roots of unity</li>
-<li>its eigenvectors are Fourier vectors built from powers of those roots</li>
-<li>the Fourier matrix is the eigenvector matrix of the shift matrix</li>
-<li>every circulant matrix is diagonalized by the same Fourier basis</li>
-<li>cyclic convolution becomes simple multiplication in the Fourier domain</li>
+<li>polynomial multiplication is the simplest discrete model of convolution</li>
+<li>cyclic convolution is the version naturally tied to circulant matrices and Fourier diagonalization</li>
+<li>the convolution theorem explains why FFT accelerates large convolutions</li>
+<li>in 2D, convolution kernels like the Laplacian connect differential operators, image filtering, and Fourier analysis</li>
 </ul>
 
 
@@ -1781,310 +1724,223 @@ Cv = F \Lambda F^{-1} v.
   loadGiscus();
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Lecture 31: Eigenvectors of Circulant Matrices, Fourier Matrix"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Lecture 32: The Convolution Rule"</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-04-02"</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [MIT 18.065, Linear Algebra, Circulant Matrices, Fourier Matrix, Eigenvectors, Signal Processing]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "How the cyclic shift matrix produces roots-of-unity eigenvalues, how its eigenvectors become the Fourier matrix, and why circulant matrices are diagonalized by Fourier modes."</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-04-05"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [MIT 18.065, Linear Algebra, Convolution, Fourier Transform, FFT]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Polynomial convolution, cyclic convolution, the convolution theorem, and the 2D Laplacian connection behind filtering, Fourier diagonalization, and FFT acceleration."</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">iframe</span><span class="ot"> width</span><span class="op">=</span><span class="st">"100%"</span><span class="ot"> height</span><span class="op">=</span><span class="st">"500"</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://www.youtube.com/embed/1pFv7e9xtHo"</span><span class="ot"> title</span><span class="op">=</span><span class="st">"MIT 18.065 Lecture 31"</span><span class="ot"> frameborder</span><span class="op">=</span><span class="st">"0"</span><span class="ot"> allowfullscreen</span><span class="dt">&gt;&lt;/</span><span class="kw">iframe</span><span class="dt">&gt;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">iframe</span><span class="ot"> width</span><span class="op">=</span><span class="st">"100%"</span><span class="ot"> height</span><span class="op">=</span><span class="st">"500"</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://www.youtube.com/embed/hwDRfkPSXng"</span><span class="ot"> title</span><span class="op">=</span><span class="st">"MIT 18.065 Lecture 32"</span><span class="ot"> frameborder</span><span class="op">=</span><span class="st">"0"</span><span class="ot"> allowfullscreen</span><span class="dt">&gt;&lt;/</span><span class="kw">iframe</span><span class="dt">&gt;</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>A circulant matrix is built by shifting the first row cyclically:</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## Polynomial Model (Linear Algebra View)</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>C =</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>c_0 &amp; c_1 &amp; c_2 &amp; \cdots &amp; c_{N-1} <span class="sc">\\</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>c_{N-1} &amp; c_0 &amp; c_1 &amp; \cdots &amp; c_{N-2} <span class="sc">\\</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>c_{N-2} &amp; c_{N-1} &amp; c_0 &amp; \cdots &amp; c_{N-3} <span class="sc">\\</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>\vdots &amp; \vdots &amp; \vdots &amp; \ddots &amp; \vdots <span class="sc">\\</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>c_1 &amp; c_2 &amp; c_3 &amp; \cdots &amp; c_0</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}.</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>The key idea of the lecture is that circulant matrices are governed by the cyclic shift matrix, and that shift matrix is diagonalized by Fourier vectors.</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Shift Matrix P</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>Let</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>P =</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>0 &amp; 1 &amp; 0 &amp; 0 <span class="sc">\\</span></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>0 &amp; 0 &amp; 1 &amp; 0 <span class="sc">\\</span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>0 &amp; 0 &amp; 0 &amp; 1 <span class="sc">\\</span></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>1 &amp; 0 &amp; 0 &amp; 0</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}.</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>Multiplying by $P$ shifts the entries of a vector upward by one position and wraps the first component to the bottom.</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>Every circulant matrix can be written as a polynomial in $P$:</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">### Discrete Form</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>From the linear algebra view, polynomial multiplication is the cleanest model for convolution.</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>If</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>c(x) = c_0 + c_1x + c_2x^2 + \cdots, \qquad d(x) = d_0 + d_1x + d_2x^2 + \cdots,</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>then the coefficient of $x^k$ in the product comes from all pairs whose exponents add to $k$:</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>(c * d)_k = \sum_{i+j=k} c_i d_j = \sum_{i=0}^k c_i d_{k-i}.</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>For example, the $x^2$ term is</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>c_2d_0 + c_1d_1 + c_0d_2.</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>That is exactly the convolution rule: fix the output index $k$, then multiply-and-sum every pair whose indices add to $k$.</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="fu">### Continuous Form</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>There are two equivalent notational views:</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>temporal view: $t$ is fixed, $x$ is the integration variable</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>spatial view: $x$ is fixed, $t$ is the integration variable</span>
 <span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>C = c_0 I + c_1 P + c_2 P^2 + \cdots + c_{N-1} P^{N-1}.</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>(f * g)(t) = \int_{-\infty}^{\infty} f(x) g(t-x)\,dx</span>
 <span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>So once the eigenvalues and eigenvectors of $P$ are known, the same structure extends to every circulant matrix.</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>and equivalently</span>
 <span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="fu">## Eigenvalues of P</span></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>To find the eigenvalues, solve</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>(f * g)(x) = \int_{-\infty}^{\infty} f(t) g(x-t)\,dt.</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>Px = \lambda x.</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="fu">## Cyclic Convolution</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>In cyclic convolution, the shifts wrap around modulo $N$. This is the discrete version that matches circulant matrices and the Fourier basis.</span>
 <span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>For the $4 \times 4$ shift matrix, this is equivalent to solving</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>Let</span>
 <span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>\det(\lambda I - P) = 0.</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>w = e^{2\pi i/N}, \qquad w^N = 1.</span>
 <span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>The characteristic equation is</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>Then cyclic convolution is</span>
 <span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>\lambda^4 - 1 = 0,</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>(c \circledast d)_k = \sum_{i=0}^{N-1} c_i d_{(k-i) \bmod N}.</span>
 <span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>so the eigenvalues are the fourth roots of unity:</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>The key difference from ordinary convolution is the output size:</span>
 <span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$1$</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$i$</span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$-1$</span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$-i$</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>ordinary convolution of lengths $p$ and $q$ has $p+q-1$ terms</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>cyclic convolution on length $N$ always has exactly $N$ terms</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a><span class="fu">### Eigenvalues of a Circulant Matrix</span></span>
 <span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>Written in Euler form, these four values are</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>For a $4 \times 4$ circulant matrix,</span>
 <span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>e^{\pi i/2}=\cos(\pi/2)+i\sin(\pi/2)=i</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>C = c_0 I + c_1 P + c_2 P^2 + c_3 P^3,</span>
 <span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>e^{\pi i}=\cos(\pi)+i\sin(\pi)=-1</span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>where $P$ is the cyclic shift matrix.</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>Its eigenvalues are obtained by evaluating the associated polynomial at powers of $w$:</span>
 <span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>e^{3\pi i/2}=\cos(3\pi/2)+i\sin(3\pi/2)=-i</span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>\lambda_k = c_0 + c_1 w^k + c_2 (w^k)^2 + c_3 (w^k)^3.</span>
 <span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>e^{2\pi i}=\cos(2\pi)+i\sin(2\pi)=1.</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>If $F$ is the Fourier matrix, then</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>For the $8 \times 8$ shift matrix, the characteristic equation becomes</span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>FC = \Lambda F</span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>\lambda^8 = 1,</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>and therefore</span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>so the eigenvalues are the eight roots of unity:</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>C = F^{-1} \Lambda F.</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$1$</span>
-<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$e^{\pi i/4}$</span>
-<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$i$</span>
-<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$e^{3\pi i/4}$</span>
-<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$-1$</span>
-<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$e^{5\pi i/4}$</span>
-<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$-i$</span>
-<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$e^{7\pi i/4}$</span>
-<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>For an $N \times N$ shift matrix, the same argument gives</span>
-<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>\lambda^N = 1,</span>
-<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a>This is the diagonalization that turns cyclic convolution into component-wise multiplication.</span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a><span class="fu">## Convolution Theorem</span></span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>Convolve first and then transform, or transform separately and multiply component-wise: they give the same result.</span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>F(c \circledast d) = (Fc) .* (Fd).</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>This is the main computational reason Fourier analysis matters:</span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>direct convolution costs about $N^2$</span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>FFT computes the transform in about $N \log N$</span>
 <span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a>so the eigenvalues are the $N$th roots of unity:</span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a>So FFT-based convolution can be dramatically faster for large problems.</span>
 <span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>1,\; \omega,\; \omega^2,\; \dots,\; \omega^{N-1},</span>
-<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>\qquad</span>
-<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>\omega = e^{2\pi i / N}.</span>
-<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2D Convolution and the Laplacian</span></span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a><span class="fu">### Second Derivative in 1D</span></span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>The first discrete derivative is</span>
 <span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>This is the general solution: every eigenvalue of the shift matrix is a root of unity.</span>
-<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a><span class="fu">### Why These Numbers Work</span></span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>u_i - u_{i-1},</span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>The proof is short:</span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>so the second discrete derivative is the change of that difference:</span>
 <span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>e^{2\pi i} = \cos(2\pi) + i\sin(2\pi) = 1.</span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>(u_{i+1} - u_i) - (u_i - u_{i-1}) = u_{i+1} - 2u_i + u_{i-1}.</span>
 <span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>So for any integer $k$,</span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>This leads to the tridiagonal matrix</span>
 <span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>\left(e^{2\pi i k / N}\right)^N = e^{2\pi i k} = 1.</span>
-<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>That is exactly the condition $\lambda^N = 1$.</span>
-<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a><span class="al">![](mit18065-lecture31-1.png)</span></span>
-<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a>These points lie evenly on the unit circle in the complex plane.</span>
-<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a><span class="fu">## Eigenvectors of P</span></span>
-<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>Now solve the vector equation itself. For the $4 \times 4$ shift matrix,</span>
-<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>Px = \lambda x</span>
-<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a>gives the chain</span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>A = \begin{bmatrix}</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>2 &amp; -1 &amp; 0 <span class="sc">\\</span></span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>-1 &amp; 2 &amp; -1 <span class="sc">\\</span></span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>0 &amp; -1 &amp; 2</span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}</span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>\approx -\frac{d^2u}{dx^2}.</span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>The same stencil appears in the $y$-direction:</span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>B = \begin{bmatrix}</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>2 &amp; -1 &amp; 0 <span class="sc">\\</span></span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>-1 &amp; 2 &amp; -1 <span class="sc">\\</span></span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>0 &amp; -1 &amp; 2</span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}</span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>\approx -\frac{d^2u}{dy^2}.</span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>x_2 = \lambda x_1, \qquad</span>
-<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>x_3 = \lambda x_2, \qquad</span>
-<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>x_4 = \lambda x_3, \qquad</span>
-<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a>x_1 = \lambda x_4.</span>
-<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>If we choose $x_1 = 1$, then the eigenvector must be</span>
-<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a>x =</span>
-<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
-<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a>1 <span class="sc">\\</span></span>
-<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a>\lambda <span class="sc">\\</span></span>
-<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>\lambda^2 <span class="sc">\\</span></span>
-<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>\lambda^3</span>
-<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}.</span>
-<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2D Laplacian Kernel</span></span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>In two dimensions, the Laplacian stencil becomes</span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>K = \begin{bmatrix}</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>0 &amp; -1 &amp; 0 <span class="sc">\\</span></span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>-1 &amp; 4 &amp; -1 <span class="sc">\\</span></span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a>0 &amp; -1 &amp; 0</span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}</span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a>\approx -\frac{d^2u}{dx^2} - \frac{d^2u}{dy^2}.</span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a><span class="al">![](mit18065-lecture32-1.png)</span></span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>This kernel is the classical edge detector: flat regions mostly disappear, while rapid local changes become large.</span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a><span class="fu">## Connections</span></span>
 <span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a>Substituting the four eigenvalues gives four eigenvectors:</span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1. The Physical Action: 2D Filters and Convolution</span></span>
 <span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}1<span class="sc">\\</span>1<span class="sc">\\</span>1<span class="sc">\\</span>1\end{bmatrix},</span>
-<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a>\quad</span>
-<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}1<span class="sc">\\</span>i<span class="sc">\\</span>-1<span class="sc">\\</span>-i\end{bmatrix},</span>
-<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a>\quad</span>
-<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}1<span class="sc">\\</span>-1<span class="sc">\\</span>1<span class="sc">\\</span>-1\end{bmatrix},</span>
-<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a>\quad</span>
-<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}1<span class="sc">\\</span>-i<span class="sc">\\</span>-1<span class="sc">\\</span>i\end{bmatrix}.</span>
-<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a>In general, for $\lambda = \omega^k$, the eigenvector is</span>
-<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>v_k =</span>
-<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
-<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a>1 <span class="sc">\\</span></span>
-<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a>\omega^k <span class="sc">\\</span></span>
-<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a>\omega^{2k} <span class="sc">\\</span></span>
-<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a>\vdots <span class="sc">\\</span></span>
-<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a>\omega^{(N-1)k}</span>
-<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}.</span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>In a CNN, a small kernel slides over a large image. At each location it performs an element-wise multiply-and-sum, producing one output number.</span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a>Mathematically, the same operation has two views:</span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>algebraically, it matches bivariate polynomial multiplication, where $x$ and $y$ represent spatial shifts</span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>in linear algebra, it can be written as a huge sparse matrix acting on a flattened image vector</span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2. The Boundary Problem and the Cyclic Assumption</span></span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a>Ordinary image boundaries break perfect shift symmetry.</span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a>A common mathematical simplification is to impose periodic boundary conditions: the image wraps around, like Pac-Man leaving one side and re-entering from the other. With that assumption, the convolution matrix becomes circulant in 1D and doubly block circulant in 2D.</span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>That is the structure Fourier diagonalizes.</span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a><span class="fu">### 3. The Fourier View</span></span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a>The eigenvectors of circulant matrices are the Fourier basis vectors. So cyclic convolution becomes diagonal in the Fourier domain.</span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a>That is the structural content of the convolution theorem:</span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Fourier Matrix</span></span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>F(c \circledast d) = (Fc) .* (Fd).</span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>Placing these eigenvectors side by side gives the Fourier matrix:</span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>Instead of one globally coupled convolution, the Fourier transform breaks the problem into many independent scalar multiplications.</span>
 <span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a>F_N =</span>
-<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
-<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a>1 &amp; 1 &amp; 1 &amp; \cdots &amp; 1 <span class="sc">\\</span></span>
-<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a>1 &amp; \omega &amp; \omega^2 &amp; \cdots &amp; \omega^{N-1} <span class="sc">\\</span></span>
-<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a>1 &amp; \omega^2 &amp; \omega^4 &amp; \cdots &amp; \omega^{2(N-1)} <span class="sc">\\</span></span>
-<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>\vdots &amp; \vdots &amp; \vdots &amp; \ddots &amp; \vdots <span class="sc">\\</span></span>
-<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a>1 &amp; \omega^{N-1} &amp; \omega^{2(N-1)} &amp; \cdots &amp; \omega^{(N-1)^2}</span>
-<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}.</span>
-<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a>For example, when $N=8$,</span>
-<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a>F_8 =</span>
-<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
-<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a>1 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1 <span class="sc">\\</span></span>
-<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a>1 &amp; W &amp; W^2 &amp; W^3 &amp; W^4 &amp; W^5 &amp; W^6 &amp; W^7 <span class="sc">\\</span></span>
-<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a>1 &amp; W^2 &amp; W^4 &amp; W^6 &amp; W^8 &amp; W^{10} &amp; W^{12} &amp; W^{14} <span class="sc">\\</span></span>
-<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a>1 &amp; W^3 &amp; W^6 &amp; W^9 &amp; W^{12} &amp; W^{15} &amp; W^{18} &amp; W^{21} <span class="sc">\\</span></span>
-<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a>1 &amp; W^4 &amp; W^8 &amp; W^{12} &amp; W^{16} &amp; W^{20} &amp; W^{24} &amp; W^{28} <span class="sc">\\</span></span>
-<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a>1 &amp; W^5 &amp; W^{10} &amp; W^{15} &amp; W^{20} &amp; W^{25} &amp; W^{30} &amp; W^{35} <span class="sc">\\</span></span>
-<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a>1 &amp; W^6 &amp; W^{12} &amp; W^{18} &amp; W^{24} &amp; W^{30} &amp; W^{36} &amp; W^{42} <span class="sc">\\</span></span>
-<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a>1 &amp; W^7 &amp; W^{14} &amp; W^{21} &amp; W^{28} &amp; W^{35} &amp; W^{42} &amp; W^{49}</span>
-<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a>\end{bmatrix},</span>
-<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a>where $W = e^{2\pi i/8}$.</span>
-<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a><span class="al">![](mit18065-lecture31-2.png)</span></span>
-<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a><span class="fu">## Why Fourier Vectors Are Orthogonal</span></span>
-<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a>Two different Fourier vectors are orthogonal because their inner product becomes a geometric series:</span>
-<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a>1 + \omega^m + \omega^{2m} + \cdots + \omega^{(N-1)m} = 0</span>
-<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a>\qquad (m \not\equiv 0 \mod N).</span>
-<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a>Geometrically, these terms are equally spaced points on the unit circle, so they cancel out.</span>
-<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a>After normalization by $1/\sqrt{N}$, the Fourier matrix becomes unitary:</span>
-<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a>U_N = \frac{1}{\sqrt{N}} F_N,</span>
-<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a>\qquad</span>
-<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a>U_N^* U_N = I.</span>
-<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a>So the Fourier basis is the orthonormal eigenbasis of the shift matrix.</span>
-<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a><span class="fu">## Orthogonal, Unitary, and Normal Structure</span></span>
-<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a>This lecture also sits inside a bigger linear-algebra picture:</span>
-<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>symmetric matrices have real eigenvalues and orthogonal eigenvectors</span>
-<span id="cb1-264"><a href="#cb1-264" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>diagonal matrices already use the standard basis as eigenvectors</span>
-<span id="cb1-265"><a href="#cb1-265" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>orthogonal matrices satisfy $Q^\top Q = I$, so their eigenvalues lie on the unit circle</span>
-<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>skew-symmetric matrices push real vectors into perpendicular directions, which is why their eigenvalues are typically imaginary</span>
-<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>normal matrices are exactly the matrices that can be diagonalized by an orthonormal basis</span>
-<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a>The Fourier matrix belongs to this picture after normalization: it is unitary, so its columns are orthonormal complex eigenvectors.</span>
-<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a><span class="fu">## Circulant Matrices and Fourier Diagonalization</span></span>
-<span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-273"><a href="#cb1-273" aria-hidden="true" tabindex="-1"></a>Since every circulant matrix is a polynomial in $P$, and $P$ is diagonalized by the Fourier matrix, every circulant matrix is diagonalized by the same basis:</span>
-<span id="cb1-274"><a href="#cb1-274" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a>C = F \Lambda F^{-1}.</span>
-<span id="cb1-277"><a href="#cb1-277" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-279"><a href="#cb1-279" aria-hidden="true" tabindex="-1"></a>The eigenvalues of $C$ are obtained by evaluating the circulant polynomial at the roots of unity.</span>
-<span id="cb1-280"><a href="#cb1-280" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a>This is the main structural fact behind fast convolution algorithms.</span>
-<span id="cb1-282"><a href="#cb1-282" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a><span class="fu">## Connection to Cyclic Convolution</span></span>
-<span id="cb1-284"><a href="#cb1-284" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-285"><a href="#cb1-285" aria-hidden="true" tabindex="-1"></a>Multiplying a circulant matrix by a vector is the same as cyclic convolution:</span>
-<span id="cb1-286"><a href="#cb1-286" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-287"><a href="#cb1-287" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a>Cv = c \circledast v.</span>
-<span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a>Because circulant matrices are diagonalized by the Fourier matrix, cyclic convolution can be computed in the Fourier domain:</span>
-<span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a>Cv = F \Lambda F^{-1} v.</span>
-<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-296"><a href="#cb1-296" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a>That is the linear algebra reason the FFT makes convolution fast: convolution becomes diagonal multiplication after moving into the Fourier basis.</span>
-<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a><span class="fu">## Takeaways</span></span>
-<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the cyclic shift matrix has eigenvalues equal to the roots of unity</span>
-<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>its eigenvectors are Fourier vectors built from powers of those roots</span>
-<span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the Fourier matrix is the eigenvector matrix of the shift matrix</span>
-<span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>every circulant matrix is diagonalized by the same Fourier basis</span>
-<span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>cyclic convolution becomes simple multiplication in the Fourier domain</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a><span class="fu">### 4. Why It Matters</span></span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a>Even when practical CNN implementations use direct matrix-multiply kernels instead of FFT, the Fourier view is still the cleanest way to analyze what a filter is doing.</span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a>For example, the Laplacian suppresses low frequencies and amplifies high frequencies. That is why it highlights edges.</span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a><span class="fu">## Takeaways</span></span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>polynomial multiplication is the simplest discrete model of convolution</span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>cyclic convolution is the version naturally tied to circulant matrices and Fourier diagonalization</span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the convolution theorem explains why FFT accelerates large convolutions</span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>in 2D, convolution kernels like the Laplacian connect differential operators, image filtering, and Fourier analysis</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
