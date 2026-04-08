@@ -17,6 +17,12 @@ EE364A_COUNT=$(grep -c "^\*\*\[Lecture\|^\*\*\[Chapter" Math/EE364A/lectures.qmd
 # Count Calculus notes
 CALCULUS_COUNT=$(grep -c "^\*\*\[" Math/Calculus/index.qmd)
 
+# Count Probability notes
+PROBABILITY_COUNT=$(grep -c "^\*\*\[" Math/Probability/index.qmd)
+
+# Count all Math items
+MATH_COUNT=$((MIT1806_COUNT + MIT18065_COUNT + EE364A_COUNT + CALCULUS_COUNT + PROBABILITY_COUNT))
+
 # Count Deep Learning papers
 DL_PAPERS_COUNT=$(grep -c "^\*\*\[" ML/papers/index.qmd)
 
@@ -28,10 +34,12 @@ HWSW_COUNT=$(grep -c "^\*\*\[" ML/HW-SW-codesign/index.qmd)
 
 echo "Content counts:"
 echo "  Deep Learning: $DL_COUNT chapters"
-echo "  MIT 18.06SC: $MIT1806_COUNT lectures"
-echo "  MIT 18.065: $MIT18065_COUNT lectures"
-echo "  Stanford EE 364A: $EE364A_COUNT lectures"
-echo "  Calculus: $CALCULUS_COUNT notes"
+echo "  Math: $MATH_COUNT items"
+echo "    Probability: $PROBABILITY_COUNT notes"
+echo "    Calculus: $CALCULUS_COUNT notes"
+echo "    MIT 18.06SC: $MIT1806_COUNT lectures"
+echo "    MIT 18.065: $MIT18065_COUNT lectures"
+echo "    Stanford EE 364A: $EE364A_COUNT lectures"
 echo "  Deep Learning Papers: $DL_PAPERS_COUNT notes"
 echo "  RL: $RL_COUNT notes"
 echo "  ML HW-SW Codesign: $HWSW_COUNT notes"
@@ -39,13 +47,7 @@ echo "  ML HW-SW Codesign: $HWSW_COUNT notes"
 # Update index.qmd with the counts
 sed -i.bak "s/Goodfellow Deep Learning Book <span class=\"section-count\">[0-9]* chapters/Goodfellow Deep Learning Book <span class=\"section-count\">$DL_COUNT chapters/" index.qmd
 
-sed -i.bak "s/MIT 18.06SC Linear Algebra <span class=\"section-count\">[0-9]* lectures/MIT 18.06SC Linear Algebra <span class=\"section-count\">$MIT1806_COUNT lectures/" index.qmd
-
-sed -i.bak "s/MIT 18.065: Linear Algebra Applications <span class=\"section-count\">[0-9]* lectures\{0,1\}/MIT 18.065: Linear Algebra Applications <span class=\"section-count\">$MIT18065_COUNT lectures/" index.qmd
-
-sed -i.bak "s/Stanford EE 364A: Convex Optimization <span class=\"section-count\">[0-9]* lectures\{0,1\}/Stanford EE 364A: Convex Optimization <span class=\"section-count\">$EE364A_COUNT lectures/" index.qmd
-
-sed -i.bak "s/Calculus <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/Calculus <span class=\\\"section-count\\\">$CALCULUS_COUNT note$( [ $CALCULUS_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
+sed -i.bak "s/Math <span class=\"section-count\">[0-9]* item[s]\\{0,1\\}/Math <span class=\\\"section-count\\\">$MATH_COUNT item$( [ $MATH_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
 sed -i.bak "s/Papers in Deep Learning <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/Papers in Deep Learning <span class=\\\"section-count\\\">$DL_PAPERS_COUNT note$( [ $DL_PAPERS_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
