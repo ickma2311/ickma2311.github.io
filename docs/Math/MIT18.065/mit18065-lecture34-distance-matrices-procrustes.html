@@ -7,9 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Chao Ma">
-<meta name="dcterms.date" content="2025-11-30">
+<meta name="dcterms.date" content="2026-04-10">
+<meta name="description" content="How squared distance matrices recover a Gram matrix by double-centering, why PSD detects valid Euclidean geometry, and how orthogonal Procrustes reduces to an SVD.">
 
-<title>Lecture 9: Four Ways to Solve Least Squares Problems – ∇ ickma.dev</title>
+<title>Lecture 34: Distance Matrices, Procrustes Problem – ∇ ickma.dev</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -1001,15 +1002,15 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#projection-matrices" id="toc-projection-matrices" class="nav-link" data-scroll-target="#projection-matrices">Projection Matrices</a></li>
-  <li><a href="#method-1-pseudo-inverse" id="toc-method-1-pseudo-inverse" class="nav-link" data-scroll-target="#method-1-pseudo-inverse">Method 1: Pseudo-Inverse</a></li>
-  <li><a href="#method-2-normal-equations" id="toc-method-2-normal-equations" class="nav-link" data-scroll-target="#method-2-normal-equations">Method 2: Normal Equations</a>
-  <ul class="collapse">
-  <li><a href="#linear-regression-example" id="toc-linear-regression-example" class="nav-link" data-scroll-target="#linear-regression-example">Linear Regression Example</a></li>
-  <li><a href="#three-approaches-to-the-solution" id="toc-three-approaches-to-the-solution" class="nav-link" data-scroll-target="#three-approaches-to-the-solution">Three Approaches to the Solution</a></li>
-  </ul></li>
-  <li><a href="#key-insights" id="toc-key-insights" class="nav-link" data-scroll-target="#key-insights">Key Insights</a></li>
+  <li><a href="#from-distances-to-geometry" id="toc-from-distances-to-geometry" class="nav-link active" data-scroll-target="#from-distances-to-geometry">From Distances to Geometry</a></li>
+  <li><a href="#triangle-inequality-example" id="toc-triangle-inequality-example" class="nav-link" data-scroll-target="#triangle-inequality-example">Triangle Inequality Example</a></li>
+  <li><a href="#distance-matrix-and-gram-matrix" id="toc-distance-matrix-and-gram-matrix" class="nav-link" data-scroll-target="#distance-matrix-and-gram-matrix">Distance Matrix and Gram Matrix</a></li>
+  <li><a href="#psd-test-for-the-example" id="toc-psd-test-for-the-example" class="nav-link" data-scroll-target="#psd-test-for-the-example">PSD Test for the Example</a></li>
+  <li><a href="#procrustes-problem" id="toc-procrustes-problem" class="nav-link" data-scroll-target="#procrustes-problem">Procrustes Problem</a></li>
+  <li><a href="#why-the-frobenius-norm-becomes-a-trace-problem" id="toc-why-the-frobenius-norm-becomes-a-trace-problem" class="nav-link" data-scroll-target="#why-the-frobenius-norm-becomes-a-trace-problem">Why the Frobenius Norm Becomes a Trace Problem</a></li>
+  <li><a href="#svd-solution" id="toc-svd-solution" class="nav-link" data-scroll-target="#svd-solution">SVD Solution</a></li>
+  <li><a href="#interpretation" id="toc-interpretation" class="nav-link" data-scroll-target="#interpretation">Interpretation</a></li>
+  <li><a href="#takeaways" id="toc-takeaways" class="nav-link" data-scroll-target="#takeaways">Takeaways</a></li>
   </ul>
 </nav>
     </div>
@@ -1018,16 +1019,22 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Lecture 9: Four Ways to Solve Least Squares Problems</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">Lecture 34: Distance Matrices, Procrustes Problem</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
   <div class="quarto-categories">
+    <div class="quarto-category">MIT 18.065</div>
     <div class="quarto-category">Linear Algebra</div>
-    <div class="quarto-category">Least Squares</div>
-    <div class="quarto-category">Pseudo-Inverse</div>
+    <div class="quarto-category">Distance Matrix</div>
+    <div class="quarto-category">Gram Matrix</div>
+    <div class="quarto-category">Procrustes</div>
     <div class="quarto-category">SVD</div>
-    <div class="quarto-category">Normal Equations</div>
   </div>
   </div>
 
+<div>
+  <div class="description">
+    How squared distance matrices recover a Gram matrix by double-centering, why PSD detects valid Euclidean geometry, and how orthogonal Procrustes reduces to an SVD.
+  </div>
+</div>
 
 
 <div class="quarto-title-meta">
@@ -1042,7 +1049,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">November 30, 2025</p>
+      <p class="date">April 10, 2026</p>
     </div>
   </div>
   
@@ -1054,104 +1061,193 @@ window.Quarto = {
 </header>
 
 
-<section id="overview" class="level2">
-<h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>This lecture presents four methods for solving least squares problems <span class="math inline">\(Ax = b\)</span> when <span class="math inline">\(A\)</span> has no inverse, exploring the connections between pseudo-inverse, normal equations, and projection geometry.</p>
-</section>
-<section id="projection-matrices" class="level2">
-<h2 class="anchored" data-anchor-id="projection-matrices">Projection Matrices</h2>
-<p>Understanding projections is key to least squares:</p>
-<ul>
-<li><strong><span class="math inline">\(A^+A\)</span></strong>: Projection onto row space <span class="math inline">\(C(A^T)\)</span>
-<ul>
-<li>If <span class="math inline">\(x\)</span> is in the row space, we get <span class="math inline">\(x\)</span> back</li>
-<li>If <span class="math inline">\(x\)</span> is in the null space, it gets mapped to <span class="math inline">\(0\)</span></li>
-</ul></li>
-<li><strong><span class="math inline">\(AA^+\)</span></strong>: Projection onto column space <span class="math inline">\(C(A)\)</span>
-<ul>
-<li>Projects vectors onto the column space of <span class="math inline">\(A\)</span></li>
-</ul></li>
-</ul>
-<p><img src="spaces.png" class="img-fluid" alt="Projection spaces"> <em>Figure: The four fundamental subspaces and how projection matrices <span class="math inline">\(A^+A\)</span> and <span class="math inline">\(AA^+\)</span> map between them.</em></p>
-</section>
-<section id="method-1-pseudo-inverse" class="level2">
-<h2 class="anchored" data-anchor-id="method-1-pseudo-inverse">Method 1: Pseudo-Inverse</h2>
-<p>Using the SVD decomposition <span class="math inline">\(A = U\Sigma V^T\)</span>:</p>
-<p><strong>For invertible matrices:</strong> <span class="math display">\[A^{-1} = V\Sigma^{-1}U^T\]</span></p>
-<p><strong>For non-invertible matrices:</strong> <span class="math display">\[A^+ = V\Sigma^+ U^T\]</span></p>
-<p>where <span class="math inline">\(\Sigma^+\)</span> inverts only the non-zero singular values:</p>
+<iframe width="100%" height="500" src="https://www.youtube.com/embed/0Qws8BuK3RQ" title="MIT 18.065 Lecture 34" frameborder="0" allowfullscreen="">
+</iframe>
+<section id="from-distances-to-geometry" class="level2">
+<h2 class="anchored" data-anchor-id="from-distances-to-geometry">From Distances to Geometry</h2>
+<p>Suppose we know only pairwise distances between points and want to decide whether those points can actually live in Euclidean space.</p>
+<p>Let</p>
 <p><span class="math display">\[
-\Sigma^+ = \begin{bmatrix}
-\frac{1}{\sigma_1} &amp; 0 &amp; \cdots &amp; 0 \\
-0 &amp; \frac{1}{\sigma_2} &amp; \cdots &amp; 0 \\
-\vdots &amp; \vdots &amp; \ddots &amp; \vdots
-\end{bmatrix}
+D_{ij} = \|x_i - x_j\|^2
 \]</span></p>
-<p><strong>Solution:</strong> <span class="math inline">\(\hat{x} = A^+ b\)</span></p>
-</section>
-<section id="method-2-normal-equations" class="level2">
-<h2 class="anchored" data-anchor-id="method-2-normal-equations">Method 2: Normal Equations</h2>
-<p>Solve <span class="math inline">\(A^T A \hat{x} = A^T b\)</span> when <span class="math inline">\(A\)</span> is <span class="math inline">\(m \times n\)</span> with rank <span class="math inline">\(r\)</span>.</p>
-<section id="linear-regression-example" class="level3">
-<h3 class="anchored" data-anchor-id="linear-regression-example">Linear Regression Example</h3>
-<p>Given data points <span class="math inline">\((x_1, y_1), (x_2, y_2), \ldots, (x_m, y_m)\)</span>, we want to find <span class="math inline">\(C, D\)</span> such that:</p>
-<p><span class="math display">\[C + Dx \approx y\]</span></p>
-<p>Build the matrix: <span class="math display">\[A = \begin{bmatrix}
-1 &amp; x_1 \\
-1 &amp; x_2 \\
-\vdots &amp; \vdots \\
-1 &amp; x_m
-\end{bmatrix}, \quad
-A\begin{bmatrix}C \\ D\end{bmatrix} =
-C\begin{bmatrix}1 \\ 1 \\ \vdots \\ 1\end{bmatrix} +
-D\begin{bmatrix}x_1 \\ x_2 \\ \vdots \\ x_m\end{bmatrix}
-\]</span></p>
-<p><img src="solveAx=b.png" class="img-fluid" alt="Linear regression setup"> <em>Figure: Setting up the least squares problem for linear regression—finding the line that best fits the data points.</em></p>
-</section>
-<section id="three-approaches-to-the-solution" class="level3">
-<h3 class="anchored" data-anchor-id="three-approaches-to-the-solution">Three Approaches to the Solution</h3>
-<section id="algebraic-approach" class="level4">
-<h4 class="anchored" data-anchor-id="algebraic-approach">1. Algebraic Approach</h4>
-<p>Minimize <span class="math inline">\(\|Ax - b\|_2^2\)</span>:</p>
+<p>be the squared distance matrix. The key idea is that distances are not arbitrary: they must come from an inner-product matrix</p>
 <p><span class="math display">\[
-\|Ax - b\|_2^2 = (Ax - b)^T(Ax - b) = x^T A^T A x - 2x^T A^T b + b^T b
+G = X^\top X,
 \]</span></p>
-<p><strong>Gradient:</strong> <span class="math display">\[\nabla_x \|Ax - b\|_2^2 = 2A^T A x - 2A^T b\]</span></p>
-<p><strong>Setting gradient to zero:</strong> <span class="math display">\[A^T A \hat{x} = A^T b\]</span></p>
-</section>
-<section id="geometric-approach" class="level4">
-<h4 class="anchored" data-anchor-id="geometric-approach">2. Geometric Approach</h4>
+<p>where <span class="math inline">\(X = [x_1,\dots,x_n]\)</span> contains the point coordinates. Since every Gram matrix has the form <span class="math inline">\(X^\top X\)</span>, it must be positive semidefinite.</p>
+<p>That gives a clean test:</p>
 <ul>
-<li>The vector <span class="math inline">\(Ax\)</span> always lies in the column space <span class="math inline">\(C(A)\)</span></li>
-<li>In general, <span class="math inline">\(b \notin C(A)\)</span>, so <span class="math inline">\(Ax = b\)</span> has no exact solution</li>
-<li>The least-squares solution <span class="math inline">\(\hat{x}\)</span> satisfies: <span class="math inline">\(A\hat{x} = P_{C(A)} b\)</span>
-<ul>
-<li>i.e., <strong>the orthogonal projection of <span class="math inline">\(b\)</span> onto the column space of <span class="math inline">\(A\)</span></strong></li>
-</ul></li>
-<li>This projection condition is equivalent to: <span class="math inline">\(A^T(A\hat{x} - b) = 0\)</span></li>
-<li>Hence the <strong>normal equation</strong>: <span class="math inline">\(A^T A \hat{x} = A^T b\)</span></li>
+<li>start from squared distances</li>
+<li>recover the Gram matrix</li>
+<li>check whether that Gram matrix is PSD</li>
 </ul>
-<p><img src="geometry.png" class="img-fluid" alt="Geometric interpretation"> <em>Figure: Geometric view of least squares—projecting <span class="math inline">\(b\)</span> onto the column space of <span class="math inline">\(A\)</span> to find the closest solution <span class="math inline">\(A\hat{x}\)</span>.</em></p>
+<p>If it is not PSD, then the distances cannot come from real Euclidean points.</p>
 </section>
-<section id="connection-to-pseudo-inverse" class="level4">
-<h4 class="anchored" data-anchor-id="connection-to-pseudo-inverse">3. Connection to Pseudo-Inverse</h4>
-<p>When <span class="math inline">\(A^T A\)</span> is invertible:</p>
-<p><span class="math display">\[A^+ = V\Sigma^{-1}U^T = (A^T A)^{-1}A^T\]</span></p>
-<p>The pseudo-inverse <span class="math inline">\((A^T A)^{-1}A^T\)</span> is the <strong>left inverse</strong> because: <span class="math display">\[(A^T A)^{-1}A^T \cdot A = I_n\]</span></p>
-<p>Therefore: <span class="math display">\[\hat{x} = A^+ b = (A^T A)^{-1}A^T b\]</span></p>
-<p>This shows that the pseudo-inverse method and normal equations give the same solution!</p>
-<p><img src="four ways.png" class="img-fluid" alt="Four methods comparison"> <em>Figure: Summary of four equivalent ways to solve least squares problems, all converging to the same optimal solution.</em></p>
+<section id="triangle-inequality-example" class="level2">
+<h2 class="anchored" data-anchor-id="triangle-inequality-example">Triangle Inequality Example</h2>
+<p>Suppose three points are claimed to satisfy</p>
+<p><span class="math display">\[
+\|x_1-x_2\|^2 = 1, \qquad
+\|x_2-x_3\|^2 = 1, \qquad
+\|x_1-x_3\|^2 = 6.
+\]</span></p>
+<p>The actual distances are therefore</p>
+<p><span class="math display">\[
+d_{12}=1, \qquad d_{23}=1, \qquad d_{13}=\sqrt{6}.
+\]</span></p>
+<p>But the triangle inequality would require</p>
+<p><span class="math display">\[
+d_{13} \le d_{12} + d_{23} = 2,
+\]</span></p>
+<p>and <span class="math inline">\(\sqrt{6} &gt; 2\)</span>. So these three points cannot exist in Euclidean space.</p>
+<p>This is the geometric check. The matrix check reaches the same conclusion.</p>
 </section>
+<section id="distance-matrix-and-gram-matrix" class="level2">
+<h2 class="anchored" data-anchor-id="distance-matrix-and-gram-matrix">Distance Matrix and Gram Matrix</h2>
+<p>For any points <span class="math inline">\(x_i\)</span> and <span class="math inline">\(x_j\)</span>,</p>
+<p><span class="math display">\[
+\|x_i-x_j\|^2
+= x_i^\top x_i + x_j^\top x_j - 2x_i^\top x_j.
+\]</span></p>
+<p>If <span class="math inline">\(G = (g_{ij}) = X^\top X\)</span>, then</p>
+<p><span class="math display">\[
+D_{ij} = g_{ii} + g_{jj} - 2g_{ij}.
+\]</span></p>
+<p>So <span class="math inline">\(D\)</span> is determined by the Gram matrix. The reverse direction is also possible after centering.</p>
+<p>Let</p>
+<p><span class="math display">\[
+J = I - \frac{1}{n}\mathbf{1}\mathbf{1}^\top.
+\]</span></p>
+<p>This subtracts the mean, so multiplying by <span class="math inline">\(J\)</span> centers the point cloud. For centered data, the Gram matrix is recovered by the double-centering formula</p>
+<p><span class="math display">\[
+G = -\frac{1}{2}JDJ.
+\]</span></p>
+<p>This formula is the bridge from distances back to inner products.</p>
 </section>
+<section id="psd-test-for-the-example" class="level2">
+<h2 class="anchored" data-anchor-id="psd-test-for-the-example">PSD Test for the Example</h2>
+<p>For the example above,</p>
+<p><span class="math display">\[
+D =
+\begin{bmatrix}
+0 &amp; 1 &amp; 6 \\
+1 &amp; 0 &amp; 1 \\
+6 &amp; 1 &amp; 0
+\end{bmatrix}.
+\]</span></p>
+<p>Applying double-centering gives</p>
+<p><span class="math display">\[
+G = -\frac{1}{2}JDJ
+=
+\begin{bmatrix}
+\frac{13}{9} &amp; \frac{1}{9} &amp; -\frac{14}{9} \\
+\frac{1}{9} &amp; -\frac{2}{9} &amp; \frac{1}{9} \\
+-\frac{14}{9} &amp; \frac{1}{9} &amp; \frac{13}{9}
+\end{bmatrix}.
+\]</span></p>
+<p>Its eigenvalues are</p>
+<p><span class="math display">\[
+3,\quad 0,\quad -\frac{1}{3}.
+\]</span></p>
+<p>The negative eigenvalue means <span class="math inline">\(G\)</span> is not positive semidefinite, so the squared distances do not come from any Euclidean configuration. This matches the triangle-inequality failure.</p>
+<p>The broader lesson is:</p>
+<ul>
+<li>a valid Euclidean squared distance matrix produces a PSD Gram matrix after double-centering</li>
+<li>if the recovered Gram matrix has a negative eigenvalue, the geometry is impossible</li>
+</ul>
 </section>
-<section id="key-insights" class="level2">
-<h2 class="anchored" data-anchor-id="key-insights">Key Insights</h2>
-<ol type="1">
-<li><p><strong>Multiple perspectives, same solution</strong>: The pseudo-inverse, normal equations, algebraic minimization, and geometric projection all lead to the same least-squares solution.</p></li>
-<li><p><strong>When <span class="math inline">\(A^T A\)</span> is invertible</strong>: <span class="math inline">\(\hat{x} = (A^T A)^{-1}A^T b\)</span> provides a closed-form solution.</p></li>
-<li><p><strong>Projection interpretation</strong>: Least squares finds the point in <span class="math inline">\(C(A)\)</span> closest to <span class="math inline">\(b\)</span>—this is the fundamental geometric insight.</p></li>
-<li><p><strong>Pseudo-inverse generalizes inversion</strong>: <span class="math inline">\(A^+ = V\Sigma^+ U^T\)</span> extends matrix inversion to non-invertible matrices by inverting only non-zero singular values.</p></li>
-</ol>
+<section id="procrustes-problem" class="level2">
+<h2 class="anchored" data-anchor-id="procrustes-problem">Procrustes Problem</h2>
+<p>The second topic in the lecture asks a different question: if two point clouds already exist, how do we align one to the other as well as possible?</p>
+<p>Given a target matrix <span class="math inline">\(X\)</span> and a current configuration <span class="math inline">\(Y\)</span>, the orthogonal Procrustes problem is</p>
+<p><span class="math display">\[
+\min_{Q^\top Q = I} \|YQ - X\|_F^2.
+\]</span></p>
+<p>Here <span class="math inline">\(Q\)</span> is constrained to be orthogonal, so it can rotate or reflect the data but cannot scale or shear it.</p>
+<p><img src="mit18065-lecture34-1.png" class="img-fluid"></p>
+</section>
+<section id="why-the-frobenius-norm-becomes-a-trace-problem" class="level2">
+<h2 class="anchored" data-anchor-id="why-the-frobenius-norm-becomes-a-trace-problem">Why the Frobenius Norm Becomes a Trace Problem</h2>
+<p>The Frobenius norm satisfies</p>
+<p><span class="math display">\[
+\|A\|_F^2 = \operatorname{trace}(A^\top A).
+\]</span></p>
+<p>So</p>
+<p><span class="math display">\[
+\|YQ - X\|_F^2
+= \operatorname{trace}((YQ-X)^\top (YQ-X)).
+\]</span></p>
+<p>Expand:</p>
+<p><span class="math display">\[
+\|YQ - X\|_F^2
+= \operatorname{trace}(Q^\top Y^\top YQ)
+- 2\operatorname{trace}(Q^\top Y^\top X)
++ \operatorname{trace}(X^\top X).
+\]</span></p>
+<p>Since <span class="math inline">\(Q^\top Q = I\)</span>,</p>
+<p><span class="math display">\[
+\operatorname{trace}(Q^\top Y^\top YQ)
+= \operatorname{trace}(Y^\top Y),
+\]</span></p>
+<p>which is constant with respect to <span class="math inline">\(Q\)</span>. Therefore minimizing the Frobenius norm is equivalent to maximizing</p>
+<p><span class="math display">\[
+\operatorname{trace}(Q^\top Y^\top X).
+\]</span></p>
+</section>
+<section id="svd-solution" class="level2">
+<h2 class="anchored" data-anchor-id="svd-solution">SVD Solution</h2>
+<p>Take the singular value decomposition of the cross-matrix:</p>
+<p><span class="math display">\[
+Y^\top X = U\Sigma V^\top.
+\]</span></p>
+<p>Then</p>
+<p><span class="math display">\[
+\operatorname{trace}(Q^\top Y^\top X)
+= \operatorname{trace}(Q^\top U\Sigma V^\top).
+\]</span></p>
+<p>Using cyclic invariance of trace, define</p>
+<p><span class="math display">\[
+Z = U^\top Q V.
+\]</span></p>
+<p>Because <span class="math inline">\(Q\)</span>, <span class="math inline">\(U\)</span>, and <span class="math inline">\(V\)</span> are orthogonal, <span class="math inline">\(Z\)</span> is also orthogonal. Then</p>
+<p><span class="math display">\[
+\operatorname{trace}(Q^\top Y^\top X)
+= \operatorname{trace}(Z^\top \Sigma)
+= \sum_i \sigma_i z_{ii}.
+\]</span></p>
+<p>For an orthogonal matrix, each diagonal entry satisfies <span class="math inline">\(|z_{ii}| \le 1\)</span>, so</p>
+<p><span class="math display">\[
+\operatorname{trace}(Z^\top \Sigma) \le \sum_i \sigma_i.
+\]</span></p>
+<p>The maximum is achieved when <span class="math inline">\(Z = I\)</span>, which means</p>
+<p><span class="math display">\[
+Q = UV^\top.
+\]</span></p>
+<p>So the orthogonal Procrustes problem has the elegant closed-form answer</p>
+<p><span class="math display">\[
+Q_{\star} = UV^\top,
+\qquad \text{where } Y^\top X = U\Sigma V^\top.
+\]</span></p>
+<p>This is a beautiful pattern: the singular values measure how well the two point clouds match, and the orthogonal part <span class="math inline">\(UV^\top\)</span> gives the best rigid alignment.</p>
+</section>
+<section id="interpretation" class="level2">
+<h2 class="anchored" data-anchor-id="interpretation">Interpretation</h2>
+<ul>
+<li>the distance-matrix part of the lecture asks whether geometry is feasible at all</li>
+<li>the Procrustes part assumes geometry exists and asks for the best orthogonal alignment</li>
+<li>both topics reduce geometry to matrix structure: PSD for feasibility, SVD for alignment</li>
+</ul>
+<p>If we also impose <span class="math inline">\(\det(Q)=1\)</span>, then reflections are forbidden and the problem becomes the rotation-only version often used in shape matching and point-cloud alignment.</p>
+</section>
+<section id="takeaways" class="level2">
+<h2 class="anchored" data-anchor-id="takeaways">Takeaways</h2>
+<ul>
+<li>squared Euclidean distances determine a centered Gram matrix through <span class="math inline">\(G = -\frac{1}{2}JDJ\)</span></li>
+<li>valid Euclidean distance data must produce a positive semidefinite Gram matrix</li>
+<li>triangle inequality failure and a negative Gram-matrix eigenvalue are two views of the same inconsistency</li>
+<li>the orthogonal Procrustes problem reduces to maximizing a trace</li>
+<li>the best orthogonal alignment is obtained from the SVD of <span class="math inline">\(Y^\top X\)</span> via <span class="math inline">\(Q_\star = UV^\top\)</span></li>
+</ul>
 
 
 <!-- -->
@@ -1640,131 +1736,253 @@ D\begin{bmatrix}x_1 \\ x_2 \\ \vdots \\ x_m\end{bmatrix}
   loadGiscus();
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Lecture 9: Four Ways to Solve Least Squares Problems"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Lecture 34: Distance Matrices, Procrustes Problem"</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2025-11-30"</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Linear Algebra, Least Squares, Pseudo-Inverse, SVD, Normal Equations]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## Overview</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-04-10"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [MIT 18.065, Linear Algebra, Distance Matrix, Gram Matrix, Procrustes, SVD]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "How squared distance matrices recover a Gram matrix by double-centering, why PSD detects valid Euclidean geometry, and how orthogonal Procrustes reduces to an SVD."</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>This lecture presents four methods for solving least squares problems $Ax = b$ when $A$ has no inverse, exploring the connections between pseudo-inverse, normal equations, and projection geometry.</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">iframe</span><span class="ot"> width</span><span class="op">=</span><span class="st">"100%"</span><span class="ot"> height</span><span class="op">=</span><span class="st">"500"</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://www.youtube.com/embed/0Qws8BuK3RQ"</span><span class="ot"> title</span><span class="op">=</span><span class="st">"MIT 18.065 Lecture 34"</span><span class="ot"> frameborder</span><span class="op">=</span><span class="st">"0"</span><span class="ot"> allowfullscreen</span><span class="dt">&gt;&lt;/</span><span class="kw">iframe</span><span class="dt">&gt;</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## Projection Matrices</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## From Distances to Geometry</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>Understanding projections is key to least squares:</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>Suppose we know only pairwise distances between points and want to decide whether those points can actually live in Euclidean space.</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**$A^+A$**: Projection onto row space $C(A^T)$</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>If $x$ is in the row space, we get $x$ back</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>If $x$ is in the null space, it gets mapped to $0$</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**$AA^+$**: Projection onto column space $C(A)$</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>Projects vectors onto the column space of $A$</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="al">![Projection spaces](spaces.png)</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>*Figure: The four fundamental subspaces and how projection matrices $A^+A$ and $AA^+$ map between them.*</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="fu">## Method 1: Pseudo-Inverse</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>Let</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>D_{ij} = <span class="sc">\|</span>x_i - x_j<span class="sc">\|</span>^2</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>be the squared distance matrix. The key idea is that distances are not arbitrary: they must come from an inner-product matrix</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>G = X^\top X,</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>Using the SVD decomposition $A = U\Sigma V^T$:</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>where $X = <span class="co">[</span><span class="ot">x_1,\dots,x_n</span><span class="co">]</span>$ contains the point coordinates. Since every Gram matrix has the form $X^\top X$, it must be positive semidefinite.</span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>**For invertible matrices:**</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>$$A^{-1} = V\Sigma^{-1}U^T$$</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>**For non-invertible matrices:**</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>$$A^+ = V\Sigma^+ U^T$$</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>That gives a clean test:</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>start from squared distances</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>recover the Gram matrix</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>check whether that Gram matrix is PSD</span>
 <span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>where $\Sigma^+$ inverts only the non-zero singular values:</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>If it is not PSD, then the distances cannot come from real Euclidean points.</span>
 <span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>\Sigma^+ = \begin{bmatrix}</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sigma_1} &amp; 0 &amp; \cdots &amp; 0 <span class="sc">\\</span></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>0 &amp; \frac{1}{\sigma_2} &amp; \cdots &amp; 0 <span class="sc">\\</span></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>\vdots &amp; \vdots &amp; \ddots &amp; \vdots</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>**Solution:** $\hat{x} = A^+ b$</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="fu">## Triangle Inequality Example</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>Suppose three points are claimed to satisfy</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>x_1-x_2<span class="sc">\|</span>^2 = 1, \qquad</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>x_2-x_3<span class="sc">\|</span>^2 = 1, \qquad</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>x_1-x_3<span class="sc">\|</span>^2 = 6.</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="fu">## Method 2: Normal Equations</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>The actual distances are therefore</span>
 <span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>Solve $A^T A \hat{x} = A^T b$ when $A$ is $m \times n$ with rank $r$.</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="fu">### Linear Regression Example</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>d_{12}=1, \qquad d_{23}=1, \qquad d_{13}=\sqrt{6}.</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>Given data points $(x_1, y_1), (x_2, y_2), \ldots, (x_m, y_m)$, we want to find $C, D$ such that:</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>But the triangle inequality would require</span>
 <span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>$$C + Dx \approx y$$</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>Build the matrix:</span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>$$A = \begin{bmatrix}</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>1 &amp; x_1 <span class="sc">\\</span></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>1 &amp; x_2 <span class="sc">\\</span></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>\vdots &amp; \vdots <span class="sc">\\</span></span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>1 &amp; x_m</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}, \quad</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>A\begin{bmatrix}C <span class="sc">\\</span> D\end{bmatrix} =</span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>C\begin{bmatrix}1 <span class="sc">\\</span> 1 <span class="sc">\\</span> \vdots <span class="sc">\\</span> 1\end{bmatrix} +</span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>D\begin{bmatrix}x_1 <span class="sc">\\</span> x_2 <span class="sc">\\</span> \vdots <span class="sc">\\</span> x_m\end{bmatrix}</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>d_{13} \le d_{12} + d_{23} = 2,</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>and $\sqrt{6} &gt; 2$. So these three points cannot exist in Euclidean space.</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>This is the geometric check. The matrix check reaches the same conclusion.</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="fu">## Distance Matrix and Gram Matrix</span></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>For any points $x_i$ and $x_j$,</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a><span class="al">![Linear regression setup](solveAx=b.png)</span></span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>*Figure: Setting up the least squares problem for linear regression—finding the line that best fits the data points.*</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>x_i-x_j<span class="sc">\|</span>^2</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>= x_i^\top x_i + x_j^\top x_j - 2x_i^\top x_j.</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="fu">### Three Approaches to the Solution</span></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>If $G = (g_{ij}) = X^\top X$, then</span>
 <span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="fu">#### 1. Algebraic Approach</span></span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>Minimize $<span class="sc">\|</span>Ax - b<span class="sc">\|</span>_2^2$:</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>D_{ij} = g_{ii} + g_{jj} - 2g_{ij}.</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>Ax - b<span class="sc">\|</span>_2^2 = (Ax - b)^T(Ax - b) = x^T A^T A x - 2x^T A^T b + b^T b</span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>So $D$ is determined by the Gram matrix. The reverse direction is also possible after centering.</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>Let</span>
 <span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>**Gradient:**</span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>$$\nabla_x <span class="sc">\|</span>Ax - b<span class="sc">\|</span>_2^2 = 2A^T A x - 2A^T b$$</span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>**Setting gradient to zero:**</span>
-<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>$$A^T A \hat{x} = A^T b$$</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>J = I - \frac{1}{n}\mathbf{1}\mathbf{1}^\top.</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>This subtracts the mean, so multiplying by $J$ centers the point cloud. For centered data, the Gram matrix is recovered by the double-centering formula</span>
 <span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a><span class="fu">#### 2. Geometric Approach</span></span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The vector $Ax$ always lies in the column space $C(A)$</span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>In general, $b \notin C(A)$, so $Ax = b$ has no exact solution</span>
-<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The least-squares solution $\hat{x}$ satisfies: $A\hat{x} = P_{C(A)} b$</span>
-<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>i.e., **the orthogonal projection of $b$ onto the column space of $A$**</span>
-<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>This projection condition is equivalent to: $A^T(A\hat{x} - b) = 0$</span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Hence the **normal equation**: $A^T A \hat{x} = A^T b$</span>
-<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a><span class="al">![Geometric interpretation](geometry.png)</span></span>
-<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>*Figure: Geometric view of least squares—projecting $b$ onto the column space of $A$ to find the closest solution $A\hat{x}$.*</span>
-<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a><span class="fu">#### 3. Connection to Pseudo-Inverse</span></span>
-<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>When $A^T A$ is invertible:</span>
-<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>$$A^+ = V\Sigma^{-1}U^T = (A^T A)^{-1}A^T$$</span>
-<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>The pseudo-inverse $(A^T A)^{-1}A^T$ is the **left inverse** because:</span>
-<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>$$(A^T A)^{-1}A^T \cdot A = I_n$$</span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>G = -\frac{1}{2}JDJ.</span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>This formula is the bridge from distances back to inner products.</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a><span class="fu">## PSD Test for the Example</span></span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>For the example above,</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>D =</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>0 &amp; 1 &amp; 6 <span class="sc">\\</span></span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>1 &amp; 0 &amp; 1 <span class="sc">\\</span></span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a>6 &amp; 1 &amp; 0</span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}.</span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>Applying double-centering gives</span>
 <span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>Therefore:</span>
-<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>$$\hat{x} = A^+ b = (A^T A)^{-1}A^T b$$</span>
-<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>This shows that the pseudo-inverse method and normal equations give the same solution!</span>
-<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a><span class="al">![Four methods comparison](four ways.png)</span></span>
-<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>*Figure: Summary of four equivalent ways to solve least squares problems, all converging to the same optimal solution.*</span>
-<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Insights</span></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>G = -\frac{1}{2}JDJ</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>\begin{bmatrix}</span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>\frac{13}{9} &amp; \frac{1}{9} &amp; -\frac{14}{9} <span class="sc">\\</span></span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>\frac{1}{9} &amp; -\frac{2}{9} &amp; \frac{1}{9} <span class="sc">\\</span></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>-\frac{14}{9} &amp; \frac{1}{9} &amp; \frac{13}{9}</span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>\end{bmatrix}.</span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Multiple perspectives, same solution**: The pseudo-inverse, normal equations, algebraic minimization, and geometric projection all lead to the same least-squares solution.</span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>Its eigenvalues are</span>
 <span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**When $A^T A$ is invertible**: $\hat{x} = (A^T A)^{-1}A^T b$ provides a closed-form solution.</span>
-<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Projection interpretation**: Least squares finds the point in $C(A)$ closest to $b$—this is the fundamental geometric insight.</span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>3,\quad 0,\quad -\frac{1}{3}.</span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Pseudo-inverse generalizes inversion**: $A^+ = V\Sigma^+ U^T$ extends matrix inversion to non-invertible matrices by inverting only non-zero singular values.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>The negative eigenvalue means $G$ is not positive semidefinite, so the squared distances do not come from any Euclidean configuration. This matches the triangle-inequality failure.</span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>The broader lesson is:</span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>a valid Euclidean squared distance matrix produces a PSD Gram matrix after double-centering</span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>if the recovered Gram matrix has a negative eigenvalue, the geometry is impossible</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a><span class="fu">## Procrustes Problem</span></span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>The second topic in the lecture asks a different question: if two point clouds already exist, how do we align one to the other as well as possible?</span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>Given a target matrix $X$ and a current configuration $Y$, the orthogonal Procrustes problem is</span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>\min_{Q^\top Q = I} <span class="sc">\|</span>YQ - X<span class="sc">\|</span>_F^2.</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>Here $Q$ is constrained to be orthogonal, so it can rotate or reflect the data but cannot scale or shear it.</span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a><span class="al">![](mit18065-lecture34-1.png)</span></span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a><span class="fu">## Why the Frobenius Norm Becomes a Trace Problem</span></span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>The Frobenius norm satisfies</span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>A<span class="sc">\|</span>_F^2 = \operatorname{trace}(A^\top A).</span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>So</span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>YQ - X<span class="sc">\|</span>_F^2</span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>= \operatorname{trace}((YQ-X)^\top (YQ-X)).</span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>Expand:</span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>YQ - X<span class="sc">\|</span>_F^2</span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>= \operatorname{trace}(Q^\top Y^\top YQ)</span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>2\operatorname{trace}(Q^\top Y^\top X)</span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a><span class="ss">+ </span>\operatorname{trace}(X^\top X).</span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a>Since $Q^\top Q = I$,</span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>\operatorname{trace}(Q^\top Y^\top YQ)</span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a>= \operatorname{trace}(Y^\top Y),</span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a>which is constant with respect to $Q$. Therefore minimizing the Frobenius norm is equivalent to maximizing</span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a>\operatorname{trace}(Q^\top Y^\top X).</span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a><span class="fu">## SVD Solution</span></span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a>Take the singular value decomposition of the cross-matrix:</span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a>Y^\top X = U\Sigma V^\top.</span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a>Then</span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a>\operatorname{trace}(Q^\top Y^\top X)</span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a>= \operatorname{trace}(Q^\top U\Sigma V^\top).</span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a>Using cyclic invariance of trace, define</span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>Z = U^\top Q V.</span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>Because $Q$, $U$, and $V$ are orthogonal, $Z$ is also orthogonal. Then</span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a>\operatorname{trace}(Q^\top Y^\top X)</span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a>= \operatorname{trace}(Z^\top \Sigma)</span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a>= \sum_i \sigma_i z_{ii}.</span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>For an orthogonal matrix, each diagonal entry satisfies $|z_{ii}| \le 1$, so</span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a>\operatorname{trace}(Z^\top \Sigma) \le \sum_i \sigma_i.</span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a>The maximum is achieved when $Z = I$, which means</span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a>Q = UV^\top.</span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a>So the orthogonal Procrustes problem has the elegant closed-form answer</span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a>Q_{\star} = UV^\top,</span>
+<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a>\qquad \text{where } Y^\top X = U\Sigma V^\top.</span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a>This is a beautiful pattern: the singular values measure how well the two point clouds match, and the orthogonal part $UV^\top$ gives the best rigid alignment.</span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a><span class="fu">## Interpretation</span></span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the distance-matrix part of the lecture asks whether geometry is feasible at all</span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the Procrustes part assumes geometry exists and asks for the best orthogonal alignment</span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>both topics reduce geometry to matrix structure: PSD for feasibility, SVD for alignment</span>
+<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a>If we also impose $\det(Q)=1$, then reflections are forbidden and the problem becomes the rotation-only version often used in shape matching and point-cloud alignment.</span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a><span class="fu">## Takeaways</span></span>
+<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>squared Euclidean distances determine a centered Gram matrix through $G = -\frac{1}{2}JDJ$</span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>valid Euclidean distance data must produce a positive semidefinite Gram matrix</span>
+<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>triangle inequality failure and a negative Gram-matrix eigenvalue are two views of the same inconsistency</span>
+<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the orthogonal Procrustes problem reduces to maximizing a trace</span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the best orthogonal alignment is obtained from the SVD of $Y^\top X$ via $Q_\star = UV^\top$</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
