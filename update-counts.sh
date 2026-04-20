@@ -20,8 +20,11 @@ CALCULUS_COUNT=$(grep -c "^\*\*\[" Math/Calculus/index.qmd)
 # Count Probability notes
 PROBABILITY_COUNT=$(grep -c "^\*\*\[" Math/Probability/index.qmd)
 
+# Count Information Theory notes
+INFO_THEORY_COUNT=$(grep -c "^\*\*\[" Math/InformationTheory/index.qmd)
+
 # Count all Math items
-MATH_COUNT=$((MIT1806_COUNT + MIT18065_COUNT + EE364A_COUNT + CALCULUS_COUNT + PROBABILITY_COUNT))
+MATH_COUNT=$((MIT1806_COUNT + MIT18065_COUNT + EE364A_COUNT + CALCULUS_COUNT + PROBABILITY_COUNT + INFO_THEORY_COUNT))
 
 # Count Deep Learning papers
 DL_PAPERS_COUNT=$(grep -c "^\*\*\[" ML/papers/index.qmd)
@@ -36,6 +39,7 @@ echo "Content counts:"
 echo "  Deep Learning: $DL_COUNT chapters"
 echo "  Math: $MATH_COUNT items"
 echo "    Probability: $PROBABILITY_COUNT notes"
+echo "    Information Theory: $INFO_THEORY_COUNT notes"
 echo "    Calculus: $CALCULUS_COUNT notes"
 echo "    MIT 18.06SC: $MIT1806_COUNT lectures"
 echo "    MIT 18.065: $MIT18065_COUNT lectures"
