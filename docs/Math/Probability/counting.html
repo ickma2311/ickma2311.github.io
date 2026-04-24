@@ -7,9 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Chao Ma">
-<meta name="dcterms.date" content="2026-02-08">
+<meta name="dcterms.date" content="2026-04-23">
+<meta name="description" content="Uniform probabilities on finite sample spaces, permutations, subsets, binomial coefficients, binomial probabilities, conditional counting, and partition arguments.">
 
-<title>Gilbert Strang’s Calculus: Max, Min, and Second Derivative – ∇ ickma.dev</title>
+<title>MIT 6.041 Probability: Counting – ∇ ickma.dev</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -1043,16 +1044,21 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#big-idea" id="toc-big-idea" class="nav-link active" data-scroll-target="#big-idea">Big idea</a></li>
-  <li><a href="#speed-slope-and-acceleration" id="toc-speed-slope-and-acceleration" class="nav-link" data-scroll-target="#speed-slope-and-acceleration">Speed, slope, and acceleration</a></li>
-  <li><a href="#convex-concave-and-inflection" id="toc-convex-concave-and-inflection" class="nav-link" data-scroll-target="#convex-concave-and-inflection">Convex, concave, and inflection</a></li>
-  <li><a href="#example-1-ysin-x" id="toc-example-1-ysin-x" class="nav-link" data-scroll-target="#example-1-ysin-x">Example 1: <span class="math inline">\(y=\sin x\)</span></a>
+  <li><a href="#counting-principle" id="toc-counting-principle" class="nav-link active" data-scroll-target="#counting-principle">Counting Principle</a></li>
+  <li><a href="#basic-counting-objects" id="toc-basic-counting-objects" class="nav-link" data-scroll-target="#basic-counting-objects">Basic Counting Objects</a>
   <ul class="collapse">
-  <li><a href="#maximum" id="toc-maximum" class="nav-link" data-scroll-target="#maximum">Maximum</a></li>
-  <li><a href="#inflection-point" id="toc-inflection-point" class="nav-link" data-scroll-target="#inflection-point">Inflection point</a></li>
-  <li><a href="#minimum" id="toc-minimum" class="nav-link" data-scroll-target="#minimum">Minimum</a></li>
+  <li><a href="#permutations" id="toc-permutations" class="nav-link" data-scroll-target="#permutations">Permutations</a></li>
+  <li><a href="#subsets" id="toc-subsets" class="nav-link" data-scroll-target="#subsets">Subsets</a></li>
+  <li><a href="#binomial-coefficients" id="toc-binomial-coefficients" class="nav-link" data-scroll-target="#binomial-coefficients">Binomial Coefficients</a></li>
   </ul></li>
-  <li><a href="#example-2-yx3-x2" id="toc-example-2-yx3-x2" class="nav-link" data-scroll-target="#example-2-yx3-x2">Example 2: <span class="math inline">\(y=x^3-x^2\)</span></a></li>
+  <li><a href="#binomial-probabilities" id="toc-binomial-probabilities" class="nav-link" data-scroll-target="#binomial-probabilities">Binomial Probabilities</a></li>
+  <li><a href="#conditional-counting-example" id="toc-conditional-counting-example" class="nav-link" data-scroll-target="#conditional-counting-example">Conditional Counting Example</a></li>
+  <li><a href="#partition-example-dealing-cards" id="toc-partition-example-dealing-cards" class="nav-link" data-scroll-target="#partition-example-dealing-cards">Partition Example: Dealing Cards</a>
+  <ul class="collapse">
+  <li><a href="#counting-the-whole-sample-space" id="toc-counting-the-whole-sample-space" class="nav-link" data-scroll-target="#counting-the-whole-sample-space">Counting the Whole Sample Space</a></li>
+  <li><a href="#counting-favorable-deals" id="toc-counting-favorable-deals" class="nav-link" data-scroll-target="#counting-favorable-deals">Counting Favorable Deals</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
   </ul>
 </nav>
     </div>
@@ -1061,15 +1067,21 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Gilbert Strang’s Calculus: Max, Min, and Second Derivative</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">MIT 6.041 Probability: Counting</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
   <div class="quarto-categories">
-    <div class="quarto-category">Calculus</div>
-    <div class="quarto-category">Derivatives</div>
-    <div class="quarto-category">Second Derivative</div>
-    <div class="quarto-category">Extrema</div>
+    <div class="quarto-category">Probability</div>
+    <div class="quarto-category">Counting</div>
+    <div class="quarto-category">Combinatorics</div>
+    <div class="quarto-category">Binomial Distribution</div>
+    <div class="quarto-category">MIT 6.041</div>
   </div>
   </div>
 
+<div>
+  <div class="description">
+    Uniform probabilities on finite sample spaces, permutations, subsets, binomial coefficients, binomial probabilities, conditional counting, and partition arguments.
+  </div>
+</div>
 
 
 <div class="quarto-title-meta">
@@ -1084,7 +1096,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">February 8, 2026</p>
+      <p class="date">April 23, 2026</p>
     </div>
   </div>
   
@@ -1096,86 +1108,177 @@ window.Quarto = {
 </header>
 
 
-<p>Video: <a href="https://www.youtube.com/watch?v=tBBJ2TSTa1Q&amp;t=974s">Max and Min and Second Derivative (Gilbert Strang)</a></p>
-<div class="quarto-video ratio ratio-16x9"><iframe data-external="1" src="https://www.youtube.com/embed/tBBJ2TSTa1Q" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>
-<section id="big-idea" class="level1">
-<h1>Big idea</h1>
-<p>The <strong>first derivative</strong> locates where slope is zero (candidates for max or min). The <strong>second derivative</strong> tells the curve’s bending direction, so we can decide whether that point is a maximum or minimum.</p>
-</section>
-<section id="speed-slope-and-acceleration" class="level1">
-<h1>Speed, slope, and acceleration</h1>
-<ul>
-<li><strong>Position/height</strong>: <span class="math inline">\(f(t)\)</span> describes where you are.</li>
-<li><strong>Speed/slope</strong>: <span class="math inline">\(f'(t)\)</span> is the instantaneous rate of change.</li>
-<li><strong>Acceleration/bending</strong>: <span class="math inline">\(f''(t)\)</span> tells how the slope itself changes.</li>
-</ul>
-<p>Example: if <span class="math inline">\(f(x)=x^2\)</span>, then <span class="math display">\[
-f'(x)=2x,\qquad f''(x)=2.
-\]</span> The constant positive second derivative says the curve bends upward everywhere.</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="max-min-second-derivative-1.png" class="img-fluid figure-img"></p>
-<figcaption>Second derivative for a parabola</figcaption>
-</figure>
-</div>
-</section>
-<section id="convex-concave-and-inflection" class="level1">
-<h1>Convex, concave, and inflection</h1>
-<ul>
-<li>If <span class="math inline">\(f''(x) &gt; 0\)</span>, the slope is increasing and the graph bends <strong>upward</strong> (convex).</li>
-<li>If <span class="math inline">\(f''(x) &lt; 0\)</span>, the slope is decreasing and the graph bends <strong>downward</strong> (concave).</li>
-<li>An <strong>inflection point</strong> is where the bending changes direction, typically where <span class="math inline">\(f''(x)=0\)</span>.</li>
-</ul>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="max-min-second-derivative-2.png" class="img-fluid figure-img"></p>
-<figcaption>Concave vs.&nbsp;convex and inflection</figcaption>
-</figure>
-</div>
-</section>
-<section id="example-1-ysin-x" class="level1">
-<h1>Example 1: <span class="math inline">\(y=\sin x\)</span></h1>
-<ul>
-<li><span class="math inline">\(y' = \cos x\)</span></li>
-<li><span class="math inline">\(y'' = -\sin x\)</span></li>
-</ul>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="max-min-second-derivative-3.png" class="img-fluid figure-img"></p>
-<figcaption>Sine with slope and curvature</figcaption>
-</figure>
-</div>
-<section id="maximum" class="level2">
-<h2 class="anchored" data-anchor-id="maximum">Maximum</h2>
-<p>At <span class="math inline">\(x=\pi/2\)</span>, <span class="math inline">\(y=1\)</span> and <span class="math inline">\(y'=0\)</span>. Since <span class="math inline">\(y''=-1&lt;0\)</span>, the curve bends downward, so this is a <strong>local maximum</strong>.</p>
-</section>
-<section id="inflection-point" class="level2">
-<h2 class="anchored" data-anchor-id="inflection-point">Inflection point</h2>
-<p>At <span class="math inline">\(x=\pi\)</span>, <span class="math inline">\(y''=0\)</span> and the bending changes sign. This is an <strong>inflection point</strong>.</p>
-</section>
-<section id="minimum" class="level2">
-<h2 class="anchored" data-anchor-id="minimum">Minimum</h2>
-<p>At <span class="math inline">\(x=3\pi/2\)</span>, <span class="math inline">\(y=-1\)</span> and <span class="math inline">\(y'=0\)</span>. Since <span class="math inline">\(y''=1&gt;0\)</span>, the curve bends upward, so this is a <strong>local minimum</strong>.</p>
-</section>
-</section>
-<section id="example-2-yx3-x2" class="level1">
-<h1>Example 2: <span class="math inline">\(y=x^3-x^2\)</span></h1>
-<ul>
-<li><span class="math inline">\(y' = 3x^2-2x = x(3x-2)\)</span></li>
-<li><span class="math inline">\(y'' = 6x-2\)</span></li>
-</ul>
-<p>Set <span class="math inline">\(y'=0\)</span>: <span class="math display">\[
-3x^2-2x=0 \quad\Rightarrow\quad x=0,\; x=\tfrac{2}{3}.
+<iframe width="100%" height="500" src="https://www.youtube.com/embed/6oV3pKLgW2I" title="MIT 6.041 Probability Counting" frameborder="0" allowfullscreen="">
+</iframe>
+<p>This lecture turns counting into probability. Once all sample points are equally likely, probabilities become ratios of set sizes, so combinatorics becomes a direct tool for solving probabilistic questions.</p>
+<section id="counting-principle" class="level2">
+<h2 class="anchored" data-anchor-id="counting-principle">Counting Principle</h2>
+<p>If the sample space <span class="math inline">\(\Omega\)</span> is finite and all sample points are equally likely, then for any event <span class="math inline">\(A\)</span>,</p>
+<p><span class="math display">\[
+P(A)=\frac{|A|}{|\Omega|}.
 \]</span></p>
-<ul>
-<li>At <span class="math inline">\(x=0\)</span>, <span class="math inline">\(y''=-2&lt;0\)</span>, so this is a <strong>local maximum</strong>.</li>
-<li>At <span class="math inline">\(x=\tfrac{2}{3}\)</span>, <span class="math inline">\(y''=2&gt;0\)</span>, so this is a <strong>local minimum</strong>.</li>
-</ul>
-<p>The inflection point is where <span class="math inline">\(y''=0\)</span>: <span class="math display">\[
-6x-2=0 \Rightarrow x=\tfrac{1}{3}.
+<p>This is the basic bridge from combinatorics to probability: count the favorable outcomes, count the total outcomes, and take the ratio.</p>
+</section>
+<section id="basic-counting-objects" class="level2">
+<h2 class="anchored" data-anchor-id="basic-counting-objects">Basic Counting Objects</h2>
+<section id="permutations" class="level3">
+<h3 class="anchored" data-anchor-id="permutations">Permutations</h3>
+<p>The number of ways to order <span class="math inline">\(n\)</span> distinct objects is</p>
+<p><span class="math display">\[
+n!.
 \]</span></p>
-<hr>
-<p><strong>Takeaway.</strong> First derivative = where the slope is zero. Second derivative = which way the curve bends. Together they classify maxima, minima, and inflection points.</p>
+</section>
+<section id="subsets" class="level3">
+<h3 class="anchored" data-anchor-id="subsets">Subsets</h3>
+<p>A set with <span class="math inline">\(n\)</span> elements has</p>
+<p><span class="math display">\[
+2^n
+\]</span></p>
+<p>subsets, because each element is either included or excluded.</p>
+</section>
+<section id="binomial-coefficients" class="level3">
+<h3 class="anchored" data-anchor-id="binomial-coefficients">Binomial Coefficients</h3>
+<p>The number of ways to choose <span class="math inline">\(k\)</span> elements from an <span class="math inline">\(n\)</span>-element set is</p>
+<p><span class="math display">\[
+\binom{n}{k}.
+\]</span></p>
+<p>Choosing and then ordering those <span class="math inline">\(k\)</span> elements gives</p>
+<p><span class="math display">\[
+\binom{n}{k}k!
+=
+n(n-1)\cdots(n-k+1)
+=
+\frac{n!}{(n-k)!}.
+\]</span></p>
+<p>So</p>
+<p><span class="math display">\[
+\binom{n}{k}
+=
+\frac{n!}{k!(n-k)!}.
+\]</span></p>
+<p>Useful boundary cases:</p>
+<p><span class="math display">\[
+\binom{n}{n}=1,
+\qquad
+\binom{n}{0}=1.
+\]</span></p>
+<p>And summing over all subset sizes gives</p>
+<p><span class="math display">\[
+\sum_{k=0}^n \binom{n}{k}=2^n.
+\]</span></p>
+<p>This identity is just saying: if you count all subsets by size, you get the total number of subsets.</p>
+<p><img src="counting-1.png" class="img-fluid"></p>
+</section>
+</section>
+<section id="binomial-probabilities" class="level2">
+<h2 class="anchored" data-anchor-id="binomial-probabilities">Binomial Probabilities</h2>
+<p>Suppose we toss a coin independently <span class="math inline">\(n\)</span> times, with</p>
+<p><span class="math display">\[
+P(H)=p,
+\qquad
+P(T)=1-p.
+\]</span></p>
+<p>For a particular sequence, multiply the probabilities along the sequence. For example,</p>
+<p><span class="math display">\[
+P(\text{HTTHHH})
+=
+p(1-p)(1-p)ppp
+=
+p^4(1-p)^2.
+\]</span></p>
+<p>Any sequence with exactly <span class="math inline">\(k\)</span> heads and <span class="math inline">\(n-k\)</span> tails has the same probability:</p>
+<p><span class="math display">\[
+p^k(1-p)^{n-k}.
+\]</span></p>
+<p>There are</p>
+<p><span class="math display">\[
+\binom{n}{k}
+\]</span></p>
+<p>such sequences, so</p>
+<p><span class="math display">\[
+P(\text{exactly }k\text{ heads})
+=
+\binom{n}{k}p^k(1-p)^{n-k}.
+\]</span></p>
+<p>Summing over all possible numbers of heads gives</p>
+<p><span class="math display">\[
+\sum_{k=0}^n \binom{n}{k}p^k(1-p)^{n-k}=1,
+\]</span></p>
+<p>because these cases exhaust all possible outcomes. This is the binomial theorem in probability form.</p>
+</section>
+<section id="conditional-counting-example" class="level2">
+<h2 class="anchored" data-anchor-id="conditional-counting-example">Conditional Counting Example</h2>
+<p>Suppose a coin is flipped <span class="math inline">\(10\)</span> times and we know that exactly <span class="math inline">\(3\)</span> of the tosses were heads. What is the probability that the first two tosses were both heads?</p>
+<p>Let</p>
+<ul>
+<li><span class="math inline">\(B\)</span>: exactly <span class="math inline">\(3\)</span> heads appear in <span class="math inline">\(10\)</span> tosses</li>
+<li><span class="math inline">\(A\)</span>: the first two tosses are heads</li>
+</ul>
+<p>The event <span class="math inline">\(B\)</span> contains</p>
+<p><span class="math display">\[
+\binom{10}{3}
+\]</span></p>
+<p>possible placements of the three heads.</p>
+<p>For <span class="math inline">\(A\cap B\)</span>, the first two head positions are fixed, so the remaining <span class="math inline">\(1\)</span> head must be chosen from the last <span class="math inline">\(8\)</span> tosses:</p>
+<p><span class="math display">\[
+|A\cap B|=\binom{8}{1}.
+\]</span></p>
+<p>Therefore</p>
+<p><span class="math display">\[
+P(A\mid B)
+=
+\frac{P(A\cap B)}{P(B)}
+=
+\frac{\binom{8}{1}}{\binom{10}{3}}.
+\]</span></p>
+<p>This is a nice example of conditional probability reducing to conditional counting.</p>
+</section>
+<section id="partition-example-dealing-cards" class="level2">
+<h2 class="anchored" data-anchor-id="partition-example-dealing-cards">Partition Example: Dealing Cards</h2>
+<p>A deck of <span class="math inline">\(52\)</span> cards is dealt to <span class="math inline">\(4\)</span> players, <span class="math inline">\(13\)</span> cards each. What is the probability that each player gets exactly one ace?</p>
+<section id="counting-the-whole-sample-space" class="level3">
+<h3 class="anchored" data-anchor-id="counting-the-whole-sample-space">Counting the Whole Sample Space</h3>
+<p>One way to count all possible deals is sequential partitioning:</p>
+<p><span class="math display">\[
+\binom{52}{13}\binom{39}{13}\binom{26}{13}\binom{13}{13}.
+\]</span></p>
+</section>
+<section id="counting-favorable-deals" class="level3">
+<h3 class="anchored" data-anchor-id="counting-favorable-deals">Counting Favorable Deals</h3>
+<p>To force each player to receive one ace:</p>
+<ul>
+<li>assign the <span class="math inline">\(4\)</span> aces to the <span class="math inline">\(4\)</span> players in</li>
+</ul>
+<p><span class="math display">\[
+4!
+\]</span></p>
+<p>ways</p>
+<ul>
+<li>then fill the remaining <span class="math inline">\(12\)</span> cards for each player from the <span class="math inline">\(48\)</span> non-aces:</li>
+</ul>
+<p><span class="math display">\[
+\binom{48}{12}\binom{36}{12}\binom{24}{12}\binom{12}{12}.
+\]</span></p>
+<p>So the desired probability is</p>
+<p><span class="math display">\[
+\frac{
+4!\binom{48}{12}\binom{36}{12}\binom{24}{12}\binom{12}{12}
+}{
+\binom{52}{13}\binom{39}{13}\binom{26}{13}\binom{13}{13}
+}.
+\]</span></p>
+<p>The main idea is not the final expression itself, but the method: count the full partition space, count the restricted partition space, and divide.</p>
+</section>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<ul>
+<li>when sample points are equally likely, probabilities reduce to ratios of counts</li>
+<li>permutations count orderings, subsets count inclusion choices, and binomial coefficients count selections</li>
+<li>binomial coefficients connect directly to probabilities of repeated Bernoulli trials</li>
+<li>conditional probability problems can often be solved by conditional counting</li>
+<li>partition arguments are useful when outcomes are distributed across several groups</li>
+</ul>
 
 
 <!-- -->
@@ -1664,82 +1767,224 @@ f'(x)=2x,\qquad f''(x)=2.
   loadGiscus();
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Gilbert Strang's Calculus: Max, Min, and Second Derivative"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "MIT 6.041 Probability: Counting"</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-02-08"</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Calculus, Derivatives, Second Derivative, Extrema]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>Video: <span class="co">[</span><span class="ot">Max and Min and Second Derivative (Gilbert Strang)</span><span class="co">](https://www.youtube.com/watch?v=tBBJ2TSTa1Q&amp;t=974s)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-04-23"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Probability, Counting, Combinatorics, Binomial Distribution, MIT 6.041]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Uniform probabilities on finite sample spaces, permutations, subsets, binomial coefficients, binomial probabilities, conditional counting, and partition arguments."</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>{{&lt; video https://www.youtube.com/watch?v=tBBJ2TSTa1Q&amp;t=974s &gt;}}</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">iframe</span><span class="ot"> width</span><span class="op">=</span><span class="st">"100%"</span><span class="ot"> height</span><span class="op">=</span><span class="st">"500"</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://www.youtube.com/embed/6oV3pKLgW2I"</span><span class="ot"> title</span><span class="op">=</span><span class="st">"MIT 6.041 Probability Counting"</span><span class="ot"> frameborder</span><span class="op">=</span><span class="st">"0"</span><span class="ot"> allowfullscreen</span><span class="dt">&gt;&lt;/</span><span class="kw">iframe</span><span class="dt">&gt;</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu"># Big idea</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>This lecture turns counting into probability. Once all sample points are equally likely, probabilities become ratios of set sizes, so combinatorics becomes a direct tool for solving probabilistic questions.</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>The **first derivative** locates where slope is zero (candidates for max or min). The **second derivative** tells the curve's bending direction, so we can decide whether that point is a maximum or minimum.</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">## Counting Principle</span></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu"># Speed, slope, and acceleration</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>If the sample space $\Omega$ is finite and all sample points are equally likely, then for any event $A$,</span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Position/height**: $f(t)$ describes where you are.</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Speed/slope**: $f'(t)$ is the instantaneous rate of change.</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Acceleration/bending**: $f''(t)$ tells how the slope itself changes.</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>P(A)=\frac{|A|}{|\Omega|}.</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>Example: if $f(x)=x^2$, then</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>f'(x)=2x,\qquad f''(x)=2.</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>The constant positive second derivative says the curve bends upward everywhere.</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>This is the basic bridge from combinatorics to probability: count the favorable outcomes, count the total outcomes, and take the ratio.</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">## Basic Counting Objects</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="fu">### Permutations</span></span>
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="al">![Second derivative for a parabola](max-min-second-derivative-1.png)</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>The number of ways to order $n$ distinct objects is</span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="fu"># Convex, concave, and inflection</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>If $f''(x) &gt; 0$, the slope is increasing and the graph bends **upward** (convex).</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>If $f''(x) &lt; 0$, the slope is decreasing and the graph bends **downward** (concave).</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>An **inflection point** is where the bending changes direction, typically where $f''(x)=0$.</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>n!.</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="fu">### Subsets</span></span>
 <span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="al">![Concave vs. convex and inflection](max-min-second-derivative-2.png)</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>A set with $n$ elements has</span>
 <span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="fu"># Example 1: $y=\sin x$</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$y' = \cos x$</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$y'' = -\sin x$</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="al">![Sine with slope and curvature](max-min-second-derivative-3.png)</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="fu">## Maximum</span></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>At $x=\pi/2$, $y=1$ and $y'=0$. Since $y''=-1&lt;0$, the curve bends downward, so this is a **local maximum**.</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="fu">## Inflection point</span></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>At $x=\pi$, $y''=0$ and the bending changes sign. This is an **inflection point**.</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="fu">## Minimum</span></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>At $x=3\pi/2$, $y=-1$ and $y'=0$. Since $y''=1&gt;0$, the curve bends upward, so this is a **local minimum**.</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a><span class="fu"># Example 2: $y=x^3-x^2$</span></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$y' = 3x^2-2x = x(3x-2)$</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$y'' = 6x-2$</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>2^n</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>subsets, because each element is either included or excluded.</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="fu">### Binomial Coefficients</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>The number of ways to choose $k$ elements from an $n$-element set is</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>\binom{n}{k}.</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>Choosing and then ordering those $k$ elements gives</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>\binom{n}{k}k!</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>n(n-1)\cdots(n-k+1)</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>\frac{n!}{(n-k)!}.</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>Set $y'=0$:</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>3x^2-2x=0 \quad\Rightarrow\quad x=0,\; x=\tfrac{2}{3}.</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>At $x=0$, $y''=-2&lt;0$, so this is a **local maximum**.</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>At $x=\tfrac{2}{3}$, $y''=2&gt;0$, so this is a **local minimum**.</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>So</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>\binom{n}{k}</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>\frac{n!}{k!(n-k)!}.</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>The inflection point is where $y''=0$:</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>6x-2=0 \Rightarrow x=\tfrac{1}{3}.</span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>**Takeaway.** First derivative = where the slope is zero. Second derivative = which way the curve bends. Together they classify maxima, minima, and inflection points.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>Useful boundary cases:</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>\binom{n}{n}=1,</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>\binom{n}{0}=1.</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>And summing over all subset sizes gives</span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>\sum_{k=0}^n \binom{n}{k}=2^n.</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>This identity is just saying: if you count all subsets by size, you get the total number of subsets.</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="al">![](counting-1.png)</span></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a><span class="fu">## Binomial Probabilities</span></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>Suppose we toss a coin independently $n$ times, with</span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>P(H)=p,</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>P(T)=1-p.</span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>For a particular sequence, multiply the probabilities along the sequence. For example,</span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>P(\text{HTTHHH})</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>p(1-p)(1-p)ppp</span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>p^4(1-p)^2.</span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>Any sequence with exactly $k$ heads and $n-k$ tails has the same probability:</span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>p^k(1-p)^{n-k}.</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>There are</span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>\binom{n}{k}</span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>such sequences, so</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>P(\text{exactly }k\text{ heads})</span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>\binom{n}{k}p^k(1-p)^{n-k}.</span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>Summing over all possible numbers of heads gives</span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>\sum_{k=0}^n \binom{n}{k}p^k(1-p)^{n-k}=1,</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>because these cases exhaust all possible outcomes. This is the binomial theorem in probability form.</span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a><span class="fu">## Conditional Counting Example</span></span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>Suppose a coin is flipped $10$ times and we know that exactly $3$ of the tosses were heads. What is the probability that the first two tosses were both heads?</span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>Let</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$B$: exactly $3$ heads appear in $10$ tosses</span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$A$: the first two tosses are heads</span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>The event $B$ contains</span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>\binom{10}{3}</span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>possible placements of the three heads.</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>For $A\cap B$, the first two head positions are fixed, so the remaining $1$ head must be chosen from the last $8$ tosses:</span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>A\cap B<span class="pp">|</span>=\binom{8}{1}.</span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>Therefore</span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>P(A\mid B)</span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>\frac{P(A\cap B)}{P(B)}</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>\frac{\binom{8}{1}}{\binom{10}{3}}.</span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a>This is a nice example of conditional probability reducing to conditional counting.</span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a><span class="fu">## Partition Example: Dealing Cards</span></span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>A deck of $52$ cards is dealt to $4$ players, $13$ cards each. What is the probability that each player gets exactly one ace?</span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a><span class="fu">### Counting the Whole Sample Space</span></span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a>One way to count all possible deals is sequential partitioning:</span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>\binom{52}{13}\binom{39}{13}\binom{26}{13}\binom{13}{13}.</span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a><span class="fu">### Counting Favorable Deals</span></span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a>To force each player to receive one ace:</span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>assign the $4$ aces to the $4$ players in</span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a>4!</span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>ways</span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>then fill the remaining $12$ cards for each player from the $48$ non-aces:</span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a>\binom{48}{12}\binom{36}{12}\binom{24}{12}\binom{12}{12}.</span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a>So the desired probability is</span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>\frac{</span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>4!\binom{48}{12}\binom{36}{12}\binom{24}{12}\binom{12}{12}</span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a>}{</span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a>\binom{52}{13}\binom{39}{13}\binom{26}{13}\binom{13}{13}</span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a>}.</span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a>The main idea is not the final expression itself, but the method: count the full partition space, count the restricted partition space, and divide.</span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary</span></span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>when sample points are equally likely, probabilities reduce to ratios of counts</span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>permutations count orderings, subsets count inclusion choices, and binomial coefficients count selections</span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>binomial coefficients connect directly to probabilities of repeated Bernoulli trials</span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>conditional probability problems can often be solved by conditional counting</span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>partition arguments are useful when outcomes are distributed across several groups</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
