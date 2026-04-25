@@ -32,6 +32,9 @@ DL_PAPERS_COUNT=$(grep -c "^\*\*\[" ML/papers/index.qmd)
 # Count RL notes
 RL_COUNT=$(grep -c "^\*\*\[" ML/RL/index.qmd)
 
+# Count JAX notes
+JAX_COUNT=$(grep -c "^\*\*\[" ML/JAX/index.qmd)
+
 # Count ML HW-SW codesign notes
 HWSW_COUNT=$(grep -c "^\*\*\[" ML/HW-SW-codesign/index.qmd)
 
@@ -45,6 +48,7 @@ echo "    MIT 18.06SC: $MIT1806_COUNT lectures"
 echo "    MIT 18.065: $MIT18065_COUNT lectures"
 echo "    Stanford EE 364A: $EE364A_COUNT lectures"
 echo "  Deep Learning Papers: $DL_PAPERS_COUNT notes"
+echo "  JAX: $JAX_COUNT notes"
 echo "  RL: $RL_COUNT notes"
 echo "  ML HW-SW Codesign: $HWSW_COUNT notes"
 
@@ -54,6 +58,8 @@ sed -i.bak "s/Goodfellow Deep Learning Book <span class=\"section-count\">[0-9]*
 sed -i.bak "s/Math <span class=\"section-count\">[0-9]* item[s]\\{0,1\\}/Math <span class=\\\"section-count\\\">$MATH_COUNT item$( [ $MATH_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
 sed -i.bak "s/Papers in Deep Learning <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/Papers in Deep Learning <span class=\\\"section-count\\\">$DL_PAPERS_COUNT note$( [ $DL_PAPERS_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
+
+sed -i.bak "s/JAX <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/JAX <span class=\\\"section-count\\\">$JAX_COUNT note$( [ $JAX_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
 sed -i.bak "s/RL <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/RL <span class=\\\"section-count\\\">$RL_COUNT note$( [ $RL_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
