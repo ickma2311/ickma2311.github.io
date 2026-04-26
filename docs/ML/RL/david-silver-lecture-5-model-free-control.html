@@ -1,0 +1,2265 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Chao Ma">
+<meta name="dcterms.date" content="2026-04-26">
+<meta name="description" content="Lecture 5 notes on model-free control: epsilon-greedy improvement, GLIE Monte Carlo control, Sarsa, n-step and lambda methods, off-policy learning, importance sampling, and Q-learning.">
+
+<title>David Silver RL Course - Lecture 5: Model-Free Control – ∇ ickma.dev</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../favicon.svg" rel="icon" type="image/svg+xml">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-PK5N5KWZBF"></script>
+
+<script type="text/javascript">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-PK5N5KWZBF', { 'anonymize_ip': true});
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">∇ ickma.dev</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-deep-learning" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Deep Learning</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-deep-learning">    
+        <li class="dropdown-header">ML HW-SW Codesign</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-01-introduction.html">
+ <span class="dropdown-text">Efficient AI Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-03-pruning-and-sparsity-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 3: Pruning and Sparsity (Part 1)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-04-pruning-and-sparsity-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 4: Pruning and Sparsity (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-05-quantization-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 5: Quantization (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-06-quantization-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 6: Quantization (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-07-neural-architecture-search-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 7: Neural Architecture Search (Part I)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">JAX</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-ai-stack.html">
+ <span class="dropdown-text">JAX AI Stack</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">RL</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-5-model-free-control.html">
+ <span class="dropdown-text">David Silver Lecture 5: Model-Free Control</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/cmu-advanced-nlp-reinforcement-learning.html">
+ <span class="dropdown-text">CMU Advanced NLP: Reinforcement Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-4-model-free-prediction.html">
+ <span class="dropdown-text">David Silver Lecture 4: Model-Free Prediction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-3-planning-by-dynamic-programming.html">
+ <span class="dropdown-text">David Silver Lecture 3: Planning by Dynamic Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-2-markov-decision-process.html">
+ <span class="dropdown-text">David Silver Lecture 2: Markov Decision Process</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-1-introduction-to-reinforcement-learning.html">
+ <span class="dropdown-text">David Silver Lecture 1: Introduction to RL</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Papers in Deep Learning</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/generative-adversarial-nets.html">
+ <span class="dropdown-text">Generative Adversarial Nets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/why-tpu-is-fast-for-dot-product.html">
+ <span class="dropdown-text">Why TPU Is Fast for Dot Product</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/transformer-attention-is-all-you-need.html">
+ <span class="dropdown-text">Transformer: Attention Is All You Need</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/attention-origin-transformer.html">
+ <span class="dropdown-text">Attention: The Origin of Transformer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/batch-normalization.html">
+ <span class="dropdown-text">Batch Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/lora.html">
+ <span class="dropdown-text">LoRA: Low-Rank Adaptation</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-learning-book.html">
+ <span class="dropdown-text">Goodfellow Deep Learning Book (Overview)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/xor-deep-learning.html">
+ <span class="dropdown-text">Chapter 6.1: XOR Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/likelihood-loss-functions.html">
+ <span class="dropdown-text">Chapter 6.2: Loss Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/activation-functions.html">
+ <span class="dropdown-text">Chapter 6.3: Activation Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/architecture-design.html">
+ <span class="dropdown-text">Chapter 6.4: Architecture Design</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/backpropagation.html">
+ <span class="dropdown-text">Chapter 6.5: Back-Propagation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/hessian-prerequisites.html">
+ <span class="dropdown-text">Chapter 7 Prerequisites: Hessian Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l2-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.1: L2 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l1-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.2: L1 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/constrained-optimization-regularization.html">
+ <span class="dropdown-text">Chapter 7.2: Constrained Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/regularization-underconstrained.html">
+ <span class="dropdown-text">Chapter 7.3: Under-Constrained Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dataset-augmentation.html">
+ <span class="dropdown-text">Chapter 7.4: Dataset Augmentation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/noise-robustness.html">
+ <span class="dropdown-text">Chapter 7.5: Noise Robustness</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/semi-supervised-learning.html">
+ <span class="dropdown-text">Chapter 7.6: Semi-Supervised Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/multi-task-learning.html">
+ <span class="dropdown-text">Chapter 7.7: Multi-Task Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/early-stopping.html">
+ <span class="dropdown-text">Chapter 7.8: Early Stopping</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-tying-sharing.html">
+ <span class="dropdown-text">Chapter 7.9: Parameter Tying &amp; Sharing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-sparsity.html">
+ <span class="dropdown-text">Chapter 7.10: Sparse Representations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/bagging-ensemble.html">
+ <span class="dropdown-text">Chapter 7.11: Bagging &amp; Ensemble Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dropout.html">
+ <span class="dropdown-text">Chapter 7.12: Dropout</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adversarial-training.html">
+ <span class="dropdown-text">Chapter 7.13: Adversarial Training</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/tangent-prop-manifold.html">
+ <span class="dropdown-text">Chapter 7.14: Tangent Prop &amp; Manifolds</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/learning-vs-optimization.html">
+ <span class="dropdown-text">Chapter 8.1: Learning vs Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-challenges.html">
+ <span class="dropdown-text">Chapter 8.2: Optimization Challenges</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/basic-optimization-algorithms.html">
+ <span class="dropdown-text">Chapter 8.3: Basic Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-initialization.html">
+ <span class="dropdown-text">Chapter 8.4: Parameter Initialization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adaptive-learning-rates.html">
+ <span class="dropdown-text">Chapter 8.5: Adaptive Learning Rates</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/second-order-methods.html">
+ <span class="dropdown-text">Chapter 8.6: Second-Order Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-strategies.html">
+ <span class="dropdown-text">Chapter 8.7: Optimization Strategies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolution-computation.html">
+ <span class="dropdown-text">Chapter 9.1: Convolution Computation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-motivation.html">
+ <span class="dropdown-text">Chapter 9.2: CNN Motivation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-pooling.html">
+ <span class="dropdown-text">Chapter 9.3: Pooling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-infinitely-strong-prior.html">
+ <span class="dropdown-text">Chapter 9.4: Infinitely Strong Prior</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolutional-functions.html">
+ <span class="dropdown-text">Chapter 9.5: Convolutional Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-structured-outputs.html">
+ <span class="dropdown-text">Chapter 9.6: Structured Outputs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-data-types.html">
+ <span class="dropdown-text">Chapter 9.7: Data Types</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-efficient-convolution.html">
+ <span class="dropdown-text">Chapter 9.8: Efficient Convolution</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-unsupervised-learning.html">
+ <span class="dropdown-text">Chapter 9.9: Unsupervised Feature Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-neuroscience.html">
+ <span class="dropdown-text">Chapter 9.10: Neuroscientific Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-unfold-computation-graph.html">
+ <span class="dropdown-text">Chapter 10.1: Unfold Computation Graph</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recurrent-neural-networks.html">
+ <span class="dropdown-text">Chapter 10.2: Recurrent Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-bidirectional.html">
+ <span class="dropdown-text">Chapter 10.3: Bidirectional RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-encoder-decoder.html">
+ <span class="dropdown-text">Chapter 10.4: Encoder-Decoder Seq2Seq</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-deep.html">
+ <span class="dropdown-text">Chapter 10.5: Deep RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recursive.html">
+ <span class="dropdown-text">Chapter 10.6: Recursive Neural Network</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-long-term-dependency.html">
+ <span class="dropdown-text">Chapter 10.7: Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-echo-state.html">
+ <span class="dropdown-text">Chapter 10.8: Echo State Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-leaky-unit.html">
+ <span class="dropdown-text">Chapter 10.9: Leaky Units</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-lstm-gru.html">
+ <span class="dropdown-text">Chapter 10.10: LSTM and GRU</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-optimize-long-term.html">
+ <span class="dropdown-text">Chapter 10.11: Optimizing Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-explicit-memory.html">
+ <span class="dropdown-text">Chapter 10.12: Explicit Memory</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/practical-methodology.html">
+ <span class="dropdown-text">Chapter 11: Practical Methodology</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/large-scale-deep-learning.html">
+ <span class="dropdown-text">Chapter 12.1: Large-Scale Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/image-preprocessing-normalization.html">
+ <span class="dropdown-text">Chapter 12.2: Image Preprocessing and Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/automatic-speech-recognition.html">
+ <span class="dropdown-text">Chapter 12.3: Automatic Speech Recognition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/nlp-applications.html">
+ <span class="dropdown-text">Chapter 12.4: NLP Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/other-applications.html">
+ <span class="dropdown-text">Chapter 12.5: Other Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/linear-factor-models.html">
+ <span class="dropdown-text">Chapter 13: Linear Factor Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/autoencoders.html">
+ <span class="dropdown-text">Chapter 14: Autoencoders</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-learning.html">
+ <span class="dropdown-text">Chapter 15: Representation Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/structured-probabilistic-models.html">
+ <span class="dropdown-text">Chapter 16: Structured Probabilistic Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/monte-carlo-methods.html">
+ <span class="dropdown-text">Chapter 17: Monte Carlo Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/confronting-partition-function.html">
+ <span class="dropdown-text">Chapter 18: Confronting the Partition Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/approximate-inference.html">
+ <span class="dropdown-text">Chapter 19: Approximate Inference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-generative-models.html">
+ <span class="dropdown-text">Chapter 20: Deep Generative Models</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-math" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Math</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-math">    
+        <li>
+    <a class="dropdown-item" href="../../Math/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Probability</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/index.html">
+ <span class="dropdown-text">MIT 6.041 Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/counting.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Counting</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/independence.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Independence</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/conditioning-bayes-rule.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Conditioning and Bayes’ Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/probability-models-axioms.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Probability Models and Axioms</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Information Theory</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/index.html">
+ <span class="dropdown-text">Oxford Math Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-1-defining-entropy-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 1: Defining Entropy and Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-2-basic-properties-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 2: Basic Properties of Information</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Calculus</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/six-functions-rules-theorems.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Six Functions, Six Rules, and Six Theorems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-growth.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Growth</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-motion.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Motion</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/power-series-eulers-great-formula.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Power Series and Euler’s Great Formula</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/linear-approximation-newtons-method.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Linear Approximation and Newton’s Method</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/growth-rates-log-graphs.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Growth Rates and Log Graphs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivatives-ln-arcsin.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivatives of ln y and arcsin(y)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/limits-continuous-functions.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Limits and Continuous Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivative-sin-cos.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivative of sin x and cos x</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/product-quotient-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Product Rule and Quotient Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/chain-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Chains and the Chain Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-integral.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture Integral</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/exponential-function.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: The Exponential Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/max-min-second-derivative.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Max, Min, and Second Derivative</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-derivatives.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture on Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/highlights-of-calculus.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Highlights</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Reflections &amp; Synthesis</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/mit1806-invertibility-connections.html">
+ <span class="dropdown-text">Invertibility Connections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/taylor-euler-fourier.html">
+ <span class="dropdown-text">Taylor, Euler, and Fourier</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.06SC Linear Algebra</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture1-geometry.html">
+ <span class="dropdown-text">Lecture 1: Geometry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture2-elimination.html">
+ <span class="dropdown-text">Lecture 2: Elimination</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture3-multiplication.html">
+ <span class="dropdown-text">Lecture 3: Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture4-lu-decomposition.html">
+ <span class="dropdown-text">Lecture 4: LU Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-permutations.html">
+ <span class="dropdown-text">Lecture 5.1: Permutations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-2-transpose.html">
+ <span class="dropdown-text">Lecture 5.2: Transpose</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-3-spaces.html">
+ <span class="dropdown-text">Lecture 5.3: Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture6-column-null-space.html">
+ <span class="dropdown-text">Lecture 6: Column &amp; Null Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture7-solving-ax-0.html">
+ <span class="dropdown-text">Lecture 7: Solving Ax=0</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture8-solving-ax-b.html">
+ <span class="dropdown-text">Lecture 8: Solving Ax=b</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture9-independence-basis-dimension.html">
+ <span class="dropdown-text">Lecture 9: Independence, Basis, Dimension</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture10-four-subspaces.html">
+ <span class="dropdown-text">Lecture 10: Four Fundamental Subspaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture11-matrix-spaces.html">
+ <span class="dropdown-text">Lecture 11: Matrix Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture12-graphs-networks.html">
+ <span class="dropdown-text">Lecture 12: Graphs and Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture13-quiz-review.html">
+ <span class="dropdown-text">Lecture 13: Quiz 1 Review</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture14-orthogonality.html">
+ <span class="dropdown-text">Lecture 14: Orthogonality</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture15-projections.html">
+ <span class="dropdown-text">Lecture 15: Projections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture16-least-squares.html">
+ <span class="dropdown-text">Lecture 16: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture17-gram-schmidt.html">
+ <span class="dropdown-text">Lecture 17: Gram-Schmidt</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture18-determinants.html">
+ <span class="dropdown-text">Lecture 18: Determinants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture19-determinant-formulas.html">
+ <span class="dropdown-text">Lecture 19: Determinant Formulas</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture20-cramers-rule.html">
+ <span class="dropdown-text">Lecture 20: Inverse &amp; Volume</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture21-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 21: Eigenvalues &amp; Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture22-diagonalization-powers.html">
+ <span class="dropdown-text">Lecture 22: Diagonalization &amp; Powers</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture23-differential-equations.html">
+ <span class="dropdown-text">Lecture 23: Differential Equations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture24-markov-fourier.html">
+ <span class="dropdown-text">Lecture 24: Markov &amp; Fourier</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture25-symmetric-positive-definite.html">
+ <span class="dropdown-text">Lecture 25: Symmetric &amp; Positive Definite</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture26-complex-matrices-fft.html">
+ <span class="dropdown-text">Lecture 26: Complex Matrices &amp; FFT</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture27-positive-definite-minima.html">
+ <span class="dropdown-text">Lecture 27: Positive Definite &amp; Minima</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture28-similar-matrices-jordan.html">
+ <span class="dropdown-text">Lecture 28: Similar Matrices &amp; Jordan Form</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture29-svd.html">
+ <span class="dropdown-text">Lecture 29: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture30-linear-transformations.html">
+ <span class="dropdown-text">Lecture 30: Linear Transformations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture31-change-of-basis.html">
+ <span class="dropdown-text">Lecture 31: Change of Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture33-left-right-inverse.html">
+ <span class="dropdown-text">Lecture 33: Left &amp; Right Inverse</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.065: Linear Algebra Applications</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture1-column-space.html">
+ <span class="dropdown-text">Lecture 1: Column Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture2-multiplying-factoring.html">
+ <span class="dropdown-text">Lecture 2: Multiplying and Factoring Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture3-orthonormal-columns.html">
+ <span class="dropdown-text">Lecture 3: Orthonormal Columns</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture4-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 4: Eigenvalues and Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture5-positive-definite.html">
+ <span class="dropdown-text">Lecture 5: Positive Definite Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture6-svd.html">
+ <span class="dropdown-text">Lecture 6: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture7-eckart-young.html">
+ <span class="dropdown-text">Lecture 7: Eckart-Young Theorem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture8-norms.html">
+ <span class="dropdown-text">Lecture 8: Norms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture9-least-squares.html">
+ <span class="dropdown-text">Lecture 9: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture10-axb-difficulties.html">
+ <span class="dropdown-text">Lecture 10: Survey of Ax=b Difficulties</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/lecture-11-minimize-norm-subject-to-constraint.html">
+ <span class="dropdown-text">Lecture 11: Minimize Norm subject to Constraint</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture12-eigenvalue-algorithms.html">
+ <span class="dropdown-text">Lecture 12: Computing Eigenvalues</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture13-randomized-matrix-multiplication.html">
+ <span class="dropdown-text">Lecture 13: Randomized Matrix Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture14-low-rank-changes-inverse.html">
+ <span class="dropdown-text">Lecture 14: Low Rank Changes</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture15-matrix-derivatives.html">
+ <span class="dropdown-text">Lecture 15: Matrix Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture16-derivative-inverse-singular-values.html">
+ <span class="dropdown-text">Lecture 16: Derivative of Inverse and Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture17-rapidly-decreasing-singular-values.html">
+ <span class="dropdown-text">Lecture 17: Rapidly Decreasing Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture18-counting-parameters-svd-lu-qr-saddle-points.html">
+ <span class="dropdown-text">Lecture 18: Counting Parameters in SVD, LU, QR, and Saddle Points</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture19-saddle-point-maxmin-principle.html">
+ <span class="dropdown-text">Lecture 19: Saddle Point and the Max–Min Principle</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture20-probability-definitions-inequalities.html">
+ <span class="dropdown-text">Lecture 20: Probability Definitions and Inequalities</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture21-minimizing-function.html">
+ <span class="dropdown-text">Lecture 21: Minimizing a Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture22-gradient-descent.html">
+ <span class="dropdown-text">Lecture 22: Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture23-accelerating-gradient-descent-momentum.html">
+ <span class="dropdown-text">Lecture 23: Accelerating Gradient Descent (Momentum)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture24-linear-programming-two-person-games.html">
+ <span class="dropdown-text">Lecture 24: Linear Programming and Two-Person Games</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture25-stochastic-gradient-descent.html">
+ <span class="dropdown-text">Lecture 25: Stochastic Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture26-structure-of-neural-nets.html">
+ <span class="dropdown-text">Lecture 26: Structure of Neural Nets for Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture27-backpropagation-partial-gradients.html">
+ <span class="dropdown-text">Lecture 27: Back Propagation and Partial Gradients</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture30-completing-rank1-circulants.html">
+ <span class="dropdown-text">Lecture 30: Completing a Rank-1 Matrix, Circulants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture31-fourier-matrix.html">
+ <span class="dropdown-text">Lecture 31: Eigenvectors of Circulant Matrices, Fourier Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture32-convolution-rule.html">
+ <span class="dropdown-text">Lecture 32: The Convolution Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture34-distance-matrices-procrustes.html">
+ <span class="dropdown-text">Lecture 34: Distance Matrices, Procrustes Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture35-find-clusters-graph.html">
+ <span class="dropdown-text">Lecture 35: Find Clusters in Graph</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Stanford EE 364A: Convex Optimization</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/lectures.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture1-intro.html">
+ <span class="dropdown-text">Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture2-math-foundations.html">
+ <span class="dropdown-text">Lecture 2: Convex Sets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture3-convex-functions.html">
+ <span class="dropdown-text">Lecture 3: Convex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part1-operations-preserving-convexity.html">
+ <span class="dropdown-text">Lecture 4.1: Operations Preserving Convexity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part2-conjugate-quasiconvex.html">
+ <span class="dropdown-text">Lecture 4.2: Conjugate &amp; Quasiconvex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part1-log-concave-convex.html">
+ <span class="dropdown-text">Lecture 5.1: Log-Concave &amp; Log-Convex</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part2-monotonicity.html">
+ <span class="dropdown-text">Lecture 5.2: Monotonicity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture6-optimization-problems.html">
+ <span class="dropdown-text">Chapter 4.1: Optimization Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture7-convex-optimization.html">
+ <span class="dropdown-text">Chapter 4.2: Convex Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture8-linear-optimization.html">
+ <span class="dropdown-text">Chapter 4.3: Linear Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture9-quadratic-optimization.html">
+ <span class="dropdown-text">Chapter 4.4: Quadratic Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-5-geometric-programming.html">
+ <span class="dropdown-text">Chapter 4.5: Geometric Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-6-generalized-inequality-constraints.html">
+ <span class="dropdown-text">Chapter 4.6: Generalized Inequality Constraints</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-7-vector-optimization.html">
+ <span class="dropdown-text">Chapter 4.7: Vector Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter5-1-lagrange-dual-function.html">
+ <span class="dropdown-text">Chapter 5.1: The Lagrange Dual Function</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-theory-to-repro" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Theory-to-Repro</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-theory-to-repro">    
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/linear-regression-three-ways.html">
+ <span class="dropdown-text">Linear Regression via Three Solvers</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/k_means_clustering.html">
+ <span class="dropdown-text">K-Means Clustering</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/logistic_regression.html">
+ <span class="dropdown-text">Logistic Regression</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/axis.html">
+ <span class="dropdown-text">Axis Operations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Algorithm/dp_regex.html">
+ <span class="dropdown-text">DP Regex</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/ickma2311/ickma2311.github.io/discussions"> 
+<span class="menu-text">Feedback</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#on-policy-learning" id="toc-on-policy-learning" class="nav-link active" data-scroll-target="#on-policy-learning">On-Policy Learning</a>
+  <ul class="collapse">
+  <li><a href="#greedy-and-epsilon-greedy-improvement" id="toc-greedy-and-epsilon-greedy-improvement" class="nav-link" data-scroll-target="#greedy-and-epsilon-greedy-improvement">Greedy and Epsilon-Greedy Improvement</a></li>
+  <li><a href="#glie" id="toc-glie" class="nav-link" data-scroll-target="#glie">GLIE</a></li>
+  <li><a href="#monte-carlo-control" id="toc-monte-carlo-control" class="nav-link" data-scroll-target="#monte-carlo-control">Monte Carlo Control</a></li>
+  <li><a href="#sarsa" id="toc-sarsa" class="nav-link" data-scroll-target="#sarsa">Sarsa</a></li>
+  <li><a href="#n-step-sarsa" id="toc-n-step-sarsa" class="nav-link" data-scroll-target="#n-step-sarsa">N-Step Sarsa</a></li>
+  <li><a href="#sarsalambda" id="toc-sarsalambda" class="nav-link" data-scroll-target="#sarsalambda">Sarsa(lambda)</a></li>
+  </ul></li>
+  <li><a href="#off-policy-learning" id="toc-off-policy-learning" class="nav-link" data-scroll-target="#off-policy-learning">Off-Policy Learning</a>
+  <ul class="collapse">
+  <li><a href="#importance-sampling" id="toc-importance-sampling" class="nav-link" data-scroll-target="#importance-sampling">Importance Sampling</a></li>
+  <li><a href="#q-learning" id="toc-q-learning" class="nav-link" data-scroll-target="#q-learning">Q-Learning</a></li>
+  <li><a href="#full-backup-vs-sample-backup" id="toc-full-backup-vs-sample-backup" class="nav-link" data-scroll-target="#full-backup-vs-sample-backup">Full Backup vs Sample Backup</a></li>
+  <li><a href="#q-learning-demo" id="toc-q-learning-demo" class="nav-link" data-scroll-target="#q-learning-demo">Q-Learning Demo</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">David Silver RL Course - Lecture 5: Model-Free Control</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">Reinforcement Learning</div>
+    <div class="quarto-category">RL</div>
+    <div class="quarto-category">David Silver</div>
+    <div class="quarto-category">Sarsa</div>
+    <div class="quarto-category">Q-Learning</div>
+    <div class="quarto-category">Control</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Lecture 5 notes on model-free control: epsilon-greedy improvement, GLIE Monte Carlo control, Sarsa, n-step and lambda methods, off-policy learning, importance sampling, and Q-learning.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Chao Ma </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 26, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<iframe width="100%" height="500" src="https://www.youtube.com/embed/0g4j2k_Ggc4?list=PLqYmG7hTraZDM-OYHWgPebj2MfCFzFObQ&amp;index=5" title="David Silver Reinforcement Learning Lecture 5" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="">
+</iframe>
+<p>This lecture moves from model-free prediction to model-free control. The goal is no longer just to evaluate a fixed policy. The goal is to improve behavior and eventually learn an optimal policy directly from experience, without knowing the MDP model.</p>
+<section id="on-policy-learning" class="level2">
+<h2 class="anchored" data-anchor-id="on-policy-learning">On-Policy Learning</h2>
+<p>On-policy control means:</p>
+<ul>
+<li>learn about the policy currently being followed</li>
+<li>improve that same policy using the learned value estimates</li>
+</ul>
+<p>The usual loop is:</p>
+<ol type="1">
+<li>evaluate the current policy</li>
+<li>improve it</li>
+<li>repeat</li>
+</ol>
+<p>In dynamic programming, greedy improvement can be written in terms of the state-value function:</p>
+<p><span class="math display">\[
+\pi'(s) = \arg\max_a \sum_{s',r} p(s',r \mid s,a)\bigl[r + \gamma v_\pi(s')\bigr].
+\]</span></p>
+<p>But this requires the transition model. In model-free control, the useful object is the action-value function:</p>
+<p><span class="math display">\[
+\pi'(s) = \arg\max_{a \in \mathcal{A}} q_\pi(s,a).
+\]</span></p>
+<p>So once we estimate <span class="math inline">\(Q(s,a)\)</span> directly from experience, we can improve the policy without an explicit model.</p>
+<section id="greedy-and-epsilon-greedy-improvement" class="level3">
+<h3 class="anchored" data-anchor-id="greedy-and-epsilon-greedy-improvement">Greedy and Epsilon-Greedy Improvement</h3>
+<p>A purely greedy policy chooses the action with the largest estimated action-value:</p>
+<p><span class="math display">\[
+\pi(s) = \arg\max_a Q(s,a).
+\]</span></p>
+<p>The problem is exploration. If we always exploit the current estimate, we may stop visiting actions that actually have better long-run value.</p>
+<p>The standard fix is an <span class="math inline">\(\epsilon\)</span>-greedy policy:</p>
+<ul>
+<li>with probability <span class="math inline">\(1-\epsilon\)</span>, choose a greedy action</li>
+<li>with probability <span class="math inline">\(\epsilon\)</span>, choose uniformly at random</li>
+</ul>
+<p>If there are <span class="math inline">\(m\)</span> actions and <span class="math inline">\(a^*\)</span> is a greedy action, then:</p>
+<p><span class="math display">\[
+\pi(a \mid s) =
+\begin{cases}
+1-\epsilon+\epsilon/m, &amp; a=a^*, \\
+\epsilon/m, &amp; a \neq a^*.
+\end{cases}
+\]</span></p>
+<p>This ensures every action keeps a nonzero probability of being tried.</p>
+<p>Policy improvement still holds in the <span class="math inline">\(\epsilon\)</span>-greedy setting: the new <span class="math inline">\(\epsilon\)</span>-greedy policy with respect to <span class="math inline">\(q_\pi\)</span> is at least as good as the old one.</p>
+</section>
+<section id="glie" class="level3">
+<h3 class="anchored" data-anchor-id="glie">GLIE</h3>
+<p>The lecture emphasizes <strong>Greedy in the Limit with Infinite Exploration (GLIE)</strong>.</p>
+<p>The idea is:</p>
+<ul>
+<li>every state-action pair is explored infinitely often</li>
+<li>the policy becomes greedy in the limit</li>
+</ul>
+<p>Formally:</p>
+<p><span class="math display">\[
+\lim_{k\to\infty} N_k(s,a) = \infty
+\]</span></p>
+<p>for all <span class="math inline">\((s,a)\)</span>, while the exploration rate decays so that the policy becomes nearly greedy. A typical schedule is:</p>
+<p><span class="math display">\[
+\epsilon_k = \frac{1}{k}.
+\]</span></p>
+<p>This is the balance control needs:</p>
+<ul>
+<li>enough exploration early</li>
+<li>near-greedy behavior later</li>
+</ul>
+</section>
+<section id="monte-carlo-control" class="level3">
+<h3 class="anchored" data-anchor-id="monte-carlo-control">Monte Carlo Control</h3>
+<p>Monte Carlo control uses complete sampled returns to estimate action-values:</p>
+<p><span class="math display">\[
+q_\pi(s,a) = \mathbb{E}_\pi[G_t \mid S_t=s, A_t=a].
+\]</span></p>
+<p>The GLIE Monte Carlo control loop is:</p>
+<ol type="1">
+<li>generate an episode using the current <span class="math inline">\(\epsilon\)</span>-greedy policy</li>
+<li>for each visited state-action pair, update the action-value estimate from the observed return</li>
+<li>improve the policy to be <span class="math inline">\(\epsilon\)</span>-greedy with respect to the new <span class="math inline">\(Q\)</span></li>
+<li>gradually reduce <span class="math inline">\(\epsilon\)</span></li>
+</ol>
+<p>Using incremental averaging, the update is</p>
+<p><span class="math display">\[
+N(S_t,A_t) \leftarrow N(S_t,A_t)+1,
+\]</span></p>
+<p><span class="math display">\[
+Q(S_t,A_t) \leftarrow Q(S_t,A_t) + \frac{1}{N(S_t,A_t)}\bigl(G_t - Q(S_t,A_t)\bigr).
+\]</span></p>
+<p>This works, but it has the same limitation as Monte Carlo prediction:</p>
+<ul>
+<li>high variance</li>
+<li>must wait for full returns</li>
+</ul>
+<p>That leads to TD control.</p>
+</section>
+<section id="sarsa" class="level3">
+<h3 class="anchored" data-anchor-id="sarsa">Sarsa</h3>
+<p>Sarsa is the on-policy TD control algorithm. Its name comes from the update tuple:</p>
+<p><span class="math display">\[
+(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1}).
+\]</span></p>
+<p>The one-step update is:</p>
+<p><span class="math display">\[
+Q(S_t,A_t) \leftarrow Q(S_t,A_t) + \alpha\Bigl(R_{t+1} + \gamma Q(S_{t+1},A_{t+1}) - Q(S_t,A_t)\Bigr).
+\]</span></p>
+<p>This is on-policy because the next action <span class="math inline">\(A_{t+1}\)</span> is chosen using the same current <span class="math inline">\(\epsilon\)</span>-greedy policy that the agent is actually following.</p>
+<p>So Sarsa evaluates and improves the current behavior policy at the same time.</p>
+<p>Under standard conditions:</p>
+<ul>
+<li>GLIE exploration</li>
+<li>Robbins-Monro step sizes</li>
+</ul>
+<p>Sarsa converges to the optimal action-value function.</p>
+<p><img src="lecture-5-model-free-control-1.png" class="img-fluid"></p>
+</section>
+<section id="n-step-sarsa" class="level3">
+<h3 class="anchored" data-anchor-id="n-step-sarsa">N-Step Sarsa</h3>
+<p>One-step Sarsa uses only one reward before bootstrapping. Monte Carlo waits until the end. N-step Sarsa sits between them.</p>
+<p>Examples:</p>
+<p><span class="math display">\[
+G_t^{(1)} = R_{t+1} + \gamma Q(S_{t+1},A_{t+1}),
+\]</span></p>
+<p><span class="math display">\[
+G_t^{(2)} = R_{t+1} + \gamma R_{t+2} + \gamma^2 Q(S_{t+2},A_{t+2}),
+\]</span></p>
+<p>and in general</p>
+<p><span class="math display">\[
+G_t^{(n)}
+=
+R_{t+1} + \gamma R_{t+2} + \cdots + \gamma^{n-1}R_{t+n}
++ \gamma^n Q(S_{t+n},A_{t+n}).
+\]</span></p>
+<p>The update becomes</p>
+<p><span class="math display">\[
+Q(S_t,A_t) \leftarrow Q(S_t,A_t) + \alpha\bigl(G_t^{(n)} - Q(S_t,A_t)\bigr).
+\]</span></p>
+<p>This is another bias-variance tradeoff:</p>
+<ul>
+<li>small <span class="math inline">\(n\)</span>: more bootstrapping, lower variance</li>
+<li>large <span class="math inline">\(n\)</span>: less bootstrapping, higher variance</li>
+</ul>
+</section>
+<section id="sarsalambda" class="level3">
+<h3 class="anchored" data-anchor-id="sarsalambda">Sarsa(lambda)</h3>
+<p>Sarsa(<span class="math inline">\(\lambda\)</span>) combines all n-step returns into one weighted target:</p>
+<p><span class="math display">\[
+G_t^\lambda = (1-\lambda)\sum_{n=1}^{\infty}\lambda^{n-1} G_t^{(n)}.
+\]</span></p>
+<p>Then the forward-view update is</p>
+<p><span class="math display">\[
+Q(S_t,A_t) \leftarrow Q(S_t,A_t) + \alpha\bigl(G_t^\lambda - Q(S_t,A_t)\bigr).
+\]</span></p>
+<p>The backward view implements the same idea with <strong>eligibility traces</strong>.</p>
+<p>Initialize</p>
+<p><span class="math display">\[
+E_0(s,a)=0.
+\]</span></p>
+<p>Then update traces by</p>
+<p><span class="math display">\[
+E_t(s,a)=\gamma\lambda E_{t-1}(s,a) + \mathbf{1}\{S_t=s,\ A_t=a\}.
+\]</span></p>
+<p>Define the TD error</p>
+<p><span class="math display">\[
+\delta_t = R_{t+1} + \gamma Q(S_{t+1},A_{t+1}) - Q(S_t,A_t),
+\]</span></p>
+<p>and update</p>
+<p><span class="math display">\[
+Q(s,a) \leftarrow Q(s,a) + \alpha\,\delta_t E_t(s,a).
+\]</span></p>
+<p>Intuition:</p>
+<ul>
+<li>the most recent actions get the biggest credit or blame</li>
+<li>earlier actions still get updated, but with decayed weight</li>
+</ul>
+<p>That is why eligibility traces propagate reward information backward efficiently.</p>
+</section>
+</section>
+<section id="off-policy-learning" class="level2">
+<h2 class="anchored" data-anchor-id="off-policy-learning">Off-Policy Learning</h2>
+<p>Off-policy learning separates:</p>
+<ul>
+<li>the <strong>behavior policy</strong> <span class="math inline">\(\mu\)</span>, which generates data</li>
+<li>the <strong>target policy</strong> <span class="math inline">\(\pi\)</span>, which we want to evaluate or improve</li>
+</ul>
+<p>This matters because it lets us:</p>
+<ul>
+<li>reuse old experience</li>
+<li>learn from exploratory behavior</li>
+<li>learn an optimal greedy policy while still behaving more randomly</li>
+</ul>
+<section id="importance-sampling" class="level3">
+<h3 class="anchored" data-anchor-id="importance-sampling">Importance Sampling</h3>
+<p>If samples come from <span class="math inline">\(\mu\)</span> but we care about expectations under <span class="math inline">\(\pi\)</span>, we correct the mismatch with importance sampling.</p>
+<p>Basic identity:</p>
+<p><span class="math display">\[
+\mathbb{E}_{X\sim P}[f(X)]
+=
+\mathbb{E}_{X\sim Q}\left[\frac{P(X)}{Q(X)}f(X)\right].
+\]</span></p>
+<p>For off-policy Monte Carlo, we weight returns by the trajectory probability ratio:</p>
+<p><span class="math display">\[
+\rho_{t:T-1}
+=
+\prod_{k=t}^{T-1}\frac{\pi(A_k\mid S_k)}{\mu(A_k\mid S_k)}.
+\]</span></p>
+<p>Then one ordinary importance-sampling style update is</p>
+<p><span class="math display">\[
+V(S_t) \leftarrow V(S_t) + \alpha\bigl(\rho_{t:T-1}G_t - V(S_t)\bigr).
+\]</span></p>
+<p>For one-step TD prediction, only the current-step correction appears:</p>
+<p><span class="math display">\[
+V(S_t) \leftarrow V(S_t) + \alpha\,\rho_t\Bigl(R_{t+1} + \gamma V(S_{t+1}) - V(S_t)\Bigr),
+\]</span></p>
+<p>where</p>
+<p><span class="math display">\[
+\rho_t = \frac{\pi(A_t\mid S_t)}{\mu(A_t\mid S_t)}.
+\]</span></p>
+<p>Compared with Monte Carlo importance sampling, one-step TD usually has much lower variance.</p>
+</section>
+<section id="q-learning" class="level3">
+<h3 class="anchored" data-anchor-id="q-learning">Q-Learning</h3>
+<p>Q-learning is the key off-policy control method in the lecture.</p>
+<p>The update is:</p>
+<p><span class="math display">\[
+Q(S_t,A_t)
+\leftarrow
+Q(S_t,A_t)
++
+\alpha\Bigl(R_{t+1} + \gamma \max_{a'}Q(S_{t+1},a') - Q(S_t,A_t)\Bigr).
+\]</span></p>
+<p>This is the crucial difference from Sarsa:</p>
+<ul>
+<li><strong>Sarsa</strong> bootstraps from the action actually taken next</li>
+<li><strong>Q-learning</strong> bootstraps from the best next action according to the current estimate</li>
+</ul>
+<p>So Q-learning learns the greedy target policy even while behavior remains exploratory.</p>
+<p>That is why no multi-step importance-sampling correction is needed in the control update itself: the target is defined directly by the max operator.</p>
+<p><img src="lecture-5-model-free-control-2.png" class="img-fluid"></p>
+</section>
+<section id="full-backup-vs-sample-backup" class="level3">
+<h3 class="anchored" data-anchor-id="full-backup-vs-sample-backup">Full Backup vs Sample Backup</h3>
+<p>This lecture also fits the main RL methods into a useful table:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Objective</th>
+<th>Full Backup (DP)</th>
+<th>Sample Backup (TD)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Bellman expectation for <span class="math inline">\(v_\pi\)</span></td>
+<td>Iterative policy evaluation</td>
+<td>TD learning</td>
+</tr>
+<tr class="even">
+<td>Bellman expectation for <span class="math inline">\(q_\pi\)</span></td>
+<td>Policy iteration with action-values</td>
+<td>Sarsa</td>
+</tr>
+<tr class="odd">
+<td>Bellman optimality for <span class="math inline">\(q_*\)</span></td>
+<td>Q-value iteration</td>
+<td>Q-learning</td>
+</tr>
+</tbody>
+</table>
+<p>This is a good summary of where model-free control sits:</p>
+<ul>
+<li>dynamic programming uses full expectations from a known model</li>
+<li>TD control uses sampled transitions from experience</li>
+</ul>
+</section>
+<section id="q-learning-demo" class="level3">
+<h3 class="anchored" data-anchor-id="q-learning-demo">Q-Learning Demo</h3>
+<p>Colab demo:</p>
+<p><a href="https://colab.research.google.com/drive/1RF4ykBWW_Kfu9WkMseuGnrZnh5H60_pl#scrollTo=f6781cff">Q-learning demo Colab</a></p>
+</section>
+<section id="summary" class="level3">
+<h3 class="anchored" data-anchor-id="summary">Summary</h3>
+<ul>
+<li>model-free control improves behavior directly from sampled experience</li>
+<li><span class="math inline">\(\epsilon\)</span>-greedy policies add exploration to greedy improvement</li>
+<li>GLIE balances infinite exploration with greedy behavior in the limit</li>
+<li>Monte Carlo control learns from complete returns</li>
+<li>Sarsa is the standard on-policy TD control method</li>
+<li>n-step Sarsa and Sarsa(<span class="math inline">\(\lambda\)</span>) interpolate between one-step bootstrapping and long returns</li>
+<li>off-policy learning separates behavior policy from target policy</li>
+<li>importance sampling corrects policy mismatch</li>
+<li>Q-learning learns the greedy optimal action-value function while behaving exploratorily</li>
+</ul>
+
+
+<!-- -->
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<input type="hidden" id="giscus-base-theme" value="light">
+<input type="hidden" id="giscus-alt-theme" value="light">
+<script>
+  function loadGiscus() {
+    // Function to get the theme based on body class
+    const getTheme = () => {
+      let baseTheme = document.getElementById('giscus-base-theme').value;
+      let altTheme = document.getElementById('giscus-alt-theme').value;
+      return document.body.classList.contains('quarto-dark') ? altTheme : baseTheme;
+    };
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.dataset.repo = "ickma2311/ickma2311.github.io";
+    script.dataset.repoId = "R_kgDOOzbaAg";
+    script.dataset.category = "Comments";
+    script.dataset.categoryId = "DIC_kwDOOzbaAs4CxPFj";
+    script.dataset.mapping = "pathname";
+    script.dataset.reactionsEnabled = "1";
+    script.dataset.emitMetadata = "0";
+    script.dataset.inputPosition = "top";
+    script.dataset.theme = getTheme();
+    script.dataset.lang = "en";
+    script.crossOrigin = "anonymous";
+    // Append the script to the desired div instead of at the end of the body
+    document.getElementById("quarto-content").appendChild(script);
+  }
+  loadGiscus();
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "David Silver RL Course - Lecture 5: Model-Free Control"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-04-26"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Reinforcement Learning, RL, David Silver, Sarsa, Q-Learning, Control]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Lecture 5 notes on model-free control: epsilon-greedy improvement, GLIE Monte Carlo control, Sarsa, n-step and lambda methods, off-policy learning, importance sampling, and Q-learning."</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">iframe</span><span class="ot"> width</span><span class="op">=</span><span class="st">"100%"</span><span class="ot"> height</span><span class="op">=</span><span class="st">"500"</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://www.youtube.com/embed/0g4j2k_Ggc4?list=PLqYmG7hTraZDM-OYHWgPebj2MfCFzFObQ</span><span class="dv">&amp;amp;</span><span class="st">index=5"</span><span class="ot"> title</span><span class="op">=</span><span class="st">"David Silver Reinforcement Learning Lecture 5"</span><span class="ot"> frameborder</span><span class="op">=</span><span class="st">"0"</span><span class="ot"> allow</span><span class="op">=</span><span class="st">"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"</span><span class="ot"> allowfullscreen</span><span class="dt">&gt;&lt;/</span><span class="kw">iframe</span><span class="dt">&gt;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>This lecture moves from model-free prediction to model-free control. The goal is no longer just to evaluate a fixed policy. The goal is to improve behavior and eventually learn an optimal policy directly from experience, without knowing the MDP model.</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">## On-Policy Learning</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>On-policy control means:</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>learn about the policy currently being followed</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>improve that same policy using the learned value estimates</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>The usual loop is:</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>evaluate the current policy</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>improve it</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>repeat</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>In dynamic programming, greedy improvement can be written in terms of the state-value function:</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>\pi'(s) = \arg\max_a \sum_{s',r} p(s',r \mid s,a)\bigl<span class="co">[</span><span class="ot">r + \gamma v_\pi(s')\bigr</span><span class="co">]</span>.</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>But this requires the transition model. In model-free control, the useful object is the action-value function:</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>\pi'(s) = \arg\max_{a \in \mathcal{A}} q_\pi(s,a).</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>So once we estimate $Q(s,a)$ directly from experience, we can improve the policy without an explicit model.</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="fu">### Greedy and Epsilon-Greedy Improvement</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>A purely greedy policy chooses the action with the largest estimated action-value:</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>\pi(s) = \arg\max_a Q(s,a).</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>The problem is exploration. If we always exploit the current estimate, we may stop visiting actions that actually have better long-run value.</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>The standard fix is an $\epsilon$-greedy policy:</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>with probability $1-\epsilon$, choose a greedy action</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>with probability $\epsilon$, choose uniformly at random</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>If there are $m$ actions and $a^*$ is a greedy action, then:</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>\pi(a \mid s) =</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>\begin{cases}</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>1-\epsilon+\epsilon/m, &amp; a=a^*, <span class="sc">\\</span></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>\epsilon/m, &amp; a \neq a^*.</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>This ensures every action keeps a nonzero probability of being tried.</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>Policy improvement still holds in the $\epsilon$-greedy setting: the new $\epsilon$-greedy policy with respect to $q_\pi$ is at least as good as the old one.</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="fu">### GLIE</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>The lecture emphasizes **Greedy in the Limit with Infinite Exploration (GLIE)**.</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>The idea is:</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>every state-action pair is explored infinitely often</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the policy becomes greedy in the limit</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>Formally:</span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>\lim_{k\to\infty} N_k(s,a) = \infty</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>for all $(s,a)$, while the exploration rate decays so that the policy becomes nearly greedy. A typical schedule is:</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>\epsilon_k = \frac{1}{k}.</span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>This is the balance control needs:</span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>enough exploration early</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>near-greedy behavior later</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a><span class="fu">### Monte Carlo Control</span></span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>Monte Carlo control uses complete sampled returns to estimate action-values:</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>q_\pi(s,a) = \mathbb{E}_\pi<span class="co">[</span><span class="ot">G_t \mid S_t=s, A_t=a</span><span class="co">]</span>.</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>The GLIE Monte Carlo control loop is:</span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>generate an episode using the current $\epsilon$-greedy policy</span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>for each visited state-action pair, update the action-value estimate from the observed return</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>improve the policy to be $\epsilon$-greedy with respect to the new $Q$</span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>gradually reduce $\epsilon$</span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>Using incremental averaging, the update is</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>N(S_t,A_t) \leftarrow N(S_t,A_t)+1,</span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>Q(S_t,A_t) \leftarrow Q(S_t,A_t) + \frac{1}{N(S_t,A_t)}\bigl(G_t - Q(S_t,A_t)\bigr).</span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>This works, but it has the same limitation as Monte Carlo prediction:</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>high variance</span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>must wait for full returns</span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>That leads to TD control.</span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a><span class="fu">### Sarsa</span></span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>Sarsa is the on-policy TD control algorithm. Its name comes from the update tuple:</span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1}).</span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>The one-step update is:</span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>Q(S_t,A_t) \leftarrow Q(S_t,A_t) + \alpha\Bigl(R_{t+1} + \gamma Q(S_{t+1},A_{t+1}) - Q(S_t,A_t)\Bigr).</span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>This is on-policy because the next action $A_{t+1}$ is chosen using the same current $\epsilon$-greedy policy that the agent is actually following.</span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>So Sarsa evaluates and improves the current behavior policy at the same time.</span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>Under standard conditions:</span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>GLIE exploration</span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Robbins-Monro step sizes</span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>Sarsa converges to the optimal action-value function.</span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a><span class="al">![](lecture-5-model-free-control-1.png)</span></span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a><span class="fu">### N-Step Sarsa</span></span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>One-step Sarsa uses only one reward before bootstrapping. Monte Carlo waits until the end. N-step Sarsa sits between them.</span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>Examples:</span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>G_t^{(1)} = R_{t+1} + \gamma Q(S_{t+1},A_{t+1}),</span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>G_t^{(2)} = R_{t+1} + \gamma R_{t+2} + \gamma^2 Q(S_{t+2},A_{t+2}),</span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>and in general</span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a>G_t^{(n)}</span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>R_{t+1} + \gamma R_{t+2} + \cdots + \gamma^{n-1}R_{t+n}</span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a><span class="ss">+ </span>\gamma^n Q(S_{t+n},A_{t+n}).</span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a>The update becomes</span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>Q(S_t,A_t) \leftarrow Q(S_t,A_t) + \alpha\bigl(G_t^{(n)} - Q(S_t,A_t)\bigr).</span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a>This is another bias-variance tradeoff:</span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>small $n$: more bootstrapping, lower variance</span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>large $n$: less bootstrapping, higher variance</span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a><span class="fu">### Sarsa(lambda)</span></span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a>Sarsa($\lambda$) combines all n-step returns into one weighted target:</span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>G_t^\lambda = (1-\lambda)\sum_{n=1}^{\infty}\lambda^{n-1} G_t^{(n)}.</span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a>Then the forward-view update is</span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a>Q(S_t,A_t) \leftarrow Q(S_t,A_t) + \alpha\bigl(G_t^\lambda - Q(S_t,A_t)\bigr).</span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>The backward view implements the same idea with **eligibility traces**.</span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>Initialize</span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a>E_0(s,a)=0.</span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a>Then update traces by</span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>E_t(s,a)=\gamma\lambda E_{t-1}(s,a) + \mathbf{1}<span class="sc">\{</span>S_t=s,\ A_t=a<span class="sc">\}</span>.</span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a>Define the TD error</span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a>\delta_t = R_{t+1} + \gamma Q(S_{t+1},A_{t+1}) - Q(S_t,A_t),</span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a>and update</span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a>Q(s,a) \leftarrow Q(s,a) + \alpha\,\delta_t E_t(s,a).</span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a>Intuition:</span>
+<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the most recent actions get the biggest credit or blame</span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>earlier actions still get updated, but with decayed weight</span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a>That is why eligibility traces propagate reward information backward efficiently.</span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a><span class="fu">## Off-Policy Learning</span></span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a>Off-policy learning separates:</span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the **behavior policy** $\mu$, which generates data</span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the **target policy** $\pi$, which we want to evaluate or improve</span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a>This matters because it lets us:</span>
+<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>reuse old experience</span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>learn from exploratory behavior</span>
+<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>learn an optimal greedy policy while still behaving more randomly</span>
+<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a><span class="fu">### Importance Sampling</span></span>
+<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a>If samples come from $\mu$ but we care about expectations under $\pi$, we correct the mismatch with importance sampling.</span>
+<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a>Basic identity:</span>
+<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_{X\sim P}<span class="co">[</span><span class="ot">f(X)</span><span class="co">]</span></span>
+<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_{X\sim Q}\left<span class="co">[</span><span class="ot">\frac{P(X)}{Q(X)}f(X)\right</span><span class="co">]</span>.</span>
+<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a>For off-policy Monte Carlo, we weight returns by the trajectory probability ratio:</span>
+<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a>\rho_{t:T-1}</span>
+<span id="cb1-264"><a href="#cb1-264" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-265"><a href="#cb1-265" aria-hidden="true" tabindex="-1"></a>\prod_{k=t}^{T-1}\frac{\pi(A_k\mid S_k)}{\mu(A_k\mid S_k)}.</span>
+<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a>Then one ordinary importance-sampling style update is</span>
+<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a>V(S_t) \leftarrow V(S_t) + \alpha\bigl(\rho_{t:T-1}G_t - V(S_t)\bigr).</span>
+<span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-273"><a href="#cb1-273" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-274"><a href="#cb1-274" aria-hidden="true" tabindex="-1"></a>For one-step TD prediction, only the current-step correction appears:</span>
+<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-277"><a href="#cb1-277" aria-hidden="true" tabindex="-1"></a>V(S_t) \leftarrow V(S_t) + \alpha\,\rho_t\Bigl(R_{t+1} + \gamma V(S_{t+1}) - V(S_t)\Bigr),</span>
+<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-279"><a href="#cb1-279" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-280"><a href="#cb1-280" aria-hidden="true" tabindex="-1"></a>where</span>
+<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-282"><a href="#cb1-282" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a>\rho_t = \frac{\pi(A_t\mid S_t)}{\mu(A_t\mid S_t)}.</span>
+<span id="cb1-284"><a href="#cb1-284" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-285"><a href="#cb1-285" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-286"><a href="#cb1-286" aria-hidden="true" tabindex="-1"></a>Compared with Monte Carlo importance sampling, one-step TD usually has much lower variance.</span>
+<span id="cb1-287"><a href="#cb1-287" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a><span class="fu">### Q-Learning</span></span>
+<span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a>Q-learning is the key off-policy control method in the lecture.</span>
+<span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a>The update is:</span>
+<span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a>Q(S_t,A_t)</span>
+<span id="cb1-296"><a href="#cb1-296" aria-hidden="true" tabindex="-1"></a>\leftarrow</span>
+<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a>Q(S_t,A_t)</span>
+<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a>\alpha\Bigl(R_{t+1} + \gamma \max_{a'}Q(S_{t+1},a') - Q(S_t,A_t)\Bigr).</span>
+<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a>This is the crucial difference from Sarsa:</span>
+<span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Sarsa** bootstraps from the action actually taken next</span>
+<span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Q-learning** bootstraps from the best next action according to the current estimate</span>
+<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-307"><a href="#cb1-307" aria-hidden="true" tabindex="-1"></a>So Q-learning learns the greedy target policy even while behavior remains exploratory.</span>
+<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a>That is why no multi-step importance-sampling correction is needed in the control update itself: the target is defined directly by the max operator.</span>
+<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-311"><a href="#cb1-311" aria-hidden="true" tabindex="-1"></a><span class="al">![](lecture-5-model-free-control-2.png)</span></span>
+<span id="cb1-312"><a href="#cb1-312" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-313"><a href="#cb1-313" aria-hidden="true" tabindex="-1"></a><span class="fu">### Full Backup vs Sample Backup</span></span>
+<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-315"><a href="#cb1-315" aria-hidden="true" tabindex="-1"></a>This lecture also fits the main RL methods into a useful table:</span>
+<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-317"><a href="#cb1-317" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Objective <span class="pp">|</span> Full Backup (DP) <span class="pp">|</span> Sample Backup (TD) <span class="pp">|</span></span>
+<span id="cb1-318"><a href="#cb1-318" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb1-319"><a href="#cb1-319" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Bellman expectation for $v_\pi$ <span class="pp">|</span> Iterative policy evaluation <span class="pp">|</span> TD learning <span class="pp">|</span></span>
+<span id="cb1-320"><a href="#cb1-320" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Bellman expectation for $q_\pi$ <span class="pp">|</span> Policy iteration with action-values <span class="pp">|</span> Sarsa <span class="pp">|</span></span>
+<span id="cb1-321"><a href="#cb1-321" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Bellman optimality for $q_*$ <span class="pp">|</span> Q-value iteration <span class="pp">|</span> Q-learning <span class="pp">|</span></span>
+<span id="cb1-322"><a href="#cb1-322" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-323"><a href="#cb1-323" aria-hidden="true" tabindex="-1"></a>This is a good summary of where model-free control sits:</span>
+<span id="cb1-324"><a href="#cb1-324" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-325"><a href="#cb1-325" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>dynamic programming uses full expectations from a known model</span>
+<span id="cb1-326"><a href="#cb1-326" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>TD control uses sampled transitions from experience</span>
+<span id="cb1-327"><a href="#cb1-327" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-328"><a href="#cb1-328" aria-hidden="true" tabindex="-1"></a><span class="fu">### Q-Learning Demo</span></span>
+<span id="cb1-329"><a href="#cb1-329" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-330"><a href="#cb1-330" aria-hidden="true" tabindex="-1"></a>Colab demo:</span>
+<span id="cb1-331"><a href="#cb1-331" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-332"><a href="#cb1-332" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Q-learning demo Colab</span><span class="co">](https://colab.research.google.com/drive/1RF4ykBWW_Kfu9WkMseuGnrZnh5H60_pl#scrollTo=f6781cff)</span></span>
+<span id="cb1-333"><a href="#cb1-333" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-334"><a href="#cb1-334" aria-hidden="true" tabindex="-1"></a><span class="fu">### Summary</span></span>
+<span id="cb1-335"><a href="#cb1-335" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-336"><a href="#cb1-336" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>model-free control improves behavior directly from sampled experience</span>
+<span id="cb1-337"><a href="#cb1-337" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\epsilon$-greedy policies add exploration to greedy improvement</span>
+<span id="cb1-338"><a href="#cb1-338" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>GLIE balances infinite exploration with greedy behavior in the limit</span>
+<span id="cb1-339"><a href="#cb1-339" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Monte Carlo control learns from complete returns</span>
+<span id="cb1-340"><a href="#cb1-340" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Sarsa is the standard on-policy TD control method</span>
+<span id="cb1-341"><a href="#cb1-341" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>n-step Sarsa and Sarsa($\lambda$) interpolate between one-step bootstrapping and long returns</span>
+<span id="cb1-342"><a href="#cb1-342" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>off-policy learning separates behavior policy from target policy</span>
+<span id="cb1-343"><a href="#cb1-343" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>importance sampling corrects policy mismatch</span>
+<span id="cb1-344"><a href="#cb1-344" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Q-learning learns the greedy optimal action-value function while behaving exploratorily</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
