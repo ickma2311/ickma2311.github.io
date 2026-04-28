@@ -7,10 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Chao Ma">
-<meta name="dcterms.date" content="2026-04-15">
-<meta name="description" content="Classic efficient building blocks, cell-level NAS search spaces, elastic dimensions such as depth/width/resolution, and the main NAS strategies from grid search to RL, differentiable search, and evolution.">
+<meta name="dcterms.date" content="2026-04-27">
+<meta name="description" content="Accuracy estimation, weight inheritance, hypernetworks, ProxylessNAS, Once-for-All networks, zero-shot NAS scores, and joint neural network, mapping, and accelerator search.">
 
-<title>Efficient AI Lecture 7: Neural Architecture Search (Part I) – ∇ ickma.dev</title>
+<title>Efficient AI Lecture 8: Neural Architecture Search (Part II) – ∇ ickma.dev</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -116,9 +116,6 @@ function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', 'G-PK5N5KWZBF', { 'anonymize_ip': true});
 </script>
-<script src="../../site_libs/quarto-diagram/mermaid.min.js"></script>
-<script src="../../site_libs/quarto-diagram/mermaid-init.js"></script>
-<link href="../../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -1069,24 +1066,30 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#why-architecture-search-matters" id="toc-why-architecture-search-matters" class="nav-link active" data-scroll-target="#why-architecture-search-matters">Why Architecture Search Matters</a></li>
-  <li><a href="#classic-efficient-building-blocks" id="toc-classic-efficient-building-blocks" class="nav-link" data-scroll-target="#classic-efficient-building-blocks">Classic Efficient Building Blocks</a></li>
-  <li><a href="#search-space" id="toc-search-space" class="nav-link" data-scroll-target="#search-space">Search Space</a>
+  <li><a href="#accuracy-estimation" id="toc-accuracy-estimation" class="nav-link active" data-scroll-target="#accuracy-estimation">Accuracy Estimation</a>
   <ul class="collapse">
-  <li><a href="#cell-level-search" id="toc-cell-level-search" class="nav-link" data-scroll-target="#cell-level-search">Cell-Level Search</a></li>
-  <li><a href="#elastic-dimensions" id="toc-elastic-dimensions" class="nav-link" data-scroll-target="#elastic-dimensions">Elastic Dimensions</a></li>
+  <li><a href="#weight-inheritance" id="toc-weight-inheritance" class="nav-link" data-scroll-target="#weight-inheritance">Weight Inheritance</a></li>
+  <li><a href="#hypernetwork" id="toc-hypernetwork" class="nav-link" data-scroll-target="#hypernetwork">Hypernetwork</a></li>
   </ul></li>
-  <li><a href="#good-search-spaces-respect-hardware" id="toc-good-search-spaces-respect-hardware" class="nav-link" data-scroll-target="#good-search-spaces-respect-hardware">Good Search Spaces Respect Hardware</a></li>
-  <li><a href="#search-strategy" id="toc-search-strategy" class="nav-link" data-scroll-target="#search-strategy">Search Strategy</a>
+  <li><a href="#hardware-aware-nas" id="toc-hardware-aware-nas" class="nav-link" data-scroll-target="#hardware-aware-nas">Hardware-Aware NAS</a>
   <ul class="collapse">
-  <li><a href="#grid-search" id="toc-grid-search" class="nav-link" data-scroll-target="#grid-search">Grid Search</a></li>
-  <li><a href="#compound-scaling" id="toc-compound-scaling" class="nav-link" data-scroll-target="#compound-scaling">Compound Scaling</a></li>
-  <li><a href="#random-search" id="toc-random-search" class="nav-link" data-scroll-target="#random-search">Random Search</a></li>
-  <li><a href="#reinforcement-learning" id="toc-reinforcement-learning" class="nav-link" data-scroll-target="#reinforcement-learning">Reinforcement Learning</a></li>
-  <li><a href="#differentiable-search" id="toc-differentiable-search" class="nav-link" data-scroll-target="#differentiable-search">Differentiable Search</a></li>
-  <li><a href="#evolutionary-search" id="toc-evolutionary-search" class="nav-link" data-scroll-target="#evolutionary-search">Evolutionary Search</a></li>
+  <li><a href="#proxylessnas" id="toc-proxylessnas" class="nav-link" data-scroll-target="#proxylessnas">ProxylessNAS</a></li>
+  <li><a href="#latency-prediction-and-feedback" id="toc-latency-prediction-and-feedback" class="nav-link" data-scroll-target="#latency-prediction-and-feedback">Latency Prediction and Feedback</a></li>
   </ul></li>
-  <li><a href="#interpretation" id="toc-interpretation" class="nav-link" data-scroll-target="#interpretation">Interpretation</a></li>
+  <li><a href="#once-for-all-networks" id="toc-once-for-all-networks" class="nav-link" data-scroll-target="#once-for-all-networks">Once-for-All Networks</a>
+  <ul class="collapse">
+  <li><a href="#progressive-shrinking" id="toc-progressive-shrinking" class="nav-link" data-scroll-target="#progressive-shrinking">Progressive Shrinking</a></li>
+  <li><a href="#roofline-intuition" id="toc-roofline-intuition" class="nav-link" data-scroll-target="#roofline-intuition">Roofline Intuition</a></li>
+  </ul></li>
+  <li><a href="#zero-shot-nas" id="toc-zero-shot-nas" class="nav-link" data-scroll-target="#zero-shot-nas">Zero-Shot NAS</a>
+  <ul class="collapse">
+  <li><a href="#zen-nas" id="toc-zen-nas" class="nav-link" data-scroll-target="#zen-nas">Zen-NAS</a></li>
+  <li><a href="#gradsign" id="toc-gradsign" class="nav-link" data-scroll-target="#gradsign">GradSign</a></li>
+  </ul></li>
+  <li><a href="#beyond-nas-hardware-and-mapping-search" id="toc-beyond-nas-hardware-and-mapping-search" class="nav-link" data-scroll-target="#beyond-nas-hardware-and-mapping-search">Beyond NAS: Hardware and Mapping Search</a></li>
+  <li><a href="#joint-optimization-loop" id="toc-joint-optimization-loop" class="nav-link" data-scroll-target="#joint-optimization-loop">Joint Optimization Loop</a></li>
+  <li><a href="#lab" id="toc-lab" class="nav-link" data-scroll-target="#lab">Lab</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
   </ul>
 </nav>
     </div>
@@ -1095,20 +1098,20 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Efficient AI Lecture 7: Neural Architecture Search (Part I)</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">Efficient AI Lecture 8: Neural Architecture Search (Part II)</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
   <div class="quarto-categories">
     <div class="quarto-category">Efficient AI</div>
     <div class="quarto-category">Neural Architecture Search</div>
     <div class="quarto-category">NAS</div>
-    <div class="quarto-category">Model Design</div>
-    <div class="quarto-category">EfficientNet</div>
-    <div class="quarto-category">DARTS</div>
+    <div class="quarto-category">Hardware-Aware NAS</div>
+    <div class="quarto-category">Once-for-All</div>
+    <div class="quarto-category">Zero-Shot NAS</div>
   </div>
   </div>
 
 <div>
   <div class="description">
-    Classic efficient building blocks, cell-level NAS search spaces, elastic dimensions such as depth/width/resolution, and the main NAS strategies from grid search to RL, differentiable search, and evolution.
+    Accuracy estimation, weight inheritance, hypernetworks, ProxylessNAS, Once-for-All networks, zero-shot NAS scores, and joint neural network, mapping, and accelerator search.
   </div>
 </div>
 
@@ -1125,7 +1128,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 15, 2026</p>
+      <p class="date">April 27, 2026</p>
     </div>
   </div>
   
@@ -1137,243 +1140,262 @@ window.Quarto = {
 </header>
 
 
-<iframe width="100%" height="500" src="https://www.youtube.com/embed/_Pflki9XOXE" title="Efficient AI Lecture 7" frameborder="0" allowfullscreen="">
+<iframe width="100%" height="500" src="https://www.youtube.com/embed/L07-eVmSVGY" title="Efficient AI Lecture 8" frameborder="0" allowfullscreen="">
 </iframe>
-<p>Slides: <a href="https://www.dropbox.com/scl/fi/hxhjhxonwqyw2hfoywzcp/Lec07-Neural-Architecture-Search-I.pdf?rlkey=o6s5dglazyb2o2nrc897ccppg&amp;e=1&amp;st=dcjyr42l&amp;dl=0">Lecture 7 PDF</a></p>
-<section id="why-architecture-search-matters" class="level2">
-<h2 class="anchored" data-anchor-id="why-architecture-search-matters">Why Architecture Search Matters</h2>
-<p>Efficient AI is not only about compressing a fixed model. Sometimes the better move is to search directly for an architecture that matches the hardware budget from the beginning.</p>
-<p>This lecture separates two ingredients:</p>
+<p>Slides: <a href="https://www.dropbox.com/scl/fi/kaia5vvmdwb2bj0xnbihm/Lec08-Neural-Architecture-Search-II.pdf?rlkey=vkp9i12ljbk4jmdfp05j3ctdy&amp;st=hincmob7&amp;dl=0">Lecture 8 PDF</a></p>
+<p><img src="lecture-08-nas-1.png" class="img-fluid"></p>
+<p>Lecture 7 focused on the NAS search space and search strategy. Lecture 8 asks the next practical question: how do we estimate accuracy and hardware cost without training every candidate from scratch?</p>
+<p>The main progression is:</p>
 <ul>
-<li>the <strong>search space</strong>: which architectures are allowed</li>
-<li>the <strong>search strategy</strong>: how we explore that space efficiently</li>
+<li>train each candidate from scratch</li>
+<li>reuse weights from a trained parent model</li>
+<li>use a hypernetwork to generate candidate weights</li>
+<li>train a shared supernet and sample child networks</li>
+<li>use zero-shot scores without training</li>
+<li>add hardware latency, mapping, and accelerator design into the loop</li>
 </ul>
-<p>That distinction is useful because a bad search strategy can waste compute, but a bad search space can prevent the right model from ever being considered.</p>
+<section id="accuracy-estimation" class="level2">
+<h2 class="anchored" data-anchor-id="accuracy-estimation">Accuracy Estimation</h2>
+<p>The expensive part of NAS is not sampling architectures. It is evaluating them. A naive NAS loop trains thousands of candidates, and each full training run can be costly.</p>
+<p>Accuracy-estimation methods try to answer a cheaper question:</p>
+<blockquote class="blockquote">
+<p>Can we predict which architecture is promising without paying the full training cost?</p>
+</blockquote>
+<section id="weight-inheritance" class="level3">
+<h3 class="anchored" data-anchor-id="weight-inheritance">Weight Inheritance</h3>
+<p>Weight inheritance treats architecture search as evolution rather than creation from zero.</p>
+<p>Instead of initializing every candidate randomly, a child model starts from a trained parent model and expands it through transformations that preserve the parent’s function.</p>
+<p>Two common transformations are:</p>
+<ul>
+<li><strong>Net2Wider:</strong> duplicate neurons or channels, then divide outgoing weights so the widened layer initially computes the same function.</li>
+<li><strong>Net2Deeper:</strong> insert a new layer initialized as an identity mapping, so the deeper network initially behaves like the shallower one.</li>
+</ul>
+<p>The goal is to expand capacity while preserving useful learned representations. The child can then be fine-tuned instead of trained from scratch.</p>
 </section>
-<section id="classic-efficient-building-blocks" class="level2">
-<h2 class="anchored" data-anchor-id="classic-efficient-building-blocks">Classic Efficient Building Blocks</h2>
-<p>Modern NAS systems do not start from nothing. They reuse a menu of building blocks that have already proved effective.</p>
-<ul>
-<li><strong>ResNet bottleneck block</strong>: uses a skip connection plus 1x1-3x3-1x1 convolutions to reduce cost while keeping deep optimization stable.</li>
-<li><strong>MobileNetV1</strong>: replaces a full convolution with a depthwise convolution followed by a pointwise 1x1 convolution, dramatically reducing FLOPs and parameters.</li>
-<li><strong>MobileNetV2 / MBConv</strong>: expands channels first, performs depthwise convolution in the expanded space, then projects back down with a linear bottleneck so information is not destroyed by a final ReLU.</li>
-<li><strong>ShuffleNet block</strong>: uses groupwise pointwise convolutions and a channel-shuffle operation to reduce compute while still mixing information across groups.</li>
-<li><strong>Transformer block</strong>: replaces convolutional locality with self-attention, which is flexible but expensive in sequence length.</li>
-</ul>
-<p>For self-attention,</p>
-<p><span class="math display">\[
-\operatorname{Attention}(Q,K,V) = \operatorname{softmax}\left(\frac{QK^\top}{\sqrt{k}}\right)V.
-\]</span></p>
-<p>If the sequence length is <span class="math inline">\(N\)</span> and hidden width is <span class="math inline">\(d\)</span>, then:</p>
-<ul>
-<li>forming <span class="math inline">\(QK^\top\)</span> costs <span class="math inline">\(O(N^2 d)\)</span></li>
-<li>multiplying the attention matrix by <span class="math inline">\(V\)</span> also costs <span class="math inline">\(O(N^2 d)\)</span></li>
-</ul>
-<p>So the total complexity is</p>
-<p><span class="math display">\[
-O(N^2 d),
-\]</span></p>
-<p>which is why standard attention becomes expensive for long sequences.</p>
-<div class="cell" data-layout-align="default">
-<div class="cell-output-display">
-<div>
-<p></p><figure class="figure"><p></p>
-<div>
-<pre class="mermaid mermaid-js">graph LR
-    Q["Q (N x d)"] --&gt;|MatMul| A["softmax(QK^T) (N x N)"]
-    K["K^T (d x N)"] --&gt;|MatMul| A
-    A --&gt;|MatMul| O["Output (N x d)"]
-    V["V (N x d)"] --&gt;|MatMul| O
-</pre>
-</div>
-<p></p></figure><p></p>
-</div>
-</div>
-</div>
-</section>
-<section id="search-space" class="level2">
-<h2 class="anchored" data-anchor-id="search-space">Search Space</h2>
-<p>A neural architecture search problem begins by defining the family of candidate models.</p>
-<section id="cell-level-search" class="level3">
-<h3 class="anchored" data-anchor-id="cell-level-search">Cell-Level Search</h3>
-<p>One influential idea is to search for a small computational cell and then stack copies of that cell.</p>
-<ul>
-<li>a <strong>normal cell</strong> preserves spatial resolution and mainly extracts features</li>
-<li>a <strong>reduction cell</strong> shrinks spatial resolution and increases receptive field</li>
-</ul>
-<p>The controller repeatedly decides:</p>
+<section id="hypernetwork" class="level3">
+<h3 class="anchored" data-anchor-id="hypernetwork">Hypernetwork</h3>
+<p>A hypernetwork is a model that generates weights for another model.</p>
+<p>In NAS, this means we train one master network that can emit weights for many sampled child architectures. A typical loop is:</p>
 <ol type="1">
-<li>which previous hidden states to use as inputs</li>
-<li>which operation to apply to each selected input</li>
-<li>how to combine the two transformed results</li>
+<li>Sample an architecture from the search space.</li>
+<li>Encode its structure into embeddings.</li>
+<li>Feed the embeddings through the hypernetwork.</li>
+<li>Generate the child model’s weights.</li>
+<li>Evaluate the child model on data.</li>
+<li>Use the child model’s loss to update the hypernetwork.</li>
 </ol>
-<div class="cell" data-layout-align="default">
-<div class="cell-output-display">
-<div>
-<p></p><figure class="figure"><p></p>
-<div>
-<pre class="mermaid mermaid-js">graph LR
-    H1["Select first input"] --&gt; O1["Operation on first input"]
-    H2["Select second input"] --&gt; O2["Operation on second input"]
-    O1 --&gt; C["Combine"]
-    O2 --&gt; C
-    C --&gt; N["New hidden state"]
-</pre>
-</div>
-<p></p></figure><p></p>
-</div>
-</div>
-</div>
-<p>If each node is built from:</p>
-<ul>
-<li>2 input selections</li>
-<li><span class="math inline">\(M\)</span> candidate operations for the first branch</li>
-<li><span class="math inline">\(M\)</span> candidate operations for the second branch</li>
-<li><span class="math inline">\(N\)</span> candidate combine methods</li>
-</ul>
-<p>then a <span class="math inline">\(B\)</span>-block cell has design space size</p>
+<p>This replaces “train every candidate” with “learn a weight generator.” The sampled architecture still gets evaluated, but it does not need its own full training run.</p>
+</section>
+</section>
+<section id="hardware-aware-nas" class="level2">
+<h2 class="anchored" data-anchor-id="hardware-aware-nas">Hardware-Aware NAS</h2>
+<p>Hardware-aware NAS includes latency, memory, energy, or other deployment constraints directly in the search objective.</p>
+<p>The objective is no longer only:</p>
 <p><span class="math display">\[
-(2 \cdot 2 \cdot M \cdot M \cdot N)^B.
+\max_\alpha \operatorname{Accuracy}(\alpha).
 \]</span></p>
-<p>This grows extremely fast, which is why brute-force search becomes expensive.</p>
-</section>
-<section id="elastic-dimensions" class="level3">
-<h3 class="anchored" data-anchor-id="elastic-dimensions">Elastic Dimensions</h3>
-<p>The search space is not only about operators inside a cell. Practical efficient-model design often searches over several global dimensions:</p>
-<ul>
-<li><strong>depth</strong>: how many blocks are stacked in each stage</li>
-<li><strong>width</strong>: how many channels each stage uses</li>
-<li><strong>resolution</strong>: the input image size</li>
-<li><strong>kernel size</strong>: whether layers use 3x3, 5x5, 7x7, and so on</li>
-<li><strong>topology / connectivity</strong>: how information routes across scales or stages</li>
-</ul>
-<p>This is the logic behind systems such as MobileNet variants and EfficientNet: capacity is not controlled by one knob, but by several coupled knobs.</p>
-</section>
-</section>
-<section id="good-search-spaces-respect-hardware" class="level2">
-<h2 class="anchored" data-anchor-id="good-search-spaces-respect-hardware">Good Search Spaces Respect Hardware</h2>
-<p>A large search space is not automatically a good one. In efficient AI, the target is not simply the model with the highest FLOPs or the largest parameter count.</p>
-<p>The design space should contain strong candidates <strong>under the real hardware constraint</strong>, such as latency, memory, or energy.</p>
-<p>For example, width-resolution pairs with similar FLOPs can behave differently in practice:</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Width-Resolution</th>
-<th style="text-align: right;">mFLOPs</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>w0.3-r160</td>
-<td style="text-align: right;">32.5</td>
-</tr>
-<tr class="even">
-<td>w0.4-r112</td>
-<td style="text-align: right;">32.4</td>
-</tr>
-<tr class="odd">
-<td>w0.4-r128</td>
-<td style="text-align: right;">39.3</td>
-</tr>
-<tr class="even">
-<td>w0.5-r112</td>
-<td style="text-align: right;">38.3</td>
-</tr>
-<tr class="odd">
-<td>w0.7-r96</td>
-<td style="text-align: right;">31.4</td>
-</tr>
-<tr class="even">
-<td>w0.7-r112</td>
-<td style="text-align: right;">38.4</td>
-</tr>
-</tbody>
-</table>
-<p>So the goal is not just “more FLOPs means more accuracy.” The better interpretation is:</p>
-<ul>
-<li>larger models often have higher capacity</li>
-<li>but the <strong>shape</strong> of that extra capacity matters</li>
-<li>a good search space makes it easy to pick the best architecture for a fixed budget</li>
-</ul>
-</section>
-<section id="search-strategy" class="level2">
-<h2 class="anchored" data-anchor-id="search-strategy">Search Strategy</h2>
-<p>Once the search space is fixed, we need a procedure for exploring it.</p>
-<section id="grid-search" class="level3">
-<h3 class="anchored" data-anchor-id="grid-search">Grid Search</h3>
-<p>The simplest baseline is grid search over a Cartesian product of dimensions such as width and resolution. Each candidate is trained and evaluated, then we keep only the models that satisfy the latency constraint.</p>
-<p>This is conceptually simple but computationally expensive.</p>
-</section>
-<section id="compound-scaling" class="level3">
-<h3 class="anchored" data-anchor-id="compound-scaling">Compound Scaling</h3>
-<p>EfficientNet-style compound scaling replaces a large grid with three coordinated scaling variables:</p>
+<p>Instead, the search balances model quality and hardware cost:</p>
 <p><span class="math display">\[
-d = \alpha^\phi,\qquad
-w = \beta^\phi,\qquad
-r = \gamma^\phi.
+\max_\alpha \operatorname{Accuracy}(\alpha)
+\quad \text{subject to} \quad
+\operatorname{Latency}(\alpha) \le T.
 \]</span></p>
-<p>Because convolutional FLOPs scale roughly like</p>
+<p>Equivalently, latency can be added as a differentiable or predicted penalty:</p>
 <p><span class="math display">\[
-d \cdot w^2 \cdot r^2,
+\mathcal{L}_{\text{total}}
+=
+\mathcal{L}_{\text{task}}
++ \lambda \operatorname{Latency}(\alpha).
 \]</span></p>
-<p>the scaling coefficients are chosen so that</p>
+<section id="proxylessnas" class="level3">
+<h3 class="anchored" data-anchor-id="proxylessnas">ProxylessNAS</h3>
+<p>ProxylessNAS avoids training a separate proxy model that may not match the target hardware. It builds an over-parameterized network containing all candidate paths, then trains the search process directly on the target task and hardware constraint.</p>
+<p>The simplified workflow is:</p>
+<ol type="1">
+<li>Build a supernet with all candidate paths.</li>
+<li>Train the over-parameterized network as one shared model.</li>
+<li>Learn which paths are useful.</li>
+<li>Prune redundant paths.</li>
+<li>Keep the final efficient architecture.</li>
+</ol>
+<p>This is a single-training-process view of NAS: the supernet shares weights across candidates, and search becomes path selection inside the network.</p>
+</section>
+<section id="latency-prediction-and-feedback" class="level3">
+<h3 class="anchored" data-anchor-id="latency-prediction-and-feedback">Latency Prediction and Feedback</h3>
+<p>Measuring real latency for every sampled architecture on a physical device is too slow. Hardware-aware NAS usually needs a fast latency estimator.</p>
+<p>One approach is a <strong>latency lookup table</strong>:</p>
+<ol type="1">
+<li>Measure common operations on the target device.</li>
+<li>Store latency values for layers such as 3x3 convolution, 5x5 convolution, depthwise convolution, and pointwise convolution.</li>
+<li>Estimate architecture latency by summing the latency of its components.</li>
+</ol>
+<p>Another approach is a learned latency predictor:</p>
+<ol type="1">
+<li>Collect architectures and measured latencies.</li>
+<li>Extract architecture features such as kernel size, width, depth, and resolution.</li>
+<li>Train a predictor to estimate latency for unseen candidates.</li>
+</ol>
+<p>The estimated latency then feeds back into the NAS loop, so the search is guided toward architectures that are accurate and deployable.</p>
+</section>
+</section>
+<section id="once-for-all-networks" class="level2">
+<h2 class="anchored" data-anchor-id="once-for-all-networks">Once-for-All Networks</h2>
+<p>Once-for-All (OFA) changes the deployment workflow from “train one model for one device” to “train one supernet, then extract many specialized subnets.”</p>
+<p>The idea is:</p>
+<ul>
+<li>train a large supernet once</li>
+<li>allow child networks with different depth, width, kernel size, and resolution</li>
+<li>extract a subnet for a target hardware constraint</li>
+<li>deploy the extracted subnet without retraining</li>
+</ul>
+<p>This reduces design cost. If a phone, watch, edge accelerator, and cloud GPU all need different latency or memory targets, OFA can select different child networks from the same trained supernet.</p>
+<section id="progressive-shrinking" class="level3">
+<h3 class="anchored" data-anchor-id="progressive-shrinking">Progressive Shrinking</h3>
+<p>Progressive shrinking is the training strategy that makes OFA work. The supernet is trained so that smaller subnets remain accurate after extraction.</p>
+<p>The shrinking dimensions include:</p>
+<ul>
+<li><strong>Kernel size:</strong> learn transformations from larger kernels such as 7x7 into smaller kernels such as 5x5 or 3x3.</li>
+<li><strong>Depth:</strong> allow shallower subnets to exit early by skipping later layers in a block.</li>
+<li><strong>Width:</strong> rank channels by importance and keep the stronger channels for narrower subnets.</li>
+</ul>
+<p>During training, the model is exposed to these smaller choices so early layers and shared weights become robust. During deployment, unused paths are removed.</p>
+</section>
+<section id="roofline-intuition" class="level3">
+<h3 class="anchored" data-anchor-id="roofline-intuition">Roofline Intuition</h3>
+<p>Efficient deployment is not only about reducing FLOPs. Hardware performance also depends on memory movement.</p>
+<p>Roofline analysis separates two regimes:</p>
+<ul>
+<li><strong>memory-bound:</strong> performance is limited by moving data</li>
+<li><strong>compute-bound:</strong> performance is limited by arithmetic throughput</li>
+</ul>
+<p>Arithmetic intensity is:</p>
 <p><span class="math display">\[
-\alpha \beta^2 \gamma^2 \approx 2,
+\text{Arithmetic intensity}
+=
+\frac{\text{operations}}{\text{bytes moved}}.
+\]</span></p>
+<p>An architecture with higher arithmetic intensity does more work for each byte fetched from memory. That can move it away from the memory-bound region and improve real hardware utilization.</p>
+<p>This is why a searched architecture can outperform a hand-designed model even when the nominal FLOPs look similar.</p>
+</section>
+</section>
+<section id="zero-shot-nas" class="level2">
+<h2 class="anchored" data-anchor-id="zero-shot-nas">Zero-Shot NAS</h2>
+<p>Zero-shot NAS tries to rank architectures without training them.</p>
+<p>Instead of estimating validation accuracy after training, it computes cheap scores from a randomly initialized network. The assumption is that some structural signals correlate with trainability or final accuracy.</p>
+<section id="zen-nas" class="level3">
+<h3 class="anchored" data-anchor-id="zen-nas">Zen-NAS</h3>
+<p>Zen-NAS scores an architecture by measuring how sensitive the randomly initialized network is to a small input perturbation, plus a batch-normalization variance term.</p>
+<p>The rough procedure is:</p>
+<ol type="1">
+<li>Sample random input:</li>
+</ol>
+<p><span class="math display">\[
+x \sim \mathcal{N}(0, 1).
+\]</span></p>
+<ol start="2" type="1">
+<li>Add a small perturbation:</li>
+</ol>
+<p><span class="math display">\[
+x' = x + \epsilon.
+\]</span></p>
+<ol start="3" type="1">
+<li>Initialize the network weights randomly.</li>
+<li>Measure the output difference:</li>
+</ol>
+<p><span class="math display">\[
+z_1 = \log \left\| f(x') - f(x) \right\|.
+\]</span></p>
+<ol start="5" type="1">
+<li>Add a batch-normalization signal. For channel-wise standard deviation <span class="math inline">\(\sigma_{i,j}\)</span>,</li>
+</ol>
+<p><span class="math display">\[
+\bar{\sigma}_i =
+\sqrt{
+\frac{\sum_j \sigma_{i,j}^2}{c_{\text{out}}}
+},
 \qquad
-\alpha \ge 1,\ \beta \ge 1,\ \gamma \ge 1.
+z_2 = \sum_i \log \bar{\sigma}_i.
 \]</span></p>
-<p>This gives a structured way to enlarge a model family without an exhaustive search over every dimension independently.</p>
-</section>
-<section id="random-search" class="level3">
-<h3 class="anchored" data-anchor-id="random-search">Random Search</h3>
-<p>Random search samples architectures from the candidate set and keeps the best-performing ones. It is surprisingly competitive when the search space is well designed, though it still wastes many evaluations.</p>
-</section>
-<section id="reinforcement-learning" class="level3">
-<h3 class="anchored" data-anchor-id="reinforcement-learning">Reinforcement Learning</h3>
-<p>RL-based NAS models architecture generation as a sequential decision problem.</p>
-<ul>
-<li>an RNN controller samples an architecture token by token</li>
-<li>the sampled child model is trained and evaluated</li>
-<li>the validation accuracy becomes the reward</li>
-<li>policy-gradient updates improve the controller</li>
-</ul>
-<p>This was a major early NAS idea, but it is costly because many child networks must be trained.</p>
-</section>
-<section id="differentiable-search" class="level3">
-<h3 class="anchored" data-anchor-id="differentiable-search">Differentiable Search</h3>
-<p>The key DARTS-style trick is to relax a discrete operator choice into a soft weighted mixture:</p>
+<p>The final score is:</p>
 <p><span class="math display">\[
-\bar o(x) = \sum_i \frac{\exp(\alpha_i)}{\sum_j \exp(\alpha_j)} o_i(x).
+z = z_1 + z_2.
 \]</span></p>
-<p>Now the architecture parameters <span class="math inline">\(\alpha_i\)</span> are differentiable, so gradient descent can optimize them directly.</p>
-<p>This reduces search cost dramatically. It also makes it possible to include hardware-aware penalties, such as expected latency:</p>
+<p>The intuition is that a good architecture should be expressive and sensitive enough to distinguish nearby inputs, while maintaining useful signal propagation.</p>
+</section>
+<section id="gradsign" class="level3">
+<h3 class="anchored" data-anchor-id="gradsign">GradSign</h3>
+<p>GradSign is based on gradient sign consistency across samples.</p>
+<p>The intuition is that an easier-to-optimize architecture has sample-wise local minima that are closer together. If this is true, gradients from different samples should often point in similar directions at random initialization.</p>
+<p>Given a dataset</p>
 <p><span class="math display">\[
-\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{task}} + \lambda F(\alpha,\beta,\dots),
+S = \{(x_i, y_i)\}_{i=1}^n
 \]</span></p>
-<p>where <span class="math inline">\(F\)</span> is a latency predictor or lookup-table estimate. After optimization, the relaxed architecture is discretized by keeping the strongest operation on each edge.</p>
+<p>and random initialization <span class="math inline">\(\theta_0\)</span>, compute gradient signs for each sample and layer:</p>
+<p><span class="math display">\[
+g[i,k]
+=
+\operatorname{sign}
+\left(
+\left[
+\nabla_\theta \ell(f_\theta(x_i), y_i)
+\big|_{\theta_0}
+\right]_k
+\right).
+\]</span></p>
+<p>Then score the model by aggregating sign agreement:</p>
+<p><span class="math display">\[
+\tau_f
+=
+\sum_k
+\left\|
+\sum_{i=1}^n g[i,k]
+\right\|.
+\]</span></p>
+<p>If gradients across samples have the same sign, the inner sum is large. Higher sign consistency suggests easier optimization and better final accuracy.</p>
 </section>
-<section id="evolutionary-search" class="level3">
-<h3 class="anchored" data-anchor-id="evolutionary-search">Evolutionary Search</h3>
-<p>Evolutionary search treats architectures like a population:</p>
+</section>
+<section id="beyond-nas-hardware-and-mapping-search" class="level2">
+<h2 class="anchored" data-anchor-id="beyond-nas-hardware-and-mapping-search">Beyond NAS: Hardware and Mapping Search</h2>
+<p>The last step is to expand the search beyond the neural network itself.</p>
+<p>In Neural Accelerator Architecture Search (NAAS), the search space includes:</p>
 <ul>
-<li>encode each architecture</li>
-<li>evaluate its fitness under accuracy and hardware constraints</li>
-<li>create offspring by crossover and mutation</li>
-<li>keep the stronger candidates and discard the weaker ones</li>
+<li><strong>neural network architecture:</strong> depth, width, kernels, operators, and topology</li>
+<li><strong>accelerator architecture:</strong> cache sizes, number of processing elements, and memory bandwidth</li>
+<li><strong>mapping strategy:</strong> tiling sizes and loop ordering</li>
 </ul>
-<p>This method is intuitive and hardware-friendly because it can optimize directly for black-box objectives such as measured latency, though it can still require many evaluations.</p>
-<p>The slide below summarizes the broader NAS picture in the lecture:</p>
-<p><img src="lecture-07-nas-1.png" class="img-fluid"></p>
+<p>The mapping part matters because the same model and hardware can perform differently depending on data movement and loop scheduling.</p>
+<p>Some mapping choices are categorical, such as loop orders like <code>CRXKYS</code> or <code>CXYRSK</code>. Search algorithms often encode these choices as numerical indices so they can be optimized together with continuous or integer hardware parameters.</p>
 </section>
+<section id="joint-optimization-loop" class="level2">
+<h2 class="anchored" data-anchor-id="joint-optimization-loop">Joint Optimization Loop</h2>
+<p>A simplified NAAS-style loop looks like this:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> epoch_naas <span class="kw">in</span> <span class="bu">range</span>(max_naas_epochs):</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    accelerators <span class="op">=</span> NAAS_generate_hardware()</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> hw <span class="kw">in</span> accelerators:</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> epoch_ofa <span class="kw">in</span> <span class="bu">range</span>(max_ofa_epochs):</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>            networks <span class="op">=</span> OFA_generate_networks(accuracy)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> nn <span class="kw">in</span> networks:</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>                mapping <span class="op">=</span> NAAS_optimize_mappings(hw, nn)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>                edp <span class="op">=</span> NAAS_get_edp(hw, nn, mapping)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>                OFA_update_optimizer(nn, edp)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>                best_nn, best_map, best_edp <span class="op">=</span> OFA_update_best(nn, mapping, edp)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        NAAS_update_optimizer(hw, best_nn, best_map, best_edp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The objective is not only high accuracy. The system searches for a model, hardware design, and mapping that jointly minimize deployment cost.</p>
 </section>
-<section id="interpretation" class="level2">
-<h2 class="anchored" data-anchor-id="interpretation">Interpretation</h2>
+<section id="lab" class="level2">
+<h2 class="anchored" data-anchor-id="lab">Lab</h2>
+<p><a href="https://colab.research.google.com/drive/1xKReLBHVS6bkFbYkfi-Ky3C4loQmG6Yc">Colab notebook</a></p>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
 <ul>
-<li>the <strong>search space</strong> decides what kinds of efficient models are even possible</li>
-<li>the <strong>search strategy</strong> decides how much compute we spend to find one</li>
-<li>hardware-aware NAS works only when both are designed together</li>
+<li>Weight inheritance and hypernetworks reduce the cost of candidate evaluation.</li>
+<li>ProxylessNAS searches directly inside an over-parameterized target network.</li>
+<li>Hardware-aware NAS uses latency prediction or lookup tables as feedback.</li>
+<li>Once-for-All networks train one supernet and extract many device-specific child networks.</li>
+<li>Zero-shot NAS ranks architectures without training by using random-initialization signals.</li>
+<li>NAAS extends the search to neural network architecture, accelerator design, and compiler mapping.</li>
 </ul>
-<p>The lecture’s main message is that efficient AI is not just about pruning or quantizing an existing model. Sometimes the architecture itself should be treated as a variable, and the search must be guided by both learning performance and deployment constraints.</p>
 
 
 <!-- -->
@@ -1861,235 +1883,308 @@ d \cdot w^2 \cdot r^2,
   }
   loadGiscus();
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Efficient AI Lecture 7: Neural Architecture Search (Part I)"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-04-15"</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Efficient AI, Neural Architecture Search, NAS, Model Design, EfficientNet, DARTS]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Classic efficient building blocks, cell-level NAS search spaces, elastic dimensions such as depth/width/resolution, and the main NAS strategies from grid search to RL, differentiable search, and evolution."</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">iframe</span><span class="ot"> width</span><span class="op">=</span><span class="st">"100%"</span><span class="ot"> height</span><span class="op">=</span><span class="st">"500"</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://www.youtube.com/embed/_Pflki9XOXE"</span><span class="ot"> title</span><span class="op">=</span><span class="st">"Efficient AI Lecture 7"</span><span class="ot"> frameborder</span><span class="op">=</span><span class="st">"0"</span><span class="ot"> allowfullscreen</span><span class="dt">&gt;&lt;/</span><span class="kw">iframe</span><span class="dt">&gt;</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>Slides: <span class="co">[</span><span class="ot">Lecture 7 PDF</span><span class="co">](https://www.dropbox.com/scl/fi/hxhjhxonwqyw2hfoywzcp/Lec07-Neural-Architecture-Search-I.pdf?rlkey=o6s5dglazyb2o2nrc897ccppg&amp;e=1&amp;st=dcjyr42l&amp;dl=0)</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">## Why Architecture Search Matters</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>Efficient AI is not only about compressing a fixed model. Sometimes the better move is to search directly for an architecture that matches the hardware budget from the beginning.</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>This lecture separates two ingredients:</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the **search space**: which architectures are allowed</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the **search strategy**: how we explore that space efficiently</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>That distinction is useful because a bad search strategy can waste compute, but a bad search space can prevent the right model from ever being considered.</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="fu">## Classic Efficient Building Blocks</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>Modern NAS systems do not start from nothing. They reuse a menu of building blocks that have already proved effective.</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**ResNet bottleneck block**: uses a skip connection plus 1x1-3x3-1x1 convolutions to reduce cost while keeping deep optimization stable.</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**MobileNetV1**: replaces a full convolution with a depthwise convolution followed by a pointwise 1x1 convolution, dramatically reducing FLOPs and parameters.</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**MobileNetV2 / MBConv**: expands channels first, performs depthwise convolution in the expanded space, then projects back down with a linear bottleneck so information is not destroyed by a final ReLU.</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**ShuffleNet block**: uses groupwise pointwise convolutions and a channel-shuffle operation to reduce compute while still mixing information across groups.</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Transformer block**: replaces convolutional locality with self-attention, which is flexible but expensive in sequence length.</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>For self-attention,</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>\operatorname{Attention}(Q,K,V) = \operatorname{softmax}\left(\frac{QK^\top}{\sqrt{k}}\right)V.</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>If the sequence length is $N$ and hidden width is $d$, then:</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>forming $QK^\top$ costs $O(N^2 d)$</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>multiplying the attention matrix by $V$ also costs $O(N^2 d)$</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>So the total complexity is</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>O(N^2 d),</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>which is why standard attention becomes expensive for long sequences.</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>graph LR</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>    Q[<span class="ot">"</span><span class="st">Q (N x d)</span><span class="ot">"</span>] --&gt;|MatMul| A[<span class="ot">"</span><span class="st">softmax(QK^T) (N x N)</span><span class="ot">"</span>]</span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>    K[<span class="ot">"</span><span class="st">K^T (d x N)</span><span class="ot">"</span>] --&gt;|MatMul| A</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>    A --&gt;|MatMul| O[<span class="ot">"</span><span class="st">Output (N x d)</span><span class="ot">"</span>]</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>    V[<span class="ot">"</span><span class="st">V (N x d)</span><span class="ot">"</span>] --&gt;|MatMul| O</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="fu">## Search Space</span></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>A neural architecture search problem begins by defining the family of candidate models.</span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="fu">### Cell-Level Search</span></span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>One influential idea is to search for a small computational cell and then stack copies of that cell.</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>a **normal cell** preserves spatial resolution and mainly extracts features</span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>a **reduction cell** shrinks spatial resolution and increases receptive field</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>The controller repeatedly decides:</span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>which previous hidden states to use as inputs</span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>which operation to apply to each selected input</span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>how to combine the two transformed results</span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>graph LR</span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>    H1[<span class="ot">"</span><span class="st">Select first input</span><span class="ot">"</span>] --&gt; O1[<span class="ot">"</span><span class="st">Operation on first input</span><span class="ot">"</span>]</span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>    H2[<span class="ot">"</span><span class="st">Select second input</span><span class="ot">"</span>] --&gt; O2[<span class="ot">"</span><span class="st">Operation on second input</span><span class="ot">"</span>]</span>
-<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>    O1 --&gt; C[<span class="ot">"</span><span class="st">Combine</span><span class="ot">"</span>]</span>
-<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>    O2 --&gt; C</span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>    C --&gt; N[<span class="ot">"</span><span class="st">New hidden state</span><span class="ot">"</span>]</span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>If each node is built from:</span>
-<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>2 input selections</span>
-<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$M$ candidate operations for the first branch</span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$M$ candidate operations for the second branch</span>
-<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$N$ candidate combine methods</span>
-<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>then a $B$-block cell has design space size</span>
-<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>(2 \cdot 2 \cdot M \cdot M \cdot N)^B.</span>
-<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>This grows extremely fast, which is why brute-force search becomes expensive.</span>
-<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a><span class="fu">### Elastic Dimensions</span></span>
-<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>The search space is not only about operators inside a cell. Practical efficient-model design often searches over several global dimensions:</span>
-<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**depth**: how many blocks are stacked in each stage</span>
-<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**width**: how many channels each stage uses</span>
-<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**resolution**: the input image size</span>
-<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**kernel size**: whether layers use 3x3, 5x5, 7x7, and so on</span>
-<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**topology / connectivity**: how information routes across scales or stages</span>
-<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>This is the logic behind systems such as MobileNet variants and EfficientNet: capacity is not controlled by one knob, but by several coupled knobs.</span>
-<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a><span class="fu">## Good Search Spaces Respect Hardware</span></span>
-<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a>A large search space is not automatically a good one. In efficient AI, the target is not simply the model with the highest FLOPs or the largest parameter count.</span>
-<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>The design space should contain strong candidates **under the real hardware constraint**, such as latency, memory, or energy.</span>
-<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>For example, width-resolution pairs with similar FLOPs can behave differently in practice:</span>
-<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Width-Resolution <span class="pp">|</span> mFLOPs <span class="pp">|</span></span>
-<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---:|</span></span>
-<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> w0.3-r160 <span class="pp">|</span> 32.5 <span class="pp">|</span></span>
-<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> w0.4-r112 <span class="pp">|</span> 32.4 <span class="pp">|</span></span>
-<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> w0.4-r128 <span class="pp">|</span> 39.3 <span class="pp">|</span></span>
-<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> w0.5-r112 <span class="pp">|</span> 38.3 <span class="pp">|</span></span>
-<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> w0.7-r96 <span class="pp">|</span> 31.4 <span class="pp">|</span></span>
-<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> w0.7-r112 <span class="pp">|</span> 38.4 <span class="pp">|</span></span>
-<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>So the goal is not just "more FLOPs means more accuracy." The better interpretation is:</span>
-<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>larger models often have higher capacity</span>
-<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>but the **shape** of that extra capacity matters</span>
-<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>a good search space makes it easy to pick the best architecture for a fixed budget</span>
-<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a><span class="fu">## Search Strategy</span></span>
-<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>Once the search space is fixed, we need a procedure for exploring it.</span>
-<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a><span class="fu">### Grid Search</span></span>
-<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>The simplest baseline is grid search over a Cartesian product of dimensions such as width and resolution. Each candidate is trained and evaluated, then we keep only the models that satisfy the latency constraint.</span>
-<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>This is conceptually simple but computationally expensive.</span>
-<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a><span class="fu">### Compound Scaling</span></span>
-<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>EfficientNet-style compound scaling replaces a large grid with three coordinated scaling variables:</span>
-<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a>d = \alpha^\phi,\qquad</span>
-<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>w = \beta^\phi,\qquad</span>
-<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>r = \gamma^\phi.</span>
-<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>Because convolutional FLOPs scale roughly like</span>
-<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>d \cdot w^2 \cdot r^2,</span>
-<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>the scaling coefficients are chosen so that</span>
-<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a>\alpha \beta^2 \gamma^2 \approx 2,</span>
-<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a>\qquad</span>
-<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>\alpha \ge 1,\ \beta \ge 1,\ \gamma \ge 1.</span>
-<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>This gives a structured way to enlarge a model family without an exhaustive search over every dimension independently.</span>
-<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a><span class="fu">### Random Search</span></span>
-<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>Random search samples architectures from the candidate set and keeps the best-performing ones. It is surprisingly competitive when the search space is well designed, though it still wastes many evaluations.</span>
-<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a><span class="fu">### Reinforcement Learning</span></span>
-<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a>RL-based NAS models architecture generation as a sequential decision problem.</span>
-<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>an RNN controller samples an architecture token by token</span>
-<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the sampled child model is trained and evaluated</span>
-<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the validation accuracy becomes the reward</span>
-<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>policy-gradient updates improve the controller</span>
-<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a>This was a major early NAS idea, but it is costly because many child networks must be trained.</span>
-<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a><span class="fu">### Differentiable Search</span></span>
-<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a>The key DARTS-style trick is to relax a discrete operator choice into a soft weighted mixture:</span>
-<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a>\bar o(x) = \sum_i \frac{\exp(\alpha_i)}{\sum_j \exp(\alpha_j)} o_i(x).</span>
-<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a>Now the architecture parameters $\alpha_i$ are differentiable, so gradient descent can optimize them directly.</span>
-<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a>This reduces search cost dramatically. It also makes it possible to include hardware-aware penalties, such as expected latency:</span>
-<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a>\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{task}} + \lambda F(\alpha,\beta,\dots),</span>
-<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a>where $F$ is a latency predictor or lookup-table estimate. After optimization, the relaxed architecture is discretized by keeping the strongest operation on each edge.</span>
-<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a><span class="fu">### Evolutionary Search</span></span>
-<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>Evolutionary search treats architectures like a population:</span>
-<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>encode each architecture</span>
-<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>evaluate its fitness under accuracy and hardware constraints</span>
-<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>create offspring by crossover and mutation</span>
-<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>keep the stronger candidates and discard the weaker ones</span>
-<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a>This method is intuitive and hardware-friendly because it can optimize directly for black-box objectives such as measured latency, though it can still require many evaluations.</span>
-<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a>The slide below summarizes the broader NAS picture in the lecture:</span>
-<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a><span class="al">![](lecture-07-nas-1.png)</span></span>
-<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a><span class="fu">## Interpretation</span></span>
-<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the **search space** decides what kinds of efficient models are even possible</span>
-<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>the **search strategy** decides how much compute we spend to find one</span>
-<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>hardware-aware NAS works only when both are designed together</span>
-<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a>The lecture’s main message is that efficient AI is not just about pruning or quantizing an existing model. Sometimes the architecture itself should be treated as a variable, and the search must be guided by both learning performance and deployment constraints.</span>
-</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Efficient AI Lecture 8: Neural Architecture Search (Part II)"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-04-27"</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Efficient AI, Neural Architecture Search, NAS, Hardware-Aware NAS, Once-for-All, Zero-Shot NAS]</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Accuracy estimation, weight inheritance, hypernetworks, ProxylessNAS, Once-for-All networks, zero-shot NAS scores, and joint neural network, mapping, and accelerator search."</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">iframe</span><span class="ot"> width</span><span class="op">=</span><span class="st">"100%"</span><span class="ot"> height</span><span class="op">=</span><span class="st">"500"</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://www.youtube.com/embed/L07-eVmSVGY"</span><span class="ot"> title</span><span class="op">=</span><span class="st">"Efficient AI Lecture 8"</span><span class="ot"> frameborder</span><span class="op">=</span><span class="st">"0"</span><span class="ot"> allowfullscreen</span><span class="dt">&gt;&lt;/</span><span class="kw">iframe</span><span class="dt">&gt;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>Slides: <span class="co">[</span><span class="ot">Lecture 8 PDF</span><span class="co">](https://www.dropbox.com/scl/fi/kaia5vvmdwb2bj0xnbihm/Lec08-Neural-Architecture-Search-II.pdf?rlkey=vkp9i12ljbk4jmdfp05j3ctdy&amp;st=hincmob7&amp;dl=0)</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="al">![](lecture-08-nas-1.png)</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>Lecture 7 focused on the NAS search space and search strategy. Lecture 8 asks the next practical question: how do we estimate accuracy and hardware cost without training every candidate from scratch?</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>The main progression is:</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>train each candidate from scratch</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>reuse weights from a trained parent model</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>use a hypernetwork to generate candidate weights</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>train a shared supernet and sample child networks</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>use zero-shot scores without training</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>add hardware latency, mapping, and accelerator design into the loop</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="fu">## Accuracy Estimation</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>The expensive part of NAS is not sampling architectures. It is evaluating them. A naive NAS loop trains thousands of candidates, and each full training run can be costly.</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>Accuracy-estimation methods try to answer a cheaper question:</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; Can we predict which architecture is promising without paying the full training cost?</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="fu">### Weight Inheritance</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>Weight inheritance treats architecture search as evolution rather than creation from zero.</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>Instead of initializing every candidate randomly, a child model starts from a trained parent model and expands it through transformations that preserve the parent's function.</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>Two common transformations are:</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Net2Wider:** duplicate neurons or channels, then divide outgoing weights so the widened layer initially computes the same function.</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Net2Deeper:** insert a new layer initialized as an identity mapping, so the deeper network initially behaves like the shallower one.</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>The goal is to expand capacity while preserving useful learned representations. The child can then be fine-tuned instead of trained from scratch.</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="fu">### Hypernetwork</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>A hypernetwork is a model that generates weights for another model.</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>In NAS, this means we train one master network that can emit weights for many sampled child architectures. A typical loop is:</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Sample an architecture from the search space.</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Encode its structure into embeddings.</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Feed the embeddings through the hypernetwork.</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Generate the child model's weights.</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Evaluate the child model on data.</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="ss">6. </span>Use the child model's loss to update the hypernetwork.</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>This replaces "train every candidate" with "learn a weight generator." The sampled architecture still gets evaluated, but it does not need its own full training run.</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="fu">## Hardware-Aware NAS</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>Hardware-aware NAS includes latency, memory, energy, or other deployment constraints directly in the search objective.</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>The objective is no longer only:</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>\max_\alpha \operatorname{Accuracy}(\alpha).</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>Instead, the search balances model quality and hardware cost:</span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>\max_\alpha \operatorname{Accuracy}(\alpha)</span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>\quad \text{subject to} \quad</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>\operatorname{Latency}(\alpha) \le T.</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>Equivalently, latency can be added as a differentiable or predicted penalty:</span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>\mathcal{L}_{\text{total}}</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>\mathcal{L}_{\text{task}}</span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a><span class="ss">+ </span>\lambda \operatorname{Latency}(\alpha).</span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="fu">### ProxylessNAS</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>ProxylessNAS avoids training a separate proxy model that may not match the target hardware. It builds an over-parameterized network containing all candidate paths, then trains the search process directly on the target task and hardware constraint.</span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>The simplified workflow is:</span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Build a supernet with all candidate paths.</span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Train the over-parameterized network as one shared model.</span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Learn which paths are useful.</span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Prune redundant paths.</span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Keep the final efficient architecture.</span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>This is a single-training-process view of NAS: the supernet shares weights across candidates, and search becomes path selection inside the network.</span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a><span class="fu">### Latency Prediction and Feedback</span></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a>Measuring real latency for every sampled architecture on a physical device is too slow. Hardware-aware NAS usually needs a fast latency estimator.</span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a>One approach is a **latency lookup table**:</span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Measure common operations on the target device.</span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Store latency values for layers such as 3x3 convolution, 5x5 convolution, depthwise convolution, and pointwise convolution.</span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Estimate architecture latency by summing the latency of its components.</span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>Another approach is a learned latency predictor:</span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Collect architectures and measured latencies.</span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Extract architecture features such as kernel size, width, depth, and resolution.</span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Train a predictor to estimate latency for unseen candidates.</span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a>The estimated latency then feeds back into the NAS loop, so the search is guided toward architectures that are accurate and deployable.</span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a><span class="fu">## Once-for-All Networks</span></span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a>Once-for-All (OFA) changes the deployment workflow from "train one model for one device" to "train one supernet, then extract many specialized subnets."</span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>The idea is:</span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>train a large supernet once</span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>allow child networks with different depth, width, kernel size, and resolution</span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>extract a subnet for a target hardware constraint</span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>deploy the extracted subnet without retraining</span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>This reduces design cost. If a phone, watch, edge accelerator, and cloud GPU all need different latency or memory targets, OFA can select different child networks from the same trained supernet.</span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a><span class="fu">### Progressive Shrinking</span></span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a>Progressive shrinking is the training strategy that makes OFA work. The supernet is trained so that smaller subnets remain accurate after extraction.</span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>The shrinking dimensions include:</span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Kernel size:** learn transformations from larger kernels such as 7x7 into smaller kernels such as 5x5 or 3x3.</span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Depth:** allow shallower subnets to exit early by skipping later layers in a block.</span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Width:** rank channels by importance and keep the stronger channels for narrower subnets.</span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a>During training, the model is exposed to these smaller choices so early layers and shared weights become robust. During deployment, unused paths are removed.</span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a><span class="fu">### Roofline Intuition</span></span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>Efficient deployment is not only about reducing FLOPs. Hardware performance also depends on memory movement.</span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a>Roofline analysis separates two regimes:</span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**memory-bound:** performance is limited by moving data</span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**compute-bound:** performance is limited by arithmetic throughput</span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a>Arithmetic intensity is:</span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a>\text{Arithmetic intensity}</span>
+<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a>\frac{\text{operations}}{\text{bytes moved}}.</span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a>An architecture with higher arithmetic intensity does more work for each byte fetched from memory. That can move it away from the memory-bound region and improve real hardware utilization.</span>
+<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a>This is why a searched architecture can outperform a hand-designed model even when the nominal FLOPs look similar.</span>
+<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a><span class="fu">## Zero-Shot NAS</span></span>
+<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a>Zero-shot NAS tries to rank architectures without training them.</span>
+<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a>Instead of estimating validation accuracy after training, it computes cheap scores from a randomly initialized network. The assumption is that some structural signals correlate with trainability or final accuracy.</span>
+<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a><span class="fu">### Zen-NAS</span></span>
+<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a>Zen-NAS scores an architecture by measuring how sensitive the randomly initialized network is to a small input perturbation, plus a batch-normalization variance term.</span>
+<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a>The rough procedure is:</span>
+<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Sample random input:</span>
+<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a>x \sim \mathcal{N}(0, 1).</span>
+<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Add a small perturbation:</span>
+<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a>x' = x + \epsilon.</span>
+<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Initialize the network weights randomly.</span>
+<span id="cb2-193"><a href="#cb2-193" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Measure the output difference:</span>
+<span id="cb2-194"><a href="#cb2-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a>z_1 = \log \left<span class="sc">\|</span> f(x') - f(x) \right<span class="sc">\|</span>.</span>
+<span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Add a batch-normalization signal. For channel-wise standard deviation $\sigma_{i,j}$,</span>
+<span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-202"><a href="#cb2-202" aria-hidden="true" tabindex="-1"></a>\bar{\sigma}_i =</span>
+<span id="cb2-203"><a href="#cb2-203" aria-hidden="true" tabindex="-1"></a>\sqrt{</span>
+<span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a>\frac{\sum_j \sigma_{i,j}^2}{c_{\text{out}}}</span>
+<span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a>},</span>
+<span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a>z_2 = \sum_i \log \bar{\sigma}_i.</span>
+<span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-209"><a href="#cb2-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-210"><a href="#cb2-210" aria-hidden="true" tabindex="-1"></a>The final score is:</span>
+<span id="cb2-211"><a href="#cb2-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-212"><a href="#cb2-212" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-213"><a href="#cb2-213" aria-hidden="true" tabindex="-1"></a>z = z_1 + z_2.</span>
+<span id="cb2-214"><a href="#cb2-214" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-215"><a href="#cb2-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-216"><a href="#cb2-216" aria-hidden="true" tabindex="-1"></a>The intuition is that a good architecture should be expressive and sensitive enough to distinguish nearby inputs, while maintaining useful signal propagation.</span>
+<span id="cb2-217"><a href="#cb2-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-218"><a href="#cb2-218" aria-hidden="true" tabindex="-1"></a><span class="fu">### GradSign</span></span>
+<span id="cb2-219"><a href="#cb2-219" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-220"><a href="#cb2-220" aria-hidden="true" tabindex="-1"></a>GradSign is based on gradient sign consistency across samples.</span>
+<span id="cb2-221"><a href="#cb2-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-222"><a href="#cb2-222" aria-hidden="true" tabindex="-1"></a>The intuition is that an easier-to-optimize architecture has sample-wise local minima that are closer together. If this is true, gradients from different samples should often point in similar directions at random initialization.</span>
+<span id="cb2-223"><a href="#cb2-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-224"><a href="#cb2-224" aria-hidden="true" tabindex="-1"></a>Given a dataset</span>
+<span id="cb2-225"><a href="#cb2-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-226"><a href="#cb2-226" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-227"><a href="#cb2-227" aria-hidden="true" tabindex="-1"></a>S = <span class="sc">\{</span>(x_i, y_i)<span class="sc">\}</span>_{i=1}^n</span>
+<span id="cb2-228"><a href="#cb2-228" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-229"><a href="#cb2-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-230"><a href="#cb2-230" aria-hidden="true" tabindex="-1"></a>and random initialization $\theta_0$, compute gradient signs for each sample and layer:</span>
+<span id="cb2-231"><a href="#cb2-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-232"><a href="#cb2-232" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-233"><a href="#cb2-233" aria-hidden="true" tabindex="-1"></a>g<span class="co">[</span><span class="ot">i,k</span><span class="co">]</span></span>
+<span id="cb2-234"><a href="#cb2-234" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-235"><a href="#cb2-235" aria-hidden="true" tabindex="-1"></a>\operatorname{sign}</span>
+<span id="cb2-236"><a href="#cb2-236" aria-hidden="true" tabindex="-1"></a>\left(</span>
+<span id="cb2-237"><a href="#cb2-237" aria-hidden="true" tabindex="-1"></a>\left[</span>
+<span id="cb2-238"><a href="#cb2-238" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \ell(f_\theta(x_i), y_i)</span>
+<span id="cb2-239"><a href="#cb2-239" aria-hidden="true" tabindex="-1"></a>\big|_{\theta_0}</span>
+<span id="cb2-240"><a href="#cb2-240" aria-hidden="true" tabindex="-1"></a>\right]_k</span>
+<span id="cb2-241"><a href="#cb2-241" aria-hidden="true" tabindex="-1"></a>\right).</span>
+<span id="cb2-242"><a href="#cb2-242" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-243"><a href="#cb2-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-244"><a href="#cb2-244" aria-hidden="true" tabindex="-1"></a>Then score the model by aggregating sign agreement:</span>
+<span id="cb2-245"><a href="#cb2-245" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-246"><a href="#cb2-246" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-247"><a href="#cb2-247" aria-hidden="true" tabindex="-1"></a>\tau_f</span>
+<span id="cb2-248"><a href="#cb2-248" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-249"><a href="#cb2-249" aria-hidden="true" tabindex="-1"></a>\sum_k</span>
+<span id="cb2-250"><a href="#cb2-250" aria-hidden="true" tabindex="-1"></a>\left<span class="sc">\|</span></span>
+<span id="cb2-251"><a href="#cb2-251" aria-hidden="true" tabindex="-1"></a>\sum_{i=1}^n g<span class="co">[</span><span class="ot">i,k</span><span class="co">]</span></span>
+<span id="cb2-252"><a href="#cb2-252" aria-hidden="true" tabindex="-1"></a>\right<span class="sc">\|</span>.</span>
+<span id="cb2-253"><a href="#cb2-253" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-254"><a href="#cb2-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-255"><a href="#cb2-255" aria-hidden="true" tabindex="-1"></a>If gradients across samples have the same sign, the inner sum is large. Higher sign consistency suggests easier optimization and better final accuracy.</span>
+<span id="cb2-256"><a href="#cb2-256" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-257"><a href="#cb2-257" aria-hidden="true" tabindex="-1"></a><span class="fu">## Beyond NAS: Hardware and Mapping Search</span></span>
+<span id="cb2-258"><a href="#cb2-258" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-259"><a href="#cb2-259" aria-hidden="true" tabindex="-1"></a>The last step is to expand the search beyond the neural network itself.</span>
+<span id="cb2-260"><a href="#cb2-260" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-261"><a href="#cb2-261" aria-hidden="true" tabindex="-1"></a>In Neural Accelerator Architecture Search (NAAS), the search space includes:</span>
+<span id="cb2-262"><a href="#cb2-262" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-263"><a href="#cb2-263" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**neural network architecture:** depth, width, kernels, operators, and topology</span>
+<span id="cb2-264"><a href="#cb2-264" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**accelerator architecture:** cache sizes, number of processing elements, and memory bandwidth</span>
+<span id="cb2-265"><a href="#cb2-265" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**mapping strategy:** tiling sizes and loop ordering</span>
+<span id="cb2-266"><a href="#cb2-266" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-267"><a href="#cb2-267" aria-hidden="true" tabindex="-1"></a>The mapping part matters because the same model and hardware can perform differently depending on data movement and loop scheduling.</span>
+<span id="cb2-268"><a href="#cb2-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-269"><a href="#cb2-269" aria-hidden="true" tabindex="-1"></a>Some mapping choices are categorical, such as loop orders like <span class="in">`CRXKYS`</span> or <span class="in">`CXYRSK`</span>. Search algorithms often encode these choices as numerical indices so they can be optimized together with continuous or integer hardware parameters.</span>
+<span id="cb2-270"><a href="#cb2-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-271"><a href="#cb2-271" aria-hidden="true" tabindex="-1"></a><span class="fu">## Joint Optimization Loop</span></span>
+<span id="cb2-272"><a href="#cb2-272" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-273"><a href="#cb2-273" aria-hidden="true" tabindex="-1"></a>A simplified NAAS-style loop looks like this:</span>
+<span id="cb2-274"><a href="#cb2-274" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-275"><a href="#cb2-275" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb2-276"><a href="#cb2-276" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> epoch_naas <span class="kw">in</span> <span class="bu">range</span>(max_naas_epochs):</span>
+<span id="cb2-277"><a href="#cb2-277" aria-hidden="true" tabindex="-1"></a>    accelerators <span class="op">=</span> NAAS_generate_hardware()</span>
+<span id="cb2-278"><a href="#cb2-278" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> hw <span class="kw">in</span> accelerators:</span>
+<span id="cb2-279"><a href="#cb2-279" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> epoch_ofa <span class="kw">in</span> <span class="bu">range</span>(max_ofa_epochs):</span>
+<span id="cb2-280"><a href="#cb2-280" aria-hidden="true" tabindex="-1"></a>            networks <span class="op">=</span> OFA_generate_networks(accuracy)</span>
+<span id="cb2-281"><a href="#cb2-281" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> nn <span class="kw">in</span> networks:</span>
+<span id="cb2-282"><a href="#cb2-282" aria-hidden="true" tabindex="-1"></a>                mapping <span class="op">=</span> NAAS_optimize_mappings(hw, nn)</span>
+<span id="cb2-283"><a href="#cb2-283" aria-hidden="true" tabindex="-1"></a>                edp <span class="op">=</span> NAAS_get_edp(hw, nn, mapping)</span>
+<span id="cb2-284"><a href="#cb2-284" aria-hidden="true" tabindex="-1"></a>                OFA_update_optimizer(nn, edp)</span>
+<span id="cb2-285"><a href="#cb2-285" aria-hidden="true" tabindex="-1"></a>                best_nn, best_map, best_edp <span class="op">=</span> OFA_update_best(nn, mapping, edp)</span>
+<span id="cb2-286"><a href="#cb2-286" aria-hidden="true" tabindex="-1"></a>        NAAS_update_optimizer(hw, best_nn, best_map, best_edp)</span>
+<span id="cb2-287"><a href="#cb2-287" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-288"><a href="#cb2-288" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-289"><a href="#cb2-289" aria-hidden="true" tabindex="-1"></a>The objective is not only high accuracy. The system searches for a model, hardware design, and mapping that jointly minimize deployment cost.</span>
+<span id="cb2-290"><a href="#cb2-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-291"><a href="#cb2-291" aria-hidden="true" tabindex="-1"></a><span class="fu">## Lab</span></span>
+<span id="cb2-292"><a href="#cb2-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-293"><a href="#cb2-293" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Colab notebook</span><span class="co">](https://colab.research.google.com/drive/1xKReLBHVS6bkFbYkfi-Ky3C4loQmG6Yc)</span></span>
+<span id="cb2-294"><a href="#cb2-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-295"><a href="#cb2-295" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary</span></span>
+<span id="cb2-296"><a href="#cb2-296" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-297"><a href="#cb2-297" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Weight inheritance and hypernetworks reduce the cost of candidate evaluation.</span>
+<span id="cb2-298"><a href="#cb2-298" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>ProxylessNAS searches directly inside an over-parameterized target network.</span>
+<span id="cb2-299"><a href="#cb2-299" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Hardware-aware NAS uses latency prediction or lookup tables as feedback.</span>
+<span id="cb2-300"><a href="#cb2-300" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Once-for-All networks train one supernet and extract many device-specific child networks.</span>
+<span id="cb2-301"><a href="#cb2-301" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Zero-shot NAS ranks architectures without training by using random-initialization signals.</span>
+<span id="cb2-302"><a href="#cb2-302" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>NAAS extends the search to neural network architecture, accelerator design, and compiler mapping.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
