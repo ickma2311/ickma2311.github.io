@@ -7,9 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Chao Ma">
-<meta name="dcterms.date" content="2025-12-08">
+<meta name="dcterms.date" content="2026-05-07">
+<meta name="description" content="Lecture 7 notes on policy gradient methods: direct policy search, score functions, softmax and Gaussian policies, REINFORCE, actor-critic, baselines, eligibility traces, and natural policy gradients.">
 
-<title>EE 364A (Convex Optimization): Lecture 4.1 - Operations Preserving Convexity – ∇ ickma.dev</title>
+<title>David Silver RL Course - Lecture 7: Policy Gradient Methods – ∇ ickma.dev</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -1107,26 +1108,19 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#operations-preserving-convexity" id="toc-operations-preserving-convexity" class="nav-link active" data-scroll-target="#operations-preserving-convexity">Operations preserving Convexity</a>
-  <ul class="collapse">
-  <li><a href="#review-basic-operations-from-lecture-3" id="toc-review-basic-operations-from-lecture-3" class="nav-link" data-scroll-target="#review-basic-operations-from-lecture-3">Review: Basic Operations from Lecture 3</a></li>
-  <li><a href="#pointwise-maximum" id="toc-pointwise-maximum" class="nav-link" data-scroll-target="#pointwise-maximum">Pointwise Maximum</a></li>
-  <li><a href="#pointwise-supremum" id="toc-pointwise-supremum" class="nav-link" data-scroll-target="#pointwise-supremum">Pointwise Supremum</a></li>
-  <li><a href="#composition-with-scalar-functions" id="toc-composition-with-scalar-functions" class="nav-link" data-scroll-target="#composition-with-scalar-functions">Composition with Scalar Functions</a>
-  <ul class="collapse">
-  <li><a href="#proof" id="toc-proof" class="nav-link" data-scroll-target="#proof">Proof</a></li>
-  </ul></li>
-  <li><a href="#vector-composition-general-rule" id="toc-vector-composition-general-rule" class="nav-link" data-scroll-target="#vector-composition-general-rule">Vector Composition (General Rule)</a>
-  <ul class="collapse">
-  <li><a href="#proof-1" id="toc-proof-1" class="nav-link" data-scroll-target="#proof-1">Proof</a></li>
-  </ul></li>
-  <li><a href="#minimization" id="toc-minimization" class="nav-link" data-scroll-target="#minimization">Minimization</a>
-  <ul class="collapse">
-  <li><a href="#example-1-quadratic-function" id="toc-example-1-quadratic-function" class="nav-link" data-scroll-target="#example-1-quadratic-function">Example 1: Quadratic function</a></li>
-  <li><a href="#example-2-distance-to-a-set" id="toc-example-2-distance-to-a-set" class="nav-link" data-scroll-target="#example-2-distance-to-a-set">Example 2: Distance to a set</a></li>
-  </ul></li>
-  <li><a href="#perspective" id="toc-perspective" class="nav-link" data-scroll-target="#perspective">Perspective</a></li>
-  </ul></li>
+  <li><a href="#value-based-policy-based-and-actor-critic" id="toc-value-based-policy-based-and-actor-critic" class="nav-link active" data-scroll-target="#value-based-policy-based-and-actor-critic">Value-Based, Policy-Based, and Actor-Critic</a></li>
+  <li><a href="#policy-objective-functions" id="toc-policy-objective-functions" class="nav-link" data-scroll-target="#policy-objective-functions">Policy Objective Functions</a></li>
+  <li><a href="#finite-difference-policy-gradient" id="toc-finite-difference-policy-gradient" class="nav-link" data-scroll-target="#finite-difference-policy-gradient">Finite-Difference Policy Gradient</a></li>
+  <li><a href="#the-score-function" id="toc-the-score-function" class="nav-link" data-scroll-target="#the-score-function">The Score Function</a></li>
+  <li><a href="#softmax-policy" id="toc-softmax-policy" class="nav-link" data-scroll-target="#softmax-policy">Softmax Policy</a></li>
+  <li><a href="#gaussian-policy" id="toc-gaussian-policy" class="nav-link" data-scroll-target="#gaussian-policy">Gaussian Policy</a></li>
+  <li><a href="#policy-gradient-theorem" id="toc-policy-gradient-theorem" class="nav-link" data-scroll-target="#policy-gradient-theorem">Policy Gradient Theorem</a></li>
+  <li><a href="#reinforce" id="toc-reinforce" class="nav-link" data-scroll-target="#reinforce">REINFORCE</a></li>
+  <li><a href="#actor-critic-policy-gradient" id="toc-actor-critic-policy-gradient" class="nav-link" data-scroll-target="#actor-critic-policy-gradient">Actor-Critic Policy Gradient</a></li>
+  <li><a href="#baselines-and-advantage" id="toc-baselines-and-advantage" class="nav-link" data-scroll-target="#baselines-and-advantage">Baselines and Advantage</a></li>
+  <li><a href="#eligibility-traces-for-policy-gradient" id="toc-eligibility-traces-for-policy-gradient" class="nav-link" data-scroll-target="#eligibility-traces-for-policy-gradient">Eligibility Traces for Policy Gradient</a></li>
+  <li><a href="#natural-policy-gradient" id="toc-natural-policy-gradient" class="nav-link" data-scroll-target="#natural-policy-gradient">Natural Policy Gradient</a></li>
+  <li><a href="#main-takeaway" id="toc-main-takeaway" class="nav-link" data-scroll-target="#main-takeaway">Main Takeaway</a></li>
   </ul>
 </nav>
     </div>
@@ -1135,14 +1129,23 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">EE 364A (Convex Optimization): Lecture 4.1 - Operations Preserving Convexity</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">David Silver RL Course - Lecture 7: Policy Gradient Methods</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
   <div class="quarto-categories">
-    <div class="quarto-category">Convex Optimization</div>
-    <div class="quarto-category">EE364A</div>
-    <div class="quarto-category">Stanford</div>
+    <div class="quarto-category">Reinforcement Learning</div>
+    <div class="quarto-category">RL</div>
+    <div class="quarto-category">David Silver</div>
+    <div class="quarto-category">Policy Gradient</div>
+    <div class="quarto-category">REINFORCE</div>
+    <div class="quarto-category">Actor-Critic</div>
+    <div class="quarto-category">Natural Gradient</div>
   </div>
   </div>
 
+<div>
+  <div class="description">
+    Lecture 7 notes on policy gradient methods: direct policy search, score functions, softmax and Gaussian policies, REINFORCE, actor-critic, baselines, eligibility traces, and natural policy gradients.
+  </div>
+</div>
 
 
 <div class="quarto-title-meta">
@@ -1157,7 +1160,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">December 8, 2025</p>
+      <p class="date">May 7, 2026</p>
     </div>
   </div>
   
@@ -1169,178 +1172,342 @@ window.Quarto = {
 </header>
 
 
-<div class="quarto-video ratio ratio-16x9"><iframe data-external="1" src="https://www.youtube.com/embed/U2HRwA7XePU" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>
-<section id="operations-preserving-convexity" class="level1">
-<h1>Operations preserving Convexity</h1>
-<p>This lecture covers operations that preserve convexity—building complex convex functions from simpler convex pieces.</p>
-<section id="review-basic-operations-from-lecture-3" class="level2">
-<h2 class="anchored" data-anchor-id="review-basic-operations-from-lecture-3">Review: Basic Operations from Lecture 3</h2>
-<p>We’ve already seen some fundamental operations in <a href="https://ickma2311.github.io/Math/EE364A/ee364a-lecture3-convex-functions.html#convex-functions">Lecture 3</a>:</p>
+<iframe width="100%" height="500" src="https://www.youtube.com/embed/KHZVXao4qXs?list=PLqYmG7hTraZDM-OYHWgPebj2MfCFzFObQ&amp;index=7" title="David Silver Reinforcement Learning Lecture 7" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="">
+</iframe>
+<p>This lecture moves from learning values to learning the policy directly.</p>
+<p>In value-based reinforcement learning, the agent learns a value function first, then derives a policy from it. For example, Q-learning learns <span class="math inline">\(q(s,a)\)</span> and then acts greedily, or <span class="math inline">\(\epsilon\)</span>-greedily, with respect to those values.</p>
+<p>Policy gradient methods take a different route:</p>
+<blockquote class="blockquote">
+<p>Parameterize the policy itself, then improve the policy parameters by following the gradient of expected return.</p>
+</blockquote>
+<p>This is useful when the action space is continuous, when the best behavior is stochastic, or when representing a value function is not the most natural way to solve the task.</p>
+<section id="value-based-policy-based-and-actor-critic" class="level2">
+<h2 class="anchored" data-anchor-id="value-based-policy-based-and-actor-critic">Value-Based, Policy-Based, and Actor-Critic</h2>
+<p>There are three broad styles:</p>
 <ul>
-<li><strong>Nonnegative weighted sum</strong>: If <span class="math inline">\(f_1, f_2\)</span> are convex, then <span class="math inline">\(f_1 + f_2\)</span> is convex</li>
-<li><strong>Nonnegative scaling</strong>: If <span class="math inline">\(f\)</span> is convex and <span class="math inline">\(\alpha &gt; 0\)</span>, then <span class="math inline">\(\alpha f\)</span> is convex</li>
-<li><strong>Composition with affine mapping</strong>: If <span class="math inline">\(f\)</span> is convex, then <span class="math inline">\(g(x) = f(Ax + b)\)</span> is convex</li>
+<li>value-based methods learn a value function and use an implicit policy</li>
+<li>policy-based methods learn a policy directly, often without a value function</li>
+<li>actor-critic methods learn both a policy and a value function</li>
 </ul>
-<p>Now we’ll extend this toolkit with more powerful operations that preserve convexity.</p>
+<p>The policy-based approach has several advantages:</p>
+<ul>
+<li>it can work naturally with continuous actions</li>
+<li>it can learn stochastic policies</li>
+<li>it often has better convergence behavior than value-based control</li>
+<li>it avoids the need to compute an argmax over actions</li>
+</ul>
+<p>There are also costs:</p>
+<ul>
+<li>policy gradient methods usually converge only to local optima</li>
+<li>naive gradient estimates can have high variance</li>
+<li>evaluating a policy can be sample inefficient</li>
+</ul>
+<p>The lecture’s aliased gridworld example makes the need for stochastic policies concrete. If two different states produce the same observation, a deterministic rule like “always go east” may be correct in one hidden state and fatal in another. A stochastic policy can mix actions and escape the aliasing trap.</p>
 </section>
-<section id="pointwise-maximum" class="level2">
-<h2 class="anchored" data-anchor-id="pointwise-maximum">Pointwise Maximum</h2>
-<p>if <span class="math inline">\(f_1,...f_n\)</span> are convex, then <span class="math inline">\(f(x)=\max(f_1(x),...f_n(x))\)</span> is convex</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="pointwise-maximum.png" class="img-fluid figure-img"></p>
-<figcaption>Pointwise maximum visualization</figcaption>
-</figure>
-</div>
-<p><strong>Examples:</strong></p>
-<ul>
-<li><strong>Piecewise-linear function</strong>: <span class="math inline">\(f(x)=\max_{i=1,...m}(a_i^\top x+b_i)\)</span> is convex</li>
-<li><strong>Sum of <span class="math inline">\(r\)</span> largest components</strong> of <span class="math inline">\(x \in R^n\)</span>: <span class="math display">\[
-f(x)=x_{[1]}+x_{[2]}+...x_{[r]}
-\]</span> is convex</li>
-</ul>
-</section>
-<section id="pointwise-supremum" class="level2">
-<h2 class="anchored" data-anchor-id="pointwise-supremum">Pointwise Supremum</h2>
-<p>if <span class="math inline">\(f(x,y)\)</span> is convex in <span class="math inline">\(x\)</span> for each <span class="math inline">\(y \in A\)</span>, then <span class="math display">\[
-g(x)=\sup_{y \in A}f(x,y)
-\]</span> is convex.</p>
-<p><strong>Examples:</strong></p>
-<ul>
-<li><strong>Support function of a set C</strong>: <span class="math inline">\(S_C(x)=\sup_{y\in C}y^\top x\)</span></li>
-<li><strong>Distance to farthest point in a set C</strong>: <span class="math inline">\(f(x)=\sup_{y\in C}||y-x||\)</span></li>
-<li><strong>Maximum eigenvalue of symmetric matrix</strong> for <span class="math inline">\(X \in S^n\)</span>, <span class="math inline">\(\lambda_{\max}(X)=\sup_{||y||_2=1}y^\top Xy\)</span></li>
-</ul>
-<hr>
-</section>
-<section id="composition-with-scalar-functions" class="level2">
-<h2 class="anchored" data-anchor-id="composition-with-scalar-functions">Composition with Scalar Functions</h2>
-<p>Composition of g: <span class="math inline">\(R^n \to R\)</span>, and h : <span class="math inline">\(R \to R\)</span></p>
-<p><span class="math inline">\(f(x)=h(g(x))\)</span></p>
-<p>is convex if</p>
-<ul>
-<li>g is convex, h is convex, <span class="math inline">\(\tilde{h}\)</span> nondecreasing</li>
-<li>g is concave, h is convex, <span class="math inline">\(\tilde{h}\)</span> nonincreasing</li>
-</ul>
-<section id="proof" class="level3">
-<h3 class="anchored" data-anchor-id="proof">Proof</h3>
-<p><span class="math inline">\(f'(x)=h'(g(x))\cdot g'(x)\)</span></p>
-<p>From the general 1st order derivative theorem of <span class="math inline">\(f_n(x)=f_a(x)\cdot f_b(x)\)</span> is <span class="math inline">\(f_n'(x)=f_a'(x)\cdot f_b(x)+f_a(x)\cdot f_b'(x)\)</span></p>
-<p>So the second order derivative of <span class="math inline">\(f(x)\)</span> is:</p>
-<p><span class="math inline">\(f''(x)=h''(g(x))\cdot g'(x)^2+h'(g(x))g''(x)\)</span></p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="composition-scalar.png" class="img-fluid figure-img"></p>
-<figcaption>Composition with scalar functions analysis</figcaption>
-</figure>
-</div>
-<p><strong>Examples:</strong></p>
-<ul>
-<li><span class="math inline">\(\exp(g(z))\)</span> is convex if <span class="math inline">\(g(z)\)</span> is convex</li>
-<li><span class="math inline">\(\frac{1}{g(z)}\)</span> is convex if <span class="math inline">\(g(z)\)</span> is concave and positive</li>
-</ul>
-<hr>
-</section>
-</section>
-<section id="vector-composition-general-rule" class="level2">
-<h2 class="anchored" data-anchor-id="vector-composition-general-rule">Vector Composition (General Rule)</h2>
-<p>Composition of g: <span class="math inline">\(R^n \to R^k\)</span> and h: <span class="math inline">\(R^k \to R\)</span></p>
-<p><span class="math inline">\(f(x)=h(g(x))=h(g_1(x),g_2(x),...,g_k(x))\)</span></p>
-<p>is convex if</p>
-<ul>
-<li><strong>case 1</strong>: <span class="math inline">\(g_i\)</span> is convex, h is convex, <span class="math inline">\(\tilde{h}\)</span> nondecreasing in each argument</li>
-<li><strong>case 2</strong>: <span class="math inline">\(g_i\)</span> is concave, h is convex, <span class="math inline">\(\tilde{h}\)</span> nonincreasing in each argument</li>
-</ul>
-<section id="proof-1" class="level3">
-<h3 class="anchored" data-anchor-id="proof-1">Proof</h3>
+<section id="policy-objective-functions" class="level2">
+<h2 class="anchored" data-anchor-id="policy-objective-functions">Policy Objective Functions</h2>
+<p>Let the policy be parameterized by <span class="math inline">\(\theta\)</span>:</p>
 <p><span class="math display">\[
-f''(x)=g'(x)^\top \nabla^2h(g(x))g'(x)+\nabla h(g(x))^\top g''(x)
+\pi_\theta(a \mid s).
 \]</span></p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="vector-composition.png" class="img-fluid figure-img"></p>
-<figcaption>Vector composition analysis</figcaption>
-</figure>
-</div>
-<p><strong>Examples:</strong></p>
+<p>Policy search asks for parameters that maximize an objective:</p>
+<p><span class="math display">\[
+\theta^\star = \arg\max_\theta J(\theta).
+\]</span></p>
+<p>Different environments suggest different objectives.</p>
+<p>For episodic tasks, we can use the start-state value:</p>
+<p><span class="math display">\[
+J_1(\theta) = V^{\pi_\theta}(s_1)
+= \mathbb{E}_{\pi_\theta}[G_1].
+\]</span></p>
+<p>For continuing tasks, we can use average value:</p>
+<p><span class="math display">\[
+J_{\mathrm{avV}}(\theta)
+=
+\sum_s d^{\pi_\theta}(s) V^{\pi_\theta}(s).
+\]</span></p>
+<p>Or average reward per time step:</p>
+<p><span class="math display">\[
+J_{\mathrm{avR}}(\theta)
+=
+\sum_s d^{\pi_\theta}(s)
+\sum_a \pi_\theta(a \mid s) R_s^a.
+\]</span></p>
+<p>Once the objective is defined, policy optimization can use black-box search methods such as hill climbing, Nelder-Mead, or genetic algorithms.</p>
+<p>But if the policy is differentiable, gradient methods are usually more efficient.</p>
+</section>
+<section id="finite-difference-policy-gradient" class="level2">
+<h2 class="anchored" data-anchor-id="finite-difference-policy-gradient">Finite-Difference Policy Gradient</h2>
+<p>The policy gradient update ascends the objective:</p>
+<p><span class="math display">\[
+\Delta \theta = \alpha \nabla_\theta J(\theta).
+\]</span></p>
+<p>One simple way to estimate the gradient is finite differences. For each parameter dimension <span class="math inline">\(k\)</span>, perturb <span class="math inline">\(\theta\)</span> by a small amount <span class="math inline">\(\epsilon\)</span>:</p>
+<p><span class="math display">\[
+\frac{\partial J(\theta)}{\partial \theta_k}
+\approx
+\frac{J(\theta + \epsilon u_k)-J(\theta)}{\epsilon}.
+\]</span></p>
+<p>Here <span class="math inline">\(u_k\)</span> is the unit vector in dimension <span class="math inline">\(k\)</span>.</p>
+<p>This method is simple and can work even when the policy is not differentiable. But it is noisy and expensive because each dimension needs separate policy evaluations.</p>
+<p>The rest of the lecture focuses on gradients that use the structure of a differentiable policy.</p>
+</section>
+<section id="the-score-function" class="level2">
+<h2 class="anchored" data-anchor-id="the-score-function">The Score Function</h2>
+<p>The key identity is the likelihood-ratio trick:</p>
+<p><span class="math display">\[
+\nabla_\theta \pi_\theta(a \mid s)
+=
+\pi_\theta(a \mid s)
+\nabla_\theta \log \pi_\theta(a \mid s).
+\]</span></p>
+<p>The term</p>
+<p><span class="math display">\[
+\nabla_\theta \log \pi_\theta(a \mid s)
+\]</span></p>
+<p>is the score function.</p>
+<p>Intuitively, it tells us how to change <span class="math inline">\(\theta\)</span> to make the sampled action more or less likely. Policy gradient methods multiply this score by a measure of how good the action was.</p>
+</section>
+<section id="softmax-policy" class="level2">
+<h2 class="anchored" data-anchor-id="softmax-policy">Softmax Policy</h2>
+<p>For discrete actions, a common policy is softmax over action preferences.</p>
+<p>Let <span class="math inline">\(\phi(s,a)\)</span> be features for action <span class="math inline">\(a\)</span> in state <span class="math inline">\(s\)</span>. The policy assigns:</p>
+<p><span class="math display">\[
+\pi_\theta(a \mid s)
+\propto
+\exp(\phi(s,a)^T \theta).
+\]</span></p>
+<p>The score function becomes:</p>
+<p><span class="math display">\[
+\nabla_\theta \log \pi_\theta(a \mid s)
+=
+\phi(s,a)
+-
+\mathbb{E}_{\pi_\theta}[\phi(s,\cdot)].
+\]</span></p>
+<p>This has a clean interpretation:</p>
 <ul>
-<li><span class="math inline">\(\sum_{i=1}^m\log g_i(x)\)</span> is <strong>concave</strong> if <span class="math inline">\(g_i(x)\)</span> is concave and positive</li>
-<li><span class="math inline">\(\log\sum_{i=1}^m\exp g_i(x)\)</span> is <strong>convex</strong> if <span class="math inline">\(g_i(x)\)</span> is convex</li>
+<li>increase the features of the action actually taken</li>
+<li>subtract the average features of actions under the current policy</li>
 </ul>
-<hr>
+<p>So the update pushes the policy toward actions whose features are better than the policy’s own average.</p>
 </section>
-</section>
-<section id="minimization" class="level2">
-<h2 class="anchored" data-anchor-id="minimization">Minimization</h2>
-<p>if <span class="math inline">\(f(x,y)\)</span> is convex in <span class="math inline">\((x,y)\)</span> and <span class="math inline">\(C\)</span> is a convex set, then <span class="math display">\[
-g(x)=\inf_{y \in C}f(x,y)
-\]</span> is convex.</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="minimization.png" class="img-fluid figure-img"></p>
-<figcaption>Minimization preserves convexity</figcaption>
-</figure>
-</div>
-<section id="example-1-quadratic-function" class="level3">
-<h3 class="anchored" data-anchor-id="example-1-quadratic-function">Example 1: Quadratic function</h3>
+<section id="gaussian-policy" class="level2">
+<h2 class="anchored" data-anchor-id="gaussian-policy">Gaussian Policy</h2>
+<p>For continuous actions, a Gaussian policy is natural.</p>
+<p>For example:</p>
 <p><span class="math display">\[
-f(x,y)
-= \begin{bmatrix} x \\ y \end{bmatrix}^\top
-  \begin{bmatrix} A &amp; B \\ B^\top &amp; C \end{bmatrix}
-  \begin{bmatrix} x \\ y \end{bmatrix},
-\quad
-Q = \begin{bmatrix}A&amp;B\\B^\top&amp;C\end{bmatrix}\succeq 0,\; C\succ 0
+a \sim \mathcal{N}(\mu(s), \sigma^2),
+\qquad
+\mu(s)=\phi(s)^T\theta.
 \]</span></p>
-<p>Minimizing over y gives <span class="math inline">\(g(x)=\inf_yf(x,y)\)</span></p>
-<p>The gradient with respect to y is:</p>
+<p>The score function is:</p>
 <p><span class="math display">\[
-\nabla_y f(x,y) = 2B^\top x + 2C y
+\nabla_\theta \log \pi_\theta(a \mid s)
+=
+\frac{(a-\mu(s))\phi(s)}{\sigma^2}.
 \]</span></p>
-<p>Setting the gradient to zero: <span class="math inline">\(2B^\top x + 2C y = 0 \Rightarrow y^*=-C^{-1}B^\top x\)</span></p>
+<p>If the sampled action is larger than the current mean, the update can push the mean upward. If it is smaller, the update can push the mean downward. The reward signal decides whether that sampled deviation should be reinforced.</p>
+</section>
+<section id="policy-gradient-theorem" class="level2">
+<h2 class="anchored" data-anchor-id="policy-gradient-theorem">Policy Gradient Theorem</h2>
+<p>For a one-step MDP, the objective is:</p>
 <p><span class="math display">\[
-f(x,y^\star)=x^\top(A-BC^{-1}B^\top)x
+J(\theta)
+=
+\mathbb{E}_{\pi_\theta}[r]
+=
+\sum_s d(s)\sum_a \pi_\theta(a \mid s) R_{s,a}.
 \]</span></p>
-<p>From Schur complement, <span class="math inline">\(A-BC^{-1}B^\top \succeq 0\)</span></p>
-<p>From the preservation rule, <span class="math inline">\(g(x)\)</span> is convex.</p>
-</section>
-<section id="example-2-distance-to-a-set" class="level3">
-<h3 class="anchored" data-anchor-id="example-2-distance-to-a-set">Example 2: Distance to a set</h3>
-<p><strong>Distance to a set</strong>: <span class="math inline">\(\mathrm{dist}(x,S)=\inf_{y\in S}||x-y||\)</span> is convex if S is convex</p>
-<hr>
-</section>
-</section>
-<section id="perspective" class="level2">
-<h2 class="anchored" data-anchor-id="perspective">Perspective</h2>
-<p>The <strong>perspective function</strong> of a function <span class="math inline">\(f: R^n \to R\)</span> is the function <span class="math inline">\(g: R^n \times R \to R\)</span></p>
+<p>Using the score-function identity:</p>
 <p><span class="math display">\[
-g(x,t)=tf(x/t), \quad \mathrm{dom}\, g=\{(x,t) |x/t\in \mathrm{dom}\,f,t&gt; 0 \}
+\nabla_\theta J(\theta)
+=
+\mathbb{E}_{\pi_\theta}
+\left[
+\nabla_\theta \log \pi_\theta(a \mid s) r
+\right].
 \]</span></p>
-<p><span class="math inline">\(g\)</span> is convex if <span class="math inline">\(f\)</span> is convex.</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="perspective.png" class="img-fluid figure-img"></p>
-<figcaption>Perspective function visualization</figcaption>
-</figure>
-</div>
-<p><strong>Examples:</strong></p>
+<p>For a multi-step MDP, the immediate reward is replaced by the long-term action value:</p>
+<p><span class="math display">\[
+\nabla_\theta J(\theta)
+=
+\mathbb{E}_{\pi_\theta}
+\left[
+\nabla_\theta \log \pi_\theta(a \mid s)
+Q^\pi(s,a)
+\right].
+\]</span></p>
+<p>This is the central policy gradient theorem.</p>
+</section>
+<section id="reinforce" class="level2">
+<h2 class="anchored" data-anchor-id="reinforce">REINFORCE</h2>
+<p>REINFORCE uses the sampled return <span class="math inline">\(G_t\)</span> as an unbiased sample of <span class="math inline">\(Q^{\pi_\theta}(s_t,a_t)\)</span>:</p>
+<p><span class="math display">\[
+\Delta \theta_t
+=
+\alpha
+\nabla_\theta \log \pi_\theta(a_t \mid s_t)
+G_t.
+\]</span></p>
+<p>The algorithm is conceptually simple:</p>
+<ol type="1">
+<li>Run an episode using the current policy.</li>
+<li>For each time step, compute the return from that step.</li>
+<li>Increase the log-probability of actions that led to high return.</li>
+</ol>
+<p>In pseudocode:</p>
+<pre class="text"><code>initialize theta
+
+for each episode sampled from pi_theta:
+    for each time step t:
+        theta &lt;- theta
+                 + alpha
+                 * grad log pi_theta(a_t | s_t)
+                 * G_t</code></pre>
+<p>REINFORCE is unbiased, but it can have high variance because the return depends on everything that happens after the action.</p>
+</section>
+<section id="actor-critic-policy-gradient" class="level2">
+<h2 class="anchored" data-anchor-id="actor-critic-policy-gradient">Actor-Critic Policy Gradient</h2>
+<p>Actor-critic methods reduce variance by adding a critic.</p>
+<p>The actor is the policy:</p>
+<p><span class="math display">\[
+\pi_\theta(a \mid s).
+\]</span></p>
+<p>The critic estimates value, often:</p>
+<p><span class="math display">\[
+Q_w(s,a) \approx Q^{\pi_\theta}(s,a).
+\]</span></p>
+<p>Then the policy update becomes:</p>
+<p><span class="math display">\[
+\Delta \theta
+=
+\alpha
+\nabla_\theta \log \pi_\theta(a \mid s)
+Q_w(s,a).
+\]</span></p>
+<p><img src="lecture-7-policy-gradient-actor-critic.png" class="img-fluid"></p>
+<p>The benefit is that the actor does not need to wait until the end of an episode. The critic supplies an online estimate of how good the action was.</p>
+<p>For example, a one-step actor-critic method can use a TD error:</p>
+<p><span class="math display">\[
+\delta_t
+=
+r_{t+1}
++ \gamma V_v(s_{t+1})
+- V_v(s_t).
+\]</span></p>
+<p>Then the actor update is:</p>
+<p><span class="math display">\[
+\Delta \theta
+=
+\alpha
+\delta_t
+\nabla_\theta \log \pi_\theta(a_t \mid s_t).
+\]</span></p>
+<p>This is lower variance than Monte Carlo policy gradient, but it introduces bias through the critic’s approximation.</p>
+</section>
+<section id="baselines-and-advantage" class="level2">
+<h2 class="anchored" data-anchor-id="baselines-and-advantage">Baselines and Advantage</h2>
+<p>A baseline can reduce variance without changing the expected policy gradient.</p>
+<p>If <span class="math inline">\(B(s)\)</span> does not depend on the action, then:</p>
+<p><span class="math display">\[
+\mathbb{E}_{\pi_\theta}
+\left[
+\nabla_\theta \log \pi_\theta(a \mid s) B(s)
+\right]
+=0.
+\]</span></p>
+<p>So we can subtract a baseline from the action value.</p>
+<p>A natural baseline is the state value <span class="math inline">\(V^\pi(s)\)</span>. This gives the advantage function:</p>
+<p><span class="math display">\[
+A^\pi(s,a)
+=
+Q^\pi(s,a)-V^\pi(s).
+\]</span></p>
+<p>The policy gradient becomes:</p>
+<p><span class="math display">\[
+\nabla_\theta J(\theta)
+=
+\mathbb{E}_{\pi_\theta}
+\left[
+\nabla_\theta \log \pi_\theta(a \mid s)
+A^\pi(s,a)
+\right].
+\]</span></p>
+<p>This answers a more precise question:</p>
+<blockquote class="blockquote">
+<p>Was this action better or worse than what the current policy normally expects in this state?</p>
+</blockquote>
+</section>
+<section id="eligibility-traces-for-policy-gradient" class="level2">
+<h2 class="anchored" data-anchor-id="eligibility-traces-for-policy-gradient">Eligibility Traces for Policy Gradient</h2>
+<p>The same time-scale idea from TD(<span class="math inline">\(\lambda\)</span>) can be used for policy gradients.</p>
+<p>Monte Carlo uses a complete return. TD uses one-step bootstrapping. Eligibility traces interpolate between them.</p>
+<p>The forward view uses a <span class="math inline">\(\lambda\)</span>-return:</p>
+<p><span class="math display">\[
+\Delta \theta
+=
+\alpha
+\left(G_t^\lambda - V_v(s_t)\right)
+\nabla_\theta \log \pi_\theta(a_t \mid s_t).
+\]</span></p>
+<p>The backward view maintains a trace of recent policy-gradient directions:</p>
+<p><span class="math display">\[
+e_{t+1}
+=
+\lambda e_t
++
+\nabla_\theta \log \pi_\theta(a_t \mid s_t).
+\]</span></p>
+<p>Then the policy is updated by the TD error times the trace:</p>
+<p><span class="math display">\[
+\Delta \theta
+=
+\alpha \delta_t e_t.
+\]</span></p>
+<p>The trace lets current TD errors assign credit to recently taken actions.</p>
+</section>
+<section id="natural-policy-gradient" class="level2">
+<h2 class="anchored" data-anchor-id="natural-policy-gradient">Natural Policy Gradient</h2>
+<p>The vanilla gradient moves in parameter space. But the same change in parameters can mean very different changes in the policy distribution, depending on how the policy is parameterized.</p>
+<p>Natural policy gradient corrects for this by measuring distance in distribution space.</p>
+<p>The natural gradient is:</p>
+<p><span class="math display">\[
+\nabla_\theta^{\mathrm{nat}} J(\theta)
+=
+G_\theta^{-1}
+\nabla_\theta J(\theta),
+\]</span></p>
+<p>where <span class="math inline">\(G_\theta\)</span> is the Fisher information matrix:</p>
+<p><span class="math display">\[
+G_\theta
+=
+\mathbb{E}_{\pi_\theta}
+\left[
+\nabla_\theta \log \pi_\theta(a \mid s)
+\nabla_\theta \log \pi_\theta(a \mid s)^T
+\right].
+\]</span></p>
+<p>The idea is to find an update direction that improves the policy while controlling how much the action distribution changes.</p>
+<p>With compatible function approximation, the natural actor-critic has a nice simplification: the critic’s weights can directly represent the natural gradient direction.</p>
+</section>
+<section id="main-takeaway" class="level2">
+<h2 class="anchored" data-anchor-id="main-takeaway">Main Takeaway</h2>
+<p>Policy gradient methods optimize behavior directly.</p>
+<p>The key ideas are:</p>
 <ul>
-<li><span class="math inline">\(f(x)=x^\top x\)</span> is convex; hence <span class="math inline">\(g(x,t)=x^\top x/t\)</span> is convex for <span class="math inline">\(t&gt; 0\)</span></li>
-<li><span class="math inline">\(f(x)=-\log x\)</span> is convex, so <span class="math inline">\(g(x,t)=t\log t- t \log x\)</span> is convex on <span class="math inline">\(R_{++}^2\)</span></li>
-<li>if f is convex, then <span class="math inline">\(g(x)=(c^\top x+b)f((Ax+b)/(c^\top x+d))\)</span> is convex on <span class="math display">\[
-\{x \mid c^\top x + b &gt; 0,\ (Ax+b)/(c^\top x + d) \in \mathrm{dom}\, f \}
-\]</span></li>
+<li>parameterize the policy <span class="math inline">\(\pi_\theta(a \mid s)\)</span></li>
+<li>use the score function <span class="math inline">\(\nabla_\theta \log \pi_\theta(a \mid s)\)</span></li>
+<li>weight the score by return, value, or advantage</li>
+<li>use actor-critic methods to reduce variance and update online</li>
+<li>use baselines and advantages to make the signal cleaner</li>
+<li>use natural gradients to account for the geometry of policy distributions</li>
 </ul>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="perspective-example.png" class="img-fluid figure-img"></p>
-<figcaption>Perspective examples</figcaption>
-</figure>
-</div>
+<p>For me, this lecture connects probability, optimization, and RL very directly: learning means changing the probability of actions in proportion to how useful those actions turned out to be.</p>
 
 
 <!-- -->
 
-</section>
 </section>
 
 </main> <!-- /main -->
@@ -1824,184 +1991,431 @@ g(x,t)=tf(x/t), \quad \mathrm{dom}\, g=\{(x,t) |x/t\in \mathrm{dom}\,f,t&gt; 0 \
   }
   loadGiscus();
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "EE 364A (Convex Optimization): Lecture 4.1 - Operations Preserving Convexity"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2025-12-08"</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Convex Optimization, EE364A, Stanford]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>{{&lt; video https://www.youtube.com/watch?v=U2HRwA7XePU&amp;t=14s &gt;}}</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu"># Operations preserving Convexity</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>This lecture covers operations that preserve convexity—building complex convex functions from simpler convex pieces.</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">## Review: Basic Operations from Lecture 3</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>We've already seen some fundamental operations in <span class="co">[</span><span class="ot">Lecture 3</span><span class="co">](https://ickma2311.github.io/Math/EE364A/ee364a-lecture3-convex-functions.html#convex-functions)</span>:</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Nonnegative weighted sum**: If $f_1, f_2$ are convex, then $f_1 + f_2$ is convex</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Nonnegative scaling**: If $f$ is convex and $\alpha &gt; 0$, then $\alpha f$ is convex</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Composition with affine mapping**: If $f$ is convex, then $g(x) = f(Ax + b)$ is convex</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>Now we'll extend this toolkit with more powerful operations that preserve convexity.</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pointwise Maximum</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>if $f_1,...f_n$ are convex, then $f(x)=\max(f_1(x),...f_n(x))$ is convex</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="al">![Pointwise maximum visualization](pointwise-maximum.png)</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>**Examples:**</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Piecewise-linear function**: $f(x)=\max_{i=1,...m}(a_i^\top x+b_i)$ is convex</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Sum of $r$ largest components** of $x \in R^n$:</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>  $$</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>  f(x)=x_{[1]}+x_{[2]}+...x_{<span class="co">[</span><span class="ot">r</span><span class="co">]</span>}</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>  $$</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>  is convex</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pointwise Supremum</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>if $f(x,y)$ is convex in $x$ for each $y \in A$, then</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>g(x)=\sup_{y \in A}f(x,y)</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>is convex.</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>**Examples:**</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Support function of a set C**: $S_C(x)=\sup_{y\in C}y^\top x$</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Distance to farthest point in a set C**: $f(x)=\sup_{y\in C}||y-x||$</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Maximum eigenvalue of symmetric matrix** for $X \in S^n$, $\lambda_{\max}(X)=\sup_{||y||_2=1}y^\top Xy$</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="fu">## Composition with Scalar Functions</span></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>Composition of g: $R^n \to R$, and h : $R \to R$</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>$f(x)=h(g(x))$</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>is convex if</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>g is convex, h is convex, $\tilde{h}$ nondecreasing</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>g is concave, h is convex, $\tilde{h}$ nonincreasing</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a><span class="fu">### Proof</span></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>$f'(x)=h'(g(x))\cdot g'(x)$</span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>From the general 1st order derivative theorem of $f_n(x)=f_a(x)\cdot f_b(x)$ is</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a> $f_n'(x)=f_a'(x)\cdot f_b(x)+f_a(x)\cdot f_b'(x)$</span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>So the second order derivative of $f(x)$ is:</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>$f''(x)=h''(g(x))\cdot g'(x)^2+h'(g(x))g''(x)$</span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a><span class="al">![Composition with scalar functions analysis](composition-scalar.png)</span></span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>**Examples:**</span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\exp(g(z))$ is convex if $g(z)$ is convex</span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\frac{1}{g(z)}$ is convex if $g(z)$ is concave and positive</span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="fu">## Vector Composition (General Rule)</span></span>
-<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>Composition of g: $R^n \to R^k$ and h: $R^k \to R$</span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>$f(x)=h(g(x))=h(g_1(x),g_2(x),...,g_k(x))$</span>
-<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>is convex if</span>
-<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**case 1**: $g_i$ is convex, h is convex, $\tilde{h}$ nondecreasing in each argument</span>
-<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**case 2**: $g_i$ is concave, h is convex, $\tilde{h}$ nonincreasing in each argument</span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a><span class="fu">### Proof</span></span>
-<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>f''(x)=g'(x)^\top \nabla^2h(g(x))g'(x)+\nabla h(g(x))^\top g''(x)</span>
-<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a><span class="al">![Vector composition analysis](vector-composition.png)</span></span>
-<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>**Examples:**</span>
-<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\sum_{i=1}^m\log g_i(x)$ is **concave** if $g_i(x)$ is concave and positive</span>
-<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\log\sum_{i=1}^m\exp g_i(x)$ is **convex** if $g_i(x)$ is convex</span>
-<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a><span class="fu">## Minimization</span></span>
-<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>if $f(x,y)$ is convex in $(x,y)$ and $C$ is a convex set, then</span>
-<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>g(x)=\inf_{y \in C}f(x,y)</span>
-<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>is convex.</span>
-<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a><span class="al">![Minimization preserves convexity](minimization.png)</span></span>
-<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a><span class="fu">### Example 1: Quadratic function</span></span>
-<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>f(x,y)</span>
-<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>= \begin{bmatrix} x <span class="sc">\\</span> y \end{bmatrix}^\top</span>
-<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>  \begin{bmatrix} A &amp; B <span class="sc">\\</span> B^\top &amp; C \end{bmatrix}</span>
-<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>  \begin{bmatrix} x <span class="sc">\\</span> y \end{bmatrix},</span>
-<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>\quad</span>
-<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>Q = \begin{bmatrix}A&amp;B<span class="sc">\\</span>B^\top&amp;C\end{bmatrix}\succeq 0,\; C\succ 0</span>
-<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>Minimizing over y gives $g(x)=\inf_yf(x,y)$</span>
-<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>The gradient with respect to y is:</span>
-<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>\nabla_y f(x,y) = 2B^\top x + 2C y</span>
-<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>Setting the gradient to zero: $2B^\top x + 2C y = 0 \Rightarrow y^*=-C^{-1}B^\top x$</span>
-<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>f(x,y^\star)=x^\top(A-BC^{-1}B^\top)x</span>
-<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a>From Schur complement, $A-BC^{-1}B^\top \succeq 0$</span>
-<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>From the preservation rule, $g(x)$ is convex.</span>
-<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a><span class="fu">### Example 2: Distance to a set</span></span>
-<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>**Distance to a set**: $\mathrm{dist}(x,S)=\inf_{y\in S}||x-y||$ is convex if S is convex</span>
-<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a><span class="fu">## Perspective</span></span>
-<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>The **perspective function** of a function $f: R^n \to R$ is the function $g: R^n \times R \to R$</span>
-<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>g(x,t)=tf(x/t), \quad \mathrm{dom}\, g=<span class="sc">\{</span>(x,t) |x/t\in \mathrm{dom}\,f,t&gt; 0 <span class="sc">\}</span></span>
-<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>$g$ is convex if $f$ is convex.</span>
-<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a><span class="al">![Perspective function visualization](perspective.png)</span></span>
-<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a>**Examples:**</span>
-<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$f(x)=x^\top x$ is convex; hence $g(x,t)=x^\top x/t$ is convex for $t&gt; 0$</span>
-<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$f(x)=-\log x$ is convex, so $g(x,t)=t\log t- t \log x$ is convex on $R_{++}^2$</span>
-<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>if f is convex, then $g(x)=(c^\top x+b)f((Ax+b)/(c^\top x+d))$ is convex on</span>
-<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>  $$</span>
-<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a>  <span class="sc">\{</span>x \mid c^\top x + b &gt; 0,\ (Ax+b)/(c^\top x + d) \in \mathrm{dom}\, f <span class="sc">\}</span></span>
-<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>  $$</span>
-<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a><span class="al">![Perspective examples](perspective-example.png)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "David Silver RL Course - Lecture 7: Policy Gradient Methods"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-05-07"</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Reinforcement Learning, RL, David Silver, Policy Gradient, REINFORCE, Actor-Critic, Natural Gradient]</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Lecture 7 notes on policy gradient methods: direct policy search, score functions, softmax and Gaussian policies, REINFORCE, actor-critic, baselines, eligibility traces, and natural policy gradients."</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">iframe</span><span class="ot"> width</span><span class="op">=</span><span class="st">"100%"</span><span class="ot"> height</span><span class="op">=</span><span class="st">"500"</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://www.youtube.com/embed/KHZVXao4qXs?list=PLqYmG7hTraZDM-OYHWgPebj2MfCFzFObQ</span><span class="dv">&amp;amp;</span><span class="st">index=7"</span><span class="ot"> title</span><span class="op">=</span><span class="st">"David Silver Reinforcement Learning Lecture 7"</span><span class="ot"> frameborder</span><span class="op">=</span><span class="st">"0"</span><span class="ot"> allow</span><span class="op">=</span><span class="st">"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"</span><span class="ot"> allowfullscreen</span><span class="dt">&gt;&lt;/</span><span class="kw">iframe</span><span class="dt">&gt;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>This lecture moves from learning values to learning the policy directly.</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>In value-based reinforcement learning, the agent learns a value function first, then derives a policy from it. For example, Q-learning learns $q(s,a)$ and then acts greedily, or $\epsilon$-greedily, with respect to those values.</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>Policy gradient methods take a different route:</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; Parameterize the policy itself, then improve the policy parameters by following the gradient of expected return.</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>This is useful when the action space is continuous, when the best behavior is stochastic, or when representing a value function is not the most natural way to solve the task.</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="fu">## Value-Based, Policy-Based, and Actor-Critic</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>There are three broad styles:</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>value-based methods learn a value function and use an implicit policy</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>policy-based methods learn a policy directly, often without a value function</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>actor-critic methods learn both a policy and a value function</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>The policy-based approach has several advantages:</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>it can work naturally with continuous actions</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>it can learn stochastic policies</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>it often has better convergence behavior than value-based control</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>it avoids the need to compute an argmax over actions</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>There are also costs:</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>policy gradient methods usually converge only to local optima</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>naive gradient estimates can have high variance</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>evaluating a policy can be sample inefficient</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>The lecture's aliased gridworld example makes the need for stochastic policies concrete. If two different states produce the same observation, a deterministic rule like "always go east" may be correct in one hidden state and fatal in another. A stochastic policy can mix actions and escape the aliasing trap.</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="fu">## Policy Objective Functions</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>Let the policy be parameterized by $\theta$:</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>\pi_\theta(a \mid s).</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>Policy search asks for parameters that maximize an objective:</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>\theta^\star = \arg\max_\theta J(\theta).</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>Different environments suggest different objectives.</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>For episodic tasks, we can use the start-state value:</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>J_1(\theta) = V^{\pi_\theta}(s_1)</span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>= \mathbb{E}_{\pi_\theta}<span class="co">[</span><span class="ot">G_1</span><span class="co">]</span>.</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>For continuing tasks, we can use average value:</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>J_{\mathrm{avV}}(\theta)</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>\sum_s d^{\pi_\theta}(s) V^{\pi_\theta}(s).</span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>Or average reward per time step:</span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>J_{\mathrm{avR}}(\theta)</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>\sum_s d^{\pi_\theta}(s)</span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>\sum_a \pi_\theta(a \mid s) R_s^a.</span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>Once the objective is defined, policy optimization can use black-box search methods such as hill climbing, Nelder-Mead, or genetic algorithms.</span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>But if the policy is differentiable, gradient methods are usually more efficient.</span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="fu">## Finite-Difference Policy Gradient</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>The policy gradient update ascends the objective:</span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>\Delta \theta = \alpha \nabla_\theta J(\theta).</span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a>One simple way to estimate the gradient is finite differences. For each parameter dimension $k$, perturb $\theta$ by a small amount $\epsilon$:</span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>\frac{\partial J(\theta)}{\partial \theta_k}</span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>\approx</span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>\frac{J(\theta + \epsilon u_k)-J(\theta)}{\epsilon}.</span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a>Here $u_k$ is the unit vector in dimension $k$.</span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a>This method is simple and can work even when the policy is not differentiable. But it is noisy and expensive because each dimension needs separate policy evaluations.</span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>The rest of the lecture focuses on gradients that use the structure of a differentiable policy.</span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Score Function</span></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a>The key identity is the likelihood-ratio trick:</span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \pi_\theta(a \mid s)</span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a>\pi_\theta(a \mid s)</span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a \mid s).</span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>The term</span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a \mid s)</span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>is the score function.</span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a>Intuitively, it tells us how to change $\theta$ to make the sampled action more or less likely. Policy gradient methods multiply this score by a measure of how good the action was.</span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a><span class="fu">## Softmax Policy</span></span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>For discrete actions, a common policy is softmax over action preferences.</span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a>Let $\phi(s,a)$ be features for action $a$ in state $s$. The policy assigns:</span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>\pi_\theta(a \mid s)</span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a>\propto</span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a>\exp(\phi(s,a)^T \theta).</span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a>The score function becomes:</span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a \mid s)</span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>\phi(s,a)</span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>-</span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_{\pi_\theta}<span class="co">[</span><span class="ot">\phi(s,\cdot)</span><span class="co">]</span>.</span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a>This has a clean interpretation:</span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>increase the features of the action actually taken</span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>subtract the average features of actions under the current policy</span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a>So the update pushes the policy toward actions whose features are better than the policy's own average.</span>
+<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a><span class="fu">## Gaussian Policy</span></span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a>For continuous actions, a Gaussian policy is natural.</span>
+<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a>For example:</span>
+<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a>a \sim \mathcal{N}(\mu(s), \sigma^2),</span>
+<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a>\mu(s)=\phi(s)^T\theta.</span>
+<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a>The score function is:</span>
+<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a \mid s)</span>
+<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a>\frac{(a-\mu(s))\phi(s)}{\sigma^2}.</span>
+<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a>If the sampled action is larger than the current mean, the update can push the mean upward. If it is smaller, the update can push the mean downward. The reward signal decides whether that sampled deviation should be reinforced.</span>
+<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a><span class="fu">## Policy Gradient Theorem</span></span>
+<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a>For a one-step MDP, the objective is:</span>
+<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a>J(\theta)</span>
+<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_{\pi_\theta}<span class="co">[</span><span class="ot">r</span><span class="co">]</span></span>
+<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a>\sum_s d(s)\sum_a \pi_\theta(a \mid s) R_{s,a}.</span>
+<span id="cb2-193"><a href="#cb2-193" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-194"><a href="#cb2-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a>Using the score-function identity:</span>
+<span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a>\nabla_\theta J(\theta)</span>
+<span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_{\pi_\theta}</span>
+<span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a>\left[</span>
+<span id="cb2-202"><a href="#cb2-202" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a \mid s) r</span>
+<span id="cb2-203"><a href="#cb2-203" aria-hidden="true" tabindex="-1"></a>\right].</span>
+<span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a>For a multi-step MDP, the immediate reward is replaced by the long-term action value:</span>
+<span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-209"><a href="#cb2-209" aria-hidden="true" tabindex="-1"></a>\nabla_\theta J(\theta)</span>
+<span id="cb2-210"><a href="#cb2-210" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-211"><a href="#cb2-211" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_{\pi_\theta}</span>
+<span id="cb2-212"><a href="#cb2-212" aria-hidden="true" tabindex="-1"></a>\left[</span>
+<span id="cb2-213"><a href="#cb2-213" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a \mid s)</span>
+<span id="cb2-214"><a href="#cb2-214" aria-hidden="true" tabindex="-1"></a>Q^\pi(s,a)</span>
+<span id="cb2-215"><a href="#cb2-215" aria-hidden="true" tabindex="-1"></a>\right].</span>
+<span id="cb2-216"><a href="#cb2-216" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-217"><a href="#cb2-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-218"><a href="#cb2-218" aria-hidden="true" tabindex="-1"></a>This is the central policy gradient theorem.</span>
+<span id="cb2-219"><a href="#cb2-219" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-220"><a href="#cb2-220" aria-hidden="true" tabindex="-1"></a><span class="fu">## REINFORCE</span></span>
+<span id="cb2-221"><a href="#cb2-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-222"><a href="#cb2-222" aria-hidden="true" tabindex="-1"></a>REINFORCE uses the sampled return $G_t$ as an unbiased sample of $Q^{\pi_\theta}(s_t,a_t)$:</span>
+<span id="cb2-223"><a href="#cb2-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-224"><a href="#cb2-224" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-225"><a href="#cb2-225" aria-hidden="true" tabindex="-1"></a>\Delta \theta_t</span>
+<span id="cb2-226"><a href="#cb2-226" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-227"><a href="#cb2-227" aria-hidden="true" tabindex="-1"></a>\alpha</span>
+<span id="cb2-228"><a href="#cb2-228" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a_t \mid s_t)</span>
+<span id="cb2-229"><a href="#cb2-229" aria-hidden="true" tabindex="-1"></a>G_t.</span>
+<span id="cb2-230"><a href="#cb2-230" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-231"><a href="#cb2-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-232"><a href="#cb2-232" aria-hidden="true" tabindex="-1"></a>The algorithm is conceptually simple:</span>
+<span id="cb2-233"><a href="#cb2-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-234"><a href="#cb2-234" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Run an episode using the current policy.</span>
+<span id="cb2-235"><a href="#cb2-235" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>For each time step, compute the return from that step.</span>
+<span id="cb2-236"><a href="#cb2-236" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Increase the log-probability of actions that led to high return.</span>
+<span id="cb2-237"><a href="#cb2-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-238"><a href="#cb2-238" aria-hidden="true" tabindex="-1"></a>In pseudocode:</span>
+<span id="cb2-239"><a href="#cb2-239" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-240"><a href="#cb2-240" aria-hidden="true" tabindex="-1"></a><span class="in">```text</span></span>
+<span id="cb2-241"><a href="#cb2-241" aria-hidden="true" tabindex="-1"></a><span class="in">initialize theta</span></span>
+<span id="cb2-242"><a href="#cb2-242" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-243"><a href="#cb2-243" aria-hidden="true" tabindex="-1"></a><span class="in">for each episode sampled from pi_theta:</span></span>
+<span id="cb2-244"><a href="#cb2-244" aria-hidden="true" tabindex="-1"></a><span class="in">    for each time step t:</span></span>
+<span id="cb2-245"><a href="#cb2-245" aria-hidden="true" tabindex="-1"></a><span class="in">        theta &lt;- theta</span></span>
+<span id="cb2-246"><a href="#cb2-246" aria-hidden="true" tabindex="-1"></a><span class="in">                 + alpha</span></span>
+<span id="cb2-247"><a href="#cb2-247" aria-hidden="true" tabindex="-1"></a><span class="in">                 * grad log pi_theta(a_t | s_t)</span></span>
+<span id="cb2-248"><a href="#cb2-248" aria-hidden="true" tabindex="-1"></a><span class="in">                 * G_t</span></span>
+<span id="cb2-249"><a href="#cb2-249" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-250"><a href="#cb2-250" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-251"><a href="#cb2-251" aria-hidden="true" tabindex="-1"></a>REINFORCE is unbiased, but it can have high variance because the return depends on everything that happens after the action.</span>
+<span id="cb2-252"><a href="#cb2-252" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-253"><a href="#cb2-253" aria-hidden="true" tabindex="-1"></a><span class="fu">## Actor-Critic Policy Gradient</span></span>
+<span id="cb2-254"><a href="#cb2-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-255"><a href="#cb2-255" aria-hidden="true" tabindex="-1"></a>Actor-critic methods reduce variance by adding a critic.</span>
+<span id="cb2-256"><a href="#cb2-256" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-257"><a href="#cb2-257" aria-hidden="true" tabindex="-1"></a>The actor is the policy:</span>
+<span id="cb2-258"><a href="#cb2-258" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-259"><a href="#cb2-259" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-260"><a href="#cb2-260" aria-hidden="true" tabindex="-1"></a>\pi_\theta(a \mid s).</span>
+<span id="cb2-261"><a href="#cb2-261" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-262"><a href="#cb2-262" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-263"><a href="#cb2-263" aria-hidden="true" tabindex="-1"></a>The critic estimates value, often:</span>
+<span id="cb2-264"><a href="#cb2-264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-265"><a href="#cb2-265" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-266"><a href="#cb2-266" aria-hidden="true" tabindex="-1"></a>Q_w(s,a) \approx Q^{\pi_\theta}(s,a).</span>
+<span id="cb2-267"><a href="#cb2-267" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-268"><a href="#cb2-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-269"><a href="#cb2-269" aria-hidden="true" tabindex="-1"></a>Then the policy update becomes:</span>
+<span id="cb2-270"><a href="#cb2-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-271"><a href="#cb2-271" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-272"><a href="#cb2-272" aria-hidden="true" tabindex="-1"></a>\Delta \theta</span>
+<span id="cb2-273"><a href="#cb2-273" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-274"><a href="#cb2-274" aria-hidden="true" tabindex="-1"></a>\alpha</span>
+<span id="cb2-275"><a href="#cb2-275" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a \mid s)</span>
+<span id="cb2-276"><a href="#cb2-276" aria-hidden="true" tabindex="-1"></a>Q_w(s,a).</span>
+<span id="cb2-277"><a href="#cb2-277" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-278"><a href="#cb2-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-279"><a href="#cb2-279" aria-hidden="true" tabindex="-1"></a><span class="al">![](lecture-7-policy-gradient-actor-critic.png)</span></span>
+<span id="cb2-280"><a href="#cb2-280" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-281"><a href="#cb2-281" aria-hidden="true" tabindex="-1"></a>The benefit is that the actor does not need to wait until the end of an episode. The critic supplies an online estimate of how good the action was.</span>
+<span id="cb2-282"><a href="#cb2-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-283"><a href="#cb2-283" aria-hidden="true" tabindex="-1"></a>For example, a one-step actor-critic method can use a TD error:</span>
+<span id="cb2-284"><a href="#cb2-284" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-285"><a href="#cb2-285" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-286"><a href="#cb2-286" aria-hidden="true" tabindex="-1"></a>\delta_t</span>
+<span id="cb2-287"><a href="#cb2-287" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-288"><a href="#cb2-288" aria-hidden="true" tabindex="-1"></a>r_{t+1}</span>
+<span id="cb2-289"><a href="#cb2-289" aria-hidden="true" tabindex="-1"></a><span class="ss">+ </span>\gamma V_v(s_{t+1})</span>
+<span id="cb2-290"><a href="#cb2-290" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>V_v(s_t).</span>
+<span id="cb2-291"><a href="#cb2-291" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-292"><a href="#cb2-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-293"><a href="#cb2-293" aria-hidden="true" tabindex="-1"></a>Then the actor update is:</span>
+<span id="cb2-294"><a href="#cb2-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-295"><a href="#cb2-295" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-296"><a href="#cb2-296" aria-hidden="true" tabindex="-1"></a>\Delta \theta</span>
+<span id="cb2-297"><a href="#cb2-297" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-298"><a href="#cb2-298" aria-hidden="true" tabindex="-1"></a>\alpha</span>
+<span id="cb2-299"><a href="#cb2-299" aria-hidden="true" tabindex="-1"></a>\delta_t</span>
+<span id="cb2-300"><a href="#cb2-300" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a_t \mid s_t).</span>
+<span id="cb2-301"><a href="#cb2-301" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-302"><a href="#cb2-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-303"><a href="#cb2-303" aria-hidden="true" tabindex="-1"></a>This is lower variance than Monte Carlo policy gradient, but it introduces bias through the critic's approximation.</span>
+<span id="cb2-304"><a href="#cb2-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-305"><a href="#cb2-305" aria-hidden="true" tabindex="-1"></a><span class="fu">## Baselines and Advantage</span></span>
+<span id="cb2-306"><a href="#cb2-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-307"><a href="#cb2-307" aria-hidden="true" tabindex="-1"></a>A baseline can reduce variance without changing the expected policy gradient.</span>
+<span id="cb2-308"><a href="#cb2-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-309"><a href="#cb2-309" aria-hidden="true" tabindex="-1"></a>If $B(s)$ does not depend on the action, then:</span>
+<span id="cb2-310"><a href="#cb2-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-311"><a href="#cb2-311" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-312"><a href="#cb2-312" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_{\pi_\theta}</span>
+<span id="cb2-313"><a href="#cb2-313" aria-hidden="true" tabindex="-1"></a>\left[</span>
+<span id="cb2-314"><a href="#cb2-314" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a \mid s) B(s)</span>
+<span id="cb2-315"><a href="#cb2-315" aria-hidden="true" tabindex="-1"></a>\right]</span>
+<span id="cb2-316"><a href="#cb2-316" aria-hidden="true" tabindex="-1"></a>=0.</span>
+<span id="cb2-317"><a href="#cb2-317" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-318"><a href="#cb2-318" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-319"><a href="#cb2-319" aria-hidden="true" tabindex="-1"></a>So we can subtract a baseline from the action value.</span>
+<span id="cb2-320"><a href="#cb2-320" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-321"><a href="#cb2-321" aria-hidden="true" tabindex="-1"></a>A natural baseline is the state value $V^\pi(s)$. This gives the advantage function:</span>
+<span id="cb2-322"><a href="#cb2-322" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-323"><a href="#cb2-323" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-324"><a href="#cb2-324" aria-hidden="true" tabindex="-1"></a>A^\pi(s,a)</span>
+<span id="cb2-325"><a href="#cb2-325" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-326"><a href="#cb2-326" aria-hidden="true" tabindex="-1"></a>Q^\pi(s,a)-V^\pi(s).</span>
+<span id="cb2-327"><a href="#cb2-327" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-328"><a href="#cb2-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-329"><a href="#cb2-329" aria-hidden="true" tabindex="-1"></a>The policy gradient becomes:</span>
+<span id="cb2-330"><a href="#cb2-330" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-331"><a href="#cb2-331" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-332"><a href="#cb2-332" aria-hidden="true" tabindex="-1"></a>\nabla_\theta J(\theta)</span>
+<span id="cb2-333"><a href="#cb2-333" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-334"><a href="#cb2-334" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_{\pi_\theta}</span>
+<span id="cb2-335"><a href="#cb2-335" aria-hidden="true" tabindex="-1"></a>\left[</span>
+<span id="cb2-336"><a href="#cb2-336" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a \mid s)</span>
+<span id="cb2-337"><a href="#cb2-337" aria-hidden="true" tabindex="-1"></a>A^\pi(s,a)</span>
+<span id="cb2-338"><a href="#cb2-338" aria-hidden="true" tabindex="-1"></a>\right].</span>
+<span id="cb2-339"><a href="#cb2-339" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-340"><a href="#cb2-340" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-341"><a href="#cb2-341" aria-hidden="true" tabindex="-1"></a>This answers a more precise question:</span>
+<span id="cb2-342"><a href="#cb2-342" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-343"><a href="#cb2-343" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; Was this action better or worse than what the current policy normally expects in this state?</span></span>
+<span id="cb2-344"><a href="#cb2-344" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-345"><a href="#cb2-345" aria-hidden="true" tabindex="-1"></a><span class="fu">## Eligibility Traces for Policy Gradient</span></span>
+<span id="cb2-346"><a href="#cb2-346" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-347"><a href="#cb2-347" aria-hidden="true" tabindex="-1"></a>The same time-scale idea from TD($\lambda$) can be used for policy gradients.</span>
+<span id="cb2-348"><a href="#cb2-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-349"><a href="#cb2-349" aria-hidden="true" tabindex="-1"></a>Monte Carlo uses a complete return. TD uses one-step bootstrapping. Eligibility traces interpolate between them.</span>
+<span id="cb2-350"><a href="#cb2-350" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-351"><a href="#cb2-351" aria-hidden="true" tabindex="-1"></a>The forward view uses a $\lambda$-return:</span>
+<span id="cb2-352"><a href="#cb2-352" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-353"><a href="#cb2-353" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-354"><a href="#cb2-354" aria-hidden="true" tabindex="-1"></a>\Delta \theta</span>
+<span id="cb2-355"><a href="#cb2-355" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-356"><a href="#cb2-356" aria-hidden="true" tabindex="-1"></a>\alpha</span>
+<span id="cb2-357"><a href="#cb2-357" aria-hidden="true" tabindex="-1"></a>\left(G_t^\lambda - V_v(s_t)\right)</span>
+<span id="cb2-358"><a href="#cb2-358" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a_t \mid s_t).</span>
+<span id="cb2-359"><a href="#cb2-359" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-360"><a href="#cb2-360" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-361"><a href="#cb2-361" aria-hidden="true" tabindex="-1"></a>The backward view maintains a trace of recent policy-gradient directions:</span>
+<span id="cb2-362"><a href="#cb2-362" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-363"><a href="#cb2-363" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-364"><a href="#cb2-364" aria-hidden="true" tabindex="-1"></a>e_{t+1}</span>
+<span id="cb2-365"><a href="#cb2-365" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-366"><a href="#cb2-366" aria-hidden="true" tabindex="-1"></a>\lambda e_t</span>
+<span id="cb2-367"><a href="#cb2-367" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb2-368"><a href="#cb2-368" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a_t \mid s_t).</span>
+<span id="cb2-369"><a href="#cb2-369" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-370"><a href="#cb2-370" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-371"><a href="#cb2-371" aria-hidden="true" tabindex="-1"></a>Then the policy is updated by the TD error times the trace:</span>
+<span id="cb2-372"><a href="#cb2-372" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-373"><a href="#cb2-373" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-374"><a href="#cb2-374" aria-hidden="true" tabindex="-1"></a>\Delta \theta</span>
+<span id="cb2-375"><a href="#cb2-375" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-376"><a href="#cb2-376" aria-hidden="true" tabindex="-1"></a>\alpha \delta_t e_t.</span>
+<span id="cb2-377"><a href="#cb2-377" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-378"><a href="#cb2-378" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-379"><a href="#cb2-379" aria-hidden="true" tabindex="-1"></a>The trace lets current TD errors assign credit to recently taken actions.</span>
+<span id="cb2-380"><a href="#cb2-380" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-381"><a href="#cb2-381" aria-hidden="true" tabindex="-1"></a><span class="fu">## Natural Policy Gradient</span></span>
+<span id="cb2-382"><a href="#cb2-382" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-383"><a href="#cb2-383" aria-hidden="true" tabindex="-1"></a>The vanilla gradient moves in parameter space. But the same change in parameters can mean very different changes in the policy distribution, depending on how the policy is parameterized.</span>
+<span id="cb2-384"><a href="#cb2-384" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-385"><a href="#cb2-385" aria-hidden="true" tabindex="-1"></a>Natural policy gradient corrects for this by measuring distance in distribution space.</span>
+<span id="cb2-386"><a href="#cb2-386" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-387"><a href="#cb2-387" aria-hidden="true" tabindex="-1"></a>The natural gradient is:</span>
+<span id="cb2-388"><a href="#cb2-388" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-389"><a href="#cb2-389" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-390"><a href="#cb2-390" aria-hidden="true" tabindex="-1"></a>\nabla_\theta^{\mathrm{nat}} J(\theta)</span>
+<span id="cb2-391"><a href="#cb2-391" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-392"><a href="#cb2-392" aria-hidden="true" tabindex="-1"></a>G_\theta^{-1}</span>
+<span id="cb2-393"><a href="#cb2-393" aria-hidden="true" tabindex="-1"></a>\nabla_\theta J(\theta),</span>
+<span id="cb2-394"><a href="#cb2-394" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-395"><a href="#cb2-395" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-396"><a href="#cb2-396" aria-hidden="true" tabindex="-1"></a>where $G_\theta$ is the Fisher information matrix:</span>
+<span id="cb2-397"><a href="#cb2-397" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-398"><a href="#cb2-398" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-399"><a href="#cb2-399" aria-hidden="true" tabindex="-1"></a>G_\theta</span>
+<span id="cb2-400"><a href="#cb2-400" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb2-401"><a href="#cb2-401" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_{\pi_\theta}</span>
+<span id="cb2-402"><a href="#cb2-402" aria-hidden="true" tabindex="-1"></a>\left[</span>
+<span id="cb2-403"><a href="#cb2-403" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a \mid s)</span>
+<span id="cb2-404"><a href="#cb2-404" aria-hidden="true" tabindex="-1"></a>\nabla_\theta \log \pi_\theta(a \mid s)^T</span>
+<span id="cb2-405"><a href="#cb2-405" aria-hidden="true" tabindex="-1"></a>\right].</span>
+<span id="cb2-406"><a href="#cb2-406" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-407"><a href="#cb2-407" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-408"><a href="#cb2-408" aria-hidden="true" tabindex="-1"></a>The idea is to find an update direction that improves the policy while controlling how much the action distribution changes.</span>
+<span id="cb2-409"><a href="#cb2-409" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-410"><a href="#cb2-410" aria-hidden="true" tabindex="-1"></a>With compatible function approximation, the natural actor-critic has a nice simplification: the critic's weights can directly represent the natural gradient direction.</span>
+<span id="cb2-411"><a href="#cb2-411" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-412"><a href="#cb2-412" aria-hidden="true" tabindex="-1"></a><span class="fu">## Main Takeaway</span></span>
+<span id="cb2-413"><a href="#cb2-413" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-414"><a href="#cb2-414" aria-hidden="true" tabindex="-1"></a>Policy gradient methods optimize behavior directly.</span>
+<span id="cb2-415"><a href="#cb2-415" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-416"><a href="#cb2-416" aria-hidden="true" tabindex="-1"></a>The key ideas are:</span>
+<span id="cb2-417"><a href="#cb2-417" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-418"><a href="#cb2-418" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>parameterize the policy $\pi_\theta(a \mid s)$</span>
+<span id="cb2-419"><a href="#cb2-419" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>use the score function $\nabla_\theta \log \pi_\theta(a \mid s)$</span>
+<span id="cb2-420"><a href="#cb2-420" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>weight the score by return, value, or advantage</span>
+<span id="cb2-421"><a href="#cb2-421" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>use actor-critic methods to reduce variance and update online</span>
+<span id="cb2-422"><a href="#cb2-422" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>use baselines and advantages to make the signal cleaner</span>
+<span id="cb2-423"><a href="#cb2-423" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>use natural gradients to account for the geometry of policy distributions</span>
+<span id="cb2-424"><a href="#cb2-424" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-425"><a href="#cb2-425" aria-hidden="true" tabindex="-1"></a>For me, this lecture connects probability, optimization, and RL very directly: learning means changing the probability of actions in proportion to how useful those actions turned out to be.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
