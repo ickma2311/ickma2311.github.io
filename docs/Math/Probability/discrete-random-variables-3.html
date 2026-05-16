@@ -7,9 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Chao Ma">
-<meta name="dcterms.date" content="2026-02-22">
+<meta name="dcterms.date" content="2026-05-15">
+<meta name="description" content="Joint PMFs for multiple random variables, multiplication rules, expectations of functions, variance of sums, binomial mean and variance, and the hat-check problem.">
 
-<title>MIT 18.065: Lecture 21 - Minimizing a Function – ∇ ickma.dev</title>
+<title>MIT 6.041 Probability: Discrete Random Variables III – ∇ ickma.dev</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -1127,26 +1128,19 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#hessian-matrix" id="toc-hessian-matrix" class="nav-link active" data-scroll-target="#hessian-matrix">Hessian Matrix</a></li>
-  <li><a href="#jacobian-matrix" id="toc-jacobian-matrix" class="nav-link" data-scroll-target="#jacobian-matrix">Jacobian Matrix</a></li>
-  <li><a href="#newtons-method" id="toc-newtons-method" class="nav-link" data-scroll-target="#newtons-method">Newton’s Method</a>
+  <li><a href="#three-random-variables" id="toc-three-random-variables" class="nav-link active" data-scroll-target="#three-random-variables">Three Random Variables</a></li>
+  <li><a href="#multiplication-rule" id="toc-multiplication-rule" class="nav-link" data-scroll-target="#multiplication-rule">Multiplication Rule</a></li>
+  <li><a href="#expectations-of-functions" id="toc-expectations-of-functions" class="nav-link" data-scroll-target="#expectations-of-functions">Expectations of Functions</a></li>
+  <li><a href="#linearity-of-expectation" id="toc-linearity-of-expectation" class="nav-link" data-scroll-target="#linearity-of-expectation">Linearity of Expectation</a></li>
+  <li><a href="#product-of-independent-variables" id="toc-product-of-independent-variables" class="nav-link" data-scroll-target="#product-of-independent-variables">Product of Independent Variables</a></li>
+  <li><a href="#variance-of-sums" id="toc-variance-of-sums" class="nav-link" data-scroll-target="#variance-of-sums">Variance of Sums</a></li>
+  <li><a href="#binomial-expectation-and-variance" id="toc-binomial-expectation-and-variance" class="nav-link" data-scroll-target="#binomial-expectation-and-variance">Binomial Expectation and Variance</a></li>
+  <li><a href="#the-hat-problem" id="toc-the-hat-problem" class="nav-link" data-scroll-target="#the-hat-problem">The Hat Problem</a>
   <ul class="collapse">
-  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a>
-  <ul class="collapse">
-  <li><a href="#quadratic-convergence" id="toc-quadratic-convergence" class="nav-link" data-scroll-target="#quadratic-convergence">Quadratic Convergence</a></li>
+  <li><a href="#expected-number-of-matches" id="toc-expected-number-of-matches" class="nav-link" data-scroll-target="#expected-number-of-matches">Expected Number of Matches</a></li>
+  <li><a href="#variance-of-the-number-of-matches" id="toc-variance-of-the-number-of-matches" class="nav-link" data-scroll-target="#variance-of-the-number-of-matches">Variance of the Number of Matches</a></li>
   </ul></li>
-  <li><a href="#why-dont-we-use-full-newtons-method-in-deep-learning" id="toc-why-dont-we-use-full-newtons-method-in-deep-learning" class="nav-link" data-scroll-target="#why-dont-we-use-full-newtons-method-in-deep-learning">Why don’t we use full Newton’s method in deep learning?</a></li>
-  </ul></li>
-  <li><a href="#minimizing-f" id="toc-minimizing-f" class="nav-link" data-scroll-target="#minimizing-f">Minimizing F</a>
-  <ul class="collapse">
-  <li><a href="#steepest-descent" id="toc-steepest-descent" class="nav-link" data-scroll-target="#steepest-descent">Steepest Descent</a></li>
-  <li><a href="#newtons-method-1" id="toc-newtons-method-1" class="nav-link" data-scroll-target="#newtons-method-1">Newton’s Method</a></li>
-  </ul></li>
-  <li><a href="#convexity" id="toc-convexity" class="nav-link" data-scroll-target="#convexity">Convexity</a>
-  <ul class="collapse">
-  <li><a href="#convex-set" id="toc-convex-set" class="nav-link" data-scroll-target="#convex-set">Convex set</a></li>
-  <li><a href="#convex-function" id="toc-convex-function" class="nav-link" data-scroll-target="#convex-function">Convex function</a></li>
-  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
   </ul>
 </nav>
     </div>
@@ -1155,17 +1149,24 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">MIT 18.065: Lecture 21 - Minimizing a Function</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title">MIT 6.041 Probability: Discrete Random Variables III</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
   <div class="quarto-categories">
-    <div class="quarto-category">Linear Algebra</div>
-    <div class="quarto-category">Optimization</div>
-    <div class="quarto-category">Hessian</div>
-    <div class="quarto-category">Jacobian</div>
-    <div class="quarto-category">Newton Method</div>
-    <div class="quarto-category">Convexity</div>
+    <div class="quarto-category">Probability</div>
+    <div class="quarto-category">Random Variables</div>
+    <div class="quarto-category">Joint PMF</div>
+    <div class="quarto-category">Expectation</div>
+    <div class="quarto-category">Variance</div>
+    <div class="quarto-category">Binomial Distribution</div>
+    <div class="quarto-category">Indicator Variables</div>
+    <div class="quarto-category">MIT 6.041</div>
   </div>
   </div>
 
+<div>
+  <div class="description">
+    Joint PMFs for multiple random variables, multiplication rules, expectations of functions, variance of sums, binomial mean and variance, and the hat-check problem.
+  </div>
+</div>
 
 
 <div class="quarto-title-meta">
@@ -1180,7 +1181,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">February 22, 2026</p>
+      <p class="date">May 15, 2026</p>
     </div>
   </div>
   
@@ -1192,130 +1193,329 @@ window.Quarto = {
 </header>
 
 
-<div class="quarto-video ratio ratio-16x9"><iframe data-external="1" src="https://www.youtube.com/embed/nvXRJIBOREc" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>
-<section id="hessian-matrix" class="level1">
-<h1>Hessian Matrix</h1>
-<p>Taylor expansion (three terms) in 1D: <span class="math display">\[
-F(x+\Delta x) \approx F(x)+\Delta x\frac{dF}{dx}+\frac{1}{2}(\Delta x)^2\frac{d^2F}{dx^2}.
-\]</span></p>
-<p>Multivariable form: <span class="math display">\[
-F(x+\Delta x) \approx F(x)+(\Delta x)^\top \nabla_x F+\frac{1}{2}(\Delta x)^\top H\,\Delta x.
-\]</span></p>
+<iframe width="100%" height="500" src="https://www.youtube.com/embed/EObHWIEKGjA" title="MIT 6.041 Probability: Discrete Random Variables III" frameborder="0" allowfullscreen="">
+</iframe>
+<p>This lecture extends discrete random variables from one or two variables to several variables.</p>
+<p>The main ideas are:</p>
 <ul>
-<li><span class="math inline">\(H\)</span>: Hessian matrix (symmetric under standard smoothness assumptions)</li>
-<li>Entries: <span class="math display">\[
-H_{ij}=\frac{\partial^2 F}{\partial x_i\partial x_j}.
-\]</span></li>
+<li>joint PMFs can be marginalized to get individual PMFs</li>
+<li>multiplication rules factor joint probabilities into conditional probabilities</li>
+<li>expectation is linear even without independence</li>
+<li>variance adds only when covariance terms vanish, such as under independence</li>
+<li>indicator variables make many counting expectations much easier</li>
 </ul>
+<section id="three-random-variables" class="level2">
+<h2 class="anchored" data-anchor-id="three-random-variables">Three Random Variables</h2>
+<p>For three discrete random variables <span class="math inline">\(X,Y,Z\)</span>, the joint PMF is</p>
+<p><span class="math display">\[
+p_{X,Y,Z}(x,y,z)
+=
+P(X=x,Y=y,Z=z).
+\]</span></p>
+<p>We can recover the marginal PMF of <span class="math inline">\(X\)</span> by summing over the other variables:</p>
+<p><span class="math display">\[
+p_X(x)
+=
+\sum_y \sum_z p_{X,Y,Z}(x,y,z).
+\]</span></p>
+<p>The same idea works for any subset of variables. Marginalization means summing out the variables we no longer want to track.</p>
 </section>
-<section id="jacobian-matrix" class="level1">
-<h1>Jacobian Matrix</h1>
-<p>The Jacobian matrix <span class="math inline">\(J\)</span> is the first-order derivative matrix for a vector-valued function <span class="math inline">\(f\)</span>.</p>
-<p>If <span class="math inline">\(f:\mathbb{R}^n\to\mathbb{R}^m\)</span>, then <span class="math display">\[
-J_{jk}=\frac{\partial f_j}{\partial x_k},\qquad J\in\mathbb{R}^{m\times n}.
+<section id="multiplication-rule" class="level2">
+<h2 class="anchored" data-anchor-id="multiplication-rule">Multiplication Rule</h2>
+<p>For three events <span class="math inline">\(A,B,C\)</span>, the multiplication rule is</p>
+<p><span class="math display">\[
+P(A \cap B \cap C)
+=
+P(A)P(B \mid A)P(C \mid A \cap B).
 \]</span></p>
-<p>It plays the same role for vector functions that the gradient plays for scalar functions. It is also the first-order term in Taylor linearization: <span class="math display">\[
-f(x+\Delta x)\approx f(x)+J\Delta x.
+<p>For random variables, this becomes</p>
+<p><span class="math display">\[
+p_{X,Y,Z}(x,y,z)
+=
+p_X(x)
+p_{Y\mid X}(y\mid x)
+p_{Z\mid X,Y}(z\mid x,y).
 \]</span></p>
-<p>This linearization is the core engine of Newton’s method: solve <span class="math inline">\(f(x)=0\)</span> by repeatedly solving a linearized system.</p>
-<blockquote class="blockquote">
-<p>The Jacobian can be <span class="math inline">\(m\times n\)</span> in general. In this lecture, we focus on the square <span class="math inline">\(n\times n\)</span> case so Newton updates can be written with <span class="math inline">\(J^{-1}\)</span>.</p>
-</blockquote>
+<p>This is useful because a complicated joint probability can be built as a sequence of conditional probabilities.</p>
+<p>If <span class="math inline">\(X,Y,Z\)</span> are independent, the factorization simplifies to</p>
+<p><span class="math display">\[
+p_{X,Y,Z}(x,y,z)
+=
+p_X(x)p_Y(y)p_Z(z).
+\]</span></p>
+<p>Independence means that learning one variable does not change the distribution of the others. For example, if <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are independent, then</p>
+<p><span class="math display">\[
+p_{X\mid Y}(x\mid y)
+=
+p_X(x).
+\]</span></p>
+<p>If <span class="math inline">\(X,Y,Z\)</span> are mutually independent, then</p>
+<p><span class="math display">\[
+p_{X\mid Y,Z}(x\mid y,z)
+=
+p_X(x).
+\]</span></p>
+<p>Knowing both <span class="math inline">\(Y\)</span> and <span class="math inline">\(Z\)</span> still gives no information about <span class="math inline">\(X\)</span>.</p>
 </section>
-<section id="newtons-method" class="level1">
-<h1>Newton’s Method</h1>
-<p>Set <span class="math inline">\(f=\nabla F\)</span>. To find a stationary point, solve <span class="math display">\[
-f(x)=0\quad\Longleftrightarrow\quad f_1(x)=\cdots=f_n(x)=0.
+<section id="expectations-of-functions" class="level2">
+<h2 class="anchored" data-anchor-id="expectations-of-functions">Expectations of Functions</h2>
+<p>For two discrete random variables, the expectation of a function <span class="math inline">\(g(X,Y)\)</span> is computed by summing over all pairs:</p>
+<p><span class="math display">\[
+E[g(X,Y)]
+=
+\sum_x \sum_y g(x,y)p_{X,Y}(x,y).
 \]</span></p>
-<p>At iteration <span class="math inline">\(k\)</span>, linearize around <span class="math inline">\(x_k\)</span>: <span class="math display">\[
-f(x_k)+J(x_k)\Delta x=0.
+<p>In general,</p>
+<p><span class="math display">\[
+E[g(X,Y)]
+\ne
+g(E[X],E[Y]).
 \]</span></p>
-<p>Use <span class="math inline">\(\Delta x=x_{k+1}-x_k\)</span>: <span class="math display">\[
-J(x_k)(x_{k+1}-x_k)=-f(x_k),
-\]</span> so <span class="math display">\[
-x_{k+1}=x_k-J(x_k)^{-1}f(x_k).
+<p>Expectation applies to the function values over all outcomes, not just to the function evaluated at the average inputs.</p>
+</section>
+<section id="linearity-of-expectation" class="level2">
+<h2 class="anchored" data-anchor-id="linearity-of-expectation">Linearity of Expectation</h2>
+<p>The most important expectation rule is linearity:</p>
+<p><span class="math display">\[
+E[X+Y+Z]
+=
+E[X]+E[Y]+E[Z].
 \]</span></p>
-<p>Given <span class="math inline">\(f=\nabla F\)</span>, the Jacobian <span class="math inline">\(J(x_k)\)</span> (first derivative of a first derivative) is exactly the Hessian <span class="math inline">\(H(x_k)\)</span> of <span class="math inline">\(F\)</span> (second-order derivative).</p>
-<section id="example" class="level2">
-<h2 class="anchored" data-anchor-id="example">Example</h2>
-<p>Suppose <span class="math display">\[
-f(x)=x^2-9,
-\]</span> so <span class="math inline">\(f(x)=0\)</span> gives roots <span class="math inline">\(x=\pm 3\)</span>.</p>
-<p>Newton update: <span class="math display">\[
-x_{k+1}=x_k-\frac{f(x_k)}{f'(x_k)}
-= x_k-\frac{x_k^2-9}{2x_k}.
+<p>This is true whether or not the random variables are independent.</p>
+<p>Independence is not needed because the joint PMF marginalizes correctly when summing:</p>
+<p><span class="math display">\[
+E[X+Y]
+=
+\sum_x\sum_y (x+y)p_{X,Y}(x,y)
+=
+E[X]+E[Y].
 \]</span></p>
-<p>As expected, the method converges quickly near <span class="math inline">\(3\)</span> and <span class="math inline">\(-3\)</span>.</p>
-<section id="quadratic-convergence" class="level3">
-<h3 class="anchored" data-anchor-id="quadratic-convergence">Quadratic Convergence</h3>
-<p>Newton’s method has <strong>quadratic convergence</strong> near a nondegenerate solution: <span class="math display">\[
-e_{k+1}\approx C e_k^2.
+</section>
+<section id="product-of-independent-variables" class="level2">
+<h2 class="anchored" data-anchor-id="product-of-independent-variables">Product of Independent Variables</h2>
+<p>If <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are independent, then</p>
+<p><span class="math display">\[
+E[XY]
+=
+E[X]E[Y].
 \]</span></p>
-<p>This is much faster than linear convergence from steepest descent. The reason is second-order curvature information (via the Hessian/Jacobian), so once the iterate enters the attraction region, correct digits can roughly double each step.</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="mit18065-lecture21-minimizing-function-1.png" class="img-fluid figure-img"></p>
-<figcaption>Newton iteration geometry / convergence intuition</figcaption>
-</figure>
-</div>
+<p>More generally, if <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are independent, then any functions of them are also independent:</p>
+<p><span class="math display">\[
+E[g(X)h(Y)]
+=
+E[g(X)]E[h(Y)].
+\]</span></p>
+<p>This product rule does require independence. Linearity of expectation does not.</p>
+</section>
+<section id="variance-of-sums" class="level2">
+<h2 class="anchored" data-anchor-id="variance-of-sums">Variance of Sums</h2>
+<p>Variance is different from expectation. It is not always additive.</p>
+<p>In general,</p>
+<p><span class="math display">\[
+\operatorname{Var}(X+Y)
+=
+\operatorname{Var}(X)
++
+\operatorname{Var}(Y)
++
+2\operatorname{Cov}(X,Y).
+\]</span></p>
+<p>If <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are independent, then <span class="math inline">\(\operatorname{Cov}(X,Y)=0\)</span>, so</p>
+<p><span class="math display">\[
+\operatorname{Var}(X+Y)
+=
+\operatorname{Var}(X)
++
+\operatorname{Var}(Y).
+\]</span></p>
+<p>For example, if <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are independent, then</p>
+<p><span class="math display">\[
+\operatorname{Var}(X-3Y)
+=
+\operatorname{Var}(X)
++
+9\operatorname{Var}(Y).
+\]</span></p>
+<p>The coefficient is squared because variance measures squared deviation.</p>
+</section>
+<section id="binomial-expectation-and-variance" class="level2">
+<h2 class="anchored" data-anchor-id="binomial-expectation-and-variance">Binomial Expectation and Variance</h2>
+<p>Let</p>
+<p><span class="math display">\[
+X \sim \operatorname{Binomial}(n,p).
+\]</span></p>
+<p>The PMF is</p>
+<p><span class="math display">\[
+p_X(k)
+=
+\binom{n}{k}p^k(1-p)^{n-k},
+\qquad
+k=0,1,\dots,n.
+\]</span></p>
+<p>Directly computing the expectation from</p>
+<p><span class="math display">\[
+E[X]
+=
+\sum_{k=0}^{n}
+k\binom{n}{k}p^k(1-p)^{n-k}
+\]</span></p>
+<p>is possible, but there is a much cleaner method.</p>
+<p>Write <span class="math inline">\(X\)</span> as a sum of indicator variables:</p>
+<p><span class="math display">\[
+X=X_1+\cdots+X_n,
+\]</span></p>
+<p>where</p>
+<p><span class="math display">\[
+X_i =
+\begin{cases}
+1, &amp; \text{trial } i \text{ succeeds},\\
+0, &amp; \text{trial } i \text{ fails}.
+\end{cases}
+\]</span></p>
+<p>Each <span class="math inline">\(X_i\)</span> is a Bernoulli random variable with</p>
+<p><span class="math display">\[
+E[X_i]=p.
+\]</span></p>
+<p>By linearity of expectation,</p>
+<p><span class="math display">\[
+E[X]
+=
+\sum_{i=1}^n E[X_i]
+=
+np.
+\]</span></p>
+<p>For one Bernoulli trial,</p>
+<p><span class="math display">\[
+\operatorname{Var}(X_i)
+=
+p(1-p).
+\]</span></p>
+<p>Because the trials are independent, the variances add:</p>
+<p><span class="math display">\[
+\operatorname{Var}(X)
+=
+\sum_{i=1}^n \operatorname{Var}(X_i)
+=
+np(1-p).
+\]</span></p>
+<p>The indicator-variable viewpoint avoids tedious algebra and reveals the structure of the binomial distribution.</p>
+</section>
+<section id="the-hat-problem" class="level2">
+<h2 class="anchored" data-anchor-id="the-hat-problem">The Hat Problem</h2>
+<p>Suppose <span class="math inline">\(n\)</span> people check their hats at a party. The attendant randomly permutes the hats before returning them.</p>
+<p>Let <span class="math inline">\(X\)</span> be the number of people who get their own hat back.</p>
+<section id="expected-number-of-matches" class="level3">
+<h3 class="anchored" data-anchor-id="expected-number-of-matches">Expected Number of Matches</h3>
+<p>Define the indicator variable</p>
+<p><span class="math display">\[
+X_i =
+\begin{cases}
+1, &amp; \text{person } i \text{ gets their own hat},\\
+0, &amp; \text{otherwise}.
+\end{cases}
+\]</span></p>
+<p>Then</p>
+<p><span class="math display">\[
+X=X_1+\cdots+X_n.
+\]</span></p>
+<p>For any person <span class="math inline">\(i\)</span>,</p>
+<p><span class="math display">\[
+P(X_i=1)=\frac{1}{n},
+\]</span></p>
+<p>so</p>
+<p><span class="math display">\[
+E[X_i]=\frac{1}{n}.
+\]</span></p>
+<p>By linearity of expectation,</p>
+<p><span class="math display">\[
+E[X]
+=
+\sum_{i=1}^n E[X_i]
+=
+n\cdot \frac{1}{n}
+=
+1.
+\]</span></p>
+<p>So no matter how many people attend, the expected number of people who get their own hat back is <span class="math inline">\(1\)</span>.</p>
+</section>
+<section id="variance-of-the-number-of-matches" class="level3">
+<h3 class="anchored" data-anchor-id="variance-of-the-number-of-matches">Variance of the Number of Matches</h3>
+<p>For <span class="math inline">\(n \ge 2\)</span>,</p>
+<p><span class="math display">\[
+\operatorname{Var}(X)
+=
+E[X^2]-(E[X])^2
+=
+E[X^2]-1.
+\]</span></p>
+<p>Expand <span class="math inline">\(X^2\)</span>:</p>
+<p><span class="math display">\[
+X^2
+=
+\left(\sum_{i=1}^n X_i\right)^2
+=
+\sum_{i=1}^n X_i^2
++
+\sum_{i\ne j}X_iX_j.
+\]</span></p>
+<p>Since <span class="math inline">\(X_i\)</span> is an indicator variable,</p>
+<p><span class="math display">\[
+X_i^2=X_i.
+\]</span></p>
+<p>Therefore</p>
+<p><span class="math display">\[
+\sum_{i=1}^n E[X_i^2]
+=
+\sum_{i=1}^n E[X_i]
+=
+1.
+\]</span></p>
+<p>For the cross terms, <span class="math inline">\(X_iX_j=1\)</span> only if both person <span class="math inline">\(i\)</span> and person <span class="math inline">\(j\)</span> get their own hats. For <span class="math inline">\(i\ne j\)</span>,</p>
+<p><span class="math display">\[
+E[X_iX_j]
+=
+P(X_i=1,X_j=1)
+=
+\frac{1}{n}\cdot\frac{1}{n-1}.
+\]</span></p>
+<p>There are <span class="math inline">\(n(n-1)\)</span> ordered cross terms, so</p>
+<p><span class="math display">\[
+\sum_{i\ne j}E[X_iX_j]
+=
+n(n-1)\cdot \frac{1}{n(n-1)}
+=
+1.
+\]</span></p>
+<p>Thus</p>
+<p><span class="math display">\[
+E[X^2]=1+1=2,
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\operatorname{Var}(X)
+=
+2-1^2
+=
+1.
+\]</span></p>
+<p><img src="discrete-random-variables-3-hat-problem.png" class="img-fluid"></p>
+<p>The important lesson is that the indicators are not independent, but linearity of expectation still gives the mean immediately. For variance, we must handle the cross terms.</p>
 </section>
 </section>
-<section id="why-dont-we-use-full-newtons-method-in-deep-learning" class="level2">
-<h2 class="anchored" data-anchor-id="why-dont-we-use-full-newtons-method-in-deep-learning">Why don’t we use full Newton’s method in deep learning?</h2>
-<p>Although Newton’s method is theoretically fast, it has severe computation/storage bottlenecks for modern models because it depends on second-order derivatives.</p>
-<p>For a model with only <span class="math inline">\(10^6\)</span> parameters:</p>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
 <ul>
-<li>First-order gradient is a vector of size <span class="math inline">\(10^6\)</span> (manageable).</li>
-<li>Hessian is a <span class="math inline">\(10^6\times 10^6\)</span> matrix with <span class="math inline">\(10^{12}\)</span> entries (storage explosion).</li>
-<li>Newton step requires solving/inverting Hessian systems; naive inversion scales as <span class="math inline">\(O(N^3)\)</span> and is infeasible at this size.</li>
+<li>Joint PMFs for multiple random variables can be marginalized by summing out variables.</li>
+<li>The multiplication rule factors joint probabilities into conditional probabilities.</li>
+<li>Linearity of expectation does not require independence.</li>
+<li>Products of expectations usually require independence.</li>
+<li>Variance of a sum includes covariance terms unless the variables are independent.</li>
+<li>Indicator variables make binomial and matching problems much easier.</li>
 </ul>
-<p>So in practice, deep learning uses first-order methods (SGD/Adam) or approximate second-order variants.</p>
-</section>
-</section>
-<section id="minimizing-f" class="level1">
-<h1>Minimizing F</h1>
-<section id="steepest-descent" class="level2">
-<h2 class="anchored" data-anchor-id="steepest-descent">Steepest Descent</h2>
-<p><span class="math display">\[
-x_{k+1}=x_k-s_k\nabla F(x_k),
-\]</span> where <span class="math inline">\(s_k\)</span> is step size (learning rate).</p>
-<p>Steepest descent follows the negative gradient direction. Step size is critical: too large overshoots; too small converges slowly.</p>
-</section>
-<section id="newtons-method-1" class="level2">
-<h2 class="anchored" data-anchor-id="newtons-method-1">Newton’s Method</h2>
-<p><span class="math display">\[
-x_{k+1}=x_k-H(x_k)^{-1}\nabla F(x_k).
-\]</span></p>
-<p>Compared with steepest descent, Newton uses local curvature to adapt direction and scale.</p>
-</section>
-</section>
-<section id="convexity" class="level1">
-<h1>Convexity</h1>
-<section id="convex-set" class="level2">
-<h2 class="anchored" data-anchor-id="convex-set">Convex set</h2>
-<p>A set <span class="math inline">\(C\)</span> is convex if <span class="math display">\[
-x,y\in C,\ \forall\theta\in[0,1]\Longrightarrow\theta x+(1-\theta)y\in C.
-\]</span></p>
-</section>
-<section id="convex-function" class="level2">
-<h2 class="anchored" data-anchor-id="convex-function">Convex function</h2>
-<p>A function <span class="math inline">\(f\)</span> is convex if <span class="math display">\[
-f(\theta x+(1-\theta)y)\le \theta f(x)+(1-\theta)f(y),\quad x,y\in\mathrm{dom}(f),\ \theta\in[0,1].
-\]</span></p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="mit18065-lecture21-minimizing-function-2.png" class="img-fluid figure-img"></p>
-<figcaption>Non-convex example: midpoint of two boundary points lies outside</figcaption>
-</figure>
-</div>
-<p>From calculus, in 1D, <span class="math inline">\(f''(x)\ge 0\)</span> implies convexity. In optimization, convexity gives the key guarantee: every local minimum is also a global minimum.</p>
-<hr>
-<p><strong>Takeaway.</strong> Hessian and Jacobian connect multivariable calculus to practical optimization: gradient methods use first-order information, Newton uses second-order curvature, and convexity tells us when local optimization gives globally correct answers.</p>
 
 
 <!-- -->
 
-</section>
 </section>
 
 </main> <!-- /main -->
@@ -1800,154 +2000,413 @@ f(\theta x+(1-\theta)y)\le \theta f(x)+(1-\theta)f(y),\quad x,y\in\mathrm{dom}(f
   loadGiscus();
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "MIT 18.065: Lecture 21 - Minimizing a Function"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "MIT 6.041 Probability: Discrete Random Variables III"</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-02-22"</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Linear Algebra, Optimization, Hessian, Jacobian, Newton Method, Convexity]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>{{&lt; video https://www.youtube.com/watch?v=nvXRJIBOREc&amp;list=PLUl4u3cNGP63oMNUHXqIUcrkS2PivhN3k&amp;index=23 &gt;}}</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-05-15"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Probability, Random Variables, Joint PMF, Expectation, Variance, Binomial Distribution, Indicator Variables, MIT 6.041]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Joint PMFs for multiple random variables, multiplication rules, expectations of functions, variance of sums, binomial mean and variance, and the hat-check problem."</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu"># Hessian Matrix</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">iframe</span><span class="ot"> width</span><span class="op">=</span><span class="st">"100%"</span><span class="ot"> height</span><span class="op">=</span><span class="st">"500"</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://www.youtube.com/embed/EObHWIEKGjA"</span><span class="ot"> title</span><span class="op">=</span><span class="st">"MIT 6.041 Probability: Discrete Random Variables III"</span><span class="ot"> frameborder</span><span class="op">=</span><span class="st">"0"</span><span class="ot"> allowfullscreen</span><span class="dt">&gt;&lt;/</span><span class="kw">iframe</span><span class="dt">&gt;</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>Taylor expansion (three terms) in 1D:</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>F(x+\Delta x) \approx F(x)+\Delta x\frac{dF}{dx}+\frac{1}{2}(\Delta x)^2\frac{d^2F}{dx^2}.</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>Multivariable form:</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>F(x+\Delta x) \approx F(x)+(\Delta x)^\top \nabla_x F+\frac{1}{2}(\Delta x)^\top H\,\Delta x.</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>This lecture extends discrete random variables from one or two variables to several variables.</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>The main ideas are:</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>joint PMFs can be marginalized to get individual PMFs</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>multiplication rules factor joint probabilities into conditional probabilities</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>expectation is linear even without independence</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>variance adds only when covariance terms vanish, such as under independence</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>indicator variables make many counting expectations much easier</span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$H$: Hessian matrix (symmetric under standard smoothness assumptions)</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Entries:</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>H_{ij}=\frac{\partial^2 F}{\partial x_i\partial x_j}.</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="fu">## Three Random Variables</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>For three discrete random variables $X,Y,Z$, the joint PMF is</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="fu"># Jacobian Matrix</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>The Jacobian matrix $J$ is the first-order derivative matrix for a vector-valued function $f$.</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>p_{X,Y,Z}(x,y,z)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>P(X=x,Y=y,Z=z).</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>If $f:\mathbb{R}^n\to\mathbb{R}^m$, then</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>J_{jk}=\frac{\partial f_j}{\partial x_k},\qquad J\in\mathbb{R}^{m\times n}.</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>It plays the same role for vector functions that the gradient plays for scalar functions. It is also the first-order term in Taylor linearization:</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>We can recover the marginal PMF of $X$ by summing over the other variables:</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>p_X(x)</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>\sum_y \sum_z p_{X,Y,Z}(x,y,z).</span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>f(x+\Delta x)\approx f(x)+J\Delta x.</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>The same idea works for any subset of variables. Marginalization means summing out the variables we no longer want to track.</span>
 <span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>This linearization is the core engine of Newton's method: solve $f(x)=0$ by repeatedly solving a linearized system.</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="fu">## Multiplication Rule</span></span>
 <span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; The Jacobian can be $m\times n$ in general. In this lecture, we focus on the square $n\times n$ case so Newton updates can be written with $J^{-1}$.</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>For three events $A,B,C$, the multiplication rule is</span>
 <span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="fu"># Newton's Method</span></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>Set $f=\nabla F$. To find a stationary point, solve</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>f(x)=0\quad\Longleftrightarrow\quad f_1(x)=\cdots=f_n(x)=0.</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>At iteration $k$, linearize around $x_k$:</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>P(A \cap B \cap C)</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>P(A)P(B \mid A)P(C \mid A \cap B).</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>For random variables, this becomes</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>f(x_k)+J(x_k)\Delta x=0.</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>Use $\Delta x=x_{k+1}-x_k$:</span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>J(x_k)(x_{k+1}-x_k)=-f(x_k),</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>so</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>x_{k+1}=x_k-J(x_k)^{-1}f(x_k).</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>Given $f=\nabla F$, the Jacobian $J(x_k)$ (first derivative of a first derivative) is exactly the Hessian $H(x_k)$ of $F$ (second-order derivative).</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example</span></span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>Suppose</span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>f(x)=x^2-9,</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>p_{X,Y,Z}(x,y,z)</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>p_X(x)</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>p_{Y\mid X}(y\mid x)</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>p_{Z\mid X,Y}(z\mid x,y).</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>This is useful because a complicated joint probability can be built as a sequence of conditional probabilities.</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>If $X,Y,Z$ are independent, the factorization simplifies to</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>p_{X,Y,Z}(x,y,z)</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>p_X(x)p_Y(y)p_Z(z).</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>Independence means that learning one variable does not change the distribution of the others. For example, if $X$ and $Y$ are independent, then</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>so $f(x)=0$ gives roots $x=\pm 3$.</span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>Newton update:</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>p_{X\mid Y}(x\mid y)</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>p_X(x).</span>
 <span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>x_{k+1}=x_k-\frac{f(x_k)}{f'(x_k)}</span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>= x_k-\frac{x_k^2-9}{2x_k}.</span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>As expected, the method converges quickly near $3$ and $-3$.</span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="fu">### Quadratic Convergence</span></span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>Newton's method has **quadratic convergence** near a nondegenerate solution:</span>
-<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>e_{k+1}\approx C e_k^2.</span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>If $X,Y,Z$ are mutually independent, then</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>p_{X\mid Y,Z}(x\mid y,z)</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>p_X(x).</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>Knowing both $Y$ and $Z$ still gives no information about $X$.</span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a><span class="fu">## Expectations of Functions</span></span>
 <span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>This is much faster than linear convergence from steepest descent. The reason is second-order curvature information (via the Hessian/Jacobian), so once the iterate enters the attraction region, correct digits can roughly double each step.</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>For two discrete random variables, the expectation of a function $g(X,Y)$ is computed by summing over all pairs:</span>
 <span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a><span class="al">![Newton iteration geometry / convergence intuition](mit18065-lecture21-minimizing-function-1.png)</span></span>
-<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a><span class="fu">## Why don't we use full Newton's method in deep learning?</span></span>
-<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>Although Newton's method is theoretically fast, it has severe computation/storage bottlenecks for modern models because it depends on second-order derivatives.</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">g(X,Y)</span><span class="co">]</span></span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>\sum_x \sum_y g(x,y)p_{X,Y}(x,y).</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>For a model with only $10^6$ parameters:</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>In general,</span>
 <span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>First-order gradient is a vector of size $10^6$ (manageable).</span>
-<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Hessian is a $10^6\times 10^6$ matrix with $10^{12}$ entries (storage explosion).</span>
-<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Newton step requires solving/inverting Hessian systems; naive inversion scales as $O(N^3)$ and is infeasible at this size.</span>
-<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>So in practice, deep learning uses first-order methods (SGD/Adam) or approximate second-order variants.</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">g(X,Y)</span><span class="co">]</span></span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a>\ne</span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>g(E<span class="co">[</span><span class="ot">X</span><span class="co">]</span>,E<span class="co">[</span><span class="ot">Y</span><span class="co">]</span>).</span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a><span class="fu"># Minimizing F</span></span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>Expectation applies to the function values over all outcomes, not just to the function evaluated at the average inputs.</span>
 <span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a><span class="fu">## Steepest Descent</span></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a><span class="fu">## Linearity of Expectation</span></span>
 <span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>x_{k+1}=x_k-s_k\nabla F(x_k),</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>The most important expectation rule is linearity:</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>where $s_k$ is step size (learning rate).</span>
-<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>Steepest descent follows the negative gradient direction. Step size is critical: too large overshoots; too small converges slowly.</span>
-<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a><span class="fu">## Newton's Method</span></span>
-<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>x_{k+1}=x_k-H(x_k)^{-1}\nabla F(x_k).</span>
-<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>Compared with steepest descent, Newton uses local curvature to adapt direction and scale.</span>
-<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a><span class="fu"># Convexity</span></span>
-<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a><span class="fu">## Convex set</span></span>
-<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>A set $C$ is convex if</span>
-<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>x,y\in C,\ \forall\theta\in<span class="co">[</span><span class="ot">0,1</span><span class="co">]</span>\Longrightarrow\theta x+(1-\theta)y\in C.</span>
-<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X+Y+Z</span><span class="co">]</span></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X</span><span class="co">]</span>+E<span class="co">[</span><span class="ot">Y</span><span class="co">]</span>+E<span class="co">[</span><span class="ot">Z</span><span class="co">]</span>.</span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>This is true whether or not the random variables are independent.</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>Independence is not needed because the joint PMF marginalizes correctly when summing:</span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X+Y</span><span class="co">]</span></span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>\sum_x\sum_y (x+y)p_{X,Y}(x,y)</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X</span><span class="co">]</span>+E<span class="co">[</span><span class="ot">Y</span><span class="co">]</span>.</span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a><span class="fu">## Product of Independent Variables</span></span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>If $X$ and $Y$ are independent, then</span>
 <span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a><span class="fu">## Convex function</span></span>
-<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>A function $f$ is convex if</span>
-<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>f(\theta x+(1-\theta)y)\le \theta f(x)+(1-\theta)f(y),\quad x,y\in\mathrm{dom}(f),\ \theta\in<span class="co">[</span><span class="ot">0,1</span><span class="co">]</span>.</span>
-<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a><span class="al">![Non-convex example: midpoint of two boundary points lies outside](mit18065-lecture21-minimizing-function-2.png)</span></span>
-<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>From calculus, in 1D, $f''(x)\ge 0$ implies convexity. In optimization, convexity gives the key guarantee: every local minimum is also a global minimum.</span>
-<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>**Takeaway.** Hessian and Jacobian connect multivariable calculus to practical optimization: gradient methods use first-order information, Newton uses second-order curvature, and convexity tells us when local optimization gives globally correct answers.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">XY</span><span class="co">]</span></span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X</span><span class="co">]</span>E<span class="co">[</span><span class="ot">Y</span><span class="co">]</span>.</span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>More generally, if $X$ and $Y$ are independent, then any functions of them are also independent:</span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">g(X)h(Y)</span><span class="co">]</span></span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">g(X)</span><span class="co">]</span>E<span class="co">[</span><span class="ot">h(Y)</span><span class="co">]</span>.</span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>This product rule does require independence. Linearity of expectation does not.</span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a><span class="fu">## Variance of Sums</span></span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>Variance is different from expectation. It is not always additive.</span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>In general,</span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>\operatorname{Var}(X+Y)</span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>\operatorname{Var}(X)</span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a>\operatorname{Var}(Y)</span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>2\operatorname{Cov}(X,Y).</span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>If $X$ and $Y$ are independent, then $\operatorname{Cov}(X,Y)=0$, so</span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a>\operatorname{Var}(X+Y)</span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>\operatorname{Var}(X)</span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a>\operatorname{Var}(Y).</span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a>For example, if $X$ and $Y$ are independent, then</span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a>\operatorname{Var}(X-3Y)</span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a>\operatorname{Var}(X)</span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a>9\operatorname{Var}(Y).</span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a>The coefficient is squared because variance measures squared deviation.</span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a><span class="fu">## Binomial Expectation and Variance</span></span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a>Let</span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a>X \sim \operatorname{Binomial}(n,p).</span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a>The PMF is</span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a>p_X(k)</span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a>\binom{n}{k}p^k(1-p)^{n-k},</span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>k=0,1,\dots,n.</span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a>Directly computing the expectation from</span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X</span><span class="co">]</span></span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>\sum_{k=0}^{n}</span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a>k\binom{n}{k}p^k(1-p)^{n-k}</span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a>is possible, but there is a much cleaner method.</span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a>Write $X$ as a sum of indicator variables:</span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a>X=X_1+\cdots+X_n,</span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a>where</span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a>X_i =</span>
+<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a>\begin{cases}</span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a>1, &amp; \text{trial } i \text{ succeeds},<span class="sc">\\</span></span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a>0, &amp; \text{trial } i \text{ fails}.</span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a>Each $X_i$ is a Bernoulli random variable with</span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X_i</span><span class="co">]</span>=p.</span>
+<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a>By linearity of expectation,</span>
+<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X</span><span class="co">]</span></span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a>\sum_{i=1}^n E<span class="co">[</span><span class="ot">X_i</span><span class="co">]</span></span>
+<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a>np.</span>
+<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a>For one Bernoulli trial,</span>
+<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a>\operatorname{Var}(X_i)</span>
+<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a>p(1-p).</span>
+<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a>Because the trials are independent, the variances add:</span>
+<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a>\operatorname{Var}(X)</span>
+<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-264"><a href="#cb1-264" aria-hidden="true" tabindex="-1"></a>\sum_{i=1}^n \operatorname{Var}(X_i)</span>
+<span id="cb1-265"><a href="#cb1-265" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a>np(1-p).</span>
+<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a>The indicator-variable viewpoint avoids tedious algebra and reveals the structure of the binomial distribution.</span>
+<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Hat Problem</span></span>
+<span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-273"><a href="#cb1-273" aria-hidden="true" tabindex="-1"></a>Suppose $n$ people check their hats at a party. The attendant randomly permutes the hats before returning them.</span>
+<span id="cb1-274"><a href="#cb1-274" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a>Let $X$ be the number of people who get their own hat back.</span>
+<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-277"><a href="#cb1-277" aria-hidden="true" tabindex="-1"></a><span class="fu">### Expected Number of Matches</span></span>
+<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-279"><a href="#cb1-279" aria-hidden="true" tabindex="-1"></a>Define the indicator variable</span>
+<span id="cb1-280"><a href="#cb1-280" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-282"><a href="#cb1-282" aria-hidden="true" tabindex="-1"></a>X_i =</span>
+<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a>\begin{cases}</span>
+<span id="cb1-284"><a href="#cb1-284" aria-hidden="true" tabindex="-1"></a>1, &amp; \text{person } i \text{ gets their own hat},<span class="sc">\\</span></span>
+<span id="cb1-285"><a href="#cb1-285" aria-hidden="true" tabindex="-1"></a>0, &amp; \text{otherwise}.</span>
+<span id="cb1-286"><a href="#cb1-286" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
+<span id="cb1-287"><a href="#cb1-287" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a>Then</span>
+<span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a>X=X_1+\cdots+X_n.</span>
+<span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a>For any person $i$,</span>
+<span id="cb1-296"><a href="#cb1-296" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a>P(X_i=1)=\frac{1}{n},</span>
+<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a>so</span>
+<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X_i</span><span class="co">]</span>=\frac{1}{n}.</span>
+<span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-307"><a href="#cb1-307" aria-hidden="true" tabindex="-1"></a>By linearity of expectation,</span>
+<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X</span><span class="co">]</span></span>
+<span id="cb1-311"><a href="#cb1-311" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-312"><a href="#cb1-312" aria-hidden="true" tabindex="-1"></a>\sum_{i=1}^n E<span class="co">[</span><span class="ot">X_i</span><span class="co">]</span></span>
+<span id="cb1-313"><a href="#cb1-313" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a>n\cdot \frac{1}{n}</span>
+<span id="cb1-315"><a href="#cb1-315" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a>1.</span>
+<span id="cb1-317"><a href="#cb1-317" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-318"><a href="#cb1-318" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-319"><a href="#cb1-319" aria-hidden="true" tabindex="-1"></a>So no matter how many people attend, the expected number of people who get their own hat back is $1$.</span>
+<span id="cb1-320"><a href="#cb1-320" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-321"><a href="#cb1-321" aria-hidden="true" tabindex="-1"></a><span class="fu">### Variance of the Number of Matches</span></span>
+<span id="cb1-322"><a href="#cb1-322" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-323"><a href="#cb1-323" aria-hidden="true" tabindex="-1"></a>For $n \ge 2$,</span>
+<span id="cb1-324"><a href="#cb1-324" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-325"><a href="#cb1-325" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-326"><a href="#cb1-326" aria-hidden="true" tabindex="-1"></a>\operatorname{Var}(X)</span>
+<span id="cb1-327"><a href="#cb1-327" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-328"><a href="#cb1-328" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X^2</span><span class="co">]</span>-(E<span class="co">[</span><span class="ot">X</span><span class="co">]</span>)^2</span>
+<span id="cb1-329"><a href="#cb1-329" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-330"><a href="#cb1-330" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X^2</span><span class="co">]</span>-1.</span>
+<span id="cb1-331"><a href="#cb1-331" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-332"><a href="#cb1-332" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-333"><a href="#cb1-333" aria-hidden="true" tabindex="-1"></a>Expand $X^2$:</span>
+<span id="cb1-334"><a href="#cb1-334" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-335"><a href="#cb1-335" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-336"><a href="#cb1-336" aria-hidden="true" tabindex="-1"></a>X^2</span>
+<span id="cb1-337"><a href="#cb1-337" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-338"><a href="#cb1-338" aria-hidden="true" tabindex="-1"></a>\left(\sum_{i=1}^n X_i\right)^2</span>
+<span id="cb1-339"><a href="#cb1-339" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-340"><a href="#cb1-340" aria-hidden="true" tabindex="-1"></a>\sum_{i=1}^n X_i^2</span>
+<span id="cb1-341"><a href="#cb1-341" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-342"><a href="#cb1-342" aria-hidden="true" tabindex="-1"></a>\sum_{i\ne j}X_iX_j.</span>
+<span id="cb1-343"><a href="#cb1-343" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-344"><a href="#cb1-344" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-345"><a href="#cb1-345" aria-hidden="true" tabindex="-1"></a>Since $X_i$ is an indicator variable,</span>
+<span id="cb1-346"><a href="#cb1-346" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-347"><a href="#cb1-347" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-348"><a href="#cb1-348" aria-hidden="true" tabindex="-1"></a>X_i^2=X_i.</span>
+<span id="cb1-349"><a href="#cb1-349" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-350"><a href="#cb1-350" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-351"><a href="#cb1-351" aria-hidden="true" tabindex="-1"></a>Therefore</span>
+<span id="cb1-352"><a href="#cb1-352" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-353"><a href="#cb1-353" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-354"><a href="#cb1-354" aria-hidden="true" tabindex="-1"></a>\sum_{i=1}^n E<span class="co">[</span><span class="ot">X_i^2</span><span class="co">]</span></span>
+<span id="cb1-355"><a href="#cb1-355" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-356"><a href="#cb1-356" aria-hidden="true" tabindex="-1"></a>\sum_{i=1}^n E<span class="co">[</span><span class="ot">X_i</span><span class="co">]</span></span>
+<span id="cb1-357"><a href="#cb1-357" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-358"><a href="#cb1-358" aria-hidden="true" tabindex="-1"></a>1.</span>
+<span id="cb1-359"><a href="#cb1-359" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-360"><a href="#cb1-360" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-361"><a href="#cb1-361" aria-hidden="true" tabindex="-1"></a>For the cross terms, $X_iX_j=1$ only if both person $i$ and person $j$ get their own hats. For $i\ne j$,</span>
+<span id="cb1-362"><a href="#cb1-362" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-363"><a href="#cb1-363" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-364"><a href="#cb1-364" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X_iX_j</span><span class="co">]</span></span>
+<span id="cb1-365"><a href="#cb1-365" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-366"><a href="#cb1-366" aria-hidden="true" tabindex="-1"></a>P(X_i=1,X_j=1)</span>
+<span id="cb1-367"><a href="#cb1-367" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-368"><a href="#cb1-368" aria-hidden="true" tabindex="-1"></a>\frac{1}{n}\cdot\frac{1}{n-1}.</span>
+<span id="cb1-369"><a href="#cb1-369" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-370"><a href="#cb1-370" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-371"><a href="#cb1-371" aria-hidden="true" tabindex="-1"></a>There are $n(n-1)$ ordered cross terms, so</span>
+<span id="cb1-372"><a href="#cb1-372" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-373"><a href="#cb1-373" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-374"><a href="#cb1-374" aria-hidden="true" tabindex="-1"></a>\sum_{i\ne j}E<span class="co">[</span><span class="ot">X_iX_j</span><span class="co">]</span></span>
+<span id="cb1-375"><a href="#cb1-375" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-376"><a href="#cb1-376" aria-hidden="true" tabindex="-1"></a>n(n-1)\cdot \frac{1}{n(n-1)}</span>
+<span id="cb1-377"><a href="#cb1-377" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-378"><a href="#cb1-378" aria-hidden="true" tabindex="-1"></a>1.</span>
+<span id="cb1-379"><a href="#cb1-379" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-380"><a href="#cb1-380" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-381"><a href="#cb1-381" aria-hidden="true" tabindex="-1"></a>Thus</span>
+<span id="cb1-382"><a href="#cb1-382" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-383"><a href="#cb1-383" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-384"><a href="#cb1-384" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">X^2</span><span class="co">]</span>=1+1=2,</span>
+<span id="cb1-385"><a href="#cb1-385" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-386"><a href="#cb1-386" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-387"><a href="#cb1-387" aria-hidden="true" tabindex="-1"></a>and</span>
+<span id="cb1-388"><a href="#cb1-388" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-389"><a href="#cb1-389" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-390"><a href="#cb1-390" aria-hidden="true" tabindex="-1"></a>\operatorname{Var}(X)</span>
+<span id="cb1-391"><a href="#cb1-391" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-392"><a href="#cb1-392" aria-hidden="true" tabindex="-1"></a>2-1^2</span>
+<span id="cb1-393"><a href="#cb1-393" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-394"><a href="#cb1-394" aria-hidden="true" tabindex="-1"></a>1.</span>
+<span id="cb1-395"><a href="#cb1-395" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-396"><a href="#cb1-396" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-397"><a href="#cb1-397" aria-hidden="true" tabindex="-1"></a><span class="al">![](discrete-random-variables-3-hat-problem.png)</span></span>
+<span id="cb1-398"><a href="#cb1-398" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-399"><a href="#cb1-399" aria-hidden="true" tabindex="-1"></a>The important lesson is that the indicators are not independent, but linearity of expectation still gives the mean immediately. For variance, we must handle the cross terms.</span>
+<span id="cb1-400"><a href="#cb1-400" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-401"><a href="#cb1-401" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary</span></span>
+<span id="cb1-402"><a href="#cb1-402" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-403"><a href="#cb1-403" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Joint PMFs for multiple random variables can be marginalized by summing out variables.</span>
+<span id="cb1-404"><a href="#cb1-404" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The multiplication rule factors joint probabilities into conditional probabilities.</span>
+<span id="cb1-405"><a href="#cb1-405" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Linearity of expectation does not require independence.</span>
+<span id="cb1-406"><a href="#cb1-406" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Products of expectations usually require independence.</span>
+<span id="cb1-407"><a href="#cb1-407" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Variance of a sum includes covariance terms unless the variables are independent.</span>
+<span id="cb1-408"><a href="#cb1-408" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Indicator variables make binomial and matching problems much easier.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
