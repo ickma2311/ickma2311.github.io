@@ -1,0 +1,3031 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Chao Ma">
+<meta name="dcterms.date" content="2026-05-23">
+<meta name="description" content="Lesson 2 notes on compound classical and quantum systems: Cartesian products, tensor products, marginal and conditional states, CNOT, Bell states, partial measurement, and local unitary operations.">
+
+<title>Qiskit Lesson 2: Multiple Systems – ∇ ickma.dev</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../favicon.svg" rel="icon" type="image/svg+xml">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-PK5N5KWZBF"></script>
+
+<script type="text/javascript">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-PK5N5KWZBF', { 'anonymize_ip': true});
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">∇ ickma.dev</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-deep-learning" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Deep Learning</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-deep-learning">    
+        <li class="dropdown-header">ML HW-SW Codesign</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-01-introduction.html">
+ <span class="dropdown-text">Efficient AI Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-03-pruning-and-sparsity-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 3: Pruning and Sparsity (Part 1)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-04-pruning-and-sparsity-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 4: Pruning and Sparsity (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-05-quantization-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 5: Quantization (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-06-quantization-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 6: Quantization (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-07-neural-architecture-search-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 7: Neural Architecture Search (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-08-neural-architecture-search-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 8: Neural Architecture Search (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-09-knowledge-distillation.html">
+ <span class="dropdown-text">Efficient AI Lecture 9: Knowledge Distillation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-10-mcunet-and-tinyml.html">
+ <span class="dropdown-text">Efficient AI Lecture 10: MCUNet and TinyML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-11-tinyengine.html">
+ <span class="dropdown-text">Efficient AI Lecture 11: TinyEngine</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-12-transformer-and-llm.html">
+ <span class="dropdown-text">Efficient AI Lecture 12: Transformer and LLM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-13-llm-deployment-techniques.html">
+ <span class="dropdown-text">Efficient AI Lecture 13: LLM Deployment Techniques</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-14-llm-post-training.html">
+ <span class="dropdown-text">Efficient AI Lecture 14: LLM Post-Training</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">JAX</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-numpy.html">
+ <span class="dropdown-text">JAX NumPy</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/introducing-flax-nnx.html">
+ <span class="dropdown-text">Introducing Flax NNX</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-ai-stack.html">
+ <span class="dropdown-text">JAX AI Stack</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/scaling-up.html">
+ <span class="dropdown-text">Scaling Up</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">RL</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-8-integrating-learning-and-planning.html">
+ <span class="dropdown-text">David Silver Lecture 8: Integrating Learning and Planning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-7-policy-gradient-methods.html">
+ <span class="dropdown-text">David Silver Lecture 7: Policy Gradient Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-6-value-function-approximation.html">
+ <span class="dropdown-text">David Silver Lecture 6: Value Function Approximation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-5-model-free-control.html">
+ <span class="dropdown-text">David Silver Lecture 5: Model-Free Control</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/cmu-advanced-nlp-reinforcement-learning.html">
+ <span class="dropdown-text">CMU Advanced NLP: Reinforcement Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-4-model-free-prediction.html">
+ <span class="dropdown-text">David Silver Lecture 4: Model-Free Prediction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-3-planning-by-dynamic-programming.html">
+ <span class="dropdown-text">David Silver Lecture 3: Planning by Dynamic Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-2-markov-decision-process.html">
+ <span class="dropdown-text">David Silver Lecture 2: Markov Decision Process</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-1-introduction-to-reinforcement-learning.html">
+ <span class="dropdown-text">David Silver Lecture 1: Introduction to RL</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Papers in Deep Learning</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/generative-adversarial-nets.html">
+ <span class="dropdown-text">Generative Adversarial Nets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/why-tpu-is-fast-for-dot-product.html">
+ <span class="dropdown-text">Why TPU Is Fast for Dot Product</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/transformer-attention-is-all-you-need.html">
+ <span class="dropdown-text">Transformer: Attention Is All You Need</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/attention-origin-transformer.html">
+ <span class="dropdown-text">Attention: The Origin of Transformer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/batch-normalization.html">
+ <span class="dropdown-text">Batch Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/lora.html">
+ <span class="dropdown-text">LoRA: Low-Rank Adaptation</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-learning-book.html">
+ <span class="dropdown-text">Goodfellow Deep Learning Book (Overview)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/xor-deep-learning.html">
+ <span class="dropdown-text">Chapter 6.1: XOR Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/likelihood-loss-functions.html">
+ <span class="dropdown-text">Chapter 6.2: Loss Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/activation-functions.html">
+ <span class="dropdown-text">Chapter 6.3: Activation Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/architecture-design.html">
+ <span class="dropdown-text">Chapter 6.4: Architecture Design</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/backpropagation.html">
+ <span class="dropdown-text">Chapter 6.5: Back-Propagation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/hessian-prerequisites.html">
+ <span class="dropdown-text">Chapter 7 Prerequisites: Hessian Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l2-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.1: L2 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l1-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.2: L1 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/constrained-optimization-regularization.html">
+ <span class="dropdown-text">Chapter 7.2: Constrained Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/regularization-underconstrained.html">
+ <span class="dropdown-text">Chapter 7.3: Under-Constrained Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dataset-augmentation.html">
+ <span class="dropdown-text">Chapter 7.4: Dataset Augmentation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/noise-robustness.html">
+ <span class="dropdown-text">Chapter 7.5: Noise Robustness</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/semi-supervised-learning.html">
+ <span class="dropdown-text">Chapter 7.6: Semi-Supervised Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/multi-task-learning.html">
+ <span class="dropdown-text">Chapter 7.7: Multi-Task Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/early-stopping.html">
+ <span class="dropdown-text">Chapter 7.8: Early Stopping</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-tying-sharing.html">
+ <span class="dropdown-text">Chapter 7.9: Parameter Tying &amp; Sharing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-sparsity.html">
+ <span class="dropdown-text">Chapter 7.10: Sparse Representations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/bagging-ensemble.html">
+ <span class="dropdown-text">Chapter 7.11: Bagging &amp; Ensemble Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dropout.html">
+ <span class="dropdown-text">Chapter 7.12: Dropout</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adversarial-training.html">
+ <span class="dropdown-text">Chapter 7.13: Adversarial Training</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/tangent-prop-manifold.html">
+ <span class="dropdown-text">Chapter 7.14: Tangent Prop &amp; Manifolds</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/learning-vs-optimization.html">
+ <span class="dropdown-text">Chapter 8.1: Learning vs Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-challenges.html">
+ <span class="dropdown-text">Chapter 8.2: Optimization Challenges</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/basic-optimization-algorithms.html">
+ <span class="dropdown-text">Chapter 8.3: Basic Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-initialization.html">
+ <span class="dropdown-text">Chapter 8.4: Parameter Initialization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adaptive-learning-rates.html">
+ <span class="dropdown-text">Chapter 8.5: Adaptive Learning Rates</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/second-order-methods.html">
+ <span class="dropdown-text">Chapter 8.6: Second-Order Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-strategies.html">
+ <span class="dropdown-text">Chapter 8.7: Optimization Strategies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolution-computation.html">
+ <span class="dropdown-text">Chapter 9.1: Convolution Computation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-motivation.html">
+ <span class="dropdown-text">Chapter 9.2: CNN Motivation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-pooling.html">
+ <span class="dropdown-text">Chapter 9.3: Pooling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-infinitely-strong-prior.html">
+ <span class="dropdown-text">Chapter 9.4: Infinitely Strong Prior</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolutional-functions.html">
+ <span class="dropdown-text">Chapter 9.5: Convolutional Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-structured-outputs.html">
+ <span class="dropdown-text">Chapter 9.6: Structured Outputs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-data-types.html">
+ <span class="dropdown-text">Chapter 9.7: Data Types</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-efficient-convolution.html">
+ <span class="dropdown-text">Chapter 9.8: Efficient Convolution</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-unsupervised-learning.html">
+ <span class="dropdown-text">Chapter 9.9: Unsupervised Feature Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-neuroscience.html">
+ <span class="dropdown-text">Chapter 9.10: Neuroscientific Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-unfold-computation-graph.html">
+ <span class="dropdown-text">Chapter 10.1: Unfold Computation Graph</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recurrent-neural-networks.html">
+ <span class="dropdown-text">Chapter 10.2: Recurrent Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-bidirectional.html">
+ <span class="dropdown-text">Chapter 10.3: Bidirectional RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-encoder-decoder.html">
+ <span class="dropdown-text">Chapter 10.4: Encoder-Decoder Seq2Seq</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-deep.html">
+ <span class="dropdown-text">Chapter 10.5: Deep RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recursive.html">
+ <span class="dropdown-text">Chapter 10.6: Recursive Neural Network</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-long-term-dependency.html">
+ <span class="dropdown-text">Chapter 10.7: Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-echo-state.html">
+ <span class="dropdown-text">Chapter 10.8: Echo State Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-leaky-unit.html">
+ <span class="dropdown-text">Chapter 10.9: Leaky Units</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-lstm-gru.html">
+ <span class="dropdown-text">Chapter 10.10: LSTM and GRU</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-optimize-long-term.html">
+ <span class="dropdown-text">Chapter 10.11: Optimizing Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-explicit-memory.html">
+ <span class="dropdown-text">Chapter 10.12: Explicit Memory</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/practical-methodology.html">
+ <span class="dropdown-text">Chapter 11: Practical Methodology</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/large-scale-deep-learning.html">
+ <span class="dropdown-text">Chapter 12.1: Large-Scale Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/image-preprocessing-normalization.html">
+ <span class="dropdown-text">Chapter 12.2: Image Preprocessing and Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/automatic-speech-recognition.html">
+ <span class="dropdown-text">Chapter 12.3: Automatic Speech Recognition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/nlp-applications.html">
+ <span class="dropdown-text">Chapter 12.4: NLP Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/other-applications.html">
+ <span class="dropdown-text">Chapter 12.5: Other Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/linear-factor-models.html">
+ <span class="dropdown-text">Chapter 13: Linear Factor Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/autoencoders.html">
+ <span class="dropdown-text">Chapter 14: Autoencoders</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-learning.html">
+ <span class="dropdown-text">Chapter 15: Representation Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/structured-probabilistic-models.html">
+ <span class="dropdown-text">Chapter 16: Structured Probabilistic Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/monte-carlo-methods.html">
+ <span class="dropdown-text">Chapter 17: Monte Carlo Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/confronting-partition-function.html">
+ <span class="dropdown-text">Chapter 18: Confronting the Partition Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/approximate-inference.html">
+ <span class="dropdown-text">Chapter 19: Approximate Inference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-generative-models.html">
+ <span class="dropdown-text">Chapter 20: Deep Generative Models</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-math" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Math</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-math">    
+        <li>
+    <a class="dropdown-item" href="../../Math/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Quantum Computing</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/QuantumComputing/index.html">
+ <span class="dropdown-text">Qiskit Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/QuantumComputing/qiskit-lesson-1-classical-and-quantum-information.html">
+ <span class="dropdown-text">Qiskit Lesson 1: Classical and Quantum Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/QuantumComputing/qiskit-lesson-2-multiple-systems.html">
+ <span class="dropdown-text">Qiskit Lesson 2: Multiple Systems</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Probability</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/index.html">
+ <span class="dropdown-text">MIT 6.041 Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-3.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-2.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-1.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/counting.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Counting</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/independence.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Independence</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/conditioning-bayes-rule.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Conditioning and Bayes’ Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/probability-models-axioms.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Probability Models and Axioms</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Information Theory</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/index.html">
+ <span class="dropdown-text">Oxford Math Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-1-defining-entropy-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 1: Defining Entropy and Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-2-basic-properties-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 2: Basic Properties of Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-3-introducing-codes.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 3: Introducing Codes</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Calculus</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/six-functions-rules-theorems.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Six Functions, Six Rules, and Six Theorems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-growth.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Growth</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-motion.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Motion</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/power-series-eulers-great-formula.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Power Series and Euler’s Great Formula</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/linear-approximation-newtons-method.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Linear Approximation and Newton’s Method</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/growth-rates-log-graphs.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Growth Rates and Log Graphs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivatives-ln-arcsin.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivatives of ln y and arcsin(y)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/limits-continuous-functions.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Limits and Continuous Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivative-sin-cos.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivative of sin x and cos x</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/product-quotient-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Product Rule and Quotient Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/chain-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Chains and the Chain Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-integral.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture Integral</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/exponential-function.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: The Exponential Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/max-min-second-derivative.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Max, Min, and Second Derivative</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-derivatives.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture on Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/highlights-of-calculus.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Highlights</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Reflections &amp; Synthesis</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/mit1806-invertibility-connections.html">
+ <span class="dropdown-text">Invertibility Connections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/taylor-euler-fourier.html">
+ <span class="dropdown-text">Taylor, Euler, and Fourier</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.06SC Linear Algebra</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture1-geometry.html">
+ <span class="dropdown-text">Lecture 1: Geometry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture2-elimination.html">
+ <span class="dropdown-text">Lecture 2: Elimination</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture3-multiplication.html">
+ <span class="dropdown-text">Lecture 3: Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture4-lu-decomposition.html">
+ <span class="dropdown-text">Lecture 4: LU Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-permutations.html">
+ <span class="dropdown-text">Lecture 5.1: Permutations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-2-transpose.html">
+ <span class="dropdown-text">Lecture 5.2: Transpose</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-3-spaces.html">
+ <span class="dropdown-text">Lecture 5.3: Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture6-column-null-space.html">
+ <span class="dropdown-text">Lecture 6: Column &amp; Null Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture7-solving-ax-0.html">
+ <span class="dropdown-text">Lecture 7: Solving Ax=0</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture8-solving-ax-b.html">
+ <span class="dropdown-text">Lecture 8: Solving Ax=b</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture9-independence-basis-dimension.html">
+ <span class="dropdown-text">Lecture 9: Independence, Basis, Dimension</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture10-four-subspaces.html">
+ <span class="dropdown-text">Lecture 10: Four Fundamental Subspaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture11-matrix-spaces.html">
+ <span class="dropdown-text">Lecture 11: Matrix Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture12-graphs-networks.html">
+ <span class="dropdown-text">Lecture 12: Graphs and Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture13-quiz-review.html">
+ <span class="dropdown-text">Lecture 13: Quiz 1 Review</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture14-orthogonality.html">
+ <span class="dropdown-text">Lecture 14: Orthogonality</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture15-projections.html">
+ <span class="dropdown-text">Lecture 15: Projections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture16-least-squares.html">
+ <span class="dropdown-text">Lecture 16: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture17-gram-schmidt.html">
+ <span class="dropdown-text">Lecture 17: Gram-Schmidt</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture18-determinants.html">
+ <span class="dropdown-text">Lecture 18: Determinants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture19-determinant-formulas.html">
+ <span class="dropdown-text">Lecture 19: Determinant Formulas</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture20-cramers-rule.html">
+ <span class="dropdown-text">Lecture 20: Inverse &amp; Volume</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture21-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 21: Eigenvalues &amp; Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture22-diagonalization-powers.html">
+ <span class="dropdown-text">Lecture 22: Diagonalization &amp; Powers</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture23-differential-equations.html">
+ <span class="dropdown-text">Lecture 23: Differential Equations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture24-markov-fourier.html">
+ <span class="dropdown-text">Lecture 24: Markov &amp; Fourier</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture25-symmetric-positive-definite.html">
+ <span class="dropdown-text">Lecture 25: Symmetric &amp; Positive Definite</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture26-complex-matrices-fft.html">
+ <span class="dropdown-text">Lecture 26: Complex Matrices &amp; FFT</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture27-positive-definite-minima.html">
+ <span class="dropdown-text">Lecture 27: Positive Definite &amp; Minima</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture28-similar-matrices-jordan.html">
+ <span class="dropdown-text">Lecture 28: Similar Matrices &amp; Jordan Form</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture29-svd.html">
+ <span class="dropdown-text">Lecture 29: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture30-linear-transformations.html">
+ <span class="dropdown-text">Lecture 30: Linear Transformations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture31-change-of-basis.html">
+ <span class="dropdown-text">Lecture 31: Change of Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture33-left-right-inverse.html">
+ <span class="dropdown-text">Lecture 33: Left &amp; Right Inverse</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.065: Linear Algebra Applications</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture1-column-space.html">
+ <span class="dropdown-text">Lecture 1: Column Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture2-multiplying-factoring.html">
+ <span class="dropdown-text">Lecture 2: Multiplying and Factoring Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture3-orthonormal-columns.html">
+ <span class="dropdown-text">Lecture 3: Orthonormal Columns</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture4-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 4: Eigenvalues and Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture5-positive-definite.html">
+ <span class="dropdown-text">Lecture 5: Positive Definite Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture6-svd.html">
+ <span class="dropdown-text">Lecture 6: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture7-eckart-young.html">
+ <span class="dropdown-text">Lecture 7: Eckart-Young Theorem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture8-norms.html">
+ <span class="dropdown-text">Lecture 8: Norms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture9-least-squares.html">
+ <span class="dropdown-text">Lecture 9: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture10-axb-difficulties.html">
+ <span class="dropdown-text">Lecture 10: Survey of Ax=b Difficulties</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/lecture-11-minimize-norm-subject-to-constraint.html">
+ <span class="dropdown-text">Lecture 11: Minimize Norm subject to Constraint</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture12-eigenvalue-algorithms.html">
+ <span class="dropdown-text">Lecture 12: Computing Eigenvalues</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture13-randomized-matrix-multiplication.html">
+ <span class="dropdown-text">Lecture 13: Randomized Matrix Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture14-low-rank-changes-inverse.html">
+ <span class="dropdown-text">Lecture 14: Low Rank Changes</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture15-matrix-derivatives.html">
+ <span class="dropdown-text">Lecture 15: Matrix Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture16-derivative-inverse-singular-values.html">
+ <span class="dropdown-text">Lecture 16: Derivative of Inverse and Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture17-rapidly-decreasing-singular-values.html">
+ <span class="dropdown-text">Lecture 17: Rapidly Decreasing Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture18-counting-parameters-svd-lu-qr-saddle-points.html">
+ <span class="dropdown-text">Lecture 18: Counting Parameters in SVD, LU, QR, and Saddle Points</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture19-saddle-point-maxmin-principle.html">
+ <span class="dropdown-text">Lecture 19: Saddle Point and the Max–Min Principle</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture20-probability-definitions-inequalities.html">
+ <span class="dropdown-text">Lecture 20: Probability Definitions and Inequalities</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture21-minimizing-function.html">
+ <span class="dropdown-text">Lecture 21: Minimizing a Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture22-gradient-descent.html">
+ <span class="dropdown-text">Lecture 22: Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture23-accelerating-gradient-descent-momentum.html">
+ <span class="dropdown-text">Lecture 23: Accelerating Gradient Descent (Momentum)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture24-linear-programming-two-person-games.html">
+ <span class="dropdown-text">Lecture 24: Linear Programming and Two-Person Games</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture25-stochastic-gradient-descent.html">
+ <span class="dropdown-text">Lecture 25: Stochastic Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture26-structure-of-neural-nets.html">
+ <span class="dropdown-text">Lecture 26: Structure of Neural Nets for Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture27-backpropagation-partial-gradients.html">
+ <span class="dropdown-text">Lecture 27: Back Propagation and Partial Gradients</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture30-completing-rank1-circulants.html">
+ <span class="dropdown-text">Lecture 30: Completing a Rank-1 Matrix, Circulants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture31-fourier-matrix.html">
+ <span class="dropdown-text">Lecture 31: Eigenvectors of Circulant Matrices, Fourier Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture32-convolution-rule.html">
+ <span class="dropdown-text">Lecture 32: The Convolution Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture34-distance-matrices-procrustes.html">
+ <span class="dropdown-text">Lecture 34: Distance Matrices, Procrustes Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture35-find-clusters-graph.html">
+ <span class="dropdown-text">Lecture 35: Find Clusters in Graph</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Stanford EE 364A: Convex Optimization</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/lectures.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture1-intro.html">
+ <span class="dropdown-text">Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture2-math-foundations.html">
+ <span class="dropdown-text">Lecture 2: Convex Sets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture3-convex-functions.html">
+ <span class="dropdown-text">Lecture 3: Convex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part1-operations-preserving-convexity.html">
+ <span class="dropdown-text">Lecture 4.1: Operations Preserving Convexity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part2-conjugate-quasiconvex.html">
+ <span class="dropdown-text">Lecture 4.2: Conjugate &amp; Quasiconvex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part1-log-concave-convex.html">
+ <span class="dropdown-text">Lecture 5.1: Log-Concave &amp; Log-Convex</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part2-monotonicity.html">
+ <span class="dropdown-text">Lecture 5.2: Monotonicity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture6-optimization-problems.html">
+ <span class="dropdown-text">Chapter 4.1: Optimization Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture7-convex-optimization.html">
+ <span class="dropdown-text">Chapter 4.2: Convex Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture8-linear-optimization.html">
+ <span class="dropdown-text">Chapter 4.3: Linear Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture9-quadratic-optimization.html">
+ <span class="dropdown-text">Chapter 4.4: Quadratic Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-5-geometric-programming.html">
+ <span class="dropdown-text">Chapter 4.5: Geometric Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-6-generalized-inequality-constraints.html">
+ <span class="dropdown-text">Chapter 4.6: Generalized Inequality Constraints</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-7-vector-optimization.html">
+ <span class="dropdown-text">Chapter 4.7: Vector Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter5-1-lagrange-dual-function.html">
+ <span class="dropdown-text">Chapter 5.1: The Lagrange Dual Function</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-theory-to-repro" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Theory-to-Repro</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-theory-to-repro">    
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/linear-regression-three-ways.html">
+ <span class="dropdown-text">Linear Regression via Three Solvers</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/k_means_clustering.html">
+ <span class="dropdown-text">K-Means Clustering</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/logistic_regression.html">
+ <span class="dropdown-text">Logistic Regression</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/axis.html">
+ <span class="dropdown-text">Axis Operations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Algorithm/dp_regex.html">
+ <span class="dropdown-text">DP Regex</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/ickma2311/ickma2311.github.io/discussions"> 
+<span class="menu-text">Feedback</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#classical-multi-system-states" id="toc-classical-multi-system-states" class="nav-link active" data-scroll-target="#classical-multi-system-states">Classical Multi-System States</a>
+  <ul class="collapse">
+  <li><a href="#classical-compound-systems" id="toc-classical-compound-systems" class="nav-link" data-scroll-target="#classical-compound-systems">Classical Compound Systems</a></li>
+  <li><a href="#probabilistic-states-of-multiple-systems" id="toc-probabilistic-states-of-multiple-systems" class="nav-link" data-scroll-target="#probabilistic-states-of-multiple-systems">Probabilistic States of Multiple Systems</a></li>
+  <li><a href="#independence" id="toc-independence" class="nav-link" data-scroll-target="#independence">Independence</a></li>
+  <li><a href="#tensor-products-of-vectors" id="toc-tensor-products-of-vectors" class="nav-link" data-scroll-target="#tensor-products-of-vectors">Tensor Products of Vectors</a></li>
+  <li><a href="#measuring-probabilistic-states" id="toc-measuring-probabilistic-states" class="nav-link" data-scroll-target="#measuring-probabilistic-states">Measuring Probabilistic States</a></li>
+  <li><a href="#operations-on-probabilistic-states" id="toc-operations-on-probabilistic-states" class="nav-link" data-scroll-target="#operations-on-probabilistic-states">Operations on Probabilistic States</a></li>
+  <li><a href="#tensor-products-of-matrices" id="toc-tensor-products-of-matrices" class="nav-link" data-scroll-target="#tensor-products-of-matrices">Tensor Products of Matrices</a></li>
+  </ul></li>
+  <li><a href="#quantum-state-multi-systems" id="toc-quantum-state-multi-systems" class="nav-link" data-scroll-target="#quantum-state-multi-systems">Quantum State Multi-Systems</a>
+  <ul class="collapse">
+  <li><a href="#quantum-states-of-multiple-systems" id="toc-quantum-states-of-multiple-systems" class="nav-link" data-scroll-target="#quantum-states-of-multiple-systems">Quantum States of Multiple Systems</a></li>
+  <li><a href="#product-states-and-entanglement" id="toc-product-states-and-entanglement" class="nav-link" data-scroll-target="#product-states-and-entanglement">Product States and Entanglement</a></li>
+  <li><a href="#bell-states" id="toc-bell-states" class="nav-link" data-scroll-target="#bell-states">Bell States</a></li>
+  <li><a href="#ghz-and-w-states" id="toc-ghz-and-w-states" class="nav-link" data-scroll-target="#ghz-and-w-states">GHZ and W States</a></li>
+  <li><a href="#measuring-quantum-compound-systems" id="toc-measuring-quantum-compound-systems" class="nav-link" data-scroll-target="#measuring-quantum-compound-systems">Measuring Quantum Compound Systems</a></li>
+  <li><a href="#unitary-operations-on-multiple-systems" id="toc-unitary-operations-on-multiple-systems" class="nav-link" data-scroll-target="#unitary-operations-on-multiple-systems">Unitary Operations on Multiple Systems</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Qiskit Lesson 2: Multiple Systems</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">Quantum Computing</div>
+    <div class="quarto-category">Qiskit</div>
+    <div class="quarto-category">Quantum Information</div>
+    <div class="quarto-category">Tensor Products</div>
+    <div class="quarto-category">Entanglement</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Lesson 2 notes on compound classical and quantum systems: Cartesian products, tensor products, marginal and conditional states, CNOT, Bell states, partial measurement, and local unitary operations.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Chao Ma </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">May 23, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<iframe width="100%" height="500" src="https://www.youtube.com/embed/DfZZS8Spe7U?list=PLOFEBzvs-VvqKKMXX4vbi4EB1uaErFMSO&amp;index=4" title="Qiskit Lesson 2" frameborder="0" allowfullscreen="">
+</iframe>
+<p>Lesson 1 described a single system.</p>
+<p>Lesson 2 asks what changes when we combine systems. The main answer is that state spaces multiply: classical states use Cartesian products, while vector representations use tensor products.</p>
+<p>That same idea appears in several forms:</p>
+<ul>
+<li>classical multi-system states use Cartesian products and probability vectors</li>
+<li>quantum state multi-systems use tensor products and complex amplitudes</li>
+</ul>
+<section id="classical-multi-system-states" class="level2">
+<h2 class="anchored" data-anchor-id="classical-multi-system-states">Classical Multi-System States</h2>
+<section id="classical-compound-systems" class="level3">
+<h3 class="anchored" data-anchor-id="classical-compound-systems">Classical Compound Systems</h3>
+<p>Suppose <span class="math inline">\(X\)</span> has classical state set <span class="math inline">\(\Sigma\)</span> and <span class="math inline">\(Y\)</span> has classical state set <span class="math inline">\(\Gamma\)</span>.</p>
+<p>The compound system <span class="math inline">\((X,Y)\)</span> has classical state set:</p>
+<p><span class="math display">\[
+\Sigma \times \Gamma
+=
+\{(a,b): a\in\Sigma,\ b\in\Gamma\}.
+\]</span></p>
+<p>For example, if:</p>
+<p><span class="math display">\[
+\Sigma=\{0,1\},
+\qquad
+\Gamma=\{\clubsuit,\diamondsuit,\heartsuit,\spadesuit\},
+\]</span></p>
+<p>then:</p>
+<p><span class="math display">\[
+\Sigma\times\Gamma
+=
+\{
+(0,\clubsuit),(0,\diamondsuit),(0,\heartsuit),(0,\spadesuit),
+(1,\clubsuit),(1,\diamondsuit),(1,\heartsuit),(1,\spadesuit)
+\}.
+\]</span></p>
+<p>For <span class="math inline">\(n\)</span> systems <span class="math inline">\(X_1,\dots,X_n\)</span> with classical state sets <span class="math inline">\(\Sigma_1,\dots,\Sigma_n\)</span>, the compound state set is:</p>
+<p><span class="math display">\[
+\Sigma_1\times\cdots\times\Sigma_n
+=
+\{(a_1,\dots,a_n): a_1\in\Sigma_1,\dots,a_n\in\Sigma_n\}.
+\]</span></p>
+<p>If <span class="math inline">\(X_1,X_2,X_3\)</span> are bits, then:</p>
+<p><span class="math display">\[
+\{0,1\}^3
+=
+\{
+000,001,010,011,100,101,110,111
+\}.
+\]</span></p>
+<p>The convention is lexicographic order, with significance decreasing from left to right.</p>
+<p>For ten bits:</p>
+<p><span class="math display">\[
+\Sigma_1=\cdots=\Sigma_{10}=\{0,1\},
+\qquad
+\Sigma_1\times\cdots\times\Sigma_{10}=\{0,1\}^{10}.
+\]</span></p>
+<p>The ordered states begin:</p>
+<p><span class="math display">\[
+0000000000,\ 0000000001,\ 0000000010,\ 0000000011,\ \dots,\ 1111111111.
+\]</span></p>
+</section>
+<section id="probabilistic-states-of-multiple-systems" class="level3">
+<h3 class="anchored" data-anchor-id="probabilistic-states-of-multiple-systems">Probabilistic States of Multiple Systems</h3>
+<p>A probabilistic state of a compound system assigns probabilities to the Cartesian product of the individual state sets.</p>
+<p>For two bits <span class="math inline">\((X,Y)\)</span>, one possible state is:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\Pr((X,Y)=(0,0)) &amp;= \frac{1}{2},\\
+\Pr((X,Y)=(0,1)) &amp;= 0,\\
+\Pr((X,Y)=(1,0)) &amp;= 0,\\
+\Pr((X,Y)=(1,1)) &amp;= \frac{1}{2}.
+\end{aligned}
+\]</span></p>
+<p>Using the lexicographic basis <span class="math inline">\(00,01,10,11\)</span>, the probability vector is:</p>
+<p><span class="math display">\[
+\begin{pmatrix}
+1/2\\
+0\\
+0\\
+1/2
+\end{pmatrix}.
+\]</span></p>
+<p>Equivalently:</p>
+<p><span class="math display">\[
+|\pi\rangle
+=
+\frac{1}{2}|00\rangle+\frac{1}{2}|11\rangle.
+\]</span></p>
+<p>The basis vectors are:</p>
+<p><span class="math display">\[
+|00\rangle=
+\begin{pmatrix}1\\0\\0\\0\end{pmatrix},
+\quad
+|01\rangle=
+\begin{pmatrix}0\\1\\0\\0\end{pmatrix},
+\quad
+|10\rangle=
+\begin{pmatrix}0\\0\\1\\0\end{pmatrix},
+\quad
+|11\rangle=
+\begin{pmatrix}0\\0\\0\\1\end{pmatrix}.
+\]</span></p>
+<p>In general:</p>
+<p><span class="math display">\[
+|\pi\rangle
+=
+\sum_{(a,b)\in\Sigma\times\Gamma} p_{ab}|ab\rangle.
+\]</span></p>
+</section>
+<section id="independence" class="level3">
+<h3 class="anchored" data-anchor-id="independence">Independence</h3>
+<p>For a probabilistic state of <span class="math inline">\((X,Y)\)</span>, the systems <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are independent if:</p>
+<p><span class="math display">\[
+\Pr((X,Y)=(a,b))=\Pr(X=a)\Pr(Y=b)
+\]</span></p>
+<p>for every <span class="math inline">\(a\in\Sigma\)</span> and <span class="math inline">\(b\in\Gamma\)</span>.</p>
+<p>In vector notation, this means there are probability vectors:</p>
+<p><span class="math display">\[
+|\phi\rangle=\sum_{a\in\Sigma}q_a|a\rangle,
+\qquad
+|\psi\rangle=\sum_{b\in\Gamma}r_b|b\rangle
+\]</span></p>
+<p>such that:</p>
+<p><span class="math display">\[
+p_{ab}=q_ar_b.
+\]</span></p>
+<p>This is exactly what the tensor product encodes.</p>
+</section>
+<section id="tensor-products-of-vectors" class="level3">
+<h3 class="anchored" data-anchor-id="tensor-products-of-vectors">Tensor Products of Vectors</h3>
+<p>Let:</p>
+<p><span class="math display">\[
+|\phi\rangle=\sum_{a\in\Sigma}\alpha_a|a\rangle,
+\qquad
+|\psi\rangle=\sum_{b\in\Gamma}\beta_b|b\rangle.
+\]</span></p>
+<p>Their tensor product is:</p>
+<p><span class="math display">\[
+|\phi\rangle\otimes|\psi\rangle
+=
+\sum_{(a,b)\in\Sigma\times\Gamma}\alpha_a\beta_b|ab\rangle.
+\]</span></p>
+<p>Equivalently:</p>
+<p><span class="math display">\[
+\langle ab|\left(|\phi\rangle\otimes|\psi\rangle\right)
+=
+\langle a|\phi\rangle\langle b|\psi\rangle.
+\]</span></p>
+<p>For example:</p>
+<p><span class="math display">\[
+|\phi\rangle=\frac{1}{4}|0\rangle+\frac{3}{4}|1\rangle,
+\qquad
+|\psi\rangle=\frac{2}{3}|0\rangle+\frac{1}{3}|1\rangle.
+\]</span></p>
+<p>Then:</p>
+<p><span class="math display">\[
+\begin{aligned}
+|\phi\rangle\otimes|\psi\rangle
+&amp;=
+\frac{1}{4}\frac{2}{3}|00\rangle
++
+\frac{1}{4}\frac{1}{3}|01\rangle
++
+\frac{3}{4}\frac{2}{3}|10\rangle
++
+\frac{3}{4}\frac{1}{3}|11\rangle\\
+&amp;=
+\frac{1}{6}|00\rangle
++
+\frac{1}{12}|01\rangle
++
+\frac{1}{2}|10\rangle
++
+\frac{1}{4}|11\rangle.
+\end{aligned}
+\]</span></p>
+<p>For column vectors:</p>
+<p><span class="math display">\[
+\begin{pmatrix}
+\alpha_1\\
+\vdots\\
+\alpha_m
+\end{pmatrix}
+\otimes
+\begin{pmatrix}
+\beta_1\\
+\vdots\\
+\beta_k
+\end{pmatrix}
+=
+\begin{pmatrix}
+\alpha_1\beta_1\\
+\vdots\\
+\alpha_1\beta_k\\
+\alpha_2\beta_1\\
+\vdots\\
+\alpha_m\beta_k
+\end{pmatrix}.
+\]</span></p>
+<p>The tensor product is bilinear:</p>
+<p><span class="math display">\[
+(|\phi_1\rangle+|\phi_2\rangle)\otimes|\psi\rangle
+=
+|\phi_1\rangle\otimes|\psi\rangle
++
+|\phi_2\rangle\otimes|\psi\rangle,
+\]</span></p>
+<p>and:</p>
+<p><span class="math display">\[
+(\alpha|\phi\rangle)\otimes|\psi\rangle
+=
+\alpha(|\phi\rangle\otimes|\psi\rangle).
+\]</span></p>
+<p>For <span class="math inline">\(n\)</span> systems:</p>
+<p><span class="math display">\[
+|\psi\rangle
+=
+|\phi_1\rangle\otimes\cdots\otimes|\phi_n\rangle
+\]</span></p>
+<p>is defined by:</p>
+<p><span class="math display">\[
+\langle a_1\cdots a_n|\psi\rangle
+=
+\langle a_1|\phi_1\rangle\cdots\langle a_n|\phi_n\rangle.
+\]</span></p>
+</section>
+<section id="measuring-probabilistic-states" class="level3">
+<h3 class="anchored" data-anchor-id="measuring-probabilistic-states">Measuring Probabilistic States</h3>
+<p>If two bits are in the probabilistic state:</p>
+<p><span class="math display">\[
+\frac{1}{2}|00\rangle+\frac{1}{2}|11\rangle,
+\]</span></p>
+<p>then measuring both bits gives outcome <span class="math inline">\(00\)</span> with probability <span class="math inline">\(1/2\)</span> and outcome <span class="math inline">\(11\)</span> with probability <span class="math inline">\(1/2\)</span>.</p>
+<p>If only system <span class="math inline">\(X\)</span> is measured, the probability of observing <span class="math inline">\(a\in\Sigma\)</span> is the marginal probability:</p>
+<p><span class="math display">\[
+\Pr(X=a)
+=
+\sum_{b\in\Gamma}\Pr((X,Y)=(a,b)).
+\]</span></p>
+<p>The conditional probability is:</p>
+<p><span class="math display">\[
+\Pr(Y=b\mid X=a)
+=
+\frac{\Pr((X,Y)=(a,b))}{\Pr(X=a)}.
+\]</span></p>
+<p>For:</p>
+<p><span class="math display">\[
+\sum_{(a,b)\in\Sigma\times\Gamma}p_{ab}|ab\rangle
+=
+\sum_{a\in\Sigma}|a\rangle\otimes
+\left(\sum_{b\in\Gamma}p_{ab}|b\rangle\right),
+\]</span></p>
+<p>the marginal probability is:</p>
+<p><span class="math display">\[
+\Pr(X=a)=\sum_{b\in\Gamma}p_{ab},
+\]</span></p>
+<p>and the conditional state of <span class="math inline">\(Y\)</span> after observing <span class="math inline">\(X=a\)</span> is:</p>
+<p><span class="math display">\[
+\frac{\sum_{b\in\Gamma}p_{ab}|b\rangle}
+{\sum_{c\in\Gamma}p_{ac}}.
+\]</span></p>
+<p>For example:</p>
+<p><span class="math display">\[
+\frac{1}{12}|00\rangle
++
+\frac{1}{4}|01\rangle
++
+\frac{1}{3}|10\rangle
++
+\frac{1}{3}|11\rangle
+\]</span></p>
+<p>can be grouped by the first system as:</p>
+<p><span class="math display">\[
+|0\rangle\otimes
+\left(\frac{1}{12}|0\rangle+\frac{1}{4}|1\rangle\right)
++
+|1\rangle\otimes
+\left(\frac{1}{3}|0\rangle+\frac{1}{3}|1\rangle\right).
+\]</span></p>
+</section>
+<section id="operations-on-probabilistic-states" class="level3">
+<h3 class="anchored" data-anchor-id="operations-on-probabilistic-states">Operations on Probabilistic States</h3>
+<p>The controlled-NOT operation, or CNOT, acts on a two-bit system <span class="math inline">\((X,Y)\)</span>.</p>
+<ul>
+<li><span class="math inline">\(X\)</span> is the control bit.</li>
+<li><span class="math inline">\(Y\)</span> is the target bit.</li>
+<li>if <span class="math inline">\(X=1\)</span>, flip <span class="math inline">\(Y\)</span></li>
+<li>if <span class="math inline">\(X=0\)</span>, leave <span class="math inline">\(Y\)</span> unchanged</li>
+</ul>
+<p>Its action on the standard basis is:</p>
+<p><span class="math display">\[
+\begin{aligned}
+|00\rangle &amp;\mapsto |00\rangle,\\
+|01\rangle &amp;\mapsto |01\rangle,\\
+|10\rangle &amp;\mapsto |11\rangle,\\
+|11\rangle &amp;\mapsto |10\rangle.
+\end{aligned}
+\]</span></p>
+<p>So the matrix is:</p>
+<p><span class="math display">\[
+\begin{pmatrix}
+1 &amp; 0 &amp; 0 &amp; 0\\
+0 &amp; 1 &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; 1\\
+0 &amp; 0 &amp; 1 &amp; 0
+\end{pmatrix}.
+\]</span></p>
+<p>Another example is a randomized operation:</p>
+<ul>
+<li>with probability <span class="math inline">\(1/2\)</span>, set <span class="math inline">\(Y=X\)</span></li>
+<li>with probability <span class="math inline">\(1/2\)</span>, set <span class="math inline">\(X=Y\)</span></li>
+</ul>
+<p>The resulting stochastic matrix is an average of two deterministic matrices:</p>
+<p><span class="math display">\[
+\begin{pmatrix}
+1 &amp; 1/2 &amp; 1/2 &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; 0\\
+0 &amp; 1/2 &amp; 1/2 &amp; 1
+\end{pmatrix}
+=
+\frac{1}{2}
+\begin{pmatrix}
+1 &amp; 1 &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; 1 &amp; 1
+\end{pmatrix}
++
+\frac{1}{2}
+\begin{pmatrix}
+1 &amp; 0 &amp; 1 &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; 0\\
+0 &amp; 1 &amp; 0 &amp; 1
+\end{pmatrix}.
+\]</span></p>
+</section>
+<section id="tensor-products-of-matrices" class="level3">
+<h3 class="anchored" data-anchor-id="tensor-products-of-matrices">Tensor Products of Matrices</h3>
+<p>Let:</p>
+<p><span class="math display">\[
+M=\sum_{a,b\in\Sigma}\alpha_{ab}|a\rangle\langle b|,
+\qquad
+N=\sum_{c,d\in\Gamma}\beta_{cd}|c\rangle\langle d|.
+\]</span></p>
+<p>Their tensor product is:</p>
+<p><span class="math display">\[
+M\otimes N
+=
+\sum_{a,b\in\Sigma}
+\sum_{c,d\in\Gamma}
+\alpha_{ab}\beta_{cd}|ac\rangle\langle bd|.
+\]</span></p>
+<p>Equivalently:</p>
+<p><span class="math display">\[
+\langle ac|M\otimes N|bd\rangle
+=
+\langle a|M|b\rangle
+\langle c|N|d\rangle.
+\]</span></p>
+<p>For block matrices, the rule is:</p>
+<p><span class="math display">\[
+A\otimes B
+=
+\begin{pmatrix}
+a_{11}B &amp; a_{12}B\\
+a_{21}B &amp; a_{22}B
+\end{pmatrix}
+\]</span></p>
+<p>for a <span class="math inline">\(2\times 2\)</span> matrix <span class="math inline">\(A\)</span>.</p>
+<p>For <span class="math inline">\(n\)</span> matrices:</p>
+<p><span class="math display">\[
+\langle a_1\cdots a_n|
+M_1\otimes\cdots\otimes M_n
+|b_1\cdots b_n\rangle
+=
+\langle a_1|M_1|b_1\rangle
+\cdots
+\langle a_n|M_n|b_n\rangle.
+\]</span></p>
+<p>The mixed-product property is:</p>
+<p><span class="math display">\[
+(M_1\otimes\cdots\otimes M_n)
+(N_1\otimes\cdots\otimes N_n)
+=
+(M_1N_1)\otimes\cdots\otimes(M_nN_n).
+\]</span></p>
+<p>This says that independent local operations can be multiplied locally before tensoring globally.</p>
+</section>
+</section>
+<section id="quantum-state-multi-systems" class="level2">
+<h2 class="anchored" data-anchor-id="quantum-state-multi-systems">Quantum State Multi-Systems</h2>
+<section id="quantum-states-of-multiple-systems" class="level3">
+<h3 class="anchored" data-anchor-id="quantum-states-of-multiple-systems">Quantum States of Multiple Systems</h3>
+<p>A quantum state of a compound system is a column vector whose indices correspond to the Cartesian product of the individual classical state sets.</p>
+<p>For two qubits, the standard basis is:</p>
+<p><span class="math display">\[
+|00\rangle,\ |01\rangle,\ |10\rangle,\ |11\rangle.
+\]</span></p>
+<p>A general two-qubit state has the form:</p>
+<p><span class="math display">\[
+|\psi\rangle
+=
+\alpha_{00}|00\rangle
++
+\alpha_{01}|01\rangle
++
+\alpha_{10}|10\rangle
++
+\alpha_{11}|11\rangle,
+\]</span></p>
+<p>with normalization:</p>
+<p><span class="math display">\[
+|\alpha_{00}|^2+|\alpha_{01}|^2+|\alpha_{10}|^2+|\alpha_{11}|^2=1.
+\]</span></p>
+<p>Examples:</p>
+<p><span class="math display">\[
+\frac{1}{2}|00\rangle
++
+\frac{i}{2}|01\rangle
+-
+\frac{1}{2}|10\rangle
+-
+\frac{i}{2}|11\rangle
+\]</span></p>
+<p>has equal measurement probability <span class="math inline">\(1/4\)</span> for all four outcomes.</p>
+<p>The state:</p>
+<p><span class="math display">\[
+\frac{3}{5}|00\rangle-\frac{4}{5}|11\rangle
+\]</span></p>
+<p>has probability <span class="math inline">\(9/25\)</span> of measuring <span class="math inline">\(00\)</span> and <span class="math inline">\(16/25\)</span> of measuring <span class="math inline">\(11\)</span>.</p>
+<p>The basis state:</p>
+<p><span class="math display">\[
+|01\rangle
+\]</span></p>
+<p>has probability 1 of measuring <span class="math inline">\(01\)</span>.</p>
+</section>
+<section id="product-states-and-entanglement" class="level3">
+<h3 class="anchored" data-anchor-id="product-states-and-entanglement">Product States and Entanglement</h3>
+<p>If <span class="math inline">\(|\phi\rangle\)</span> is a state of system <span class="math inline">\(X\)</span> and <span class="math inline">\(|\psi\rangle\)</span> is a state of system <span class="math inline">\(Y\)</span>, then:</p>
+<p><span class="math display">\[
+|\phi\rangle\otimes|\psi\rangle
+\]</span></p>
+<p>is a state of the compound system <span class="math inline">\((X,Y)\)</span>.</p>
+<p>States of this form are product states. They represent systems that are independent in the quantum-state description.</p>
+<p>More generally:</p>
+<p><span class="math display">\[
+|\psi_1\rangle\otimes\cdots\otimes|\psi_n\rangle
+\]</span></p>
+<p>is a product state of <span class="math inline">\((X_1,\dots,X_n)\)</span>.</p>
+<p>Not every compound quantum state is a product state. States that cannot be factored into tensor products are entangled.</p>
+</section>
+<section id="bell-states" class="level3">
+<h3 class="anchored" data-anchor-id="bell-states">Bell States</h3>
+<p>The Bell states are four maximally entangled two-qubit states. They form an orthonormal basis for the four-dimensional two-qubit state space.</p>
+<p>The first Bell state is:</p>
+<p><span class="math display">\[
+|\Phi^+\rangle
+=
+\frac{1}{\sqrt{2}}|00\rangle
++
+\frac{1}{\sqrt{2}}|11\rangle.
+\]</span></p>
+<p>Measuring both qubits gives <span class="math inline">\(00\)</span> with probability <span class="math inline">\(1/2\)</span> and <span class="math inline">\(11\)</span> with probability <span class="math inline">\(1/2\)</span>. The outcomes are perfectly correlated.</p>
+<p>The second Bell state is:</p>
+<p><span class="math display">\[
+|\Phi^-\rangle
+=
+\frac{1}{\sqrt{2}}|00\rangle
+-
+\frac{1}{\sqrt{2}}|11\rangle.
+\]</span></p>
+<p>It has the same measurement probabilities as <span class="math inline">\(|\Phi^+\rangle\)</span>, but the relative phase is different.</p>
+<p>The third Bell state is:</p>
+<p><span class="math display">\[
+|\Psi^+\rangle
+=
+\frac{1}{\sqrt{2}}|01\rangle
++
+\frac{1}{\sqrt{2}}|10\rangle.
+\]</span></p>
+<p>Measuring gives <span class="math inline">\(01\)</span> or <span class="math inline">\(10\)</span> with equal probability. The outcomes are perfectly anti-correlated.</p>
+<p>The fourth Bell state is:</p>
+<p><span class="math display">\[
+|\Psi^-\rangle
+=
+\frac{1}{\sqrt{2}}|01\rangle
+-
+\frac{1}{\sqrt{2}}|10\rangle.
+\]</span></p>
+<p>This is also anti-correlated, with a different relative phase.</p>
+</section>
+<section id="ghz-and-w-states" class="level3">
+<h3 class="anchored" data-anchor-id="ghz-and-w-states">GHZ and W States</h3>
+<p>The GHZ state is:</p>
+<p><span class="math display">\[
+\frac{1}{\sqrt{2}}|000\rangle
++
+\frac{1}{\sqrt{2}}|111\rangle.
+\]</span></p>
+<p>All three qubits are perfectly correlated. Measuring one qubit determines the others.</p>
+<p>The W state is:</p>
+<p><span class="math display">\[
+\frac{1}{\sqrt{3}}|001\rangle
++
+\frac{1}{\sqrt{3}}|010\rangle
++
+\frac{1}{\sqrt{3}}|100\rangle.
+\]</span></p>
+<p>Exactly one qubit is in state <span class="math inline">\(1\)</span>. Each of the three positions has probability <span class="math inline">\(1/3\)</span>.</p>
+<p>The W state is important because its entanglement is more robust to losing or measuring one subsystem than GHZ-style entanglement.</p>
+</section>
+<section id="measuring-quantum-compound-systems" class="level3">
+<h3 class="anchored" data-anchor-id="measuring-quantum-compound-systems">Measuring Quantum Compound Systems</h3>
+<p>If a compound system is measured completely, the outcome belongs to the Cartesian product:</p>
+<p><span class="math display">\[
+(a_1,\dots,a_n)\in
+\Sigma_1\times\cdots\times\Sigma_n.
+\]</span></p>
+<p>For a joint quantum state <span class="math inline">\(|\psi\rangle\)</span>, the probability of observing <span class="math inline">\(a_1\cdots a_n\)</span> is:</p>
+<p><span class="math display">\[
+\left|\langle a_1\cdots a_n|\psi\rangle\right|^2.
+\]</span></p>
+<p>For example:</p>
+<p><span class="math display">\[
+|\psi\rangle
+=
+\frac{3}{5}|0\rangle|\heartsuit\rangle
+-
+\frac{4i}{5}|1\rangle|\spadesuit\rangle.
+\]</span></p>
+<p>The probability of outcome <span class="math inline">\((0,\heartsuit)\)</span> is:</p>
+<p><span class="math display">\[
+\left|\frac{3}{5}\right|^2=\frac{9}{25}.
+\]</span></p>
+<p>The probability of outcome <span class="math inline">\((1,\spadesuit)\)</span> is:</p>
+<p><span class="math display">\[
+\left|-\frac{4i}{5}\right|^2=\frac{16}{25}.
+\]</span></p>
+<p>For a two-system state:</p>
+<p><span class="math display">\[
+|\psi\rangle
+=
+\sum_{(a,b)\in\Sigma\times\Gamma}\alpha_{ab}|ab\rangle,
+\]</span></p>
+<p>if only <span class="math inline">\(X\)</span> is measured, then:</p>
+<p><span class="math display">\[
+\Pr(\text{outcome is }a)
+=
+\sum_{b\in\Gamma}|\langle ab|\psi\rangle|^2
+=
+\sum_{b\in\Gamma}|\alpha_{ab}|^2.
+\]</span></p>
+<p>Now group the state by outcomes of <span class="math inline">\(X\)</span>:</p>
+<p><span class="math display">\[
+|\psi\rangle
+=
+\sum_{a\in\Sigma}|a\rangle\otimes|\Phi_a\rangle.
+\]</span></p>
+<p>Then:</p>
+<p><span class="math display">\[
+\Pr(\text{outcome is }a)=\||\Phi_a\rangle\|^2.
+\]</span></p>
+<p>If the measurement of <span class="math inline">\(X\)</span> gives outcome <span class="math inline">\(a\)</span>, the post-measurement state is:</p>
+<p><span class="math display">\[
+|a\rangle\otimes
+\frac{|\Phi_a\rangle}{\||\Phi_a\rangle\|}.
+\]</span></p>
+<p>The division by the norm re-normalizes the remaining state.</p>
+</section>
+<section id="unitary-operations-on-multiple-systems" class="level3">
+<h3 class="anchored" data-anchor-id="unitary-operations-on-multiple-systems">Unitary Operations on Multiple Systems</h3>
+<p>When independent unitary operations are applied to separate systems, the combined global operation is the tensor product of the local unitary matrices.</p>
+<p>If <span class="math inline">\(U_1,\dots,U_n\)</span> act on systems <span class="math inline">\(X_1,\dots,X_n\)</span>, then the global operation is:</p>
+<p><span class="math display">\[
+U_1\otimes\cdots\otimes U_n.
+\]</span></p>
+<p>If we apply a unitary <span class="math inline">\(U\)</span> to system <span class="math inline">\(X\)</span> and do nothing to system <span class="math inline">\(Y\)</span>, the global operation on <span class="math inline">\((X,Y)\)</span> is:</p>
+<p><span class="math display">\[
+U\otimes I.
+\]</span></p>
+<p>The identity matrix <span class="math inline">\(I\)</span> represents doing nothing to the unaddressed subsystem. This is a recurring pattern: even a local physical operation must be represented as an operation on the full compound state space.</p>
+
+
+<!-- -->
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<input type="hidden" id="giscus-base-theme" value="light">
+<input type="hidden" id="giscus-alt-theme" value="light">
+<script>
+  function loadGiscus() {
+    // Function to get the theme based on body class
+    const getTheme = () => {
+      let baseTheme = document.getElementById('giscus-base-theme').value;
+      let altTheme = document.getElementById('giscus-alt-theme').value;
+      return document.body.classList.contains('quarto-dark') ? altTheme : baseTheme;
+    };
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.dataset.repo = "ickma2311/ickma2311.github.io";
+    script.dataset.repoId = "R_kgDOOzbaAg";
+    script.dataset.category = "Comments";
+    script.dataset.categoryId = "DIC_kwDOOzbaAs4CxPFj";
+    script.dataset.mapping = "pathname";
+    script.dataset.reactionsEnabled = "1";
+    script.dataset.emitMetadata = "0";
+    script.dataset.inputPosition = "top";
+    script.dataset.theme = getTheme();
+    script.dataset.lang = "en";
+    script.crossOrigin = "anonymous";
+    // Append the script to the desired div instead of at the end of the body
+    document.getElementById("quarto-content").appendChild(script);
+  }
+  loadGiscus();
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Qiskit Lesson 2: Multiple Systems"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-05-23"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Quantum Computing, Qiskit, Quantum Information, Tensor Products, Entanglement]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Lesson 2 notes on compound classical and quantum systems: Cartesian products, tensor products, marginal and conditional states, CNOT, Bell states, partial measurement, and local unitary operations."</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">iframe</span><span class="ot"> width</span><span class="op">=</span><span class="st">"100%"</span><span class="ot"> height</span><span class="op">=</span><span class="st">"500"</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://www.youtube.com/embed/DfZZS8Spe7U?list=PLOFEBzvs-VvqKKMXX4vbi4EB1uaErFMSO</span><span class="dv">&amp;amp;</span><span class="st">index=4"</span><span class="ot"> title</span><span class="op">=</span><span class="st">"Qiskit Lesson 2"</span><span class="ot"> frameborder</span><span class="op">=</span><span class="st">"0"</span><span class="ot"> allowfullscreen</span><span class="dt">&gt;&lt;/</span><span class="kw">iframe</span><span class="dt">&gt;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>Lesson 1 described a single system.</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>Lesson 2 asks what changes when we combine systems. The main answer is that state spaces multiply: classical states use Cartesian products, while vector representations use tensor products.</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>That same idea appears in several forms:</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>classical multi-system states use Cartesian products and probability vectors</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>quantum state multi-systems use tensor products and complex amplitudes</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="fu">## Classical Multi-System States</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="fu">### Classical Compound Systems</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>Suppose $X$ has classical state set $\Sigma$ and $Y$ has classical state set $\Gamma$.</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>The compound system $(X,Y)$ has classical state set:</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>\Sigma \times \Gamma</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="sc">\{</span>(a,b): a\in\Sigma,\ b\in\Gamma<span class="sc">\}</span>.</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>For example, if:</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>\Sigma=<span class="sc">\{</span>0,1<span class="sc">\}</span>,</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>\Gamma=<span class="sc">\{</span>\clubsuit,\diamondsuit,\heartsuit,\spadesuit<span class="sc">\}</span>,</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>then:</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>\Sigma\times\Gamma</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="sc">\{</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>(0,\clubsuit),(0,\diamondsuit),(0,\heartsuit),(0,\spadesuit),</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>(1,\clubsuit),(1,\diamondsuit),(1,\heartsuit),(1,\spadesuit)</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="sc">\}</span>.</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>For $n$ systems $X_1,\dots,X_n$ with classical state sets $\Sigma_1,\dots,\Sigma_n$, the compound state set is:</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>\Sigma_1\times\cdots\times\Sigma_n</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="sc">\{</span>(a_1,\dots,a_n): a_1\in\Sigma_1,\dots,a_n\in\Sigma_n<span class="sc">\}</span>.</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>If $X_1,X_2,X_3$ are bits, then:</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a><span class="sc">\{</span>0,1<span class="sc">\}</span>^3</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="sc">\{</span></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>000,001,010,011,100,101,110,111</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="sc">\}</span>.</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>The convention is lexicographic order, with significance decreasing from left to right.</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>For ten bits:</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>\Sigma_1=\cdots=\Sigma_{10}=<span class="sc">\{</span>0,1<span class="sc">\}</span>,</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>\Sigma_1\times\cdots\times\Sigma_{10}=<span class="sc">\{</span>0,1<span class="sc">\}</span>^{10}.</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>The ordered states begin:</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>0000000000,\ 0000000001,\ 0000000010,\ 0000000011,\ \dots,\ 1111111111.</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a><span class="fu">### Probabilistic States of Multiple Systems</span></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>A probabilistic state of a compound system assigns probabilities to the Cartesian product of the individual state sets.</span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>For two bits $(X,Y)$, one possible state is:</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>\Pr((X,Y)=(0,0)) &amp;= \frac{1}{2},<span class="sc">\\</span></span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>\Pr((X,Y)=(0,1)) &amp;= 0,<span class="sc">\\</span></span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>\Pr((X,Y)=(1,0)) &amp;= 0,<span class="sc">\\</span></span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>\Pr((X,Y)=(1,1)) &amp;= \frac{1}{2}.</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>Using the lexicographic basis $00,01,10,11$, the probability vector is:</span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>1/2<span class="sc">\\</span></span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>0<span class="sc">\\</span></span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>0<span class="sc">\\</span></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>1/2</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>\end{pmatrix}.</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>Equivalently:</span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\pi\rangle</span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a>\frac{1}{2}|00\rangle+\frac{1}{2}|11\rangle.</span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>The basis vectors are:</span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>00\rangle=</span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}1<span class="sc">\\</span>0<span class="sc">\\</span>0<span class="sc">\\</span>0\end{pmatrix},</span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>\quad</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>01\rangle=</span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}0<span class="sc">\\</span>1<span class="sc">\\</span>0<span class="sc">\\</span>0\end{pmatrix},</span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>\quad</span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>10\rangle=</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}0<span class="sc">\\</span>0<span class="sc">\\</span>1<span class="sc">\\</span>0\end{pmatrix},</span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>\quad</span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>11\rangle=</span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}0<span class="sc">\\</span>0<span class="sc">\\</span>0<span class="sc">\\</span>1\end{pmatrix}.</span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>In general:</span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\pi\rangle</span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>\sum_{(a,b)\in\Sigma\times\Gamma} p_{ab}|ab\rangle.</span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a><span class="fu">### Independence</span></span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>For a probabilistic state of $(X,Y)$, the systems $X$ and $Y$ are independent if:</span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>\Pr((X,Y)=(a,b))=\Pr(X=a)\Pr(Y=b)</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>for every $a\in\Sigma$ and $b\in\Gamma$.</span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>In vector notation, this means there are probability vectors:</span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\phi\rangle=\sum_{a\in\Sigma}q_a<span class="pp">|</span>a\rangle,</span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\psi\rangle=\sum_{b\in\Gamma}r_b<span class="pp">|</span>b\rangle</span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>such that:</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a>p_{ab}=q_ar_b.</span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>This is exactly what the tensor product encodes.</span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a><span class="fu">### Tensor Products of Vectors</span></span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>Let:</span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\phi\rangle=\sum_{a\in\Sigma}\alpha_a<span class="pp">|</span>a\rangle,</span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\psi\rangle=\sum_{b\in\Gamma}\beta_b<span class="pp">|</span>b\rangle.</span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a>Their tensor product is:</span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\phi\rangle\otimes<span class="pp">|</span>\psi\rangle</span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a>\sum_{(a,b)\in\Sigma\times\Gamma}\alpha_a\beta_b|ab\rangle.</span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a>Equivalently:</span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>\langle ab|\left(|\phi\rangle\otimes|\psi\rangle\right)</span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a>\langle a|\phi\rangle\langle b|\psi\rangle.</span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a>For example:</span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\phi\rangle=\frac{1}{4}<span class="pp">|</span>0\rangle+\frac{3}{4}<span class="pp">|</span>1\rangle,</span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\psi\rangle=\frac{2}{3}<span class="pp">|</span>0\rangle+\frac{1}{3}<span class="pp">|</span>1\rangle.</span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a>Then:</span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\phi\rangle\otimes<span class="pp">|</span>\psi\rangle</span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a>&amp;=</span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a>\frac{1}{4}\frac{2}{3}|00\rangle</span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a>\frac{1}{4}\frac{1}{3}|01\rangle</span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a>\frac{3}{4}\frac{2}{3}|10\rangle</span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a>\frac{3}{4}\frac{1}{3}|11\rangle<span class="sc">\\</span></span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a>&amp;=</span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a>\frac{1}{6}|00\rangle</span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a>\frac{1}{12}|01\rangle</span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a>\frac{1}{2}|10\rangle</span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a>\frac{1}{4}|11\rangle.</span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a>For column vectors:</span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}</span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a>\alpha_1<span class="sc">\\</span></span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a>\vdots<span class="sc">\\</span></span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a>\alpha_m</span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a>\end{pmatrix}</span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a>\otimes</span>
+<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}</span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a>\beta_1<span class="sc">\\</span></span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a>\vdots<span class="sc">\\</span></span>
+<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a>\beta_k</span>
+<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a>\end{pmatrix}</span>
+<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}</span>
+<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a>\alpha_1\beta_1<span class="sc">\\</span></span>
+<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a>\vdots<span class="sc">\\</span></span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a>\alpha_1\beta_k<span class="sc">\\</span></span>
+<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a>\alpha_2\beta_1<span class="sc">\\</span></span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a>\vdots<span class="sc">\\</span></span>
+<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a>\alpha_m\beta_k</span>
+<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a>\end{pmatrix}.</span>
+<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a>The tensor product is bilinear:</span>
+<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a>(|\phi_1\rangle+|\phi_2\rangle)\otimes|\psi\rangle</span>
+<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\phi_1\rangle\otimes<span class="pp">|</span>\psi\rangle</span>
+<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\phi_2\rangle\otimes<span class="pp">|</span>\psi\rangle,</span>
+<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-264"><a href="#cb1-264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-265"><a href="#cb1-265" aria-hidden="true" tabindex="-1"></a>and:</span>
+<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a>(\alpha|\phi\rangle)\otimes|\psi\rangle</span>
+<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a>\alpha(|\phi\rangle\otimes|\psi\rangle).</span>
+<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-273"><a href="#cb1-273" aria-hidden="true" tabindex="-1"></a>For $n$ systems:</span>
+<span id="cb1-274"><a href="#cb1-274" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\psi\rangle</span>
+<span id="cb1-277"><a href="#cb1-277" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\phi_1\rangle\otimes\cdots\otimes<span class="pp">|</span>\phi_n\rangle</span>
+<span id="cb1-279"><a href="#cb1-279" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-280"><a href="#cb1-280" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a>is defined by:</span>
+<span id="cb1-282"><a href="#cb1-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-284"><a href="#cb1-284" aria-hidden="true" tabindex="-1"></a>\langle a_1\cdots a_n|\psi\rangle</span>
+<span id="cb1-285"><a href="#cb1-285" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-286"><a href="#cb1-286" aria-hidden="true" tabindex="-1"></a>\langle a_1|\phi_1\rangle\cdots\langle a_n|\phi_n\rangle.</span>
+<span id="cb1-287"><a href="#cb1-287" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a><span class="fu">### Measuring Probabilistic States</span></span>
+<span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a>If two bits are in the probabilistic state:</span>
+<span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a>\frac{1}{2}|00\rangle+\frac{1}{2}|11\rangle,</span>
+<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-296"><a href="#cb1-296" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a>then measuring both bits gives outcome $00$ with probability $1/2$ and outcome $11$ with probability $1/2$.</span>
+<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a>If only system $X$ is measured, the probability of observing $a\in\Sigma$ is the marginal probability:</span>
+<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a>\Pr(X=a)</span>
+<span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a>\sum_{b\in\Gamma}\Pr((X,Y)=(a,b)).</span>
+<span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-307"><a href="#cb1-307" aria-hidden="true" tabindex="-1"></a>The conditional probability is:</span>
+<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a>\Pr(Y=b\mid X=a)</span>
+<span id="cb1-311"><a href="#cb1-311" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-312"><a href="#cb1-312" aria-hidden="true" tabindex="-1"></a>\frac{\Pr((X,Y)=(a,b))}{\Pr(X=a)}.</span>
+<span id="cb1-313"><a href="#cb1-313" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-315"><a href="#cb1-315" aria-hidden="true" tabindex="-1"></a>For:</span>
+<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-317"><a href="#cb1-317" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-318"><a href="#cb1-318" aria-hidden="true" tabindex="-1"></a>\sum_{(a,b)\in\Sigma\times\Gamma}p_{ab}|ab\rangle</span>
+<span id="cb1-319"><a href="#cb1-319" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-320"><a href="#cb1-320" aria-hidden="true" tabindex="-1"></a>\sum_{a\in\Sigma}|a\rangle\otimes</span>
+<span id="cb1-321"><a href="#cb1-321" aria-hidden="true" tabindex="-1"></a>\left(\sum_{b\in\Gamma}p_{ab}|b\rangle\right),</span>
+<span id="cb1-322"><a href="#cb1-322" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-323"><a href="#cb1-323" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-324"><a href="#cb1-324" aria-hidden="true" tabindex="-1"></a>the marginal probability is:</span>
+<span id="cb1-325"><a href="#cb1-325" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-326"><a href="#cb1-326" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-327"><a href="#cb1-327" aria-hidden="true" tabindex="-1"></a>\Pr(X=a)=\sum_{b\in\Gamma}p_{ab},</span>
+<span id="cb1-328"><a href="#cb1-328" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-329"><a href="#cb1-329" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-330"><a href="#cb1-330" aria-hidden="true" tabindex="-1"></a>and the conditional state of $Y$ after observing $X=a$ is:</span>
+<span id="cb1-331"><a href="#cb1-331" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-332"><a href="#cb1-332" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-333"><a href="#cb1-333" aria-hidden="true" tabindex="-1"></a>\frac{\sum_{b\in\Gamma}p_{ab}|b\rangle}</span>
+<span id="cb1-334"><a href="#cb1-334" aria-hidden="true" tabindex="-1"></a>{\sum_{c\in\Gamma}p_{ac}}.</span>
+<span id="cb1-335"><a href="#cb1-335" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-336"><a href="#cb1-336" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-337"><a href="#cb1-337" aria-hidden="true" tabindex="-1"></a>For example:</span>
+<span id="cb1-338"><a href="#cb1-338" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-339"><a href="#cb1-339" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-340"><a href="#cb1-340" aria-hidden="true" tabindex="-1"></a>\frac{1}{12}|00\rangle</span>
+<span id="cb1-341"><a href="#cb1-341" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-342"><a href="#cb1-342" aria-hidden="true" tabindex="-1"></a>\frac{1}{4}|01\rangle</span>
+<span id="cb1-343"><a href="#cb1-343" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-344"><a href="#cb1-344" aria-hidden="true" tabindex="-1"></a>\frac{1}{3}|10\rangle</span>
+<span id="cb1-345"><a href="#cb1-345" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-346"><a href="#cb1-346" aria-hidden="true" tabindex="-1"></a>\frac{1}{3}|11\rangle</span>
+<span id="cb1-347"><a href="#cb1-347" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-348"><a href="#cb1-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-349"><a href="#cb1-349" aria-hidden="true" tabindex="-1"></a>can be grouped by the first system as:</span>
+<span id="cb1-350"><a href="#cb1-350" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-351"><a href="#cb1-351" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-352"><a href="#cb1-352" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>0\rangle\otimes</span>
+<span id="cb1-353"><a href="#cb1-353" aria-hidden="true" tabindex="-1"></a>\left(\frac{1}{12}|0\rangle+\frac{1}{4}|1\rangle\right)</span>
+<span id="cb1-354"><a href="#cb1-354" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-355"><a href="#cb1-355" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>1\rangle\otimes</span>
+<span id="cb1-356"><a href="#cb1-356" aria-hidden="true" tabindex="-1"></a>\left(\frac{1}{3}|0\rangle+\frac{1}{3}|1\rangle\right).</span>
+<span id="cb1-357"><a href="#cb1-357" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-358"><a href="#cb1-358" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-359"><a href="#cb1-359" aria-hidden="true" tabindex="-1"></a><span class="fu">### Operations on Probabilistic States</span></span>
+<span id="cb1-360"><a href="#cb1-360" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-361"><a href="#cb1-361" aria-hidden="true" tabindex="-1"></a>The controlled-NOT operation, or CNOT, acts on a two-bit system $(X,Y)$.</span>
+<span id="cb1-362"><a href="#cb1-362" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-363"><a href="#cb1-363" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$X$ is the control bit.</span>
+<span id="cb1-364"><a href="#cb1-364" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$Y$ is the target bit.</span>
+<span id="cb1-365"><a href="#cb1-365" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>if $X=1$, flip $Y$</span>
+<span id="cb1-366"><a href="#cb1-366" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>if $X=0$, leave $Y$ unchanged</span>
+<span id="cb1-367"><a href="#cb1-367" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-368"><a href="#cb1-368" aria-hidden="true" tabindex="-1"></a>Its action on the standard basis is:</span>
+<span id="cb1-369"><a href="#cb1-369" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-370"><a href="#cb1-370" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-371"><a href="#cb1-371" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
+<span id="cb1-372"><a href="#cb1-372" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>00\rangle &amp;\mapsto <span class="pp">|</span>00\rangle,<span class="sc">\\</span></span>
+<span id="cb1-373"><a href="#cb1-373" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>01\rangle &amp;\mapsto <span class="pp">|</span>01\rangle,<span class="sc">\\</span></span>
+<span id="cb1-374"><a href="#cb1-374" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>10\rangle &amp;\mapsto <span class="pp">|</span>11\rangle,<span class="sc">\\</span></span>
+<span id="cb1-375"><a href="#cb1-375" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>11\rangle &amp;\mapsto <span class="pp">|</span>10\rangle.</span>
+<span id="cb1-376"><a href="#cb1-376" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
+<span id="cb1-377"><a href="#cb1-377" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-378"><a href="#cb1-378" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-379"><a href="#cb1-379" aria-hidden="true" tabindex="-1"></a>So the matrix is:</span>
+<span id="cb1-380"><a href="#cb1-380" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-381"><a href="#cb1-381" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-382"><a href="#cb1-382" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}</span>
+<span id="cb1-383"><a href="#cb1-383" aria-hidden="true" tabindex="-1"></a>1 &amp; 0 &amp; 0 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-384"><a href="#cb1-384" aria-hidden="true" tabindex="-1"></a>0 &amp; 1 &amp; 0 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-385"><a href="#cb1-385" aria-hidden="true" tabindex="-1"></a>0 &amp; 0 &amp; 0 &amp; 1<span class="sc">\\</span></span>
+<span id="cb1-386"><a href="#cb1-386" aria-hidden="true" tabindex="-1"></a>0 &amp; 0 &amp; 1 &amp; 0</span>
+<span id="cb1-387"><a href="#cb1-387" aria-hidden="true" tabindex="-1"></a>\end{pmatrix}.</span>
+<span id="cb1-388"><a href="#cb1-388" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-389"><a href="#cb1-389" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-390"><a href="#cb1-390" aria-hidden="true" tabindex="-1"></a>Another example is a randomized operation:</span>
+<span id="cb1-391"><a href="#cb1-391" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-392"><a href="#cb1-392" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>with probability $1/2$, set $Y=X$</span>
+<span id="cb1-393"><a href="#cb1-393" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>with probability $1/2$, set $X=Y$</span>
+<span id="cb1-394"><a href="#cb1-394" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-395"><a href="#cb1-395" aria-hidden="true" tabindex="-1"></a>The resulting stochastic matrix is an average of two deterministic matrices:</span>
+<span id="cb1-396"><a href="#cb1-396" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-397"><a href="#cb1-397" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-398"><a href="#cb1-398" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}</span>
+<span id="cb1-399"><a href="#cb1-399" aria-hidden="true" tabindex="-1"></a>1 &amp; 1/2 &amp; 1/2 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-400"><a href="#cb1-400" aria-hidden="true" tabindex="-1"></a>0 &amp; 0 &amp; 0 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-401"><a href="#cb1-401" aria-hidden="true" tabindex="-1"></a>0 &amp; 0 &amp; 0 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-402"><a href="#cb1-402" aria-hidden="true" tabindex="-1"></a>0 &amp; 1/2 &amp; 1/2 &amp; 1</span>
+<span id="cb1-403"><a href="#cb1-403" aria-hidden="true" tabindex="-1"></a>\end{pmatrix}</span>
+<span id="cb1-404"><a href="#cb1-404" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-405"><a href="#cb1-405" aria-hidden="true" tabindex="-1"></a>\frac{1}{2}</span>
+<span id="cb1-406"><a href="#cb1-406" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}</span>
+<span id="cb1-407"><a href="#cb1-407" aria-hidden="true" tabindex="-1"></a>1 &amp; 1 &amp; 0 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-408"><a href="#cb1-408" aria-hidden="true" tabindex="-1"></a>0 &amp; 0 &amp; 0 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-409"><a href="#cb1-409" aria-hidden="true" tabindex="-1"></a>0 &amp; 0 &amp; 0 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-410"><a href="#cb1-410" aria-hidden="true" tabindex="-1"></a>0 &amp; 0 &amp; 1 &amp; 1</span>
+<span id="cb1-411"><a href="#cb1-411" aria-hidden="true" tabindex="-1"></a>\end{pmatrix}</span>
+<span id="cb1-412"><a href="#cb1-412" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-413"><a href="#cb1-413" aria-hidden="true" tabindex="-1"></a>\frac{1}{2}</span>
+<span id="cb1-414"><a href="#cb1-414" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}</span>
+<span id="cb1-415"><a href="#cb1-415" aria-hidden="true" tabindex="-1"></a>1 &amp; 0 &amp; 1 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-416"><a href="#cb1-416" aria-hidden="true" tabindex="-1"></a>0 &amp; 0 &amp; 0 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-417"><a href="#cb1-417" aria-hidden="true" tabindex="-1"></a>0 &amp; 0 &amp; 0 &amp; 0<span class="sc">\\</span></span>
+<span id="cb1-418"><a href="#cb1-418" aria-hidden="true" tabindex="-1"></a>0 &amp; 1 &amp; 0 &amp; 1</span>
+<span id="cb1-419"><a href="#cb1-419" aria-hidden="true" tabindex="-1"></a>\end{pmatrix}.</span>
+<span id="cb1-420"><a href="#cb1-420" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-421"><a href="#cb1-421" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-422"><a href="#cb1-422" aria-hidden="true" tabindex="-1"></a><span class="fu">### Tensor Products of Matrices</span></span>
+<span id="cb1-423"><a href="#cb1-423" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-424"><a href="#cb1-424" aria-hidden="true" tabindex="-1"></a>Let:</span>
+<span id="cb1-425"><a href="#cb1-425" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-426"><a href="#cb1-426" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-427"><a href="#cb1-427" aria-hidden="true" tabindex="-1"></a>M=\sum_{a,b\in\Sigma}\alpha_{ab}|a\rangle\langle b|,</span>
+<span id="cb1-428"><a href="#cb1-428" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb1-429"><a href="#cb1-429" aria-hidden="true" tabindex="-1"></a>N=\sum_{c,d\in\Gamma}\beta_{cd}|c\rangle\langle d|.</span>
+<span id="cb1-430"><a href="#cb1-430" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-431"><a href="#cb1-431" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-432"><a href="#cb1-432" aria-hidden="true" tabindex="-1"></a>Their tensor product is:</span>
+<span id="cb1-433"><a href="#cb1-433" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-434"><a href="#cb1-434" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-435"><a href="#cb1-435" aria-hidden="true" tabindex="-1"></a>M\otimes N</span>
+<span id="cb1-436"><a href="#cb1-436" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-437"><a href="#cb1-437" aria-hidden="true" tabindex="-1"></a>\sum_{a,b\in\Sigma}</span>
+<span id="cb1-438"><a href="#cb1-438" aria-hidden="true" tabindex="-1"></a>\sum_{c,d\in\Gamma}</span>
+<span id="cb1-439"><a href="#cb1-439" aria-hidden="true" tabindex="-1"></a>\alpha_{ab}\beta_{cd}|ac\rangle\langle bd|.</span>
+<span id="cb1-440"><a href="#cb1-440" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-441"><a href="#cb1-441" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-442"><a href="#cb1-442" aria-hidden="true" tabindex="-1"></a>Equivalently:</span>
+<span id="cb1-443"><a href="#cb1-443" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-444"><a href="#cb1-444" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-445"><a href="#cb1-445" aria-hidden="true" tabindex="-1"></a>\langle ac|M\otimes N|bd\rangle</span>
+<span id="cb1-446"><a href="#cb1-446" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-447"><a href="#cb1-447" aria-hidden="true" tabindex="-1"></a>\langle a|M|b\rangle</span>
+<span id="cb1-448"><a href="#cb1-448" aria-hidden="true" tabindex="-1"></a>\langle c|N|d\rangle.</span>
+<span id="cb1-449"><a href="#cb1-449" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-450"><a href="#cb1-450" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-451"><a href="#cb1-451" aria-hidden="true" tabindex="-1"></a>For block matrices, the rule is:</span>
+<span id="cb1-452"><a href="#cb1-452" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-453"><a href="#cb1-453" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-454"><a href="#cb1-454" aria-hidden="true" tabindex="-1"></a>A\otimes B</span>
+<span id="cb1-455"><a href="#cb1-455" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-456"><a href="#cb1-456" aria-hidden="true" tabindex="-1"></a>\begin{pmatrix}</span>
+<span id="cb1-457"><a href="#cb1-457" aria-hidden="true" tabindex="-1"></a>a_{11}B &amp; a_{12}B<span class="sc">\\</span></span>
+<span id="cb1-458"><a href="#cb1-458" aria-hidden="true" tabindex="-1"></a>a_{21}B &amp; a_{22}B</span>
+<span id="cb1-459"><a href="#cb1-459" aria-hidden="true" tabindex="-1"></a>\end{pmatrix}</span>
+<span id="cb1-460"><a href="#cb1-460" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-461"><a href="#cb1-461" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-462"><a href="#cb1-462" aria-hidden="true" tabindex="-1"></a>for a $2\times 2$ matrix $A$.</span>
+<span id="cb1-463"><a href="#cb1-463" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-464"><a href="#cb1-464" aria-hidden="true" tabindex="-1"></a>For $n$ matrices:</span>
+<span id="cb1-465"><a href="#cb1-465" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-466"><a href="#cb1-466" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-467"><a href="#cb1-467" aria-hidden="true" tabindex="-1"></a>\langle a_1\cdots a_n|</span>
+<span id="cb1-468"><a href="#cb1-468" aria-hidden="true" tabindex="-1"></a>M_1\otimes\cdots\otimes M_n</span>
+<span id="cb1-469"><a href="#cb1-469" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>b_1\cdots b_n\rangle</span>
+<span id="cb1-470"><a href="#cb1-470" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-471"><a href="#cb1-471" aria-hidden="true" tabindex="-1"></a>\langle a_1|M_1|b_1\rangle</span>
+<span id="cb1-472"><a href="#cb1-472" aria-hidden="true" tabindex="-1"></a>\cdots</span>
+<span id="cb1-473"><a href="#cb1-473" aria-hidden="true" tabindex="-1"></a>\langle a_n|M_n|b_n\rangle.</span>
+<span id="cb1-474"><a href="#cb1-474" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-475"><a href="#cb1-475" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-476"><a href="#cb1-476" aria-hidden="true" tabindex="-1"></a>The mixed-product property is:</span>
+<span id="cb1-477"><a href="#cb1-477" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-478"><a href="#cb1-478" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-479"><a href="#cb1-479" aria-hidden="true" tabindex="-1"></a>(M_1\otimes\cdots\otimes M_n)</span>
+<span id="cb1-480"><a href="#cb1-480" aria-hidden="true" tabindex="-1"></a>(N_1\otimes\cdots\otimes N_n)</span>
+<span id="cb1-481"><a href="#cb1-481" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-482"><a href="#cb1-482" aria-hidden="true" tabindex="-1"></a>(M_1N_1)\otimes\cdots\otimes(M_nN_n).</span>
+<span id="cb1-483"><a href="#cb1-483" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-484"><a href="#cb1-484" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-485"><a href="#cb1-485" aria-hidden="true" tabindex="-1"></a>This says that independent local operations can be multiplied locally before tensoring globally.</span>
+<span id="cb1-486"><a href="#cb1-486" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-487"><a href="#cb1-487" aria-hidden="true" tabindex="-1"></a><span class="fu">## Quantum State Multi-Systems</span></span>
+<span id="cb1-488"><a href="#cb1-488" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-489"><a href="#cb1-489" aria-hidden="true" tabindex="-1"></a><span class="fu">### Quantum States of Multiple Systems</span></span>
+<span id="cb1-490"><a href="#cb1-490" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-491"><a href="#cb1-491" aria-hidden="true" tabindex="-1"></a>A quantum state of a compound system is a column vector whose indices correspond to the Cartesian product of the individual classical state sets.</span>
+<span id="cb1-492"><a href="#cb1-492" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-493"><a href="#cb1-493" aria-hidden="true" tabindex="-1"></a>For two qubits, the standard basis is:</span>
+<span id="cb1-494"><a href="#cb1-494" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-495"><a href="#cb1-495" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-496"><a href="#cb1-496" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>00\rangle,\ <span class="pp">|</span>01\rangle,\ <span class="pp">|</span>10\rangle,\ <span class="pp">|</span>11\rangle.</span>
+<span id="cb1-497"><a href="#cb1-497" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-498"><a href="#cb1-498" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-499"><a href="#cb1-499" aria-hidden="true" tabindex="-1"></a>A general two-qubit state has the form:</span>
+<span id="cb1-500"><a href="#cb1-500" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-501"><a href="#cb1-501" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-502"><a href="#cb1-502" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\psi\rangle</span>
+<span id="cb1-503"><a href="#cb1-503" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-504"><a href="#cb1-504" aria-hidden="true" tabindex="-1"></a>\alpha_{00}|00\rangle</span>
+<span id="cb1-505"><a href="#cb1-505" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-506"><a href="#cb1-506" aria-hidden="true" tabindex="-1"></a>\alpha_{01}|01\rangle</span>
+<span id="cb1-507"><a href="#cb1-507" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-508"><a href="#cb1-508" aria-hidden="true" tabindex="-1"></a>\alpha_{10}|10\rangle</span>
+<span id="cb1-509"><a href="#cb1-509" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-510"><a href="#cb1-510" aria-hidden="true" tabindex="-1"></a>\alpha_{11}|11\rangle,</span>
+<span id="cb1-511"><a href="#cb1-511" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-512"><a href="#cb1-512" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-513"><a href="#cb1-513" aria-hidden="true" tabindex="-1"></a>with normalization:</span>
+<span id="cb1-514"><a href="#cb1-514" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-515"><a href="#cb1-515" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-516"><a href="#cb1-516" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\alpha_{00}<span class="pp">|</span>^2+<span class="pp">|</span>\alpha_{01}<span class="pp">|</span>^2+<span class="pp">|</span>\alpha_{10}<span class="pp">|</span>^2+<span class="pp">|</span>\alpha_{11}<span class="pp">|</span>^2=1.</span>
+<span id="cb1-517"><a href="#cb1-517" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-518"><a href="#cb1-518" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-519"><a href="#cb1-519" aria-hidden="true" tabindex="-1"></a>Examples:</span>
+<span id="cb1-520"><a href="#cb1-520" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-521"><a href="#cb1-521" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-522"><a href="#cb1-522" aria-hidden="true" tabindex="-1"></a>\frac{1}{2}|00\rangle</span>
+<span id="cb1-523"><a href="#cb1-523" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-524"><a href="#cb1-524" aria-hidden="true" tabindex="-1"></a>\frac{i}{2}|01\rangle</span>
+<span id="cb1-525"><a href="#cb1-525" aria-hidden="true" tabindex="-1"></a>-</span>
+<span id="cb1-526"><a href="#cb1-526" aria-hidden="true" tabindex="-1"></a>\frac{1}{2}|10\rangle</span>
+<span id="cb1-527"><a href="#cb1-527" aria-hidden="true" tabindex="-1"></a>-</span>
+<span id="cb1-528"><a href="#cb1-528" aria-hidden="true" tabindex="-1"></a>\frac{i}{2}|11\rangle</span>
+<span id="cb1-529"><a href="#cb1-529" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-530"><a href="#cb1-530" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-531"><a href="#cb1-531" aria-hidden="true" tabindex="-1"></a>has equal measurement probability $1/4$ for all four outcomes.</span>
+<span id="cb1-532"><a href="#cb1-532" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-533"><a href="#cb1-533" aria-hidden="true" tabindex="-1"></a>The state:</span>
+<span id="cb1-534"><a href="#cb1-534" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-535"><a href="#cb1-535" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-536"><a href="#cb1-536" aria-hidden="true" tabindex="-1"></a>\frac{3}{5}|00\rangle-\frac{4}{5}|11\rangle</span>
+<span id="cb1-537"><a href="#cb1-537" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-538"><a href="#cb1-538" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-539"><a href="#cb1-539" aria-hidden="true" tabindex="-1"></a>has probability $9/25$ of measuring $00$ and $16/25$ of measuring $11$.</span>
+<span id="cb1-540"><a href="#cb1-540" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-541"><a href="#cb1-541" aria-hidden="true" tabindex="-1"></a>The basis state:</span>
+<span id="cb1-542"><a href="#cb1-542" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-543"><a href="#cb1-543" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-544"><a href="#cb1-544" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>01\rangle</span>
+<span id="cb1-545"><a href="#cb1-545" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-546"><a href="#cb1-546" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-547"><a href="#cb1-547" aria-hidden="true" tabindex="-1"></a>has probability 1 of measuring $01$.</span>
+<span id="cb1-548"><a href="#cb1-548" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-549"><a href="#cb1-549" aria-hidden="true" tabindex="-1"></a><span class="fu">### Product States and Entanglement</span></span>
+<span id="cb1-550"><a href="#cb1-550" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-551"><a href="#cb1-551" aria-hidden="true" tabindex="-1"></a>If $|\phi\rangle$ is a state of system $X$ and $|\psi\rangle$ is a state of system $Y$, then:</span>
+<span id="cb1-552"><a href="#cb1-552" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-553"><a href="#cb1-553" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-554"><a href="#cb1-554" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\phi\rangle\otimes<span class="pp">|</span>\psi\rangle</span>
+<span id="cb1-555"><a href="#cb1-555" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-556"><a href="#cb1-556" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-557"><a href="#cb1-557" aria-hidden="true" tabindex="-1"></a>is a state of the compound system $(X,Y)$.</span>
+<span id="cb1-558"><a href="#cb1-558" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-559"><a href="#cb1-559" aria-hidden="true" tabindex="-1"></a>States of this form are product states. They represent systems that are independent in the quantum-state description.</span>
+<span id="cb1-560"><a href="#cb1-560" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-561"><a href="#cb1-561" aria-hidden="true" tabindex="-1"></a>More generally:</span>
+<span id="cb1-562"><a href="#cb1-562" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-563"><a href="#cb1-563" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-564"><a href="#cb1-564" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\psi_1\rangle\otimes\cdots\otimes<span class="pp">|</span>\psi_n\rangle</span>
+<span id="cb1-565"><a href="#cb1-565" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-566"><a href="#cb1-566" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-567"><a href="#cb1-567" aria-hidden="true" tabindex="-1"></a>is a product state of $(X_1,\dots,X_n)$.</span>
+<span id="cb1-568"><a href="#cb1-568" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-569"><a href="#cb1-569" aria-hidden="true" tabindex="-1"></a>Not every compound quantum state is a product state. States that cannot be factored into tensor products are entangled.</span>
+<span id="cb1-570"><a href="#cb1-570" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-571"><a href="#cb1-571" aria-hidden="true" tabindex="-1"></a><span class="fu">### Bell States</span></span>
+<span id="cb1-572"><a href="#cb1-572" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-573"><a href="#cb1-573" aria-hidden="true" tabindex="-1"></a>The Bell states are four maximally entangled two-qubit states. They form an orthonormal basis for the four-dimensional two-qubit state space.</span>
+<span id="cb1-574"><a href="#cb1-574" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-575"><a href="#cb1-575" aria-hidden="true" tabindex="-1"></a>The first Bell state is:</span>
+<span id="cb1-576"><a href="#cb1-576" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-577"><a href="#cb1-577" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-578"><a href="#cb1-578" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\Phi^+\rangle</span>
+<span id="cb1-579"><a href="#cb1-579" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-580"><a href="#cb1-580" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{2}}|00\rangle</span>
+<span id="cb1-581"><a href="#cb1-581" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-582"><a href="#cb1-582" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{2}}|11\rangle.</span>
+<span id="cb1-583"><a href="#cb1-583" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-584"><a href="#cb1-584" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-585"><a href="#cb1-585" aria-hidden="true" tabindex="-1"></a>Measuring both qubits gives $00$ with probability $1/2$ and $11$ with probability $1/2$. The outcomes are perfectly correlated.</span>
+<span id="cb1-586"><a href="#cb1-586" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-587"><a href="#cb1-587" aria-hidden="true" tabindex="-1"></a>The second Bell state is:</span>
+<span id="cb1-588"><a href="#cb1-588" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-589"><a href="#cb1-589" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-590"><a href="#cb1-590" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\Phi^-\rangle</span>
+<span id="cb1-591"><a href="#cb1-591" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-592"><a href="#cb1-592" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{2}}|00\rangle</span>
+<span id="cb1-593"><a href="#cb1-593" aria-hidden="true" tabindex="-1"></a>-</span>
+<span id="cb1-594"><a href="#cb1-594" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{2}}|11\rangle.</span>
+<span id="cb1-595"><a href="#cb1-595" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-596"><a href="#cb1-596" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-597"><a href="#cb1-597" aria-hidden="true" tabindex="-1"></a>It has the same measurement probabilities as $|\Phi^+\rangle$, but the relative phase is different.</span>
+<span id="cb1-598"><a href="#cb1-598" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-599"><a href="#cb1-599" aria-hidden="true" tabindex="-1"></a>The third Bell state is:</span>
+<span id="cb1-600"><a href="#cb1-600" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-601"><a href="#cb1-601" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-602"><a href="#cb1-602" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\Psi^+\rangle</span>
+<span id="cb1-603"><a href="#cb1-603" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-604"><a href="#cb1-604" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{2}}|01\rangle</span>
+<span id="cb1-605"><a href="#cb1-605" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-606"><a href="#cb1-606" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{2}}|10\rangle.</span>
+<span id="cb1-607"><a href="#cb1-607" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-608"><a href="#cb1-608" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-609"><a href="#cb1-609" aria-hidden="true" tabindex="-1"></a>Measuring gives $01$ or $10$ with equal probability. The outcomes are perfectly anti-correlated.</span>
+<span id="cb1-610"><a href="#cb1-610" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-611"><a href="#cb1-611" aria-hidden="true" tabindex="-1"></a>The fourth Bell state is:</span>
+<span id="cb1-612"><a href="#cb1-612" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-613"><a href="#cb1-613" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-614"><a href="#cb1-614" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\Psi^-\rangle</span>
+<span id="cb1-615"><a href="#cb1-615" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-616"><a href="#cb1-616" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{2}}|01\rangle</span>
+<span id="cb1-617"><a href="#cb1-617" aria-hidden="true" tabindex="-1"></a>-</span>
+<span id="cb1-618"><a href="#cb1-618" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{2}}|10\rangle.</span>
+<span id="cb1-619"><a href="#cb1-619" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-620"><a href="#cb1-620" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-621"><a href="#cb1-621" aria-hidden="true" tabindex="-1"></a>This is also anti-correlated, with a different relative phase.</span>
+<span id="cb1-622"><a href="#cb1-622" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-623"><a href="#cb1-623" aria-hidden="true" tabindex="-1"></a><span class="fu">### GHZ and W States</span></span>
+<span id="cb1-624"><a href="#cb1-624" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-625"><a href="#cb1-625" aria-hidden="true" tabindex="-1"></a>The GHZ state is:</span>
+<span id="cb1-626"><a href="#cb1-626" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-627"><a href="#cb1-627" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-628"><a href="#cb1-628" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{2}}|000\rangle</span>
+<span id="cb1-629"><a href="#cb1-629" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-630"><a href="#cb1-630" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{2}}|111\rangle.</span>
+<span id="cb1-631"><a href="#cb1-631" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-632"><a href="#cb1-632" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-633"><a href="#cb1-633" aria-hidden="true" tabindex="-1"></a>All three qubits are perfectly correlated. Measuring one qubit determines the others.</span>
+<span id="cb1-634"><a href="#cb1-634" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-635"><a href="#cb1-635" aria-hidden="true" tabindex="-1"></a>The W state is:</span>
+<span id="cb1-636"><a href="#cb1-636" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-637"><a href="#cb1-637" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-638"><a href="#cb1-638" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{3}}|001\rangle</span>
+<span id="cb1-639"><a href="#cb1-639" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-640"><a href="#cb1-640" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{3}}|010\rangle</span>
+<span id="cb1-641"><a href="#cb1-641" aria-hidden="true" tabindex="-1"></a>+</span>
+<span id="cb1-642"><a href="#cb1-642" aria-hidden="true" tabindex="-1"></a>\frac{1}{\sqrt{3}}|100\rangle.</span>
+<span id="cb1-643"><a href="#cb1-643" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-644"><a href="#cb1-644" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-645"><a href="#cb1-645" aria-hidden="true" tabindex="-1"></a>Exactly one qubit is in state $1$. Each of the three positions has probability $1/3$.</span>
+<span id="cb1-646"><a href="#cb1-646" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-647"><a href="#cb1-647" aria-hidden="true" tabindex="-1"></a>The W state is important because its entanglement is more robust to losing or measuring one subsystem than GHZ-style entanglement.</span>
+<span id="cb1-648"><a href="#cb1-648" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-649"><a href="#cb1-649" aria-hidden="true" tabindex="-1"></a><span class="fu">### Measuring Quantum Compound Systems</span></span>
+<span id="cb1-650"><a href="#cb1-650" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-651"><a href="#cb1-651" aria-hidden="true" tabindex="-1"></a>If a compound system is measured completely, the outcome belongs to the Cartesian product:</span>
+<span id="cb1-652"><a href="#cb1-652" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-653"><a href="#cb1-653" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-654"><a href="#cb1-654" aria-hidden="true" tabindex="-1"></a>(a_1,\dots,a_n)\in</span>
+<span id="cb1-655"><a href="#cb1-655" aria-hidden="true" tabindex="-1"></a>\Sigma_1\times\cdots\times\Sigma_n.</span>
+<span id="cb1-656"><a href="#cb1-656" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-657"><a href="#cb1-657" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-658"><a href="#cb1-658" aria-hidden="true" tabindex="-1"></a>For a joint quantum state $|\psi\rangle$, the probability of observing $a_1\cdots a_n$ is:</span>
+<span id="cb1-659"><a href="#cb1-659" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-660"><a href="#cb1-660" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-661"><a href="#cb1-661" aria-hidden="true" tabindex="-1"></a>\left|\langle a_1\cdots a_n|\psi\rangle\right|^2.</span>
+<span id="cb1-662"><a href="#cb1-662" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-663"><a href="#cb1-663" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-664"><a href="#cb1-664" aria-hidden="true" tabindex="-1"></a>For example:</span>
+<span id="cb1-665"><a href="#cb1-665" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-666"><a href="#cb1-666" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-667"><a href="#cb1-667" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\psi\rangle</span>
+<span id="cb1-668"><a href="#cb1-668" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-669"><a href="#cb1-669" aria-hidden="true" tabindex="-1"></a>\frac{3}{5}|0\rangle|\heartsuit\rangle</span>
+<span id="cb1-670"><a href="#cb1-670" aria-hidden="true" tabindex="-1"></a>-</span>
+<span id="cb1-671"><a href="#cb1-671" aria-hidden="true" tabindex="-1"></a>\frac{4i}{5}|1\rangle|\spadesuit\rangle.</span>
+<span id="cb1-672"><a href="#cb1-672" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-673"><a href="#cb1-673" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-674"><a href="#cb1-674" aria-hidden="true" tabindex="-1"></a>The probability of outcome $(0,\heartsuit)$ is:</span>
+<span id="cb1-675"><a href="#cb1-675" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-676"><a href="#cb1-676" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-677"><a href="#cb1-677" aria-hidden="true" tabindex="-1"></a>\left|\frac{3}{5}\right|^2=\frac{9}{25}.</span>
+<span id="cb1-678"><a href="#cb1-678" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-679"><a href="#cb1-679" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-680"><a href="#cb1-680" aria-hidden="true" tabindex="-1"></a>The probability of outcome $(1,\spadesuit)$ is:</span>
+<span id="cb1-681"><a href="#cb1-681" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-682"><a href="#cb1-682" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-683"><a href="#cb1-683" aria-hidden="true" tabindex="-1"></a>\left|-\frac{4i}{5}\right|^2=\frac{16}{25}.</span>
+<span id="cb1-684"><a href="#cb1-684" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-685"><a href="#cb1-685" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-686"><a href="#cb1-686" aria-hidden="true" tabindex="-1"></a>For a two-system state:</span>
+<span id="cb1-687"><a href="#cb1-687" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-688"><a href="#cb1-688" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-689"><a href="#cb1-689" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\psi\rangle</span>
+<span id="cb1-690"><a href="#cb1-690" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-691"><a href="#cb1-691" aria-hidden="true" tabindex="-1"></a>\sum_{(a,b)\in\Sigma\times\Gamma}\alpha_{ab}|ab\rangle,</span>
+<span id="cb1-692"><a href="#cb1-692" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-693"><a href="#cb1-693" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-694"><a href="#cb1-694" aria-hidden="true" tabindex="-1"></a>if only $X$ is measured, then:</span>
+<span id="cb1-695"><a href="#cb1-695" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-696"><a href="#cb1-696" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-697"><a href="#cb1-697" aria-hidden="true" tabindex="-1"></a>\Pr(\text{outcome is }a)</span>
+<span id="cb1-698"><a href="#cb1-698" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-699"><a href="#cb1-699" aria-hidden="true" tabindex="-1"></a>\sum_{b\in\Gamma}|\langle ab|\psi\rangle|^2</span>
+<span id="cb1-700"><a href="#cb1-700" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-701"><a href="#cb1-701" aria-hidden="true" tabindex="-1"></a>\sum_{b\in\Gamma}|\alpha_{ab}|^2.</span>
+<span id="cb1-702"><a href="#cb1-702" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-703"><a href="#cb1-703" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-704"><a href="#cb1-704" aria-hidden="true" tabindex="-1"></a>Now group the state by outcomes of $X$:</span>
+<span id="cb1-705"><a href="#cb1-705" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-706"><a href="#cb1-706" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-707"><a href="#cb1-707" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>\psi\rangle</span>
+<span id="cb1-708"><a href="#cb1-708" aria-hidden="true" tabindex="-1"></a>=</span>
+<span id="cb1-709"><a href="#cb1-709" aria-hidden="true" tabindex="-1"></a>\sum_{a\in\Sigma}|a\rangle\otimes|\Phi_a\rangle.</span>
+<span id="cb1-710"><a href="#cb1-710" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-711"><a href="#cb1-711" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-712"><a href="#cb1-712" aria-hidden="true" tabindex="-1"></a>Then:</span>
+<span id="cb1-713"><a href="#cb1-713" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-714"><a href="#cb1-714" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-715"><a href="#cb1-715" aria-hidden="true" tabindex="-1"></a>\Pr(\text{outcome is }a)=<span class="sc">\|</span>|\Phi_a\rangle<span class="sc">\|</span>^2.</span>
+<span id="cb1-716"><a href="#cb1-716" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-717"><a href="#cb1-717" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-718"><a href="#cb1-718" aria-hidden="true" tabindex="-1"></a>If the measurement of $X$ gives outcome $a$, the post-measurement state is:</span>
+<span id="cb1-719"><a href="#cb1-719" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-720"><a href="#cb1-720" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-721"><a href="#cb1-721" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>a\rangle\otimes</span>
+<span id="cb1-722"><a href="#cb1-722" aria-hidden="true" tabindex="-1"></a>\frac{|\Phi_a\rangle}{<span class="sc">\|</span>|\Phi_a\rangle<span class="sc">\|</span>}.</span>
+<span id="cb1-723"><a href="#cb1-723" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-724"><a href="#cb1-724" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-725"><a href="#cb1-725" aria-hidden="true" tabindex="-1"></a>The division by the norm re-normalizes the remaining state.</span>
+<span id="cb1-726"><a href="#cb1-726" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-727"><a href="#cb1-727" aria-hidden="true" tabindex="-1"></a><span class="fu">### Unitary Operations on Multiple Systems</span></span>
+<span id="cb1-728"><a href="#cb1-728" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-729"><a href="#cb1-729" aria-hidden="true" tabindex="-1"></a>When independent unitary operations are applied to separate systems, the combined global operation is the tensor product of the local unitary matrices.</span>
+<span id="cb1-730"><a href="#cb1-730" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-731"><a href="#cb1-731" aria-hidden="true" tabindex="-1"></a>If $U_1,\dots,U_n$ act on systems $X_1,\dots,X_n$, then the global operation is:</span>
+<span id="cb1-732"><a href="#cb1-732" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-733"><a href="#cb1-733" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-734"><a href="#cb1-734" aria-hidden="true" tabindex="-1"></a>U_1\otimes\cdots\otimes U_n.</span>
+<span id="cb1-735"><a href="#cb1-735" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-736"><a href="#cb1-736" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-737"><a href="#cb1-737" aria-hidden="true" tabindex="-1"></a>If we apply a unitary $U$ to system $X$ and do nothing to system $Y$, the global operation on $(X,Y)$ is:</span>
+<span id="cb1-738"><a href="#cb1-738" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-739"><a href="#cb1-739" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-740"><a href="#cb1-740" aria-hidden="true" tabindex="-1"></a>U\otimes I.</span>
+<span id="cb1-741"><a href="#cb1-741" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-742"><a href="#cb1-742" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-743"><a href="#cb1-743" aria-hidden="true" tabindex="-1"></a>The identity matrix $I$ represents doing nothing to the unaddressed subsystem. This is a recurring pattern: even a local physical operation must be represented as an operation on the full compound state space.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

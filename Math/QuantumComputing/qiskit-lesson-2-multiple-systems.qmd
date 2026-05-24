@@ -1,0 +1,743 @@
+---
+title: "Qiskit Lesson 2: Multiple Systems"
+author: "Chao Ma"
+date: "2026-05-23"
+categories: [Quantum Computing, Qiskit, Quantum Information, Tensor Products, Entanglement]
+description: "Lesson 2 notes on compound classical and quantum systems: Cartesian products, tensor products, marginal and conditional states, CNOT, Bell states, partial measurement, and local unitary operations."
+toc: true
+---
+
+<iframe width="100%" height="500" src="https://www.youtube.com/embed/DfZZS8Spe7U?list=PLOFEBzvs-VvqKKMXX4vbi4EB1uaErFMSO&amp;index=4" title="Qiskit Lesson 2" frameborder="0" allowfullscreen></iframe>
+
+Lesson 1 described a single system.
+
+Lesson 2 asks what changes when we combine systems. The main answer is that state spaces multiply: classical states use Cartesian products, while vector representations use tensor products.
+
+That same idea appears in several forms:
+
+- classical multi-system states use Cartesian products and probability vectors
+- quantum state multi-systems use tensor products and complex amplitudes
+
+## Classical Multi-System States
+
+### Classical Compound Systems
+
+Suppose $X$ has classical state set $\Sigma$ and $Y$ has classical state set $\Gamma$.
+
+The compound system $(X,Y)$ has classical state set:
+
+$$
+\Sigma \times \Gamma
+=
+\{(a,b): a\in\Sigma,\ b\in\Gamma\}.
+$$
+
+For example, if:
+
+$$
+\Sigma=\{0,1\},
+\qquad
+\Gamma=\{\clubsuit,\diamondsuit,\heartsuit,\spadesuit\},
+$$
+
+then:
+
+$$
+\Sigma\times\Gamma
+=
+\{
+(0,\clubsuit),(0,\diamondsuit),(0,\heartsuit),(0,\spadesuit),
+(1,\clubsuit),(1,\diamondsuit),(1,\heartsuit),(1,\spadesuit)
+\}.
+$$
+
+For $n$ systems $X_1,\dots,X_n$ with classical state sets $\Sigma_1,\dots,\Sigma_n$, the compound state set is:
+
+$$
+\Sigma_1\times\cdots\times\Sigma_n
+=
+\{(a_1,\dots,a_n): a_1\in\Sigma_1,\dots,a_n\in\Sigma_n\}.
+$$
+
+If $X_1,X_2,X_3$ are bits, then:
+
+$$
+\{0,1\}^3
+=
+\{
+000,001,010,011,100,101,110,111
+\}.
+$$
+
+The convention is lexicographic order, with significance decreasing from left to right.
+
+For ten bits:
+
+$$
+\Sigma_1=\cdots=\Sigma_{10}=\{0,1\},
+\qquad
+\Sigma_1\times\cdots\times\Sigma_{10}=\{0,1\}^{10}.
+$$
+
+The ordered states begin:
+
+$$
+0000000000,\ 0000000001,\ 0000000010,\ 0000000011,\ \dots,\ 1111111111.
+$$
+
+### Probabilistic States of Multiple Systems
+
+A probabilistic state of a compound system assigns probabilities to the Cartesian product of the individual state sets.
+
+For two bits $(X,Y)$, one possible state is:
+
+$$
+\begin{aligned}
+\Pr((X,Y)=(0,0)) &= \frac{1}{2},\\
+\Pr((X,Y)=(0,1)) &= 0,\\
+\Pr((X,Y)=(1,0)) &= 0,\\
+\Pr((X,Y)=(1,1)) &= \frac{1}{2}.
+\end{aligned}
+$$
+
+Using the lexicographic basis $00,01,10,11$, the probability vector is:
+
+$$
+\begin{pmatrix}
+1/2\\
+0\\
+0\\
+1/2
+\end{pmatrix}.
+$$
+
+Equivalently:
+
+$$
+|\pi\rangle
+=
+\frac{1}{2}|00\rangle+\frac{1}{2}|11\rangle.
+$$
+
+The basis vectors are:
+
+$$
+|00\rangle=
+\begin{pmatrix}1\\0\\0\\0\end{pmatrix},
+\quad
+|01\rangle=
+\begin{pmatrix}0\\1\\0\\0\end{pmatrix},
+\quad
+|10\rangle=
+\begin{pmatrix}0\\0\\1\\0\end{pmatrix},
+\quad
+|11\rangle=
+\begin{pmatrix}0\\0\\0\\1\end{pmatrix}.
+$$
+
+In general:
+
+$$
+|\pi\rangle
+=
+\sum_{(a,b)\in\Sigma\times\Gamma} p_{ab}|ab\rangle.
+$$
+
+### Independence
+
+For a probabilistic state of $(X,Y)$, the systems $X$ and $Y$ are independent if:
+
+$$
+\Pr((X,Y)=(a,b))=\Pr(X=a)\Pr(Y=b)
+$$
+
+for every $a\in\Sigma$ and $b\in\Gamma$.
+
+In vector notation, this means there are probability vectors:
+
+$$
+|\phi\rangle=\sum_{a\in\Sigma}q_a|a\rangle,
+\qquad
+|\psi\rangle=\sum_{b\in\Gamma}r_b|b\rangle
+$$
+
+such that:
+
+$$
+p_{ab}=q_ar_b.
+$$
+
+This is exactly what the tensor product encodes.
+
+### Tensor Products of Vectors
+
+Let:
+
+$$
+|\phi\rangle=\sum_{a\in\Sigma}\alpha_a|a\rangle,
+\qquad
+|\psi\rangle=\sum_{b\in\Gamma}\beta_b|b\rangle.
+$$
+
+Their tensor product is:
+
+$$
+|\phi\rangle\otimes|\psi\rangle
+=
+\sum_{(a,b)\in\Sigma\times\Gamma}\alpha_a\beta_b|ab\rangle.
+$$
+
+Equivalently:
+
+$$
+\langle ab|\left(|\phi\rangle\otimes|\psi\rangle\right)
+=
+\langle a|\phi\rangle\langle b|\psi\rangle.
+$$
+
+For example:
+
+$$
+|\phi\rangle=\frac{1}{4}|0\rangle+\frac{3}{4}|1\rangle,
+\qquad
+|\psi\rangle=\frac{2}{3}|0\rangle+\frac{1}{3}|1\rangle.
+$$
+
+Then:
+
+$$
+\begin{aligned}
+|\phi\rangle\otimes|\psi\rangle
+&=
+\frac{1}{4}\frac{2}{3}|00\rangle
++
+\frac{1}{4}\frac{1}{3}|01\rangle
++
+\frac{3}{4}\frac{2}{3}|10\rangle
++
+\frac{3}{4}\frac{1}{3}|11\rangle\\
+&=
+\frac{1}{6}|00\rangle
++
+\frac{1}{12}|01\rangle
++
+\frac{1}{2}|10\rangle
++
+\frac{1}{4}|11\rangle.
+\end{aligned}
+$$
+
+For column vectors:
+
+$$
+\begin{pmatrix}
+\alpha_1\\
+\vdots\\
+\alpha_m
+\end{pmatrix}
+\otimes
+\begin{pmatrix}
+\beta_1\\
+\vdots\\
+\beta_k
+\end{pmatrix}
+=
+\begin{pmatrix}
+\alpha_1\beta_1\\
+\vdots\\
+\alpha_1\beta_k\\
+\alpha_2\beta_1\\
+\vdots\\
+\alpha_m\beta_k
+\end{pmatrix}.
+$$
+
+The tensor product is bilinear:
+
+$$
+(|\phi_1\rangle+|\phi_2\rangle)\otimes|\psi\rangle
+=
+|\phi_1\rangle\otimes|\psi\rangle
++
+|\phi_2\rangle\otimes|\psi\rangle,
+$$
+
+and:
+
+$$
+(\alpha|\phi\rangle)\otimes|\psi\rangle
+=
+\alpha(|\phi\rangle\otimes|\psi\rangle).
+$$
+
+For $n$ systems:
+
+$$
+|\psi\rangle
+=
+|\phi_1\rangle\otimes\cdots\otimes|\phi_n\rangle
+$$
+
+is defined by:
+
+$$
+\langle a_1\cdots a_n|\psi\rangle
+=
+\langle a_1|\phi_1\rangle\cdots\langle a_n|\phi_n\rangle.
+$$
+
+### Measuring Probabilistic States
+
+If two bits are in the probabilistic state:
+
+$$
+\frac{1}{2}|00\rangle+\frac{1}{2}|11\rangle,
+$$
+
+then measuring both bits gives outcome $00$ with probability $1/2$ and outcome $11$ with probability $1/2$.
+
+If only system $X$ is measured, the probability of observing $a\in\Sigma$ is the marginal probability:
+
+$$
+\Pr(X=a)
+=
+\sum_{b\in\Gamma}\Pr((X,Y)=(a,b)).
+$$
+
+The conditional probability is:
+
+$$
+\Pr(Y=b\mid X=a)
+=
+\frac{\Pr((X,Y)=(a,b))}{\Pr(X=a)}.
+$$
+
+For:
+
+$$
+\sum_{(a,b)\in\Sigma\times\Gamma}p_{ab}|ab\rangle
+=
+\sum_{a\in\Sigma}|a\rangle\otimes
+\left(\sum_{b\in\Gamma}p_{ab}|b\rangle\right),
+$$
+
+the marginal probability is:
+
+$$
+\Pr(X=a)=\sum_{b\in\Gamma}p_{ab},
+$$
+
+and the conditional state of $Y$ after observing $X=a$ is:
+
+$$
+\frac{\sum_{b\in\Gamma}p_{ab}|b\rangle}
+{\sum_{c\in\Gamma}p_{ac}}.
+$$
+
+For example:
+
+$$
+\frac{1}{12}|00\rangle
++
+\frac{1}{4}|01\rangle
++
+\frac{1}{3}|10\rangle
++
+\frac{1}{3}|11\rangle
+$$
+
+can be grouped by the first system as:
+
+$$
+|0\rangle\otimes
+\left(\frac{1}{12}|0\rangle+\frac{1}{4}|1\rangle\right)
++
+|1\rangle\otimes
+\left(\frac{1}{3}|0\rangle+\frac{1}{3}|1\rangle\right).
+$$
+
+### Operations on Probabilistic States
+
+The controlled-NOT operation, or CNOT, acts on a two-bit system $(X,Y)$.
+
+- $X$ is the control bit.
+- $Y$ is the target bit.
+- if $X=1$, flip $Y$
+- if $X=0$, leave $Y$ unchanged
+
+Its action on the standard basis is:
+
+$$
+\begin{aligned}
+|00\rangle &\mapsto |00\rangle,\\
+|01\rangle &\mapsto |01\rangle,\\
+|10\rangle &\mapsto |11\rangle,\\
+|11\rangle &\mapsto |10\rangle.
+\end{aligned}
+$$
+
+So the matrix is:
+
+$$
+\begin{pmatrix}
+1 & 0 & 0 & 0\\
+0 & 1 & 0 & 0\\
+0 & 0 & 0 & 1\\
+0 & 0 & 1 & 0
+\end{pmatrix}.
+$$
+
+Another example is a randomized operation:
+
+- with probability $1/2$, set $Y=X$
+- with probability $1/2$, set $X=Y$
+
+The resulting stochastic matrix is an average of two deterministic matrices:
+
+$$
+\begin{pmatrix}
+1 & 1/2 & 1/2 & 0\\
+0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0\\
+0 & 1/2 & 1/2 & 1
+\end{pmatrix}
+=
+\frac{1}{2}
+\begin{pmatrix}
+1 & 1 & 0 & 0\\
+0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0\\
+0 & 0 & 1 & 1
+\end{pmatrix}
++
+\frac{1}{2}
+\begin{pmatrix}
+1 & 0 & 1 & 0\\
+0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0\\
+0 & 1 & 0 & 1
+\end{pmatrix}.
+$$
+
+### Tensor Products of Matrices
+
+Let:
+
+$$
+M=\sum_{a,b\in\Sigma}\alpha_{ab}|a\rangle\langle b|,
+\qquad
+N=\sum_{c,d\in\Gamma}\beta_{cd}|c\rangle\langle d|.
+$$
+
+Their tensor product is:
+
+$$
+M\otimes N
+=
+\sum_{a,b\in\Sigma}
+\sum_{c,d\in\Gamma}
+\alpha_{ab}\beta_{cd}|ac\rangle\langle bd|.
+$$
+
+Equivalently:
+
+$$
+\langle ac|M\otimes N|bd\rangle
+=
+\langle a|M|b\rangle
+\langle c|N|d\rangle.
+$$
+
+For block matrices, the rule is:
+
+$$
+A\otimes B
+=
+\begin{pmatrix}
+a_{11}B & a_{12}B\\
+a_{21}B & a_{22}B
+\end{pmatrix}
+$$
+
+for a $2\times 2$ matrix $A$.
+
+For $n$ matrices:
+
+$$
+\langle a_1\cdots a_n|
+M_1\otimes\cdots\otimes M_n
+|b_1\cdots b_n\rangle
+=
+\langle a_1|M_1|b_1\rangle
+\cdots
+\langle a_n|M_n|b_n\rangle.
+$$
+
+The mixed-product property is:
+
+$$
+(M_1\otimes\cdots\otimes M_n)
+(N_1\otimes\cdots\otimes N_n)
+=
+(M_1N_1)\otimes\cdots\otimes(M_nN_n).
+$$
+
+This says that independent local operations can be multiplied locally before tensoring globally.
+
+## Quantum State Multi-Systems
+
+### Quantum States of Multiple Systems
+
+A quantum state of a compound system is a column vector whose indices correspond to the Cartesian product of the individual classical state sets.
+
+For two qubits, the standard basis is:
+
+$$
+|00\rangle,\ |01\rangle,\ |10\rangle,\ |11\rangle.
+$$
+
+A general two-qubit state has the form:
+
+$$
+|\psi\rangle
+=
+\alpha_{00}|00\rangle
++
+\alpha_{01}|01\rangle
++
+\alpha_{10}|10\rangle
++
+\alpha_{11}|11\rangle,
+$$
+
+with normalization:
+
+$$
+|\alpha_{00}|^2+|\alpha_{01}|^2+|\alpha_{10}|^2+|\alpha_{11}|^2=1.
+$$
+
+Examples:
+
+$$
+\frac{1}{2}|00\rangle
++
+\frac{i}{2}|01\rangle
+-
+\frac{1}{2}|10\rangle
+-
+\frac{i}{2}|11\rangle
+$$
+
+has equal measurement probability $1/4$ for all four outcomes.
+
+The state:
+
+$$
+\frac{3}{5}|00\rangle-\frac{4}{5}|11\rangle
+$$
+
+has probability $9/25$ of measuring $00$ and $16/25$ of measuring $11$.
+
+The basis state:
+
+$$
+|01\rangle
+$$
+
+has probability 1 of measuring $01$.
+
+### Product States and Entanglement
+
+If $|\phi\rangle$ is a state of system $X$ and $|\psi\rangle$ is a state of system $Y$, then:
+
+$$
+|\phi\rangle\otimes|\psi\rangle
+$$
+
+is a state of the compound system $(X,Y)$.
+
+States of this form are product states. They represent systems that are independent in the quantum-state description.
+
+More generally:
+
+$$
+|\psi_1\rangle\otimes\cdots\otimes|\psi_n\rangle
+$$
+
+is a product state of $(X_1,\dots,X_n)$.
+
+Not every compound quantum state is a product state. States that cannot be factored into tensor products are entangled.
+
+### Bell States
+
+The Bell states are four maximally entangled two-qubit states. They form an orthonormal basis for the four-dimensional two-qubit state space.
+
+The first Bell state is:
+
+$$
+|\Phi^+\rangle
+=
+\frac{1}{\sqrt{2}}|00\rangle
++
+\frac{1}{\sqrt{2}}|11\rangle.
+$$
+
+Measuring both qubits gives $00$ with probability $1/2$ and $11$ with probability $1/2$. The outcomes are perfectly correlated.
+
+The second Bell state is:
+
+$$
+|\Phi^-\rangle
+=
+\frac{1}{\sqrt{2}}|00\rangle
+-
+\frac{1}{\sqrt{2}}|11\rangle.
+$$
+
+It has the same measurement probabilities as $|\Phi^+\rangle$, but the relative phase is different.
+
+The third Bell state is:
+
+$$
+|\Psi^+\rangle
+=
+\frac{1}{\sqrt{2}}|01\rangle
++
+\frac{1}{\sqrt{2}}|10\rangle.
+$$
+
+Measuring gives $01$ or $10$ with equal probability. The outcomes are perfectly anti-correlated.
+
+The fourth Bell state is:
+
+$$
+|\Psi^-\rangle
+=
+\frac{1}{\sqrt{2}}|01\rangle
+-
+\frac{1}{\sqrt{2}}|10\rangle.
+$$
+
+This is also anti-correlated, with a different relative phase.
+
+### GHZ and W States
+
+The GHZ state is:
+
+$$
+\frac{1}{\sqrt{2}}|000\rangle
++
+\frac{1}{\sqrt{2}}|111\rangle.
+$$
+
+All three qubits are perfectly correlated. Measuring one qubit determines the others.
+
+The W state is:
+
+$$
+\frac{1}{\sqrt{3}}|001\rangle
++
+\frac{1}{\sqrt{3}}|010\rangle
++
+\frac{1}{\sqrt{3}}|100\rangle.
+$$
+
+Exactly one qubit is in state $1$. Each of the three positions has probability $1/3$.
+
+The W state is important because its entanglement is more robust to losing or measuring one subsystem than GHZ-style entanglement.
+
+### Measuring Quantum Compound Systems
+
+If a compound system is measured completely, the outcome belongs to the Cartesian product:
+
+$$
+(a_1,\dots,a_n)\in
+\Sigma_1\times\cdots\times\Sigma_n.
+$$
+
+For a joint quantum state $|\psi\rangle$, the probability of observing $a_1\cdots a_n$ is:
+
+$$
+\left|\langle a_1\cdots a_n|\psi\rangle\right|^2.
+$$
+
+For example:
+
+$$
+|\psi\rangle
+=
+\frac{3}{5}|0\rangle|\heartsuit\rangle
+-
+\frac{4i}{5}|1\rangle|\spadesuit\rangle.
+$$
+
+The probability of outcome $(0,\heartsuit)$ is:
+
+$$
+\left|\frac{3}{5}\right|^2=\frac{9}{25}.
+$$
+
+The probability of outcome $(1,\spadesuit)$ is:
+
+$$
+\left|-\frac{4i}{5}\right|^2=\frac{16}{25}.
+$$
+
+For a two-system state:
+
+$$
+|\psi\rangle
+=
+\sum_{(a,b)\in\Sigma\times\Gamma}\alpha_{ab}|ab\rangle,
+$$
+
+if only $X$ is measured, then:
+
+$$
+\Pr(\text{outcome is }a)
+=
+\sum_{b\in\Gamma}|\langle ab|\psi\rangle|^2
+=
+\sum_{b\in\Gamma}|\alpha_{ab}|^2.
+$$
+
+Now group the state by outcomes of $X$:
+
+$$
+|\psi\rangle
+=
+\sum_{a\in\Sigma}|a\rangle\otimes|\Phi_a\rangle.
+$$
+
+Then:
+
+$$
+\Pr(\text{outcome is }a)=\||\Phi_a\rangle\|^2.
+$$
+
+If the measurement of $X$ gives outcome $a$, the post-measurement state is:
+
+$$
+|a\rangle\otimes
+\frac{|\Phi_a\rangle}{\||\Phi_a\rangle\|}.
+$$
+
+The division by the norm re-normalizes the remaining state.
+
+### Unitary Operations on Multiple Systems
+
+When independent unitary operations are applied to separate systems, the combined global operation is the tensor product of the local unitary matrices.
+
+If $U_1,\dots,U_n$ act on systems $X_1,\dots,X_n$, then the global operation is:
+
+$$
+U_1\otimes\cdots\otimes U_n.
+$$
+
+If we apply a unitary $U$ to system $X$ and do nothing to system $Y$, the global operation on $(X,Y)$ is:
+
+$$
+U\otimes I.
+$$
+
+The identity matrix $I$ represents doing nothing to the unaddressed subsystem. This is a recurring pattern: even a local physical operation must be represented as an operation on the full compound state space.
