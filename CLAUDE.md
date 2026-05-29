@@ -188,6 +188,7 @@ After successfully pushing changes to GitHub:
 When drafting LinkedIn posts for blog content, use these emojis:
 - **Deep Learning topics**: ∇ (delta/nabla symbol) - represents gradients and optimization
 - **Linear Algebra topics**: 📐 (triangle/ruler) - represents geometric and matrix concepts
+- **Probability topics**: 𝐏 - represents probability, random variables, and probabilistic reasoning
 
 ### Writing Process
 1. **Identify the key insight**: Focus on the main conceptual connection or "aha moment" from the blog post

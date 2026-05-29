@@ -4,6 +4,7 @@
 - Start with emoji + chapter reference:
   - Deep Learning topics: ∇ **Deep Learning Book (Chapter X.X)**
   - Linear Algebra topics: 📐 **MIT 18.06SC Linear Algebra (Lecture XX)**
+  - Probability topics: 𝐏 **MIT 6.041 Probability (Lecture X)**
 - Add a clear statement or equation line.
 - 2-4 bullets with 🔹 for key insights.
 - Philosophical closing line with 💡.
