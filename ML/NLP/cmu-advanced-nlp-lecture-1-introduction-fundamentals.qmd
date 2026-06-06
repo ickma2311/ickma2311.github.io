@@ -1,0 +1,113 @@
+---
+title: "CMU Advanced NLP Lecture 1: Introduction and Fundamentals"
+author: "Chao Ma"
+date: "2026-06-06"
+categories: [Advanced NLP, NLP, Supervised Learning, Reinforcement Learning, Softmax]
+description: "Introductory notes on building NLP systems with rule-based methods, supervised learning, and reinforcement learning, plus the core ingredients of parameterization, learning, and inference."
+toc: true
+---
+
+<iframe width="100%" height="500" src="https://www.youtube.com/embed/C-U1FtkubmQ" title="CMU Advanced NLP Lecture 1: Introduction and Fundamentals" frameborder="0" allowfullscreen></iframe>
+
+This lecture introduces several ways to build NLP systems and the common ingredients behind them: parameterization, learning, and inference.
+
+## A Few Methods to Create NLP Systems
+
+### Rule-Based Systems
+
+Rule-based systems use manually written logic. They do not require training data, but they depend heavily on human-designed patterns.
+
+```python
+def classify(x: str) -> str:
+    sports_keywords = ["baseball", "soccer", "football", "tennis"]
+    if any(keyword in x for keyword in sports_keywords):
+        return "sports"
+    else:
+        return "other"
+```
+
+This approach is simple and interpretable, but it is hard to scale when language becomes ambiguous or diverse.
+
+### Supervised Learning
+
+Supervised learning trains a model from labeled examples.
+
+- Training data is needed.
+- More data is usually better.
+- Common tasks include text classification, sentiment analysis, and machine translation.
+
+The model learns a mapping from input text to target outputs, such as mapping a sentence to a sentiment label.
+
+### Reinforcement Learning
+
+Reinforcement learning needs an environment or reward signal.
+
+In NLP, reinforcement learning is often used to fine-tune and align language models. The system treats generated text as a sequence of actions and learns to improve responses by optimizing rewards, such as human preferences or automated evaluation scores.
+
+## Three General Ingredients
+
+### 1. Parameterization
+
+Parameterization means choosing how the scoring function is computed.
+
+The key question is: what parameters, rules, or numbers does the system need in order to score possible outputs?
+
+### 2. Learning
+
+Learning means setting or adjusting those parameters.
+
+The system uses data, feedback, or rewards to tune the parameters so that better outputs receive better scores.
+
+### 3. Inference
+
+Inference means making the final decision or prediction.
+
+Once the scoring function is learned, the system applies it to a new input and chooses or samples an output.
+
+## From Scoring to Probability
+
+Softmax converts scores into probabilities:
+
+$$
+p_\theta(y \mid x)
+=
+\frac{\exp(s_\theta(y \mid x))}
+{\sum_{y'} \exp(s_\theta(y' \mid x))}
+$$
+
+Here, $s_\theta(y \mid x)$ is the model score for output $y$ given input $x$, and $p_\theta(y \mid x)$ is the normalized probability.
+
+For example, for the sentence:
+
+> I hate the movie.
+
+A sentiment classifier might produce:
+
+| Label | Probability |
+|---|---:|
+| negative | 0.98 |
+| neutral | 0.01 |
+| positive | 0.01 |
+
+## From Classification to Generation
+
+Once the model gives a probability distribution, we do not have to choose only the highest-probability label. We can also sample from it:
+
+$$
+y' \sim p_\theta(y \mid x)
+$$
+
+This turns the model from a classifier into a generator. Instead of returning a fixed label, the system can produce varied outputs, such as chatbot responses.
+
+Example:
+
+```text
+Input:  I hate this movie
+Output: because it is not creative
+```
+
+The main idea is that probability distributions support both decision-making and generation. Classification usually selects an output; generation samples or decodes an output sequence.
+
+---
+
+*Source: CMU Advanced NLP Fall 2025, Lecture 1: Introduction and Fundamentals.*
