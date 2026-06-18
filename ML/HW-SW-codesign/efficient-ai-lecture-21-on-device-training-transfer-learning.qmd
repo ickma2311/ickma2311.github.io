@@ -1,0 +1,115 @@
+---
+title: "Efficient AI Lecture 21: On-Device Training and Transfer Learning"
+author: "Chao Ma"
+date: "2026-06-18"
+categories: [Deep Learning, Efficient AI, TinyML, On-Device Training, Transfer Learning]
+description: "Concise notes on why on-device training matters, why gradients are not safe to share, and how TinyTL, SparseBP, QAS, and PockEngine make edge training practical."
+toc: true
+---
+
+This lecture moves from efficient inference to efficient **training** on edge devices. The key motivation is simple: user data is personal, changing, and often cannot leave the device.
+
+# Why On-Device Learning
+
+On-device learning supports:
+
+- **Customization**: models adapt to user-specific data.
+- **Privacy**: raw data stays on the device.
+- **Lower cloud dependency**: fewer round trips to centralized training.
+
+Federated learning helps because it shares model updates instead of raw data. But the lecture's first warning is important: **gradients are not automatically safe to share**.
+
+# Gradients Can Leak Data
+
+Deep leakage from gradients shows that an attacker can optimize dummy inputs so that their gradients match the shared gradients. If the match succeeds, the attacker can reconstruct private training data.
+
+The implication:
+
+- Sharing data is unsafe.
+- Sharing gradients can also be unsafe.
+- Keeping training local is valuable, especially for sensitive user, code, or enterprise data.
+
+Gradient compression can make leakage harder, but privacy should not be treated as solved just because raw data stays local.
+
+# Memory Is the Main Bottleneck
+
+Training is much more memory-hungry than inference because backpropagation needs intermediate activations.
+
+For a layer:
+
+$$
+a_{i+1} = a_i W_i + b_i
+$$
+
+the weight gradient needs the saved activation:
+
+$$
+\frac{\partial L}{\partial W_i}
+=
+a_i^T
+\frac{\partial L}{\partial a_{i+1}}
+$$
+
+Inference can discard activations after use. Training must keep them for backward propagation. On edge devices, this activation memory often dominates parameter memory.
+
+# TinyTL
+
+TinyTL asks: if activation memory is the bottleneck, can we adapt the model without storing so many activations?
+
+The key idea:
+
+- Freeze most weights.
+- Fine-tune biases and the classifier head.
+- Add lightweight residual modules to recover capacity.
+
+Bias-only updates are memory-efficient because updating biases does not require the same saved activations as weight updates. But bias-only tuning can hurt accuracy, so TinyTL adds **lite residual learning** with small activation cost.
+
+Takeaway: parameter-efficient transfer learning is not always memory-efficient. TinyTL optimizes for the real bottleneck: activations.
+
+# Sparse Backpropagation
+
+Full backpropagation updates the whole model and stores many activations. Sparse backpropagation updates only selected layers or tensors.
+
+The method uses contribution analysis:
+
+- Fine-tune one layer or tensor group.
+- Measure its accuracy gain.
+- Update the parts that contribute most.
+- Skip the parts with low benefit or high memory cost.
+
+This can keep accuracy close to full backpropagation while using much less extra memory. The same idea also extends to LLM fine-tuning: sparse updates can improve throughput while preserving much of the quality of full tuning or LoRA-style adaptation.
+
+# Quantized Training and QAS
+
+Real quantized training saves memory because weights and activations are stored in integer formats. But it is harder to optimize than fake quantization because the training graph is truly low precision.
+
+The problem: the scale of weights and gradients can become mismatched under quantization.
+
+Quantization-Aware Scaling (QAS) fixes this by rescaling gradients according to the quantization scale, aligning the weight-to-gradient ratio more closely with full-precision training.
+
+Takeaway: quantization saves memory, but stable quantized training needs optimizer-aware scaling.
+
+# PockEngine
+
+Algorithmic savings only matter if the runtime can realize them.
+
+PockEngine moves more work to compile time:
+
+- Trace the forward graph.
+- Generate the backward graph with compile-time autodiff.
+- Apply graph optimizations such as sparse updates, operator reordering, in-place updates, constant folding, and dead-code elimination.
+- Generate lightweight training binaries for edge platforms.
+
+This matters because general-purpose training frameworks are optimized for flexibility, not tiny memory budgets.
+
+# Key Takeaway
+
+On-device training is hard because it combines three constraints:
+
+- **Privacy**: gradients can leak information.
+- **Memory**: activations dominate training footprint.
+- **Systems support**: efficient algorithms need specialized runtimes.
+
+TinyTL reduces activation memory, SparseBP avoids unnecessary backward computation, QAS stabilizes real quantized training, and PockEngine turns these ideas into practical edge training systems.
+
+*Source: MIT 6.5940 TinyML and Efficient Deep Learning Computing, Lecture 21: On-Device Training and Transfer Learning.*
