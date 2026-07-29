@@ -23,11 +23,11 @@ PROBABILITY_COUNT=$(grep -c "^\*\*\[" Math/Probability/index.qmd)
 # Count Information Theory notes
 INFO_THEORY_COUNT=$(grep -c "^\*\*\[" Math/InformationTheory/index.qmd)
 
-# Count Quantum Computing notes
-QUANTUM_COUNT=$(grep -c "^\*\*\[" Math/QuantumComputing/index.qmd)
+# Count Quantum Machine notes
+QUANTUM_MACHINE_COUNT=$(grep -c "^\*\*\[" QuantumMachine/index.qmd)
 
 # Count all Math items
-MATH_COUNT=$((MIT1806_COUNT + MIT18065_COUNT + EE364A_COUNT + CALCULUS_COUNT + PROBABILITY_COUNT + INFO_THEORY_COUNT + QUANTUM_COUNT))
+MATH_COUNT=$((MIT1806_COUNT + MIT18065_COUNT + EE364A_COUNT + CALCULUS_COUNT + PROBABILITY_COUNT + INFO_THEORY_COUNT))
 
 # Count Deep Learning papers
 DL_PAPERS_COUNT=$(grep -c "^\*\*\[" ML/papers/index.qmd)
@@ -46,11 +46,11 @@ echo "  Deep Learning: $DL_COUNT chapters"
 echo "  Math: $MATH_COUNT items"
 echo "    Probability: $PROBABILITY_COUNT notes"
 echo "    Information Theory: $INFO_THEORY_COUNT notes"
-echo "    Quantum Computing: $QUANTUM_COUNT notes"
 echo "    Calculus: $CALCULUS_COUNT notes"
 echo "    MIT 18.06SC: $MIT1806_COUNT lectures"
 echo "    MIT 18.065: $MIT18065_COUNT lectures"
 echo "    Stanford EE 364A: $EE364A_COUNT lectures"
+echo "  Quantum Machine: $QUANTUM_MACHINE_COUNT notes"
 echo "  Deep Learning Papers: $DL_PAPERS_COUNT notes"
 echo "  JAX: $JAX_COUNT notes"
 echo "  RL: $RL_COUNT notes"
@@ -60,6 +60,8 @@ echo "  ML HW-SW Codesign: $HWSW_COUNT notes"
 sed -i.bak "s/Goodfellow Deep Learning Book <span class=\"section-count\">[0-9]* chapters/Goodfellow Deep Learning Book <span class=\"section-count\">$DL_COUNT chapters/" index.qmd
 
 sed -i.bak "s/Math <span class=\"section-count\">[0-9]* item[s]\\{0,1\\}/Math <span class=\\\"section-count\\\">$MATH_COUNT item$( [ $MATH_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
+
+sed -i.bak "s/Quantum Machine <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/Quantum Machine <span class=\\\"section-count\\\">$QUANTUM_MACHINE_COUNT note$( [ $QUANTUM_MACHINE_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
 sed -i.bak "s/Papers in Deep Learning <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/Papers in Deep Learning <span class=\\\"section-count\\\">$DL_PAPERS_COUNT note$( [ $DL_PAPERS_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
