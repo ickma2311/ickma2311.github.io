@@ -1405,6 +1405,13 @@ window.Quarto = {
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>backend <span class="op">=</span> service.least_busy(operational<span class="op">=</span><span class="va">True</span>, simulator<span class="op">=</span><span class="va">False</span>, min_num_qubits<span class="op">=</span><span class="dv">127</span>)</span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(backend.name)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A real backend is a physical quantum processing unit. The circuit must be transpiled because each device has its own native gates, qubit connectivity, calibration state, and queue.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="from-zero-to-quantum-first-run-result.png" class="img-fluid figure-img"></p>
+<figcaption>First hardware run result</figcaption>
+</figure>
+</div>
+<p>In this first run, the expected Bell outcomes <code>00</code> and <code>11</code> dominate. The small counts for <code>01</code> and <code>10</code> are the practical part of using real hardware: physical devices have gate noise, readout error, and calibration drift, so the measured distribution is close to the ideal result but not perfectly clean.</p>
 <p>Never commit a real API token into code. Save it locally or pass it through a secure environment variable.</p>
 </section>
 <section id="running-on-a-simulator" class="level1">
@@ -2024,27 +2031,31 @@ window.Quarto = {
 <span id="cb6-110"><a href="#cb6-110" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-111"><a href="#cb6-111" aria-hidden="true" tabindex="-1"></a>A real backend is a physical quantum processing unit. The circuit must be transpiled because each device has its own native gates, qubit connectivity, calibration state, and queue.</span>
 <span id="cb6-112"><a href="#cb6-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-113"><a href="#cb6-113" aria-hidden="true" tabindex="-1"></a>Never commit a real API token into code. Save it locally or pass it through a secure environment variable.</span>
+<span id="cb6-113"><a href="#cb6-113" aria-hidden="true" tabindex="-1"></a><span class="al">![First hardware run result](from-zero-to-quantum-first-run-result.png)</span></span>
 <span id="cb6-114"><a href="#cb6-114" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-115"><a href="#cb6-115" aria-hidden="true" tabindex="-1"></a><span class="fu"># Running on a Simulator</span></span>
+<span id="cb6-115"><a href="#cb6-115" aria-hidden="true" tabindex="-1"></a>In this first run, the expected Bell outcomes <span class="in">`00`</span> and <span class="in">`11`</span> dominate. The small counts for <span class="in">`01`</span> and <span class="in">`10`</span> are the practical part of using real hardware: physical devices have gate noise, readout error, and calibration drift, so the measured distribution is close to the ideal result but not perfectly clean.</span>
 <span id="cb6-116"><a href="#cb6-116" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-117"><a href="#cb6-117" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb6-118"><a href="#cb6-118" aria-hidden="true" tabindex="-1"></a>backend <span class="op">=</span> AerSimulator()</span>
-<span id="cb6-119"><a href="#cb6-119" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-117"><a href="#cb6-117" aria-hidden="true" tabindex="-1"></a>Never commit a real API token into code. Save it locally or pass it through a secure environment variable.</span>
+<span id="cb6-118"><a href="#cb6-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-119"><a href="#cb6-119" aria-hidden="true" tabindex="-1"></a><span class="fu"># Running on a Simulator</span></span>
 <span id="cb6-120"><a href="#cb6-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-121"><a href="#cb6-121" aria-hidden="true" tabindex="-1"></a>The simulator is the right first backend for learning and debugging:</span>
-<span id="cb6-122"><a href="#cb6-122" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-123"><a href="#cb6-123" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>It avoids cloud queues and hardware allocation limits.</span>
-<span id="cb6-124"><a href="#cb6-124" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>It gives a clean baseline for the circuit's expected behavior.</span>
-<span id="cb6-125"><a href="#cb6-125" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>It can optionally include controlled noise models.</span>
+<span id="cb6-121"><a href="#cb6-121" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb6-122"><a href="#cb6-122" aria-hidden="true" tabindex="-1"></a>backend <span class="op">=</span> AerSimulator()</span>
+<span id="cb6-123"><a href="#cb6-123" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-124"><a href="#cb6-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-125"><a href="#cb6-125" aria-hidden="true" tabindex="-1"></a>The simulator is the right first backend for learning and debugging:</span>
 <span id="cb6-126"><a href="#cb6-126" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-127"><a href="#cb6-127" aria-hidden="true" tabindex="-1"></a>The limitation is scale. A classical simulator must represent a state vector whose size grows like $2^N$ for $N$ qubits, so large circuits become expensive quickly. A simulator is useful for development, but it is not a substitute for a physical QPU when the goal is to study real-device behavior or quantum-scale computation.</span>
-<span id="cb6-128"><a href="#cb6-128" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-129"><a href="#cb6-129" aria-hidden="true" tabindex="-1"></a><span class="fu"># Takeaways</span></span>
+<span id="cb6-127"><a href="#cb6-127" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>It avoids cloud queues and hardware allocation limits.</span>
+<span id="cb6-128"><a href="#cb6-128" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>It gives a clean baseline for the circuit's expected behavior.</span>
+<span id="cb6-129"><a href="#cb6-129" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>It can optionally include controlled noise models.</span>
 <span id="cb6-130"><a href="#cb6-130" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-131"><a href="#cb6-131" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A practical Qiskit workflow is: **build circuit -&gt; choose backend -&gt; transpile -&gt; sample -&gt; inspect counts**.</span>
-<span id="cb6-132"><a href="#cb6-132" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The Bell circuit is a useful hello world because it combines superposition and entanglement in only two qubits.</span>
-<span id="cb6-133"><a href="#cb6-133" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Simulators are best for fast iteration; IBM Quantum hardware is needed to see how the circuit behaves on an actual quantum machine.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb6-131"><a href="#cb6-131" aria-hidden="true" tabindex="-1"></a>The limitation is scale. A classical simulator must represent a state vector whose size grows like $2^N$ for $N$ qubits, so large circuits become expensive quickly. A simulator is useful for development, but it is not a substitute for a physical QPU when the goal is to study real-device behavior or quantum-scale computation.</span>
+<span id="cb6-132"><a href="#cb6-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-133"><a href="#cb6-133" aria-hidden="true" tabindex="-1"></a><span class="fu"># Takeaways</span></span>
+<span id="cb6-134"><a href="#cb6-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-135"><a href="#cb6-135" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A practical Qiskit workflow is: **build circuit -&gt; choose backend -&gt; transpile -&gt; sample -&gt; inspect counts**.</span>
+<span id="cb6-136"><a href="#cb6-136" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The Bell circuit is a useful hello world because it combines superposition and entanglement in only two qubits.</span>
+<span id="cb6-137"><a href="#cb6-137" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Simulators are best for fast iteration; IBM Quantum hardware is needed to see how the circuit behaves on an actual quantum machine.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
