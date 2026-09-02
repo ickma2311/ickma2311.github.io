@@ -1,0 +1,218 @@
+---
+title: "Learning to Self-Improve and Reason with LLMs"
+author: "Chao Ma"
+date: "2026-09-02"
+categories: [Deep Learning, LLM Agents, Reasoning, Self-Improvement, Alignment, LLM Evaluation]
+description: "Lecture notes on self-improving language models: System 2 prompting, self-rewarding training, verifiable rewards, meta-rewarding, and reasoning-based evaluators."
+toc: true
+---
+
+<iframe width="100%" height="500" src="https://www.youtube.com/embed/_MNlLhU33H0" title="Learning to Self-Improve and Reason with LLMs" frameborder="0" allowfullscreen></iframe>
+
+The goal of a self-improving language model is to do more than learn from a fixed dataset. It should be able to **create new challenges, evaluate its own responses, and update itself from what it has learned**.
+
+This creates a central research question: if an AI supplies more of its own training signal, can it keep improving when direct human supervision becomes a bottleneck?
+
+::: {.callout-note}
+The main idea of the lecture is that generation is only half of self-improvement. A model also needs a reliable way to recognize which generations are better.
+:::
+
+# System 1 and System 2 Reasoning
+
+| Mode | Behavior | Main property |
+|---|---|---|
+| **System 1** | Direct, associative generation | Roughly fixed computation per token |
+| **System 2** | Planning, search, verification, and revision | Dynamic computation before the final response |
+
+An LLM can be viewed as a System 1 engine: an input passes through the network and produces the next token. This is fast, but it can inherit spurious correlations that lead to hallucination, sycophancy, distraction by irrelevant context, or jailbreaking.
+
+System 2 behavior appears when the model spends additional computation before answering. The same underlying LLM may generate intermediate thoughts, call itself on subproblems, verify claims, or revise a draft. Improving the model's weights can strengthen System 1, while improving its reasoning trajectories can strengthen System 2.
+
+# System 2 Through Prompting
+
+Early System 2 methods did not retrain the model. They used prompting to organize additional inference-time computation.
+
+## Chain-of-Thought
+
+Chain-of-thought prompting asks the model to produce intermediate reasoning before the final answer. The important shift is that early generated text becomes a workspace rather than the response itself. Within that workspace, the model can decompose a problem, explore a solution, notice an error, and try again.
+
+## Chain-of-Verification
+
+**Chain-of-Verification** treats the initial response as a draft:
+
+1. Generate a baseline answer.
+2. Derive questions that check its factual claims.
+3. Answer those questions independently.
+4. Cross-check the results and write a verified response.
+
+A model may make mistakes while producing a long factual list even though it can answer each short verification question correctly. Breaking the task into focused checks reduces this accumulation of errors.
+
+## System 2 Attention
+
+Soft attention allows every part of the context to influence the output, including irrelevant or leading information. **System 2 Attention** adds an explicit filtering step:
+
+1. Rewrite the instruction while removing irrelevant information and user-supplied bias.
+2. Answer only the rewritten instruction.
+
+Instead of assuming the model will ignore distractions, the model deliberately decides what deserves attention.
+
+## Branch-Solve-Merge
+
+**Branch-Solve-Merge** decomposes a complex evaluation into task-specific criteria such as accuracy, relevance, clarity, and originality. Each criterion is evaluated independently, then the partial judgments are merged.
+
+Together, these methods established an important result: structured inference-time computation can improve performance without changing model weights.
+
+# From Prompting to Learning to Reason
+
+Prompting can elicit capabilities already present in a model, but it does not directly teach the model which reasoning trajectories work. Post-training turns successful behavior into learned behavior:
+
+- **Supervised fine-tuning (SFT)** increases the likelihood of demonstrated responses.
+- **Reinforcement learning from human feedback (RLHF)** learns a reward signal from human preferences and optimizes against it.
+- **Direct preference optimization (DPO)** directly increases the relative probability of a preferred response over a rejected response.
+
+DPO is simple, but a fixed preference dataset becomes stale as the policy changes. Iterative training addresses this by repeatedly generating fresh responses and rebuilding preference pairs with the current model.
+
+# Self-Rewarding Language Models
+
+## The Model as Actor and Judge
+
+A self-rewarding language model plays two roles:
+
+- **Actor:** follows an instruction and generates candidate responses.
+- **Judge:** scores those responses using criteria such as relevance, coverage, usefulness, clarity, and expertise.
+
+The motivation is not only lower labeling cost. As models become stronger in mathematics, programming, law, or medicine, it becomes harder for ordinary human annotators to judge their outputs reliably.
+
+## The Iterative Self-Training Loop
+
+```{mermaid}
+flowchart LR
+    M["Current model M_t"] --> P["Generate new prompts"]
+    P --> R["Sample candidate responses"]
+    R --> J["Score responses as an LLM judge"]
+    J --> D["Build chosen/rejected pairs"]
+    D --> T["Train with DPO"]
+    T --> N["Next model M_(t+1)"]
+    N --> P
+```
+
+The model therefore generates both its training data and its reward signal. Experiments showed improvement in instruction following across iterations, together with smaller gains in evaluation ability.
+
+However, improvements were stronger for writing, humanities, extraction, and role-playing than for mathematics, coding, and reasoning. The likely reason is simple: the LLM judge was less reliable on tasks that require exact correctness.
+
+::: {.callout-important}
+Self-improvement is bounded by self-evaluation. If the judge cannot recognize a better answer, the actor receives a weak or incorrect training signal.
+:::
+
+# Verifiable Rewards for Reasoning
+
+## Iterative Reasoning Preference Optimization
+
+For problems with known answers, a learned judge is unnecessary. **Iterative Reasoning Preference Optimization (IRPO)** uses an objectively checkable final answer:
+
+1. Generate several chains of thought and final answers.
+2. Extract the answer following a designated final-answer marker.
+3. Compare it with the known answer.
+4. Construct preference pairs from correct and incorrect generations.
+5. Train with DPO plus a negative log-likelihood term on correct solutions, then repeat.
+
+Only the outcome is verified. The model is free to discover the intermediate reasoning process that reaches it.
+
+## Why Negative Examples Matter
+
+SFT learns from correct trajectories but does not explicitly suppress plausible-looking failures. In the lecture's experiments, SFT could assign similar probability to chosen and rejected generations.
+
+Preference optimization uses both sides of the comparison: it reinforces successful reasoning paths while pushing down unsuccessful ones. This contrastive signal was crucial to the gains from iterative training.
+
+## Connection to DeepSeek-R1
+
+DeepSeek-R1 follows the same broad recipe at a much larger scale:
+
+- generate extended reasoning,
+- extract a specially formatted final answer,
+- apply a rule-based correctness reward,
+- and optimize iteratively using GRPO.
+
+Despite receiving reward only for the outcome, the model learns behaviors such as reconsidering an approach and correcting itself. Its reasoning also becomes longer during training as the policy explores more elaborate solution paths.
+
+The exact training procedure for OpenAI o1 was not published, so claims that it uses the same method remain speculative.
+
+# Reasoning on Non-Verifiable Tasks
+
+Tasks such as writing a poem or producing a nuanced explanation do not have a single checkable answer. **Thought Preference Optimization (TPO)** extends reasoning training to these open-ended tasks:
+
+1. Generate thoughts, drafts, and a final response.
+2. Judge the final response with an LLM-based reward model.
+3. Optimize successful thought-response trajectories over repeated iterations.
+
+An initial reasoning prompt can make an already well-tuned model worse. Several training rounds may be needed before learned reasoning surpasses direct generation. More thinking is therefore not automatically better; the model must learn how to use the extra computation.
+
+# Improving the Judge
+
+## Meta-Rewarding: Judging the Judgments
+
+Self-rewarding primarily improves the actor, while judge quality may improve slowly and eventually plateau. **Meta-Rewarding** gives the same model a third role:
+
+```{mermaid}
+flowchart LR
+    A["Actor generates responses"] --> J["Judge compares responses"]
+    J --> M["Meta-judge compares judgments"]
+    M --> JP["Preference pairs over judgments"]
+    JP --> U["Update acting and judging"]
+```
+
+The model produces multiple judgments for a response pair, compares the judgments pairwise, and aggregates the comparisons using Elo scores. This creates preference pairs over judgments. Training on response preferences and judgment preferences improves acting and evaluating together.
+
+## EvalPlanner: Reasoning During Evaluation
+
+**EvalPlanner** trains an LLM judge to create an evaluation plan, execute the plan, and return a verdict. Its key idea is to turn evaluation into a task with a known preference:
+
+1. Generate a good response $y$ to a prompt $x$.
+2. Generate a similar but semantically different prompt $x'$.
+3. Generate a good response $y'$ to $x'$.
+4. Compare $y$ and $y'$ as responses to the original prompt $x$.
+
+Because $y'$ answers a different prompt, $y$ should be preferred for $x$. This synthetic construction supplies a verifiable reward for training the judge's reasoning.
+
+Ablations showed that planning helps evaluation, but forcing every plan into a fixed list of criteria or verification questions hurts performance. The model benefits from discovering its own planning structure.
+
+# The Evaluation Bottleneck
+
+| Task type | Reward source | Main risk |
+|---|---|---|
+| Math, code, or other checkable tasks | Rule-based verification | Correct outcomes may hide flawed reasoning |
+| Writing and open-ended tasks | Learned LLM judge | Judge biases and errors feed back into training |
+
+The methods in the lecture form a reinforcing cycle:
+
+1. Verifiable rewards train better reasoning on checkable tasks.
+2. The same idea trains stronger reasoning-based evaluators.
+3. Better evaluators provide rewards for non-verifiable tasks.
+4. Meta-rewarding further improves evaluators by supervising their judgments.
+
+The path to stronger self-improvement therefore depends on making evaluation scale at least as quickly as generation.
+
+# Future Directions
+
+## Latent Reasoning
+
+Chain-of-thought represents System 2 reasoning as natural-language tokens. **COCONUT** instead explores reasoning in continuous hidden-state vectors. Latent reasoning may search more efficiently than verbalized thought, while natural language offers interpretability and potential safety benefits. Whether continuous reasoning scales to large, general systems remains open.
+
+## Interaction and Better System 1 Models
+
+Future models may learn through interaction with people, tools, environments, the internet, and their own generated challenges. Another direction is to strengthen System 1 itself through better attention, world models, architectures, and scalable training. System 1 and System 2 ultimately depend on one another.
+
+# Key Takeaways
+
+- Self-improvement requires both **generation** and **evaluation**.
+- Prompting shows that extra inference-time computation can reduce hallucination, distraction, and weak evaluation.
+- Iterative training converts successful reasoning trajectories into learned behavior.
+- Verifiable final-answer rewards are powerful because they avoid relying on a fallible learned judge.
+- Negative examples matter: successful trajectories should be reinforced while failures are explicitly suppressed.
+- Open-ended tasks require learned evaluators, making judge quality the central bottleneck.
+- Meta-Rewarding and EvalPlanner aim to improve the evaluator itself and strengthen the full self-training loop.
+
+# Sources
+
+- [Lecture video: Learning to Self-Improve and Reason with LLMs](https://www.youtube.com/live/_MNlLhU33H0)
+- [Lecture slides by Jason Weston](https://rdi.berkeley.edu/adv-llm-agents/slides/Jason-Weston-Reasoning-Alignment-Berkeley-Talk.pdf)

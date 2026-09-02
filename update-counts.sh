@@ -41,6 +41,9 @@ JAX_COUNT=$(grep -c "^\*\*\[" ML/JAX/index.qmd)
 # Count ML HW-SW codesign notes
 HWSW_COUNT=$(grep -c "^\*\*\[" ML/HW-SW-codesign/index.qmd)
 
+# Count Advanced LLM Agents notes
+LLM_AGENTS_COUNT=$(grep -c "^\*\*\[" ML/LLM-Agents/index.qmd)
+
 echo "Content counts:"
 echo "  Deep Learning: $DL_COUNT chapters"
 echo "  Math: $MATH_COUNT items"
@@ -55,6 +58,7 @@ echo "  Deep Learning Papers: $DL_PAPERS_COUNT notes"
 echo "  JAX: $JAX_COUNT notes"
 echo "  RL: $RL_COUNT notes"
 echo "  ML HW-SW Codesign: $HWSW_COUNT notes"
+echo "  Advanced LLM Agents: $LLM_AGENTS_COUNT notes"
 
 # Update index.qmd with the counts
 sed -i.bak "s/Goodfellow Deep Learning Book <span class=\"section-count\">[0-9]* chapters/Goodfellow Deep Learning Book <span class=\"section-count\">$DL_COUNT chapters/" index.qmd
@@ -70,6 +74,8 @@ sed -i.bak "s/JAX <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/JAX <spa
 sed -i.bak "s/RL <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/RL <span class=\\\"section-count\\\">$RL_COUNT note$( [ $RL_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
 sed -i.bak "s/ML HW-SW Codesign <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/ML HW-SW Codesign <span class=\\\"section-count\\\">$HWSW_COUNT note$( [ $HWSW_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
+
+sed -i.bak "s/Advanced Large Language Model Agents <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/Advanced Large Language Model Agents <span class=\\\"section-count\\\">$LLM_AGENTS_COUNT note$( [ $LLM_AGENTS_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
 # Remove backup file
 rm index.qmd.bak
