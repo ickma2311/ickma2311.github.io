@@ -44,7 +44,10 @@ HWSW_COUNT=$(grep -c "^\*\*\[" ML/HW-SW-codesign/index.qmd)
 # Count Advanced LLM Agents notes
 LLM_AGENTS_COUNT=$(grep -c "^\*\*\[" ML/LLM-Agents/index.qmd)
 
+STARTUPS_COUNT=$(grep -c "^\*\*\[" Startups/index.qmd)
+
 echo "Content counts:"
+echo "  Building Startups: $STARTUPS_COUNT notes"
 echo "  Deep Learning: $DL_COUNT chapters"
 echo "  Math: $MATH_COUNT items"
 echo "    Probability: $PROBABILITY_COUNT notes"
@@ -78,6 +81,8 @@ sed -i.bak "s/ML HW-SW Codesign <span class=\"section-count\">[0-9]* note[s]\\{0
 sed -i.bak "s/Advanced Large Language Model Agents <span class=\"section-count\">[0-9]* note[s]\\{0,1\\}/Advanced Large Language Model Agents <span class=\\\"section-count\\\">$LLM_AGENTS_COUNT note$( [ $LLM_AGENTS_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
 # Remove backup file
+sed -i.bak "s/Building Startups <span class=\"section-count\">[0-9]* notes\{0,1\}/Building Startups <span class=\"section-count\">$STARTUPS_COUNT note$( [ $STARTUPS_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
+
 rm index.qmd.bak
 
 echo ""
