@@ -1,0 +1,2476 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Chao Ma">
+<meta name="dcterms.date" content="2026-09-08">
+<meta name="description" content="Hanna Hajishirzi on Tulu 3, verifiable rewards, s1 test-time scaling, and OLMo mid-training.">
+
+<title>Open Training Recipes: LLM Reasoning – ∇ ickma.dev</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../favicon.svg" rel="icon" type="image/svg+xml">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-PK5N5KWZBF"></script>
+
+<script type="text/javascript">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-PK5N5KWZBF', { 'anonymize_ip': true});
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">∇ ickma.dev</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-deep-learning" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Deep Learning</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-deep-learning">    
+        <li class="dropdown-header">Advanced Large Language Model Agents</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/open-training-recipes-llm-reasoning.html">
+ <span class="dropdown-text">Open Training Recipes: LLM Reasoning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/reasoning-memory-planning-language-agents.html">
+ <span class="dropdown-text">Reasoning, Memory, and Planning of Language Agents</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/learning-to-self-improve-and-reason-with-llms.html">
+ <span class="dropdown-text">Learning to Self-Improve and Reason with LLMs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/inference-time-techniques-for-llm-reasoning.html">
+ <span class="dropdown-text">Inference-Time Techniques for LLM Reasoning</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">CMU 10-414/714 Deep Learning Systems</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-5-auto-differentiation-implementation.html">
+ <span class="dropdown-text">Lecture 5: Auto Differentiation Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-4-automatic-differentiation.html">
+ <span class="dropdown-text">Lecture 4: Automatic Differentiation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-3-part-2-manual-neural-networks.html">
+ <span class="dropdown-text">Lecture 3 Part II: Manual Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-3-manual-neural-networks.html">
+ <span class="dropdown-text">Lecture 3: Manual Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-2-ml-refresher-softmax-regression.html">
+ <span class="dropdown-text">Lecture 2: ML Refresher / Softmax Regression</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">ML HW-SW Codesign</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-01-introduction.html">
+ <span class="dropdown-text">Efficient AI Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-03-pruning-and-sparsity-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 3: Pruning and Sparsity (Part 1)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-04-pruning-and-sparsity-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 4: Pruning and Sparsity (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-05-quantization-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 5: Quantization (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-06-quantization-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 6: Quantization (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-07-neural-architecture-search-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 7: Neural Architecture Search (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-08-neural-architecture-search-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 8: Neural Architecture Search (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-09-knowledge-distillation.html">
+ <span class="dropdown-text">Efficient AI Lecture 9: Knowledge Distillation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-10-mcunet-and-tinyml.html">
+ <span class="dropdown-text">Efficient AI Lecture 10: MCUNet and TinyML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-11-tinyengine.html">
+ <span class="dropdown-text">Efficient AI Lecture 11: TinyEngine</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-12-transformer-and-llm.html">
+ <span class="dropdown-text">Efficient AI Lecture 12: Transformer and LLM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-13-llm-deployment-techniques.html">
+ <span class="dropdown-text">Efficient AI Lecture 13: LLM Deployment Techniques</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-14-llm-post-training.html">
+ <span class="dropdown-text">Efficient AI Lecture 14: LLM Post-Training</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-15-long-context-llm.html">
+ <span class="dropdown-text">Efficient AI Lecture 15: Long-Context LLM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-16-vision-transformer.html">
+ <span class="dropdown-text">Efficient AI Lecture 16: Vision Transformer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-17-gans-video-pointcloud.html">
+ <span class="dropdown-text">Efficient AI Lecture 17: GANs, Video, and Point Cloud</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-18-diffusion-models.html">
+ <span class="dropdown-text">Efficient AI Lecture 18: Diffusion Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-19-distributed-training-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 19: Distributed Training (Part 1)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-20-distributed-training-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 20: Distributed Training (Part 2)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-21-on-device-training-transfer-learning.html">
+ <span class="dropdown-text">Efficient AI Lecture 21: On-Device Training and Transfer Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-22-quantum-machine-learning-i.html">
+ <span class="dropdown-text">Efficient AI Lecture 22: Quantum Machine Learning I</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">JAX</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-numpy.html">
+ <span class="dropdown-text">JAX NumPy</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/introducing-flax-nnx.html">
+ <span class="dropdown-text">Introducing Flax NNX</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-ai-stack.html">
+ <span class="dropdown-text">JAX AI Stack</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/scaling-up.html">
+ <span class="dropdown-text">Scaling Up</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">NLP</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-21-mixture-of-experts.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 21: Mixture of Experts</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-16-reinforcement-learning-for-llms.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 16: Reinforcement Learning for LLMs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-9-decoding-algorithms.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 9: Decoding Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-2-learned-representation.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 2: Learned Representation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-1-introduction-fundamentals.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 1: Introduction and Fundamentals</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">RL</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-10-classic-games.html">
+ <span class="dropdown-text">David Silver Lecture 10: Classic Games</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-9-exploration-and-exploitation.html">
+ <span class="dropdown-text">David Silver Lecture 9: Exploration and Exploitation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-8-integrating-learning-and-planning.html">
+ <span class="dropdown-text">David Silver Lecture 8: Integrating Learning and Planning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-7-policy-gradient-methods.html">
+ <span class="dropdown-text">David Silver Lecture 7: Policy Gradient Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-6-value-function-approximation.html">
+ <span class="dropdown-text">David Silver Lecture 6: Value Function Approximation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-5-model-free-control.html">
+ <span class="dropdown-text">David Silver Lecture 5: Model-Free Control</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/cmu-advanced-nlp-reinforcement-learning.html">
+ <span class="dropdown-text">CMU Advanced NLP: Reinforcement Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-4-model-free-prediction.html">
+ <span class="dropdown-text">David Silver Lecture 4: Model-Free Prediction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-3-planning-by-dynamic-programming.html">
+ <span class="dropdown-text">David Silver Lecture 3: Planning by Dynamic Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-2-markov-decision-process.html">
+ <span class="dropdown-text">David Silver Lecture 2: Markov Decision Process</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-1-introduction-to-reinforcement-learning.html">
+ <span class="dropdown-text">David Silver Lecture 1: Introduction to RL</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Papers in Deep Learning</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/generative-adversarial-nets.html">
+ <span class="dropdown-text">Generative Adversarial Nets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/why-tpu-is-fast-for-dot-product.html">
+ <span class="dropdown-text">Why TPU Is Fast for Dot Product</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/transformer-attention-is-all-you-need.html">
+ <span class="dropdown-text">Transformer: Attention Is All You Need</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/attention-origin-transformer.html">
+ <span class="dropdown-text">Attention: The Origin of Transformer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/batch-normalization.html">
+ <span class="dropdown-text">Batch Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/lora.html">
+ <span class="dropdown-text">LoRA: Low-Rank Adaptation</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-learning-book.html">
+ <span class="dropdown-text">Goodfellow Deep Learning Book (Overview)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/xor-deep-learning.html">
+ <span class="dropdown-text">Chapter 6.1: XOR Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/likelihood-loss-functions.html">
+ <span class="dropdown-text">Chapter 6.2: Loss Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/activation-functions.html">
+ <span class="dropdown-text">Chapter 6.3: Activation Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/architecture-design.html">
+ <span class="dropdown-text">Chapter 6.4: Architecture Design</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/backpropagation.html">
+ <span class="dropdown-text">Chapter 6.5: Back-Propagation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/hessian-prerequisites.html">
+ <span class="dropdown-text">Chapter 7 Prerequisites: Hessian Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l2-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.1: L2 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l1-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.2: L1 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/constrained-optimization-regularization.html">
+ <span class="dropdown-text">Chapter 7.2: Constrained Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/regularization-underconstrained.html">
+ <span class="dropdown-text">Chapter 7.3: Under-Constrained Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dataset-augmentation.html">
+ <span class="dropdown-text">Chapter 7.4: Dataset Augmentation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/noise-robustness.html">
+ <span class="dropdown-text">Chapter 7.5: Noise Robustness</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/semi-supervised-learning.html">
+ <span class="dropdown-text">Chapter 7.6: Semi-Supervised Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/multi-task-learning.html">
+ <span class="dropdown-text">Chapter 7.7: Multi-Task Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/early-stopping.html">
+ <span class="dropdown-text">Chapter 7.8: Early Stopping</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-tying-sharing.html">
+ <span class="dropdown-text">Chapter 7.9: Parameter Tying &amp; Sharing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-sparsity.html">
+ <span class="dropdown-text">Chapter 7.10: Sparse Representations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/bagging-ensemble.html">
+ <span class="dropdown-text">Chapter 7.11: Bagging &amp; Ensemble Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dropout.html">
+ <span class="dropdown-text">Chapter 7.12: Dropout</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adversarial-training.html">
+ <span class="dropdown-text">Chapter 7.13: Adversarial Training</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/tangent-prop-manifold.html">
+ <span class="dropdown-text">Chapter 7.14: Tangent Prop &amp; Manifolds</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/learning-vs-optimization.html">
+ <span class="dropdown-text">Chapter 8.1: Learning vs Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-challenges.html">
+ <span class="dropdown-text">Chapter 8.2: Optimization Challenges</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/basic-optimization-algorithms.html">
+ <span class="dropdown-text">Chapter 8.3: Basic Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-initialization.html">
+ <span class="dropdown-text">Chapter 8.4: Parameter Initialization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adaptive-learning-rates.html">
+ <span class="dropdown-text">Chapter 8.5: Adaptive Learning Rates</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/second-order-methods.html">
+ <span class="dropdown-text">Chapter 8.6: Second-Order Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-strategies.html">
+ <span class="dropdown-text">Chapter 8.7: Optimization Strategies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolution-computation.html">
+ <span class="dropdown-text">Chapter 9.1: Convolution Computation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-motivation.html">
+ <span class="dropdown-text">Chapter 9.2: CNN Motivation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-pooling.html">
+ <span class="dropdown-text">Chapter 9.3: Pooling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-infinitely-strong-prior.html">
+ <span class="dropdown-text">Chapter 9.4: Infinitely Strong Prior</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolutional-functions.html">
+ <span class="dropdown-text">Chapter 9.5: Convolutional Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-structured-outputs.html">
+ <span class="dropdown-text">Chapter 9.6: Structured Outputs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-data-types.html">
+ <span class="dropdown-text">Chapter 9.7: Data Types</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-efficient-convolution.html">
+ <span class="dropdown-text">Chapter 9.8: Efficient Convolution</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-unsupervised-learning.html">
+ <span class="dropdown-text">Chapter 9.9: Unsupervised Feature Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-neuroscience.html">
+ <span class="dropdown-text">Chapter 9.10: Neuroscientific Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-unfold-computation-graph.html">
+ <span class="dropdown-text">Chapter 10.1: Unfold Computation Graph</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recurrent-neural-networks.html">
+ <span class="dropdown-text">Chapter 10.2: Recurrent Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-bidirectional.html">
+ <span class="dropdown-text">Chapter 10.3: Bidirectional RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-encoder-decoder.html">
+ <span class="dropdown-text">Chapter 10.4: Encoder-Decoder Seq2Seq</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-deep.html">
+ <span class="dropdown-text">Chapter 10.5: Deep RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recursive.html">
+ <span class="dropdown-text">Chapter 10.6: Recursive Neural Network</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-long-term-dependency.html">
+ <span class="dropdown-text">Chapter 10.7: Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-echo-state.html">
+ <span class="dropdown-text">Chapter 10.8: Echo State Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-leaky-unit.html">
+ <span class="dropdown-text">Chapter 10.9: Leaky Units</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-lstm-gru.html">
+ <span class="dropdown-text">Chapter 10.10: LSTM and GRU</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-optimize-long-term.html">
+ <span class="dropdown-text">Chapter 10.11: Optimizing Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-explicit-memory.html">
+ <span class="dropdown-text">Chapter 10.12: Explicit Memory</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/practical-methodology.html">
+ <span class="dropdown-text">Chapter 11: Practical Methodology</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/large-scale-deep-learning.html">
+ <span class="dropdown-text">Chapter 12.1: Large-Scale Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/image-preprocessing-normalization.html">
+ <span class="dropdown-text">Chapter 12.2: Image Preprocessing and Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/automatic-speech-recognition.html">
+ <span class="dropdown-text">Chapter 12.3: Automatic Speech Recognition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/nlp-applications.html">
+ <span class="dropdown-text">Chapter 12.4: NLP Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/other-applications.html">
+ <span class="dropdown-text">Chapter 12.5: Other Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/linear-factor-models.html">
+ <span class="dropdown-text">Chapter 13: Linear Factor Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/autoencoders.html">
+ <span class="dropdown-text">Chapter 14: Autoencoders</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-learning.html">
+ <span class="dropdown-text">Chapter 15: Representation Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/structured-probabilistic-models.html">
+ <span class="dropdown-text">Chapter 16: Structured Probabilistic Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/monte-carlo-methods.html">
+ <span class="dropdown-text">Chapter 17: Monte Carlo Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/confronting-partition-function.html">
+ <span class="dropdown-text">Chapter 18: Confronting the Partition Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/approximate-inference.html">
+ <span class="dropdown-text">Chapter 19: Approximate Inference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-generative-models.html">
+ <span class="dropdown-text">Chapter 20: Deep Generative Models</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-quantum-machine" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Quantum Machine</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-quantum-machine">    
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/your-first-quantum-experiment.html">
+ <span class="dropdown-text">Your First Quantum Experiment</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/the-math-behind-quantum-entanglement.html">
+ <span class="dropdown-text">The Math Behind Quantum Entanglement</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/from-zero-to-quantum.html">
+ <span class="dropdown-text">From Zero to Quantum</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/qiskit-lesson-1-classical-and-quantum-information.html">
+ <span class="dropdown-text">Qiskit Lesson 1: Classical and Quantum Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/qiskit-lesson-2-multiple-systems.html">
+ <span class="dropdown-text">Qiskit Lesson 2: Multiple Systems</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-math" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Math</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-math">    
+        <li>
+    <a class="dropdown-item" href="../../Math/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Probability</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/index.html">
+ <span class="dropdown-text">MIT 6.041 Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/poisson-process-ii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Poisson Process II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/poisson-process-i.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Poisson Process I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/bernoulli-process.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Bernoulli Process</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/iterated-expectations.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Iterated Expectations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/derived-distributions-covariance.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Derived Distributions and Covariance</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/continuous-bayes-rule-derived-distributions.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Continuous Bayes’ Rule and Derived Distributions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/multiple-continuous-random-variables.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Multiple Continuous Random Variables</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/continuous-random-variables.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Continuous Random Variables</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-3.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-2.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-1.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/counting.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Counting</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/independence.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Independence</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/conditioning-bayes-rule.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Conditioning and Bayes’ Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/probability-models-axioms.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Probability Models and Axioms</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Information Theory</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/index.html">
+ <span class="dropdown-text">Oxford Math Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-1-defining-entropy-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 1: Defining Entropy and Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-2-basic-properties-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 2: Basic Properties of Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-3-introducing-codes.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 3: Introducing Codes</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Calculus</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/six-functions-rules-theorems.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Six Functions, Six Rules, and Six Theorems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-growth.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Growth</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-motion.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Motion</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/power-series-eulers-great-formula.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Power Series and Euler’s Great Formula</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/linear-approximation-newtons-method.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Linear Approximation and Newton’s Method</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/growth-rates-log-graphs.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Growth Rates and Log Graphs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivatives-ln-arcsin.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivatives of ln y and arcsin(y)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/limits-continuous-functions.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Limits and Continuous Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivative-sin-cos.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivative of sin x and cos x</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/product-quotient-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Product Rule and Quotient Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/chain-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Chains and the Chain Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-integral.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture Integral</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/exponential-function.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: The Exponential Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/max-min-second-derivative.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Max, Min, and Second Derivative</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-derivatives.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture on Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/highlights-of-calculus.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Highlights</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Reflections &amp; Synthesis</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/mit1806-invertibility-connections.html">
+ <span class="dropdown-text">Invertibility Connections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/taylor-euler-fourier.html">
+ <span class="dropdown-text">Taylor, Euler, and Fourier</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.06SC Linear Algebra</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture1-geometry.html">
+ <span class="dropdown-text">Lecture 1: Geometry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture2-elimination.html">
+ <span class="dropdown-text">Lecture 2: Elimination</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture3-multiplication.html">
+ <span class="dropdown-text">Lecture 3: Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture4-lu-decomposition.html">
+ <span class="dropdown-text">Lecture 4: LU Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-permutations.html">
+ <span class="dropdown-text">Lecture 5.1: Permutations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-2-transpose.html">
+ <span class="dropdown-text">Lecture 5.2: Transpose</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-3-spaces.html">
+ <span class="dropdown-text">Lecture 5.3: Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture6-column-null-space.html">
+ <span class="dropdown-text">Lecture 6: Column &amp; Null Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture7-solving-ax-0.html">
+ <span class="dropdown-text">Lecture 7: Solving Ax=0</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture8-solving-ax-b.html">
+ <span class="dropdown-text">Lecture 8: Solving Ax=b</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture9-independence-basis-dimension.html">
+ <span class="dropdown-text">Lecture 9: Independence, Basis, Dimension</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture10-four-subspaces.html">
+ <span class="dropdown-text">Lecture 10: Four Fundamental Subspaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture11-matrix-spaces.html">
+ <span class="dropdown-text">Lecture 11: Matrix Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture12-graphs-networks.html">
+ <span class="dropdown-text">Lecture 12: Graphs and Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture13-quiz-review.html">
+ <span class="dropdown-text">Lecture 13: Quiz 1 Review</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture14-orthogonality.html">
+ <span class="dropdown-text">Lecture 14: Orthogonality</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture15-projections.html">
+ <span class="dropdown-text">Lecture 15: Projections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture16-least-squares.html">
+ <span class="dropdown-text">Lecture 16: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture17-gram-schmidt.html">
+ <span class="dropdown-text">Lecture 17: Gram-Schmidt</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture18-determinants.html">
+ <span class="dropdown-text">Lecture 18: Determinants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture19-determinant-formulas.html">
+ <span class="dropdown-text">Lecture 19: Determinant Formulas</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture20-cramers-rule.html">
+ <span class="dropdown-text">Lecture 20: Inverse &amp; Volume</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture21-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 21: Eigenvalues &amp; Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture22-diagonalization-powers.html">
+ <span class="dropdown-text">Lecture 22: Diagonalization &amp; Powers</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture23-differential-equations.html">
+ <span class="dropdown-text">Lecture 23: Differential Equations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture24-markov-fourier.html">
+ <span class="dropdown-text">Lecture 24: Markov &amp; Fourier</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture25-symmetric-positive-definite.html">
+ <span class="dropdown-text">Lecture 25: Symmetric &amp; Positive Definite</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture26-complex-matrices-fft.html">
+ <span class="dropdown-text">Lecture 26: Complex Matrices &amp; FFT</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture27-positive-definite-minima.html">
+ <span class="dropdown-text">Lecture 27: Positive Definite &amp; Minima</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture28-similar-matrices-jordan.html">
+ <span class="dropdown-text">Lecture 28: Similar Matrices &amp; Jordan Form</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture29-svd.html">
+ <span class="dropdown-text">Lecture 29: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture30-linear-transformations.html">
+ <span class="dropdown-text">Lecture 30: Linear Transformations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture31-change-of-basis.html">
+ <span class="dropdown-text">Lecture 31: Change of Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture33-left-right-inverse.html">
+ <span class="dropdown-text">Lecture 33: Left &amp; Right Inverse</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.065: Linear Algebra Applications</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture1-column-space.html">
+ <span class="dropdown-text">Lecture 1: Column Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture2-multiplying-factoring.html">
+ <span class="dropdown-text">Lecture 2: Multiplying and Factoring Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture3-orthonormal-columns.html">
+ <span class="dropdown-text">Lecture 3: Orthonormal Columns</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture4-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 4: Eigenvalues and Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture5-positive-definite.html">
+ <span class="dropdown-text">Lecture 5: Positive Definite Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture6-svd.html">
+ <span class="dropdown-text">Lecture 6: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture7-eckart-young.html">
+ <span class="dropdown-text">Lecture 7: Eckart-Young Theorem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture8-norms.html">
+ <span class="dropdown-text">Lecture 8: Norms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture9-least-squares.html">
+ <span class="dropdown-text">Lecture 9: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture10-axb-difficulties.html">
+ <span class="dropdown-text">Lecture 10: Survey of Ax=b Difficulties</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/lecture-11-minimize-norm-subject-to-constraint.html">
+ <span class="dropdown-text">Lecture 11: Minimize Norm subject to Constraint</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture12-eigenvalue-algorithms.html">
+ <span class="dropdown-text">Lecture 12: Computing Eigenvalues</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture13-randomized-matrix-multiplication.html">
+ <span class="dropdown-text">Lecture 13: Randomized Matrix Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture14-low-rank-changes-inverse.html">
+ <span class="dropdown-text">Lecture 14: Low Rank Changes</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture15-matrix-derivatives.html">
+ <span class="dropdown-text">Lecture 15: Matrix Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture16-derivative-inverse-singular-values.html">
+ <span class="dropdown-text">Lecture 16: Derivative of Inverse and Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture17-rapidly-decreasing-singular-values.html">
+ <span class="dropdown-text">Lecture 17: Rapidly Decreasing Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture18-counting-parameters-svd-lu-qr-saddle-points.html">
+ <span class="dropdown-text">Lecture 18: Counting Parameters in SVD, LU, QR, and Saddle Points</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture19-saddle-point-maxmin-principle.html">
+ <span class="dropdown-text">Lecture 19: Saddle Point and the Max–Min Principle</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture20-probability-definitions-inequalities.html">
+ <span class="dropdown-text">Lecture 20: Probability Definitions and Inequalities</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture21-minimizing-function.html">
+ <span class="dropdown-text">Lecture 21: Minimizing a Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture22-gradient-descent.html">
+ <span class="dropdown-text">Lecture 22: Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture23-accelerating-gradient-descent-momentum.html">
+ <span class="dropdown-text">Lecture 23: Accelerating Gradient Descent (Momentum)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture24-linear-programming-two-person-games.html">
+ <span class="dropdown-text">Lecture 24: Linear Programming and Two-Person Games</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture25-stochastic-gradient-descent.html">
+ <span class="dropdown-text">Lecture 25: Stochastic Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture26-structure-of-neural-nets.html">
+ <span class="dropdown-text">Lecture 26: Structure of Neural Nets for Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture27-backpropagation-partial-gradients.html">
+ <span class="dropdown-text">Lecture 27: Back Propagation and Partial Gradients</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture30-completing-rank1-circulants.html">
+ <span class="dropdown-text">Lecture 30: Completing a Rank-1 Matrix, Circulants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture31-fourier-matrix.html">
+ <span class="dropdown-text">Lecture 31: Eigenvectors of Circulant Matrices, Fourier Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture32-convolution-rule.html">
+ <span class="dropdown-text">Lecture 32: The Convolution Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture34-distance-matrices-procrustes.html">
+ <span class="dropdown-text">Lecture 34: Distance Matrices, Procrustes Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture35-find-clusters-graph.html">
+ <span class="dropdown-text">Lecture 35: Find Clusters in Graph</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Stanford EE 364A: Convex Optimization</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/lectures.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture1-intro.html">
+ <span class="dropdown-text">Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture2-math-foundations.html">
+ <span class="dropdown-text">Lecture 2: Convex Sets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture3-convex-functions.html">
+ <span class="dropdown-text">Lecture 3: Convex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part1-operations-preserving-convexity.html">
+ <span class="dropdown-text">Lecture 4.1: Operations Preserving Convexity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part2-conjugate-quasiconvex.html">
+ <span class="dropdown-text">Lecture 4.2: Conjugate &amp; Quasiconvex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part1-log-concave-convex.html">
+ <span class="dropdown-text">Lecture 5.1: Log-Concave &amp; Log-Convex</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part2-monotonicity.html">
+ <span class="dropdown-text">Lecture 5.2: Monotonicity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture6-optimization-problems.html">
+ <span class="dropdown-text">Chapter 4.1: Optimization Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture7-convex-optimization.html">
+ <span class="dropdown-text">Chapter 4.2: Convex Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture8-linear-optimization.html">
+ <span class="dropdown-text">Chapter 4.3: Linear Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture9-quadratic-optimization.html">
+ <span class="dropdown-text">Chapter 4.4: Quadratic Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-5-geometric-programming.html">
+ <span class="dropdown-text">Chapter 4.5: Geometric Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-6-generalized-inequality-constraints.html">
+ <span class="dropdown-text">Chapter 4.6: Generalized Inequality Constraints</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-7-vector-optimization.html">
+ <span class="dropdown-text">Chapter 4.7: Vector Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter5-1-lagrange-dual-function.html">
+ <span class="dropdown-text">Chapter 5.1: The Lagrange Dual Function</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-theory-to-repro" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Theory-to-Repro</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-theory-to-repro">    
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/linear-regression-three-ways.html">
+ <span class="dropdown-text">Linear Regression via Three Solvers</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/k_means_clustering.html">
+ <span class="dropdown-text">K-Means Clustering</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/logistic_regression.html">
+ <span class="dropdown-text">Logistic Regression</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/axis.html">
+ <span class="dropdown-text">Axis Operations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Algorithm/dp_regex.html">
+ <span class="dropdown-text">DP Regex</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-building-startups" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Building Startups</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-building-startups">    
+        <li>
+    <a class="dropdown-item" href="../../Startups/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Startups/getting-and-evaluating-startup-ideas.html">
+ <span class="dropdown-text">Getting and Evaluating Startup Ideas</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/ickma2311/ickma2311.github.io/discussions"> 
+<span class="menu-text">Feedback</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#post-training" id="toc-post-training" class="nav-link active" data-scroll-target="#post-training">Post-Training</a>
+  <ul class="collapse">
+  <li><a href="#why-open-training-recipes" id="toc-why-open-training-recipes" class="nav-link" data-scroll-target="#why-open-training-recipes">Why Open Training Recipes?</a></li>
+  <li><a href="#tülu-3-training-recipe" id="toc-tülu-3-training-recipe" class="nav-link" data-scroll-target="#tülu-3-training-recipe">Tülu 3 Training Recipe</a></li>
+  </ul></li>
+  <li><a href="#supervised-fine-tuning" id="toc-supervised-fine-tuning" class="nav-link" data-scroll-target="#supervised-fine-tuning">Supervised Fine-Tuning</a>
+  <ul class="collapse">
+  <li><a href="#what-does-sft-learn" id="toc-what-does-sft-learn" class="nav-link" data-scroll-target="#what-does-sft-learn">What Does SFT Learn?</a></li>
+  <li><a href="#data-curation-and-mixing" id="toc-data-curation-and-mixing" class="nav-link" data-scroll-target="#data-curation-and-mixing">Data Curation and Mixing</a></li>
+  <li><a href="#persona-driven-data-generation" id="toc-persona-driven-data-generation" class="nav-link" data-scroll-target="#persona-driven-data-generation">Persona-Driven Data Generation</a></li>
+  <li><a href="#experiment-quality-versus-quantity" id="toc-experiment-quality-versus-quantity" class="nav-link" data-scroll-target="#experiment-quality-versus-quantity">Experiment: Quality Versus Quantity</a></li>
+  </ul></li>
+  <li><a href="#preference-tuning" id="toc-preference-tuning" class="nav-link" data-scroll-target="#preference-tuning">Preference Tuning</a>
+  <ul class="collapse">
+  <li><a href="#learning-from-comparisons" id="toc-learning-from-comparisons" class="nav-link" data-scroll-target="#learning-from-comparisons">Learning from Comparisons</a></li>
+  <li><a href="#ppo-and-dpo" id="toc-ppo-and-dpo" class="nav-link" data-scroll-target="#ppo-and-dpo">PPO and DPO</a></li>
+  <li><a href="#what-matters-most" id="toc-what-matters-most" class="nav-link" data-scroll-target="#what-matters-most">What Matters Most?</a></li>
+  </ul></li>
+  <li><a href="#reinforcement-learning-with-verifiable-rewards" id="toc-reinforcement-learning-with-verifiable-rewards" class="nav-link" data-scroll-target="#reinforcement-learning-with-verifiable-rewards">Reinforcement Learning with Verifiable Rewards</a>
+  <ul class="collapse">
+  <li><a href="#why-replace-the-reward-model" id="toc-why-replace-the-reward-model" class="nav-link" data-scroll-target="#why-replace-the-reward-model">Why Replace the Reward Model?</a></li>
+  <li><a href="#training-loop" id="toc-training-loop" class="nav-link" data-scroll-target="#training-loop">Training Loop</a></li>
+  <li><a href="#experiment" id="toc-experiment" class="nav-link" data-scroll-target="#experiment">Experiment</a></li>
+  </ul></li>
+  <li><a href="#s1-reasoning-and-test-time-scaling" id="toc-s1-reasoning-and-test-time-scaling" class="nav-link" data-scroll-target="#s1-reasoning-and-test-time-scaling">s1: Reasoning and Test-Time Scaling</a>
+  <ul class="collapse">
+  <li><a href="#a-small-carefully-selected-dataset" id="toc-a-small-carefully-selected-dataset" class="nav-link" data-scroll-target="#a-small-carefully-selected-dataset">A Small, Carefully Selected Dataset</a></li>
+  <li><a href="#budget-forcing" id="toc-budget-forcing" class="nav-link" data-scroll-target="#budget-forcing">Budget Forcing</a></li>
+  <li><a href="#results-and-ablations" id="toc-results-and-ablations" class="nav-link" data-scroll-target="#results-and-ablations">Results and Ablations</a></li>
+  </ul></li>
+  <li><a href="#olmo-pretraining-and-mid-training" id="toc-olmo-pretraining-and-mid-training" class="nav-link" data-scroll-target="#olmo-pretraining-and-mid-training">OLMo: Pretraining and Mid-Training</a>
+  <ul class="collapse">
+  <li><a href="#two-stage-base-model-training" id="toc-two-stage-base-model-training" class="nav-link" data-scroll-target="#two-stage-base-model-training">Two-Stage Base-Model Training</a></li>
+  <li><a href="#reported-results" id="toc-reported-results" class="nav-link" data-scroll-target="#reported-results">Reported Results</a></li>
+  </ul></li>
+  <li><a href="#key-takeaways" id="toc-key-takeaways" class="nav-link" data-scroll-target="#key-takeaways">Key Takeaways</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Open Training Recipes: LLM Reasoning</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">Deep Learning</div>
+    <div class="quarto-category">LLM Agents</div>
+    <div class="quarto-category">Reasoning</div>
+    <div class="quarto-category">Post-Training</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Hanna Hajishirzi on Tulu 3, verifiable rewards, s1 test-time scaling, and OLMo mid-training.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Chao Ma </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 8, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="quarto-video ratio ratio-16x9"><iframe data-external="1" src="https://www.youtube.com/embed/cMiu3A7YBks" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>
+<p>This lecture connects data curation, supervised fine-tuning, preference learning, verifiable rewards, and test-time computation into reproducible recipes for reasoning models.</p>
+<section id="post-training" class="level1">
+<h1>Post-Training</h1>
+<ul>
+<li>Follow instructions</li>
+<li>Use tools</li>
+<li>Chat</li>
+<li>Avoid harm</li>
+<li>Serve apps</li>
+<li>Reason</li>
+</ul>
+<section id="why-open-training-recipes" class="level2">
+<h2 class="anchored" data-anchor-id="why-open-training-recipes">Why Open Training Recipes?</h2>
+<p><strong>Open weights are not the same as a fully open model.</strong> Reproducing and studying a model also requires its data, training code, infrastructure, and evaluation recipe.</p>
+<ul>
+<li><strong>OLMo:</strong> a fully open language-model effort, including pretraining.</li>
+<li><strong>Tülu:</strong> an open post-training recipe that can be applied to different base models.</li>
+<li><strong>s1:</strong> a minimal recipe for reasoning and test-time scaling.</li>
+</ul>
+<p><strong>Speaker:</strong> Hanna Hajishirzi</p>
+<p><strong>Slides:</strong> <a href="https://rdi.berkeley.edu/adv-llm-agents/slides/OLMo-Tulu-Reasoning-Hanna.pdf">Open Training Recipes for Reasoning in Language Models</a></p>
+</section>
+<section id="tülu-3-training-recipe" class="level2">
+<h2 class="anchored" data-anchor-id="tülu-3-training-recipe">Tülu 3 Training Recipe</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="tulu-training-pipeline.png" class="img-fluid figure-img"></p>
+<figcaption>Tulu 3 post-training pipeline.</figcaption>
+</figure>
+</div>
+<p><strong>Base model → Supervised fine-tuning → Preference tuning → RL with verifiable rewards</strong></p>
+<p>Each stage provides a different learning signal:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Stage</th>
+<th>Training signal</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>SFT</td>
+<td>Prompt and demonstrated response</td>
+<td>Learn instruction following and targeted skills</td>
+</tr>
+<tr class="even">
+<td>Preference tuning</td>
+<td>Preferred versus rejected responses</td>
+<td>Improve response quality and alignment</td>
+</tr>
+<tr class="odd">
+<td>RLVR</td>
+<td>Checkable final answers or constraints</td>
+<td>Reinforce successful generated solutions</td>
+</tr>
+</tbody>
+</table>
+<p>Before training:</p>
+<ul>
+<li>Define meaningful evaluations for the skills you want.</li>
+<li>Collect representative prompts.</li>
+<li>Check data licenses.</li>
+<li>Remove benchmark contamination.</li>
+</ul>
+</section>
+</section>
+<section id="supervised-fine-tuning" class="level1">
+<h1>Supervised Fine-Tuning</h1>
+<section id="what-does-sft-learn" class="level2">
+<h2 class="anchored" data-anchor-id="what-does-sft-learn">What Does SFT Learn?</h2>
+<p>Train the pretrained model on <strong>prompt-response pairs</strong>.</p>
+<p>For reasoning tasks, demonstrations include intermediate solution steps, not just final answers.</p>
+<p><strong>Example:</strong> Under a buy-two-get-one-free offer, seven shirts at $25 each cost $125: two groups of three cost $100, and one additional shirt costs $25.</p>
+<p>The demonstration teaches how to break the problem into steps. A readable explanation, however, is not itself proof that the reasoning is correct.</p>
+</section>
+<section id="data-curation-and-mixing" class="level2">
+<h2 class="anchored" data-anchor-id="data-curation-and-mixing">Data Curation and Mixing</h2>
+<p>Two related tasks:</p>
+<ul>
+<li><strong>Curation:</strong> collect and filter examples for a particular capability.</li>
+<li><strong>Mixing:</strong> balance examples across chat, knowledge, reasoning, coding, multilinguality, safety, and precise instruction following.</li>
+</ul>
+<p>A dataset that improves one skill may not improve every skill. Evaluate the mixture, not just each source in isolation.</p>
+</section>
+<section id="persona-driven-data-generation" class="level2">
+<h2 class="anchored" data-anchor-id="persona-driven-data-generation">Persona-Driven Data Generation</h2>
+<p>Human-written reasoning data is costly and difficult to scale. The lecture combines existing datasets with synthetic data:</p>
+<ol type="1">
+<li>Start from a diverse collection of personas.</li>
+<li>Generate problems targeting skills such as math, coding, or instruction following.</li>
+<li>Use strong models to generate worked solutions.</li>
+<li>Filter the resulting examples and mix them with existing data.</li>
+</ol>
+<p><strong>Why personas?</strong> They provide varied contexts and perspectives instead of repeatedly generating similar problems.</p>
+</section>
+<section id="experiment-quality-versus-quantity" class="level2">
+<h2 class="anchored" data-anchor-id="experiment-quality-versus-quantity">Experiment: Quality Versus Quantity</h2>
+<p><strong>Setup:</strong> Add persona-generated math problems to a public-data mixture, then filter generated solutions using voting / self-consistency.</p>
+<p><strong>Results:</strong></p>
+<ul>
+<li>Increasing persona-generated math data improves MATH performance in the reported experiments.</li>
+<li>Grade-school math data helps GSM8K.</li>
+<li>After filtering, about <strong>60% of the data</strong> retains similar MATH performance and improves GSM8K.</li>
+</ul>
+<p><strong>Takeaway:</strong> More data is not automatically better. Targeted diversity and filtering can be more useful than raw volume. Agreement between generated answers is a quality filter, not a correctness guarantee.</p>
+</section>
+</section>
+<section id="preference-tuning" class="level1">
+<h1>Preference Tuning</h1>
+<section id="learning-from-comparisons" class="level2">
+<h2 class="anchored" data-anchor-id="learning-from-comparisons">Learning from Comparisons</h2>
+<p>For the same prompt, compare two responses and identify which is better.</p>
+<ul>
+<li><strong>Human feedback:</strong> people label the preference.</li>
+<li><strong>AI feedback:</strong> a model judges the responses.</li>
+</ul>
+<p>Preference tuning strongly affects style and chat quality, while also building on capabilities learned during SFT.</p>
+</section>
+<section id="ppo-and-dpo" class="level2">
+<h2 class="anchored" data-anchor-id="ppo-and-dpo">PPO and DPO</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>How it works</th>
+<th>Trade-off</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>PPO-based RLHF</td>
+<td>Train a reward model from preferences; generate responses and optimize the policy against that reward</td>
+<td>More complex, with higher memory and compute costs</td>
+</tr>
+<tr class="even">
+<td>DPO</td>
+<td>Directly optimize preferred versus rejected responses, relative to a reference policy</td>
+<td>No separately trained reward model; simpler development</td>
+</tr>
+</tbody>
+</table>
+<p>A standard KL-regularized reward objective is:</p>
+<p><span class="math display">\[
+\max_{\theta}\;
+\mathbb{E}_{x\sim D}\left[
+\mathbb{E}_{y\sim\pi_{\theta}(\cdot\mid x)}[r(x,y)]
+-\beta D_{\mathrm{KL}}\!\left(
+\pi_{\theta}(\cdot\mid x)\,\Vert\,\pi_{\mathrm{ref}}(\cdot\mid x)
+\right)
+\right]
+\]</span></p>
+<ul>
+<li><strong>Reward:</strong> encourage better responses.</li>
+<li><strong>KL penalty:</strong> discourage excessive departure from the reference model.</li>
+</ul>
+</section>
+<section id="what-matters-most" class="level2">
+<h2 class="anchored" data-anchor-id="what-matters-most">What Matters Most?</h2>
+<p>In the lecture’s comparisons:</p>
+<ul>
+<li>High-quality preference data is the most important factor.</li>
+<li>PPO performs better than DPO, but DPO is cheaper and easier to iterate on.</li>
+<li>A larger reward model does not always produce a better final policy.</li>
+<li>Relevant, in-domain prompts can improve results.</li>
+</ul>
+<p><strong>Tülu 3 uses length-normalized DPO</strong>, which normalizes response log-likelihoods by response length. The recipe also refines preference-data generation rather than relying only on an algorithm change.</p>
+</section>
+</section>
+<section id="reinforcement-learning-with-verifiable-rewards" class="level1">
+<h1>Reinforcement Learning with Verifiable Rewards</h1>
+<section id="why-replace-the-reward-model" class="level2">
+<h2 class="anchored" data-anchor-id="why-replace-the-reward-model">Why Replace the Reward Model?</h2>
+<p>A learned reward model is an imperfect proxy. Optimizing its score too aggressively can exploit its mistakes instead of improving real quality.</p>
+<p>For tasks with checkable answers, use a <strong>verification function</strong>:</p>
+<p><span class="math display">\[
+r(x,y)=
+\begin{cases}
+1, &amp; \text{if the answer or required constraints pass verification},\\
+0, &amp; \text{otherwise}.
+\end{cases}
+\]</span></p>
+<p>Examples include mathematical final answers and precise instruction-following constraints.</p>
+</section>
+<section id="training-loop" class="level2">
+<h2 class="anchored" data-anchor-id="training-loop">Training Loop</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="rlvr-training-loop.png" class="img-fluid figure-img"></p>
+<figcaption>RLVR training loop: reference answers are used only by the verifier.</figcaption>
+</figure>
+</div>
+<ol type="1">
+<li>Start from an SFT or preference-tuned model.</li>
+<li>Sample a response to a training prompt.</li>
+<li>Verify the final answer or constraints.</li>
+<li>Update the policy with PPO.</li>
+<li>Repeat with newly generated responses.</li>
+</ol>
+<p><strong>Important distinction:</strong> this RL stage needs a correct final answer or verifier, but not a demonstrated intermediate reasoning trajectory. It is not supervision-free: the verifier supplies the learning signal.</p>
+</section>
+<section id="experiment" class="level2">
+<h2 class="anchored" data-anchor-id="experiment">Experiment</h2>
+<p><strong>Setup:</strong> Pair targeted training prompts with verifiers; evaluate on GSM8K, MATH, IFEval, and BBH. Compare SFT and DPO starting points.</p>
+<p><strong>Results:</strong></p>
+<ul>
+<li>The plotted GSM8K and MATH runs improve during RL training.</li>
+<li>Those runs do not show the over-optimization pattern highlighted for learned rewards.</li>
+<li>The lecture reports stronger RLVR performance at larger scale and shows chaining multiple RLVR stages for OLMo 2.</li>
+</ul>
+<p><strong>Why can sparse rewards work?</strong> The starting model already has useful knowledge and some ability to generate solution steps. RL can reinforce successful responses rather than discovering language and reasoning from scratch.</p>
+<p><strong>Limitation:</strong> a verifier only checks what it encodes. Passing a final-answer check does not guarantee every intermediate step is valid.</p>
+</section>
+</section>
+<section id="s1-reasoning-and-test-time-scaling" class="level1">
+<h1>s1: Reasoning and Test-Time Scaling</h1>
+<section id="a-small-carefully-selected-dataset" class="level2">
+<h2 class="anchored" data-anchor-id="a-small-carefully-selected-dataset">A Small, Carefully Selected Dataset</h2>
+<p>The recipe combines <strong>s1K data + budget forcing</strong>.</p>
+<ol type="1">
+<li>Collect about 59,000 candidate questions.</li>
+<li>Filter for quality, difficulty, and diversity.</li>
+<li>Select <strong>1,000 examples</strong>.</li>
+<li>Distill worked solutions and answers from a strong reasoning model.</li>
+<li>Supervised-fine-tune the student model.</li>
+</ol>
+<p>The slides distinguish Gemini-generated traces for <strong>s1</strong> and DeepSeek-R1 traces for <strong>s1.1</strong>.</p>
+<p><strong>Takeaway:</strong> the result depends on a strong starting model and carefully selected demonstrations; it is not training reasoning from scratch with only 1,000 examples.</p>
+</section>
+<section id="budget-forcing" class="level2">
+<h2 class="anchored" data-anchor-id="budget-forcing">Budget Forcing</h2>
+<p>When the model tries to finish its reasoning, append <strong>“Wait”</strong> to encourage continued reasoning before the final answer.</p>
+<ul>
+<li>This gives the model additional opportunities to reconsider or check its approach.</li>
+<li>It changes inference-time computation, not model weights.</li>
+<li><strong>Sequential scaling:</strong> extend one reasoning trajectory.</li>
+<li><strong>Parallel scaling:</strong> generate several trajectories and aggregate or select answers.</li>
+</ul>
+</section>
+<section id="results-and-ablations" class="level2">
+<h2 class="anchored" data-anchor-id="results-and-ablations">Results and Ablations</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="s1-test-time-scaling.png" class="img-fluid figure-img"></p>
+<figcaption>s1 test-time scaling, approximately digitized from slide 136.</figcaption>
+</figure>
+</div>
+<p><em>Original Python redraw of slide 136. Values are approximate digitizations, not raw experimental data.</em></p>
+<ul>
+<li>The reported MATH500, AIME24, and GPQA Diamond curves improve as the thinking-token budget increases over the tested range.</li>
+<li>Carefully selected s1K examples outperform random or diversity-only 1K selections on the displayed benchmarks.</li>
+<li>Using all 59K examples does not consistently beat the selected 1K set.</li>
+</ul>
+<p><strong>Takeaway:</strong> training-data selection and how extra inference compute is used both matter. Longer output alone is not a guarantee of better reasoning.</p>
+</section>
+</section>
+<section id="olmo-pretraining-and-mid-training" class="level1">
+<h1>OLMo: Pretraining and Mid-Training</h1>
+<section id="two-stage-base-model-training" class="level2">
+<h2 class="anchored" data-anchor-id="two-stage-base-model-training">Two-Stage Base-Model Training</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Stage</th>
+<th>Data</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Pretraining</td>
+<td>Large amounts of diverse, mostly unstructured text</td>
+<td>Build broad capabilities; about 99% of the illustrated training budget</td>
+</tr>
+<tr class="even">
+<td>Mid-training</td>
+<td>Higher-quality, domain-focused, synthetic, and instruction data</td>
+<td>Concentrate useful data near the end; about 1% of the illustrated budget</td>
+</tr>
+</tbody>
+</table>
+<p>During the final stage, the learning rate decays to zero.</p>
+<p><strong>Why mid-training?</strong> Some valuable datasets are too small for the main pretraining mixture. Upsampling them late makes better use of this scarce data.</p>
+</section>
+<section id="reported-results" class="level2">
+<h2 class="anchored" data-anchor-id="reported-results">Reported Results</h2>
+<p>The displayed average benchmark score increases:</p>
+<ul>
+<li><strong>OLMo 2 7B:</strong> 50.6 → 61.2.</li>
+<li><strong>OLMo 2 13B:</strong> 56.5 → 66.8.</li>
+</ul>
+<p>These are averages over the slide’s benchmark set, not universal model-quality scores.</p>
+<p>Mid-training strengthens the base model; it is distinct from the later SFT → preference tuning → RLVR pipeline.</p>
+</section>
+</section>
+<section id="key-takeaways" class="level1">
+<h1>Key Takeaways</h1>
+<ul>
+<li><strong>Open recipes enable reproducible research:</strong> weights alone are not enough.</li>
+<li><strong>Data quality and mixing are central:</strong> curate for specific capabilities and evaluate the combined recipe.</li>
+<li><strong>Different stages teach different things:</strong> demonstrations, preferences, and verifiable outcomes provide complementary signals.</li>
+<li><strong>RLVR relies on capable starting models and reliable checks.</strong></li>
+<li><strong>Test-time compute is another lever:</strong> a trained reasoning model can benefit from controlled additional reasoning.</li>
+<li><strong>Small, high-quality datasets can have large effects</strong>, especially when used at the right training stage.</li>
+</ul>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<input type="hidden" id="giscus-base-theme" value="light">
+<input type="hidden" id="giscus-alt-theme" value="light">
+<script>
+  function loadGiscus() {
+    // Function to get the theme based on body class
+    const getTheme = () => {
+      let baseTheme = document.getElementById('giscus-base-theme').value;
+      let altTheme = document.getElementById('giscus-alt-theme').value;
+      return document.body.classList.contains('quarto-dark') ? altTheme : baseTheme;
+    };
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.dataset.repo = "ickma2311/ickma2311.github.io";
+    script.dataset.repoId = "R_kgDOOzbaAg";
+    script.dataset.category = "Comments";
+    script.dataset.categoryId = "DIC_kwDOOzbaAs4CxPFj";
+    script.dataset.mapping = "pathname";
+    script.dataset.reactionsEnabled = "1";
+    script.dataset.emitMetadata = "0";
+    script.dataset.inputPosition = "top";
+    script.dataset.theme = getTheme();
+    script.dataset.lang = "en";
+    script.crossOrigin = "anonymous";
+    // Append the script to the desired div instead of at the end of the body
+    document.getElementById("quarto-content").appendChild(script);
+  }
+  loadGiscus();
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Open Training Recipes: LLM Reasoning"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-09-08"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Deep Learning, LLM Agents, Reasoning, Post-Training]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Hanna Hajishirzi on Tulu 3, verifiable rewards, s1 test-time scaling, and OLMo mid-training."</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="an">image:</span><span class="co"> "tulu-training-pipeline.png"</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>{{&lt; video https://www.youtube.com/watch?v=cMiu3A7YBks &gt;}}</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>This lecture connects data curation, supervised fine-tuning, preference learning, verifiable rewards, and test-time computation into reproducible recipes for reasoning models.</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu"># Post-Training</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Follow instructions</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Use tools</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Chat</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Avoid harm</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Serve apps</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Reason</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">## Why Open Training Recipes?</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>**Open weights are not the same as a fully open model.** Reproducing and studying a model also requires its data, training code, infrastructure, and evaluation recipe.</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**OLMo:** a fully open language-model effort, including pretraining.</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Tülu:** an open post-training recipe that can be applied to different base models.</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**s1:** a minimal recipe for reasoning and test-time scaling.</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>**Speaker:** Hanna Hajishirzi  </span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>**Slides:** <span class="co">[</span><span class="ot">Open Training Recipes for Reasoning in Language Models</span><span class="co">](https://rdi.berkeley.edu/adv-llm-agents/slides/OLMo-Tulu-Reasoning-Hanna.pdf)</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="fu">## Tülu 3 Training Recipe</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="al">![Tulu 3 post-training pipeline.](tulu-training-pipeline.png)</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>**Base model → Supervised fine-tuning → Preference tuning → RL with verifiable rewards**</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>Each stage provides a different learning signal:</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Stage <span class="pp">|</span> Training signal <span class="pp">|</span> Purpose <span class="pp">|</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> SFT <span class="pp">|</span> Prompt and demonstrated response <span class="pp">|</span> Learn instruction following and targeted skills <span class="pp">|</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Preference tuning <span class="pp">|</span> Preferred versus rejected responses <span class="pp">|</span> Improve response quality and alignment <span class="pp">|</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> RLVR <span class="pp">|</span> Checkable final answers or constraints <span class="pp">|</span> Reinforce successful generated solutions <span class="pp">|</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>Before training:</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Define meaningful evaluations for the skills you want.</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Collect representative prompts.</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Check data licenses.</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Remove benchmark contamination.</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a><span class="fu"># Supervised Fine-Tuning</span></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="fu">## What Does SFT Learn?</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>Train the pretrained model on **prompt-response pairs**.</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>For reasoning tasks, demonstrations include intermediate solution steps, not just final answers.</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>**Example:** Under a buy-two-get-one-free offer, seven shirts at \$25 each cost \$125: two groups of three cost \$100, and one additional shirt costs \$25.</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>The demonstration teaches how to break the problem into steps. A readable explanation, however, is not itself proof that the reasoning is correct.</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Curation and Mixing</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>Two related tasks:</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Curation:** collect and filter examples for a particular capability.</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Mixing:** balance examples across chat, knowledge, reasoning, coding, multilinguality, safety, and precise instruction following.</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>A dataset that improves one skill may not improve every skill. Evaluate the mixture, not just each source in isolation.</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="fu">## Persona-Driven Data Generation</span></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>Human-written reasoning data is costly and difficult to scale. The lecture combines existing datasets with synthetic data:</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Start from a diverse collection of personas.</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Generate problems targeting skills such as math, coding, or instruction following.</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Use strong models to generate worked solutions.</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Filter the resulting examples and mix them with existing data.</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>**Why personas?** They provide varied contexts and perspectives instead of repeatedly generating similar problems.</span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a><span class="fu">## Experiment: Quality Versus Quantity</span></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>**Setup:** Add persona-generated math problems to a public-data mixture, then filter generated solutions using voting / self-consistency.</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>**Results:**</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Increasing persona-generated math data improves MATH performance in the reported experiments.</span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Grade-school math data helps GSM8K.</span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>After filtering, about **60% of the data** retains similar MATH performance and improves GSM8K.</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>**Takeaway:** More data is not automatically better. Targeted diversity and filtering can be more useful than raw volume. Agreement between generated answers is a quality filter, not a correctness guarantee.</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a><span class="fu"># Preference Tuning</span></span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a><span class="fu">## Learning from Comparisons</span></span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>For the same prompt, compare two responses and identify which is better.</span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Human feedback:** people label the preference.</span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**AI feedback:** a model judges the responses.</span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>Preference tuning strongly affects style and chat quality, while also building on capabilities learned during SFT.</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a><span class="fu">## PPO and DPO</span></span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Method <span class="pp">|</span> How it works <span class="pp">|</span> Trade-off <span class="pp">|</span></span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> PPO-based RLHF <span class="pp">|</span> Train a reward model from preferences; generate responses and optimize the policy against that reward <span class="pp">|</span> More complex, with higher memory and compute costs <span class="pp">|</span></span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> DPO <span class="pp">|</span> Directly optimize preferred versus rejected responses, relative to a reference policy <span class="pp">|</span> No separately trained reward model; simpler development <span class="pp">|</span></span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a>A standard KL-regularized reward objective is:</span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>\max_{\theta}\;</span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_{x\sim D}\left[</span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>\mathbb{E}_{y\sim\pi_{\theta}(\cdot\mid x)}<span class="co">[</span><span class="ot">r(x,y)</span><span class="co">]</span></span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>-\beta D_{\mathrm{KL}}<span class="sc">\!</span>\left(</span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>\pi_{\theta}(\cdot\mid x)\,\Vert\,\pi_{\mathrm{ref}}(\cdot\mid x)</span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>\right)</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>\right]</span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Reward:** encourage better responses.</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**KL penalty:** discourage excessive departure from the reference model.</span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a><span class="fu">## What Matters Most?</span></span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>In the lecture's comparisons:</span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>High-quality preference data is the most important factor.</span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>PPO performs better than DPO, but DPO is cheaper and easier to iterate on.</span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A larger reward model does not always produce a better final policy.</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Relevant, in-domain prompts can improve results.</span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>**Tülu 3 uses length-normalized DPO**, which normalizes response log-likelihoods by response length. The recipe also refines preference-data generation rather than relying only on an algorithm change.</span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a><span class="fu"># Reinforcement Learning with Verifiable Rewards</span></span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a><span class="fu">## Why Replace the Reward Model?</span></span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>A learned reward model is an imperfect proxy. Optimizing its score too aggressively can exploit its mistakes instead of improving real quality.</span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>For tasks with checkable answers, use a **verification function**:</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>r(x,y)=</span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>\begin{cases}</span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>1, &amp; \text{if the answer or required constraints pass verification},<span class="sc">\\</span></span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a>0, &amp; \text{otherwise}.</span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>\end{cases}</span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>Examples include mathematical final answers and precise instruction-following constraints.</span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a><span class="fu">## Training Loop</span></span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a><span class="al">![RLVR training loop: reference answers are used only by the verifier.](rlvr-training-loop.png)</span></span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Start from an SFT or preference-tuned model.</span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Sample a response to a training prompt.</span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Verify the final answer or constraints.</span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Update the policy with PPO.</span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Repeat with newly generated responses.</span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>**Important distinction:** this RL stage needs a correct final answer or verifier, but not a demonstrated intermediate reasoning trajectory. It is not supervision-free: the verifier supplies the learning signal.</span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a><span class="fu">## Experiment</span></span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a>**Setup:** Pair targeted training prompts with verifiers; evaluate on GSM8K, MATH, IFEval, and BBH. Compare SFT and DPO starting points.</span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a>**Results:**</span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The plotted GSM8K and MATH runs improve during RL training.</span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Those runs do not show the over-optimization pattern highlighted for learned rewards.</span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The lecture reports stronger RLVR performance at larger scale and shows chaining multiple RLVR stages for OLMo 2.</span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a>**Why can sparse rewards work?** The starting model already has useful knowledge and some ability to generate solution steps. RL can reinforce successful responses rather than discovering language and reasoning from scratch.</span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a>**Limitation:** a verifier only checks what it encodes. Passing a final-answer check does not guarantee every intermediate step is valid.</span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a><span class="fu"># s1: Reasoning and Test-Time Scaling</span></span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a><span class="fu">## A Small, Carefully Selected Dataset</span></span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>The recipe combines **s1K data + budget forcing**.</span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Collect about 59,000 candidate questions.</span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Filter for quality, difficulty, and diversity.</span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Select **1,000 examples**.</span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Distill worked solutions and answers from a strong reasoning model.</span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Supervised-fine-tune the student model.</span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a>The slides distinguish Gemini-generated traces for **s1** and DeepSeek-R1 traces for **s1.1**.</span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a>**Takeaway:** the result depends on a strong starting model and carefully selected demonstrations; it is not training reasoning from scratch with only 1,000 examples.</span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a><span class="fu">## Budget Forcing</span></span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a>When the model tries to finish its reasoning, append **“Wait”** to encourage continued reasoning before the final answer.</span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>This gives the model additional opportunities to reconsider or check its approach.</span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>It changes inference-time computation, not model weights.</span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Sequential scaling:** extend one reasoning trajectory.</span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Parallel scaling:** generate several trajectories and aggregate or select answers.</span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a><span class="fu">## Results and Ablations</span></span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a><span class="al">![s1 test-time scaling, approximately digitized from slide 136.](s1-test-time-scaling.png)</span></span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a>*Original Python redraw of slide 136. Values are approximate digitizations, not raw experimental data.*</span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The reported MATH500, AIME24, and GPQA Diamond curves improve as the thinking-token budget increases over the tested range.</span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Carefully selected s1K examples outperform random or diversity-only 1K selections on the displayed benchmarks.</span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Using all 59K examples does not consistently beat the selected 1K set.</span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a>**Takeaway:** training-data selection and how extra inference compute is used both matter. Longer output alone is not a guarantee of better reasoning.</span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a><span class="fu"># OLMo: Pretraining and Mid-Training</span></span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a><span class="fu">## Two-Stage Base-Model Training</span></span>
+<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Stage <span class="pp">|</span> Data <span class="pp">|</span> Role <span class="pp">|</span></span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Pretraining <span class="pp">|</span> Large amounts of diverse, mostly unstructured text <span class="pp">|</span> Build broad capabilities; about 99% of the illustrated training budget <span class="pp">|</span></span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Mid-training <span class="pp">|</span> Higher-quality, domain-focused, synthetic, and instruction data <span class="pp">|</span> Concentrate useful data near the end; about 1% of the illustrated budget <span class="pp">|</span></span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a>During the final stage, the learning rate decays to zero.</span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a>**Why mid-training?** Some valuable datasets are too small for the main pretraining mixture. Upsampling them late makes better use of this scarce data.</span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reported Results</span></span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a>The displayed average benchmark score increases:</span>
+<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**OLMo 2 7B:** 50.6 → 61.2.</span>
+<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**OLMo 2 13B:** 56.5 → 66.8.</span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a>These are averages over the slide's benchmark set, not universal model-quality scores.</span>
+<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a>Mid-training strengthens the base model; it is distinct from the later SFT → preference tuning → RLVR pipeline.</span>
+<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a><span class="fu"># Key Takeaways</span></span>
+<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Open recipes enable reproducible research:** weights alone are not enough.</span>
+<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Data quality and mixing are central:** curate for specific capabilities and evaluate the combined recipe.</span>
+<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Different stages teach different things:** demonstrations, preferences, and verifiable outcomes provide complementary signals.</span>
+<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**RLVR relies on capable starting models and reliable checks.**</span>
+<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Test-time compute is another lever:** a trained reasoning model can benefit from controlled additional reasoning.</span>
+<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Small, high-quality datasets can have large effects**, especially when used at the right training stage.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
