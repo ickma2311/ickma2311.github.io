@@ -2,12 +2,36 @@
 title: "MIT 6.041 Probability: Markov Chains II"
 author: "Chao Ma"
 date: "2026-09-17"
-image: markov-ii-overview-head.png
+image: markov-ii-animated-head.png
 ---
 
 Notes on **MIT 6.041, Lecture 17: Markov Chains II**, taught by John Tsitsiklis.
 
+<figure>
+<img id="markov-head-animation" src="markov-ii-animated-head.png" alt="Animated exact Markov update. Starting in state 1, probability splits along transitions 0.5, 0.5, 0.2 and 0.8. Incoming contributions sum at each next state. After repeated updates, occupancy approaches 2/7 and 5/7 while each cross-state flow approaches 1/7. Moving dots indicate calculation order, not random trajectories." style="width:100%;height:auto" width="1280" height="720">
+<button type="button" id="markov-head-toggle" aria-controls="markov-head-animation">Play animation</button>
+<figcaption>Exact probability updates for the lecture’s two-state chain. Moving dots indicate the calculation sequence, not sampled trajectories. <a href="markov-ii-animated-head.png">Static image</a>.</figcaption>
+</figure>
+<script>
+(() => {
+ const image = document.getElementById('markov-head-animation');
+ const button = document.getElementById('markov-head-toggle');
+ let playing = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function update() {
+  image.src = playing ? 'markov-ii-animated-head.gif' : 'markov-ii-animated-head.png';
+  button.textContent = playing ? 'Stop animation' : 'Play animation';
+ }
+ button.addEventListener('click', () => { playing = !playing; update(); });
+ update();
+})();
+</script>
+
+<details>
+<summary>Static lecture overview: convergence, balance, and queues</summary>
+
 ![Three panels connect Markov-chain convergence, balance and queues. A finite chain with one aperiodic recurrent class forgets its start, unlike a period-two chain. For P with rows (0.5,0.5) and (0.2,0.8), stationary probabilities are (2/7,5/7) and cross-state flows are 1/7. For an unbounded constant-probability birth-death queue, mean occupancy rho/(1-rho) rises from 4 at rho 0.80 to 19 at 0.95.](markov-ii-overview-head.png)
+
+</details>
 
 <iframe style="width:100%;aspect-ratio:16/9;border:0" src="https://www.youtube.com/embed/ZulMqrvP-Pk" title="MIT 6.041 Lecture 17: Markov Chains II — John Tsitsiklis" loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
