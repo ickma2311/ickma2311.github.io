@@ -14,7 +14,7 @@ A telephone exchange receives 30 calls per minute. Each call lasts three minutes
 This lecture makes Markov chains answer three operational questions: how much capacity to provide, which terminal outcome a process will reach, and how long it takes to get there. The common technique is to turn the transition graph into equations, with boundary conditions chosen for the question.
 
 <figure>
-<img id="capacity-animation" src="markov-iii-assets/capacity.png" alt="Exact Erlang loss model: 90 lines block 7.957 percent of arrivals, 106 lines block 1.055 percent, and 107 lines block 0.880 percent. The animation compares capacities, not a time trajectory." width="1600" height="900" style="width:100%;height:auto">
+<img id="capacity-animation" src="markov-iii-assets/capacity.png" alt="Erlang loss model: 90 lines block 7.957 percent of arrivals, 106 lines block 1.055 percent, and 107 lines block 0.880 percent. The static frame highlights 107 lines; the adjacent curve compares capacities. The animation varies capacity at fixed offered load, not elapsed time." width="1600" height="900" style="width:100%;height:auto">
 <button type="button" id="capacity-toggle" aria-controls="capacity-animation">Play capacity comparison</button>
 <figcaption>Each frame changes the number of lines, holding arrival and service rates fixed. These are exact stationary calculations, not simulated call histories. <a href="markov-iii-assets/capacity.png">Static figure</a> · <a href="markov-iii-assets/capacity-data.csv">Underlying data</a>.</figcaption>
 </figure>
@@ -59,6 +59,15 @@ not $\pi_1\pi_2=10/49$. Being late in the process makes the marginal distributio
 
 **Worked extension:** for this particular matrix, $r_{11}(n)=2/7+(5/7)(0.3)^n$. The error is tiny after 100 steps. That number of steps is not a general rule: if the cross-state probabilities were 0.001 and 0.002, the corresponding decay factor would be $0.997^n$, still about 0.74 after 100 steps. Mixing depends on the transition probabilities.
 
+For a contrasting pair of well-separated late times,
+
+$$
+P(X_{100}=1,X_{200}=1\mid X_0=1)
+=r_{11}(100)r_{11}(100)\approx\pi_1^2=4/49.
+$$
+
+Here both the time to the first observation and the gap between observations are long relative to this chain’s mixing time. That is why approximate independence is justified in this example, while it fails for adjacent observations.
+
 ## Capacity planning: a loss system has no queue
 
 Suppose calls arrive according to a Poisson process with rate $\lambda$, and independent call durations are exponential with rate $\mu$. There are $B$ lines. An arrival takes a free line immediately or is rejected if all lines are busy.
@@ -82,7 +91,7 @@ P(i\to i+1)=\lambda\delta+o(\delta),\qquad
 P(i\to i-1)=i\mu\delta+o(\delta).
 $$
 
-These formulas apply where the neighboring state exists. At $B$, rejected arrivals do not increase the state; at zero, no departure is possible. Multiple events contribute higher-order terms. The lecture uses this small-time construction to obtain the continuous-time birth–death model.
+These formulas apply where the neighboring state exists. At $B$, rejected arrivals do not increase the state; at zero, no departure is possible. Multiple events contribute higher-order terms. The lecture discretizes time into small intervals of length $\delta$ and uses a discrete-time birth–death approximation, rather than developing continuous-time Markov-chain theory. The common factor $\delta$ cancels from the stationary flow-balance equations below.
 
 Across the cut between states $i-1$ and $i$, stationary flow must balance:
 
@@ -173,7 +182,9 @@ Q=\begin{pmatrix}0&0.6&0.4\\0.8&0&0\\0.5&0.3&0\end{pmatrix},\qquad
 (I-Q)a=r.
 $$
 
-Here eventual absorption occurs with probability one, and $I-Q$ is invertible. Do not apply this conclusion blindly if an omitted recurrent class can retain the process indefinitely.
+The lecture also uses a useful simplification: when the question only asks which terminal class is reached, collapse each closed recurrent class into a single absorbing state, adding transition probabilities that lead into that class. This preserves the entry outcome; it is not a general license to merge arbitrary states.
+
+In the five-state example above, eventual absorption occurs with probability one, and $I-Q$ is invertible. Do not apply this conclusion blindly if an omitted recurrent class can retain the process indefinitely.
 
 ## Expected time: the extra “1” is the step you just took
 
@@ -192,6 +203,8 @@ $$
 
 Compare this with the absorption-probability equation $a_i=\sum_jp_{ij}a_j$. The averaging mechanism is the same, but elapsed time accumulates a cost of one per transition. Boundary values encode whether we ask about a probability or a waiting time.
 
+**Supplementary conditions beyond the lecture’s treatment:** for a finite-state chain, these equations have a unique finite solution on the non-target states when the target is reached almost surely from every state under consideration. If a start state has positive probability of never reaching the target, its unconditional expected hitting time is infinite. Almost-sure hitting alone does not guarantee a finite mean in an infinite-state chain.
+
 The lecture's next slide changes the graph: state 5 is removed, and state 3 now goes to 1 or 2 with probability 0.5 each. State 4 is the only absorbing outcome. For this revised graph,
 
 $$
@@ -204,7 +217,7 @@ $$
 
 **Calculated solution of the slide's example:** $(t_1,t_2,t_3)=(13.75,12,13.875)$ expected steps. Notice that the graph changed: these are not waiting times for the earlier two-outcome system.
 
-As a separate extension, time to either absorbing outcome in the original graph satisfies $(I-Q)t=\mathbf1$, giving about 9.46 steps from state 1. That is also different from the conditional time to reach 4 given that 4 is reached.
+As a separate extension, time to either absorbing outcome in the original graph satisfies $(I-Q)t=\mathbf1$, giving about 9.46 steps from state 1. Applying the lecture’s general merging technique to this example, we merge states 4 and 5 into one “already absorbed” state; probabilities of entering either are added. The resulting first-step waiting-time equations give the same answer. This is different from the conditional time to reach 4 given that 4 is reached.
 
 ## First arrival versus first return
 
@@ -214,13 +227,13 @@ $$
 T_s^+=\inf\{n\ge1:X_n=s\}.
 $$
 
-It requires at least one transition, even if that transition is a self-loop. First-step analysis gives
+To calculate a first hitting time, we may replace the target’s outgoing edges with a probability-one self-loop. Transitions after the first arrival cannot change when that arrival occurred. For a first return, however, retain the original first transition from the target and then use those hitting-time values. A return requires at least one transition, even if that transition is a self-loop. First-step analysis gives
 
 $$
 t_s^+=1+\sum_jp_{sj}t_j.
 $$
 
-![A worked comparison for the two-state chain: first hitting state 1 from state 1 takes zero steps; hitting from state 2 takes five expected steps; returning to state 1 takes 1 plus 0.5 times zero plus 0.5 times five, or 3.5 expected steps.](markov-iii-assets/hitting-return.png)
+![Two-state transition diagram: 1 to 2 has probability 0.5, 2 to 1 has probability 0.2, and self-loops at 1 and 2 have probabilities 0.5 and 0.8. The stationary distribution is (2/7, 5/7). First hitting state 1 from state 1 takes zero steps; hitting from state 2 takes five expected steps; returning to state 1 takes 1 plus 0.5 times zero plus 0.5 times five, or 3.5 expected steps.](markov-iii-assets/hitting-return.png)
 
 For the two-state chain at the beginning, $t_1=0$ and $t_2=1+0.8t_2$, so $t_2=5$. Starting from 1, the first step either returns immediately with probability 0.5 or moves to 2 with probability 0.5:
 
@@ -228,7 +241,7 @@ $$
 t_1^+=1+0.5(0)+0.5(5)=3.5.
 $$
 
-As a consistency check, the finite irreducible chain's mean return time is $1/\pi_1=7/2$. A state occupied more often in the long run has a shorter mean recurrence interval. Do not confuse this recurrence statement with independence of consecutive states.
+**Standard result beyond this lecture, used as a consistency check:** the finite irreducible chain's mean return time is $1/\pi_1=7/2$. A state occupied more often in the long run has a shorter mean recurrence interval. Do not confuse this recurrence statement with independence of consecutive states.
 
 ## Choosing the right equations
 
