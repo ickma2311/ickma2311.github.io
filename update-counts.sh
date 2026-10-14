@@ -46,6 +46,8 @@ LLM_AGENTS_COUNT=$(grep -c "^\*\*\[" ML/LLM-Agents/index.qmd)
 
 CS336_COUNT=$(grep -c "^\*\*\[" ML/CS336/index.qmd)
 
+BIOLOGY_COUNT=$(grep -c "^\*\*\[" ML/Biology/index.qmd)
+
 STARTUPS_COUNT=$(grep -c "^\*\*\[" Startups/index.qmd)
 
 echo "Content counts:"
@@ -87,6 +89,8 @@ sed -i.bak "s/Stanford CS336: Language Modeling from Scratch <span class=\"secti
 
 # Remove backup file
 sed -i.bak "s/Building Startups <span class=\"section-count\">[0-9]* notes\{0,1\}/Building Startups <span class=\"section-count\">$STARTUPS_COUNT note$( [ $STARTUPS_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
+
+sed -i.bak "s/Deep Learning in the Life Sciences <span class=\"section-count\">[0-9]* note[s]\{0,1\}/Deep Learning in the Life Sciences <span class=\"section-count\">$BIOLOGY_COUNT note$( [ $BIOLOGY_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
 rm index.qmd.bak
 
