@@ -92,6 +92,12 @@ sed -i.bak "s/Building Startups <span class=\"section-count\">[0-9]* notes\{0,1\
 
 sed -i.bak "s/Deep Learning in the Life Sciences <span class=\"section-count\">[0-9]* note[s]\{0,1\}/Deep Learning in the Life Sciences <span class=\"section-count\">$BIOLOGY_COUNT note$( [ $BIOLOGY_COUNT -eq 1 ] && echo '' || echo 's' )/" index.qmd
 
+# Count ChaoLab articles (exclude in-page category links)
+CHAOLAB_COUNT=$(grep -c '^\*\*\[.*\](.*\.qmd)' ChaoLab/index.qmd)
+CHAOLAB_NOUN=articles
+if [ "$CHAOLAB_COUNT" -eq 1 ]; then CHAOLAB_NOUN=article; fi
+sed -i.bak "s/ChaoLab <span class=\"section-count\">[0-9]* article[s]\{0,1\}/ChaoLab <span class=\"section-count\">$CHAOLAB_COUNT $CHAOLAB_NOUN/" index.qmd
+
 rm index.qmd.bak
 
 echo ""
