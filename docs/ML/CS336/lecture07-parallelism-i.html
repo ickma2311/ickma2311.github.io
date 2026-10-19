@@ -1,0 +1,2509 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Chao Ma">
+<meta name="dcterms.date" content="2026-10-19">
+<meta name="description" content="How collective operations turn batch, width, and depth partitions into distributed training—and where communication, memory, and pipeline bubbles change the tradeoff.">
+
+<title>Parallel Training Starts with Deciding What Moves – ∇ ickma.dev</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../favicon.svg" rel="icon" type="image/svg+xml">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-PK5N5KWZBF"></script>
+
+<script type="text/javascript">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-PK5N5KWZBF', { 'anonymize_ip': true});
+</script>
+<style>main mjx-container[display="true"]{display:block;max-width:100%;overflow-x:auto;overflow-y:hidden;padding:4px 0}main img{max-width:100%;height:auto}</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">∇ ickma.dev</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-chaolab" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">ChaoLab</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-chaolab">    
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html#research-notes">
+ <span class="dropdown-text">Research Notes</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html#reproductions">
+ <span class="dropdown-text">Reproductions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html#field-notes">
+ <span class="dropdown-text">Field Notes</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-deep-learning" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Deep Learning</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-deep-learning">    
+        <li class="dropdown-header">Deep Learning in the Life Sciences</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/gene-expression-and-splicing.html">
+ <span class="dropdown-text">Lecture 9: Gene Expression and Splicing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/sequence-labels-to-contact-maps.html">
+ <span class="dropdown-text">Lecture 8: Sequence Labels to Contact Maps</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/regulatory-genomics.html">
+ <span class="dropdown-text">Lecture 7: Regulatory Genomics</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Stanford CS336: Language Modeling from Scratch</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture01-overview-tokenization.html">
+ <span class="dropdown-text">Lecture 1: Overview and Tokenization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture07-parallelism-i.html">
+ <span class="dropdown-text">Lecture 7: Parallelism</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture06-kernels-triton.html">
+ <span class="dropdown-text">Lecture 6: Kernels and Triton</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture05-gpus-tpus.html">
+ <span class="dropdown-text">Lecture 5: GPUs, TPUs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture04-attention-alternatives-moe.html">
+ <span class="dropdown-text">Lecture 4: Attention Alternatives and MoE</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture03-architectures-hyperparameters.html">
+ <span class="dropdown-text">Lecture 3: Architectures and Hyperparameters</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture02-pytorch-resource-accounting.html">
+ <span class="dropdown-text">Lecture 2: PyTorch and Resource Accounting</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Advanced Large Language Model Agents</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/safe-and-secure-agentic-ai.html">
+ <span class="dropdown-text">Lecture 12: Safe and Secure Agentic AI</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/abstraction-and-discovery.html">
+ <span class="dropdown-text">Lecture 11: Abstraction and Discovery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/advanced-topics-theorem-proving.html">
+ <span class="dropdown-text">Lecture 10: Advanced Topics in Theorem Proving</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/language-models-autoformalization-theorem-proving.html">
+ <span class="dropdown-text">Autoformalization and Theorem Proving</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/alphaproof-reinforcement-learning-formal-mathematics.html">
+ <span class="dropdown-text">AlphaProof: RL and Formal Mathematics</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/multimodal-agents-perception-to-action.html">
+ <span class="dropdown-text">Multimodal Agents: From Perception to Action</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/multimodal-autonomous-ai-agents.html">
+ <span class="dropdown-text">Multimodal Autonomous AI Agents</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/coding-agents-vulnerability-detection.html">
+ <span class="dropdown-text">Coding Agents and AI for Vulnerability Detection</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/open-training-recipes-llm-reasoning.html">
+ <span class="dropdown-text">Open Training Recipes: LLM Reasoning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/reasoning-memory-planning-language-agents.html">
+ <span class="dropdown-text">Reasoning, Memory, and Planning of Language Agents</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/learning-to-self-improve-and-reason-with-llms.html">
+ <span class="dropdown-text">Learning to Self-Improve and Reason with LLMs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/inference-time-techniques-for-llm-reasoning.html">
+ <span class="dropdown-text">Inference-Time Techniques for LLM Reasoning</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">CMU 10-414/714 Deep Learning Systems</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-12-gpu-acceleration.html">
+ <span class="dropdown-text">Lecture 12: GPU Acceleration</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-11-convolutional-networks.html">
+ <span class="dropdown-text">Lecture 11: Convolutional Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-10-hardware-acceleration.html">
+ <span class="dropdown-text">Lecture 10: Hardware Acceleration</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-9-neural-network-library-implementation.html">
+ <span class="dropdown-text">Lecture 9: Neural Network Library Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-8-normalization-dropout.html">
+ <span class="dropdown-text">Lecture 8: Normalization, Dropout, and Model State</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-7-neural-network-library-abstractions.html">
+ <span class="dropdown-text">Lecture 7: Neural Network Library Abstractions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-6-optimization-initialization.html">
+ <span class="dropdown-text">Lecture 6: Optimization and Initialization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-5-auto-differentiation-implementation.html">
+ <span class="dropdown-text">Lecture 5: Auto Differentiation Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-4-automatic-differentiation.html">
+ <span class="dropdown-text">Lecture 4: Automatic Differentiation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-3-part-2-manual-neural-networks.html">
+ <span class="dropdown-text">Lecture 3 Part II: Manual Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-3-manual-neural-networks.html">
+ <span class="dropdown-text">Lecture 3: Manual Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-2-ml-refresher-softmax-regression.html">
+ <span class="dropdown-text">Lecture 2: ML Refresher / Softmax Regression</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">ML HW-SW Codesign</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-01-introduction.html">
+ <span class="dropdown-text">Efficient AI Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-03-pruning-and-sparsity-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 3: Pruning and Sparsity (Part 1)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-04-pruning-and-sparsity-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 4: Pruning and Sparsity (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-05-quantization-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 5: Quantization (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-06-quantization-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 6: Quantization (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-07-neural-architecture-search-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 7: Neural Architecture Search (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-08-neural-architecture-search-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 8: Neural Architecture Search (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-09-knowledge-distillation.html">
+ <span class="dropdown-text">Efficient AI Lecture 9: Knowledge Distillation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-10-mcunet-and-tinyml.html">
+ <span class="dropdown-text">Efficient AI Lecture 10: MCUNet and TinyML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-11-tinyengine.html">
+ <span class="dropdown-text">Efficient AI Lecture 11: TinyEngine</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-12-transformer-and-llm.html">
+ <span class="dropdown-text">Efficient AI Lecture 12: Transformer and LLM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-13-llm-deployment-techniques.html">
+ <span class="dropdown-text">Efficient AI Lecture 13: LLM Deployment Techniques</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-14-llm-post-training.html">
+ <span class="dropdown-text">Efficient AI Lecture 14: LLM Post-Training</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-15-long-context-llm.html">
+ <span class="dropdown-text">Efficient AI Lecture 15: Long-Context LLM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-16-vision-transformer.html">
+ <span class="dropdown-text">Efficient AI Lecture 16: Vision Transformer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-17-gans-video-pointcloud.html">
+ <span class="dropdown-text">Efficient AI Lecture 17: GANs, Video, and Point Cloud</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-18-diffusion-models.html">
+ <span class="dropdown-text">Efficient AI Lecture 18: Diffusion Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-19-distributed-training-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 19: Distributed Training (Part 1)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-20-distributed-training-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 20: Distributed Training (Part 2)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-21-on-device-training-transfer-learning.html">
+ <span class="dropdown-text">Efficient AI Lecture 21: On-Device Training and Transfer Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-22-quantum-machine-learning-i.html">
+ <span class="dropdown-text">Efficient AI Lecture 22: Quantum Machine Learning I</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">JAX</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-numpy.html">
+ <span class="dropdown-text">JAX NumPy</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/introducing-flax-nnx.html">
+ <span class="dropdown-text">Introducing Flax NNX</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-ai-stack.html">
+ <span class="dropdown-text">JAX AI Stack</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/scaling-up.html">
+ <span class="dropdown-text">Scaling Up</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">NLP</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-21-mixture-of-experts.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 21: Mixture of Experts</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-16-reinforcement-learning-for-llms.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 16: Reinforcement Learning for LLMs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-9-decoding-algorithms.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 9: Decoding Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-2-learned-representation.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 2: Learned Representation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-1-introduction-fundamentals.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 1: Introduction and Fundamentals</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">RL</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-10-classic-games.html">
+ <span class="dropdown-text">David Silver Lecture 10: Classic Games</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-9-exploration-and-exploitation.html">
+ <span class="dropdown-text">David Silver Lecture 9: Exploration and Exploitation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-8-integrating-learning-and-planning.html">
+ <span class="dropdown-text">David Silver Lecture 8: Integrating Learning and Planning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-7-policy-gradient-methods.html">
+ <span class="dropdown-text">David Silver Lecture 7: Policy Gradient Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-6-value-function-approximation.html">
+ <span class="dropdown-text">David Silver Lecture 6: Value Function Approximation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-5-model-free-control.html">
+ <span class="dropdown-text">David Silver Lecture 5: Model-Free Control</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/cmu-advanced-nlp-reinforcement-learning.html">
+ <span class="dropdown-text">CMU Advanced NLP: Reinforcement Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-4-model-free-prediction.html">
+ <span class="dropdown-text">David Silver Lecture 4: Model-Free Prediction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-3-planning-by-dynamic-programming.html">
+ <span class="dropdown-text">David Silver Lecture 3: Planning by Dynamic Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-2-markov-decision-process.html">
+ <span class="dropdown-text">David Silver Lecture 2: Markov Decision Process</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-1-introduction-to-reinforcement-learning.html">
+ <span class="dropdown-text">David Silver Lecture 1: Introduction to RL</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Papers in Deep Learning</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/generative-adversarial-nets.html">
+ <span class="dropdown-text">Generative Adversarial Nets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/why-tpu-is-fast-for-dot-product.html">
+ <span class="dropdown-text">Why TPU Is Fast for Dot Product</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/transformer-attention-is-all-you-need.html">
+ <span class="dropdown-text">Transformer: Attention Is All You Need</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/attention-origin-transformer.html">
+ <span class="dropdown-text">Attention: The Origin of Transformer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/batch-normalization.html">
+ <span class="dropdown-text">Batch Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/lora.html">
+ <span class="dropdown-text">LoRA: Low-Rank Adaptation</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-learning-book.html">
+ <span class="dropdown-text">Goodfellow Deep Learning Book (Overview)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/xor-deep-learning.html">
+ <span class="dropdown-text">Chapter 6.1: XOR Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/likelihood-loss-functions.html">
+ <span class="dropdown-text">Chapter 6.2: Loss Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/activation-functions.html">
+ <span class="dropdown-text">Chapter 6.3: Activation Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/architecture-design.html">
+ <span class="dropdown-text">Chapter 6.4: Architecture Design</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/backpropagation.html">
+ <span class="dropdown-text">Chapter 6.5: Back-Propagation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/hessian-prerequisites.html">
+ <span class="dropdown-text">Chapter 7 Prerequisites: Hessian Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l2-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.1: L2 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l1-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.2: L1 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/constrained-optimization-regularization.html">
+ <span class="dropdown-text">Chapter 7.2: Constrained Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/regularization-underconstrained.html">
+ <span class="dropdown-text">Chapter 7.3: Under-Constrained Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dataset-augmentation.html">
+ <span class="dropdown-text">Chapter 7.4: Dataset Augmentation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/noise-robustness.html">
+ <span class="dropdown-text">Chapter 7.5: Noise Robustness</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/semi-supervised-learning.html">
+ <span class="dropdown-text">Chapter 7.6: Semi-Supervised Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/multi-task-learning.html">
+ <span class="dropdown-text">Chapter 7.7: Multi-Task Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/early-stopping.html">
+ <span class="dropdown-text">Chapter 7.8: Early Stopping</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-tying-sharing.html">
+ <span class="dropdown-text">Chapter 7.9: Parameter Tying &amp; Sharing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-sparsity.html">
+ <span class="dropdown-text">Chapter 7.10: Sparse Representations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/bagging-ensemble.html">
+ <span class="dropdown-text">Chapter 7.11: Bagging &amp; Ensemble Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dropout.html">
+ <span class="dropdown-text">Chapter 7.12: Dropout</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adversarial-training.html">
+ <span class="dropdown-text">Chapter 7.13: Adversarial Training</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/tangent-prop-manifold.html">
+ <span class="dropdown-text">Chapter 7.14: Tangent Prop &amp; Manifolds</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/learning-vs-optimization.html">
+ <span class="dropdown-text">Chapter 8.1: Learning vs Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-challenges.html">
+ <span class="dropdown-text">Chapter 8.2: Optimization Challenges</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/basic-optimization-algorithms.html">
+ <span class="dropdown-text">Chapter 8.3: Basic Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-initialization.html">
+ <span class="dropdown-text">Chapter 8.4: Parameter Initialization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adaptive-learning-rates.html">
+ <span class="dropdown-text">Chapter 8.5: Adaptive Learning Rates</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/second-order-methods.html">
+ <span class="dropdown-text">Chapter 8.6: Second-Order Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-strategies.html">
+ <span class="dropdown-text">Chapter 8.7: Optimization Strategies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolution-computation.html">
+ <span class="dropdown-text">Chapter 9.1: Convolution Computation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-motivation.html">
+ <span class="dropdown-text">Chapter 9.2: CNN Motivation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-pooling.html">
+ <span class="dropdown-text">Chapter 9.3: Pooling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-infinitely-strong-prior.html">
+ <span class="dropdown-text">Chapter 9.4: Infinitely Strong Prior</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolutional-functions.html">
+ <span class="dropdown-text">Chapter 9.5: Convolutional Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-structured-outputs.html">
+ <span class="dropdown-text">Chapter 9.6: Structured Outputs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-data-types.html">
+ <span class="dropdown-text">Chapter 9.7: Data Types</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-efficient-convolution.html">
+ <span class="dropdown-text">Chapter 9.8: Efficient Convolution</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-unsupervised-learning.html">
+ <span class="dropdown-text">Chapter 9.9: Unsupervised Feature Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-neuroscience.html">
+ <span class="dropdown-text">Chapter 9.10: Neuroscientific Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-unfold-computation-graph.html">
+ <span class="dropdown-text">Chapter 10.1: Unfold Computation Graph</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recurrent-neural-networks.html">
+ <span class="dropdown-text">Chapter 10.2: Recurrent Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-bidirectional.html">
+ <span class="dropdown-text">Chapter 10.3: Bidirectional RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-encoder-decoder.html">
+ <span class="dropdown-text">Chapter 10.4: Encoder-Decoder Seq2Seq</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-deep.html">
+ <span class="dropdown-text">Chapter 10.5: Deep RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recursive.html">
+ <span class="dropdown-text">Chapter 10.6: Recursive Neural Network</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-long-term-dependency.html">
+ <span class="dropdown-text">Chapter 10.7: Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-echo-state.html">
+ <span class="dropdown-text">Chapter 10.8: Echo State Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-leaky-unit.html">
+ <span class="dropdown-text">Chapter 10.9: Leaky Units</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-lstm-gru.html">
+ <span class="dropdown-text">Chapter 10.10: LSTM and GRU</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-optimize-long-term.html">
+ <span class="dropdown-text">Chapter 10.11: Optimizing Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-explicit-memory.html">
+ <span class="dropdown-text">Chapter 10.12: Explicit Memory</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/practical-methodology.html">
+ <span class="dropdown-text">Chapter 11: Practical Methodology</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/large-scale-deep-learning.html">
+ <span class="dropdown-text">Chapter 12.1: Large-Scale Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/image-preprocessing-normalization.html">
+ <span class="dropdown-text">Chapter 12.2: Image Preprocessing and Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/automatic-speech-recognition.html">
+ <span class="dropdown-text">Chapter 12.3: Automatic Speech Recognition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/nlp-applications.html">
+ <span class="dropdown-text">Chapter 12.4: NLP Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/other-applications.html">
+ <span class="dropdown-text">Chapter 12.5: Other Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/linear-factor-models.html">
+ <span class="dropdown-text">Chapter 13: Linear Factor Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/autoencoders.html">
+ <span class="dropdown-text">Chapter 14: Autoencoders</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-learning.html">
+ <span class="dropdown-text">Chapter 15: Representation Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/structured-probabilistic-models.html">
+ <span class="dropdown-text">Chapter 16: Structured Probabilistic Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/monte-carlo-methods.html">
+ <span class="dropdown-text">Chapter 17: Monte Carlo Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/confronting-partition-function.html">
+ <span class="dropdown-text">Chapter 18: Confronting the Partition Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/approximate-inference.html">
+ <span class="dropdown-text">Chapter 19: Approximate Inference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-generative-models.html">
+ <span class="dropdown-text">Chapter 20: Deep Generative Models</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-quantum-machine" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Quantum Machine</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-quantum-machine">    
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/your-first-quantum-experiment.html">
+ <span class="dropdown-text">Your First Quantum Experiment</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/the-math-behind-quantum-entanglement.html">
+ <span class="dropdown-text">The Math Behind Quantum Entanglement</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/from-zero-to-quantum.html">
+ <span class="dropdown-text">From Zero to Quantum</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/qiskit-lesson-1-classical-and-quantum-information.html">
+ <span class="dropdown-text">Qiskit Lesson 1: Classical and Quantum Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/qiskit-lesson-2-multiple-systems.html">
+ <span class="dropdown-text">Qiskit Lesson 2: Multiple Systems</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-math" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Math</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-math">    
+        <li>
+    <a class="dropdown-item" href="../../Math/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Probability</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/index.html">
+ <span class="dropdown-text">MIT 6.041 Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture25-classical-inference-iii.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 25: Classical Statistical Inference III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture24-classical-inference-ii.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 24: Classical Statistical Inference II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture23-classical-inference-i.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 23: Classical Statistical Inference I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture22-bayesian-inference-ii.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 22: Bayesian Statistical Inference II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture21-bayesian-inference-i.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 21: Bayesian Statistical Inference I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture20-central-limit-theorem.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 20: Central Limit Theorem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture19-weak-law.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 19: Weak Law of Large Numbers</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/markov-chains-iii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Markov Chains III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/markov-chains-ii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Markov Chains II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/markov-chains-i.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Markov Chains I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/poisson-process-ii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Poisson Process II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/poisson-process-i.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Poisson Process I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/bernoulli-process.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Bernoulli Process</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/iterated-expectations.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Iterated Expectations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/derived-distributions-covariance.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Derived Distributions and Covariance</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/continuous-bayes-rule-derived-distributions.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Continuous Bayes’ Rule and Derived Distributions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/multiple-continuous-random-variables.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Multiple Continuous Random Variables</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/continuous-random-variables.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Continuous Random Variables</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-3.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-2.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-1.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/counting.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Counting</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/independence.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Independence</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/conditioning-bayes-rule.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Conditioning and Bayes’ Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/probability-models-axioms.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Probability Models and Axioms</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Information Theory</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/index.html">
+ <span class="dropdown-text">Oxford Math Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-1-defining-entropy-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 1: Defining Entropy and Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-2-basic-properties-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 2: Basic Properties of Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-3-introducing-codes.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 3: Introducing Codes</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Calculus</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/six-functions-rules-theorems.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Six Functions, Six Rules, and Six Theorems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-growth.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Growth</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-motion.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Motion</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/power-series-eulers-great-formula.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Power Series and Euler’s Great Formula</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/linear-approximation-newtons-method.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Linear Approximation and Newton’s Method</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/growth-rates-log-graphs.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Growth Rates and Log Graphs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivatives-ln-arcsin.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivatives of ln y and arcsin(y)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/limits-continuous-functions.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Limits and Continuous Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivative-sin-cos.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivative of sin x and cos x</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/product-quotient-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Product Rule and Quotient Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/chain-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Chains and the Chain Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-integral.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture Integral</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/exponential-function.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: The Exponential Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/max-min-second-derivative.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Max, Min, and Second Derivative</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-derivatives.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture on Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/highlights-of-calculus.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Highlights</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Reflections &amp; Synthesis</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/mit1806-invertibility-connections.html">
+ <span class="dropdown-text">Invertibility Connections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/taylor-euler-fourier.html">
+ <span class="dropdown-text">Taylor, Euler, and Fourier</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.06SC Linear Algebra</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture1-geometry.html">
+ <span class="dropdown-text">Lecture 1: Geometry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture2-elimination.html">
+ <span class="dropdown-text">Lecture 2: Elimination</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture3-multiplication.html">
+ <span class="dropdown-text">Lecture 3: Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture4-lu-decomposition.html">
+ <span class="dropdown-text">Lecture 4: LU Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-permutations.html">
+ <span class="dropdown-text">Lecture 5.1: Permutations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-2-transpose.html">
+ <span class="dropdown-text">Lecture 5.2: Transpose</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-3-spaces.html">
+ <span class="dropdown-text">Lecture 5.3: Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture6-column-null-space.html">
+ <span class="dropdown-text">Lecture 6: Column &amp; Null Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture7-solving-ax-0.html">
+ <span class="dropdown-text">Lecture 7: Solving Ax=0</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture8-solving-ax-b.html">
+ <span class="dropdown-text">Lecture 8: Solving Ax=b</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture9-independence-basis-dimension.html">
+ <span class="dropdown-text">Lecture 9: Independence, Basis, Dimension</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture10-four-subspaces.html">
+ <span class="dropdown-text">Lecture 10: Four Fundamental Subspaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture11-matrix-spaces.html">
+ <span class="dropdown-text">Lecture 11: Matrix Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture12-graphs-networks.html">
+ <span class="dropdown-text">Lecture 12: Graphs and Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture13-quiz-review.html">
+ <span class="dropdown-text">Lecture 13: Quiz 1 Review</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture14-orthogonality.html">
+ <span class="dropdown-text">Lecture 14: Orthogonality</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture15-projections.html">
+ <span class="dropdown-text">Lecture 15: Projections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture16-least-squares.html">
+ <span class="dropdown-text">Lecture 16: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture17-gram-schmidt.html">
+ <span class="dropdown-text">Lecture 17: Gram-Schmidt</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture18-determinants.html">
+ <span class="dropdown-text">Lecture 18: Determinants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture19-determinant-formulas.html">
+ <span class="dropdown-text">Lecture 19: Determinant Formulas</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture20-cramers-rule.html">
+ <span class="dropdown-text">Lecture 20: Inverse &amp; Volume</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture21-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 21: Eigenvalues &amp; Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture22-diagonalization-powers.html">
+ <span class="dropdown-text">Lecture 22: Diagonalization &amp; Powers</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture23-differential-equations.html">
+ <span class="dropdown-text">Lecture 23: Differential Equations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture24-markov-fourier.html">
+ <span class="dropdown-text">Lecture 24: Markov &amp; Fourier</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture25-symmetric-positive-definite.html">
+ <span class="dropdown-text">Lecture 25: Symmetric &amp; Positive Definite</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture26-complex-matrices-fft.html">
+ <span class="dropdown-text">Lecture 26: Complex Matrices &amp; FFT</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture27-positive-definite-minima.html">
+ <span class="dropdown-text">Lecture 27: Positive Definite &amp; Minima</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture28-similar-matrices-jordan.html">
+ <span class="dropdown-text">Lecture 28: Similar Matrices &amp; Jordan Form</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture29-svd.html">
+ <span class="dropdown-text">Lecture 29: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture30-linear-transformations.html">
+ <span class="dropdown-text">Lecture 30: Linear Transformations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture31-change-of-basis.html">
+ <span class="dropdown-text">Lecture 31: Change of Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture33-left-right-inverse.html">
+ <span class="dropdown-text">Lecture 33: Left &amp; Right Inverse</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.065: Linear Algebra Applications</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture1-column-space.html">
+ <span class="dropdown-text">Lecture 1: Column Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture2-multiplying-factoring.html">
+ <span class="dropdown-text">Lecture 2: Multiplying and Factoring Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture3-orthonormal-columns.html">
+ <span class="dropdown-text">Lecture 3: Orthonormal Columns</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture4-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 4: Eigenvalues and Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture5-positive-definite.html">
+ <span class="dropdown-text">Lecture 5: Positive Definite Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture6-svd.html">
+ <span class="dropdown-text">Lecture 6: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture7-eckart-young.html">
+ <span class="dropdown-text">Lecture 7: Eckart-Young Theorem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture8-norms.html">
+ <span class="dropdown-text">Lecture 8: Norms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture9-least-squares.html">
+ <span class="dropdown-text">Lecture 9: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture10-axb-difficulties.html">
+ <span class="dropdown-text">Lecture 10: Survey of Ax=b Difficulties</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/lecture-11-minimize-norm-subject-to-constraint.html">
+ <span class="dropdown-text">Lecture 11: Minimize Norm subject to Constraint</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture12-eigenvalue-algorithms.html">
+ <span class="dropdown-text">Lecture 12: Computing Eigenvalues</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture13-randomized-matrix-multiplication.html">
+ <span class="dropdown-text">Lecture 13: Randomized Matrix Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture14-low-rank-changes-inverse.html">
+ <span class="dropdown-text">Lecture 14: Low Rank Changes</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture15-matrix-derivatives.html">
+ <span class="dropdown-text">Lecture 15: Matrix Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture16-derivative-inverse-singular-values.html">
+ <span class="dropdown-text">Lecture 16: Derivative of Inverse and Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture17-rapidly-decreasing-singular-values.html">
+ <span class="dropdown-text">Lecture 17: Rapidly Decreasing Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture18-counting-parameters-svd-lu-qr-saddle-points.html">
+ <span class="dropdown-text">Lecture 18: Counting Parameters in SVD, LU, QR, and Saddle Points</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture19-saddle-point-maxmin-principle.html">
+ <span class="dropdown-text">Lecture 19: Saddle Point and the Max–Min Principle</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture20-probability-definitions-inequalities.html">
+ <span class="dropdown-text">Lecture 20: Probability Definitions and Inequalities</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture21-minimizing-function.html">
+ <span class="dropdown-text">Lecture 21: Minimizing a Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture22-gradient-descent.html">
+ <span class="dropdown-text">Lecture 22: Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture23-accelerating-gradient-descent-momentum.html">
+ <span class="dropdown-text">Lecture 23: Accelerating Gradient Descent (Momentum)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture24-linear-programming-two-person-games.html">
+ <span class="dropdown-text">Lecture 24: Linear Programming and Two-Person Games</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture25-stochastic-gradient-descent.html">
+ <span class="dropdown-text">Lecture 25: Stochastic Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture26-structure-of-neural-nets.html">
+ <span class="dropdown-text">Lecture 26: Structure of Neural Nets for Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture27-backpropagation-partial-gradients.html">
+ <span class="dropdown-text">Lecture 27: Back Propagation and Partial Gradients</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture30-completing-rank1-circulants.html">
+ <span class="dropdown-text">Lecture 30: Completing a Rank-1 Matrix, Circulants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture31-fourier-matrix.html">
+ <span class="dropdown-text">Lecture 31: Eigenvectors of Circulant Matrices, Fourier Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture32-convolution-rule.html">
+ <span class="dropdown-text">Lecture 32: The Convolution Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture34-distance-matrices-procrustes.html">
+ <span class="dropdown-text">Lecture 34: Distance Matrices, Procrustes Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture35-find-clusters-graph.html">
+ <span class="dropdown-text">Lecture 35: Find Clusters in Graph</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Stanford EE 364A: Convex Optimization</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/lectures.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture1-intro.html">
+ <span class="dropdown-text">Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture2-math-foundations.html">
+ <span class="dropdown-text">Lecture 2: Convex Sets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture3-convex-functions.html">
+ <span class="dropdown-text">Lecture 3: Convex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part1-operations-preserving-convexity.html">
+ <span class="dropdown-text">Lecture 4.1: Operations Preserving Convexity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part2-conjugate-quasiconvex.html">
+ <span class="dropdown-text">Lecture 4.2: Conjugate &amp; Quasiconvex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part1-log-concave-convex.html">
+ <span class="dropdown-text">Lecture 5.1: Log-Concave &amp; Log-Convex</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part2-monotonicity.html">
+ <span class="dropdown-text">Lecture 5.2: Monotonicity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture6-optimization-problems.html">
+ <span class="dropdown-text">Chapter 4.1: Optimization Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture7-convex-optimization.html">
+ <span class="dropdown-text">Chapter 4.2: Convex Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture8-linear-optimization.html">
+ <span class="dropdown-text">Chapter 4.3: Linear Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture9-quadratic-optimization.html">
+ <span class="dropdown-text">Chapter 4.4: Quadratic Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-5-geometric-programming.html">
+ <span class="dropdown-text">Chapter 4.5: Geometric Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-6-generalized-inequality-constraints.html">
+ <span class="dropdown-text">Chapter 4.6: Generalized Inequality Constraints</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-7-vector-optimization.html">
+ <span class="dropdown-text">Chapter 4.7: Vector Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter5-1-lagrange-dual-function.html">
+ <span class="dropdown-text">Chapter 5.1: The Lagrange Dual Function</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-theory-to-repro" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Theory-to-Repro</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-theory-to-repro">    
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/linear-regression-three-ways.html">
+ <span class="dropdown-text">Linear Regression via Three Solvers</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/k_means_clustering.html">
+ <span class="dropdown-text">K-Means Clustering</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/logistic_regression.html">
+ <span class="dropdown-text">Logistic Regression</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/axis.html">
+ <span class="dropdown-text">Axis Operations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Algorithm/dp_regex.html">
+ <span class="dropdown-text">DP Regex</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-building-startups" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Building Startups</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-building-startups">    
+        <li>
+    <a class="dropdown-item" href="../../Startups/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Startups/getting-and-evaluating-startup-ideas.html">
+ <span class="dropdown-text">Getting and Evaluating Startup Ideas</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/ickma2311/ickma2311.github.io/discussions"> 
+<span class="menu-text">Feedback</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#three-cuts-create-three-different-dependencies" id="toc-three-cuts-create-three-different-dependencies" class="nav-link active" data-scroll-target="#three-cuts-create-three-different-dependencies">Three cuts create three different dependencies</a></li>
+  <li><a href="#collectives-describe-where-the-result-must-end-up" id="toc-collectives-describe-where-the-result-must-end-up" class="nav-link" data-scroll-target="#collectives-describe-where-the-result-must-end-up">Collectives describe where the result must end up</a></li>
+  <li><a href="#the-topology-determines-which-dependencies-are-expensive" id="toc-the-topology-determines-which-dependencies-are-expensive" class="nav-link" data-scroll-target="#the-topology-determines-which-dependencies-are-expensive">The topology determines which dependencies are expensive</a></li>
+  <li><a href="#measure-completed-communication-then-interpret-the-units" id="toc-measure-completed-communication-then-interpret-the-units" class="nav-link" data-scroll-target="#measure-completed-communication-then-interpret-the-units">Measure completed communication, then interpret the units</a></li>
+  <li><a href="#data-parallelism-works-because-gradients-add" id="toc-data-parallelism-works-because-gradients-add" class="nav-link" data-scroll-target="#data-parallelism-works-because-gradients-add">Data parallelism works because gradients add</a>
+  <ul class="collapse">
+  <li><a href="#unequal-batches-need-unequal-weights" id="toc-unequal-batches-need-unequal-weights" class="nav-link" data-scroll-target="#unequal-batches-need-unequal-weights">Unequal batches need unequal weights</a></li>
+  </ul></li>
+  <li><a href="#tensor-parallelism-splits-the-arithmetic-inside-a-layer" id="toc-tensor-parallelism-splits-the-arithmetic-inside-a-layer" class="nav-link" data-scroll-target="#tensor-parallelism-splits-the-arithmetic-inside-a-layer">Tensor parallelism splits the arithmetic inside a layer</a></li>
+  <li><a href="#pipeline-parallelism-trades-layer-storage-for-a-schedule" id="toc-pipeline-parallelism-trades-layer-storage-for-a-schedule" class="nav-link" data-scroll-target="#pipeline-parallelism-trades-layer-storage-for-a-schedule">Pipeline parallelism trades layer storage for a schedule</a></li>
+  <li><a href="#choose-the-cut-that-removes-the-actual-constraint" id="toc-choose-the-cut-that-removes-the-actual-constraint" class="nav-link" data-scroll-target="#choose-the-cut-that-removes-the-actual-constraint">Choose the cut that removes the actual constraint</a></li>
+  <li><a href="#lecture-and-references" id="toc-lecture-and-references" class="nav-link" data-scroll-target="#lecture-and-references">Lecture and references</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Parallel Training Starts with Deciding What Moves</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">Stanford CS336 · Spring 2026 · Lecture 7: Parallelism</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">LLM</div>
+    <div class="quarto-category">CS336</div>
+    <div class="quarto-category">Distributed Training</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    How collective operations turn batch, width, and depth partitions into distributed training—and where communication, memory, and pipeline bubbles change the tradeoff.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Chao Ma </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">October 19, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>A second GPU adds compute and memory. It also introduces a new place where the values needed for the next operation might be waiting.</p>
+<p>The useful question is therefore more specific than “How do we split the model?” We need to decide <strong>what each device owns, what it must receive, and when the next operation can proceed</strong>. In Percy Liang’s seventh CS336 lecture, three cuts through a multilayer perceptron make those choices visible: split the batch, split a layer’s width, or split the network’s depth.</p>
+<p>The connection to <a href="lecture06-kernels-triton.html">kernel optimization in Lecture 6</a> is direct. Fusion and tiling keep values near arithmetic within a GPU. Distributed training decides which values to replicate, which to shard, and how much communication those decisions create across GPUs.</p>
+<section id="three-cuts-create-three-different-dependencies" class="level2">
+<h2 class="anchored" data-anchor-id="three-cuts-create-three-different-dependencies">Three cuts create three different dependencies</h2>
+<p>Let a batch be <span class="math inline">\(X\in\mathbb{R}^{B\times d}\)</span>, with <span class="math inline">\(B\)</span> examples and hidden width <span class="math inline">\(d\)</span>. A simple layer computes <span class="math inline">\(H=\phi(XW)\)</span> for <span class="math inline">\(W\in\mathbb{R}^{d\times d}\)</span> and an elementwise nonlinearity <span class="math inline">\(\phi\)</span>. Let <span class="math inline">\(P\)</span> be the number of participating ranks. Here, each rank is one process assigned to one GPU; “rank” is the process identifier within a group, not a general synonym for a physical GPU.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Strategy</th>
+<th>What a rank owns</th>
+<th>What crosses the boundary</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Data parallelism</td>
+<td>A batch slice and a full model replica</td>
+<td>Gradients that must agree before the update</td>
+</tr>
+<tr class="even">
+<td>Tensor parallelism</td>
+<td>A slice of the parameters within a layer</td>
+<td>Activations or partial results needed by other slices</td>
+</tr>
+<tr class="odd">
+<td>Pipeline parallelism</td>
+<td>A consecutive group of whole layers</td>
+<td>Activations forward and their gradients backward</td>
+</tr>
+</tbody>
+</table>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="cs336-07-assets/three-cuts.png" class="img-fluid figure-img" alt="Three parallelism strategies. Data parallelism splits batch rows and keeps a full model on each rank, synchronizing gradients. Tensor parallelism splits each layer's output columns and exchanges activation slices. Pipeline parallelism assigns consecutive layers to different ranks and sends activations between stages."></p>
+<figcaption>Three ways to divide the same network.</figcaption>
+</figure>
+</div>
+<p>These are different axes, so a large training run can combine them. But each cut must preserve the original computation. Merely distributing tensors does not establish that the resulting optimizer step is correct.</p>
+</section>
+<section id="collectives-describe-where-the-result-must-end-up" class="level2">
+<h2 class="anchored" data-anchor-id="collectives-describe-where-the-result-must-end-up">Collectives describe where the result must end up</h2>
+<p>A collective operation specifies a communication pattern for a group of ranks. The backend chooses how to implement it on the available links. The four basic operations provide a useful vocabulary:</p>
+<ul>
+<li><strong>Broadcast:</strong> a designated root distributes a copy of its tensor to every rank.</li>
+<li><strong>Scatter:</strong> the root distributes different pieces to different ranks.</li>
+<li><strong>Gather:</strong> the root receives and assembles the pieces.</li>
+<li><strong>Reduce:</strong> the root receives a reduction, such as the elementwise sum of tensors from all ranks.</li>
+</ul>
+<p>The three workhorses change who retains the result. <strong>All-gather</strong> assembles all pieces on every rank. <strong>Reduce-scatter</strong> reduces corresponding elements and leaves a different result shard on each rank. <strong>All-reduce</strong> leaves the complete reduction on every rank.</p>
+<p>Consider four input vectors, one on each rank:</p>
+<p><span class="math display">\[
+\begin{aligned}
+v_0&amp;=[0,1,2,3],&amp;v_1&amp;=[1,2,3,4],\\
+v_2&amp;=[2,3,4,5],&amp;v_3&amp;=[3,4,5,6].
+\end{aligned}
+\]</span></p>
+<p>Their elementwise sum is <span class="math inline">\([6,10,14,18]\)</span>. A sum reduce-scatter leaves rank 0 with <span class="math inline">\([6]\)</span>, rank 1 with <span class="math inline">\([10]\)</span>, and so on. An all-gather of those shards then gives every rank the full sum. Thus, at the level of the mathematical result,</p>
+<p><span class="math display">\[
+\begin{aligned}
+&amp;\operatorname{AllReduce}_{\rm sum}\\
+&amp;\quad=\operatorname{AllGather}\circ\operatorname{ReduceScatter}_{\rm sum}.
+\end{aligned}
+\]</span></p>
+<p>This identity does not require an implementation to expose two separate calls. Nor does it promise bitwise equality between different floating-point reduction orders. Its value is that it separates <strong>combining contributions</strong> from <strong>replicating the combined result</strong>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="cs336-07-assets/collective-flow.png" class="img-fluid figure-img" alt="Four ranks start with vectors 0 1 2 3; 1 2 3 4; 2 3 4 5; and 3 4 5 6. Sum reduce-scatter leaves one value per rank: 6, 10, 14, and 18. All-gather then places the full vector 6 10 14 18 on every rank."></p>
+<figcaption>Reduction and replication are separate decisions.</figcaption>
+</figure>
+</div>
+<p><strong>All-to-all</strong> is different: each rank sends a designated piece to each destination. With equal pieces, viewing ranks as rows makes the routing resemble a transpose. With mixture-of-experts models, token routing can produce unequal pieces; load balance becomes part of the problem. The operation routes data rather than summing it.</p>
+</section>
+<section id="the-topology-determines-which-dependencies-are-expensive" class="level2">
+<h2 class="anchored" data-anchor-id="the-topology-determines-which-dependencies-are-expensive">The topology determines which dependencies are expensive</h2>
+<p>On one GPU, registers, shared memory, caches, and HBM form a hierarchy. Multiple GPUs add local interconnects such as PCIe or NVLink/NVSwitch, followed by network links between servers. A fast NVLink domain need not coincide with a single server: rack-scale systems can extend it across more GPUs.</p>
+<p>The practical distinction is the communication cost between the devices selected for a group. A model split that works well inside a fast domain may spend most of its time waiting when the same group spans a slower or oversubscribed network.</p>
+<p>RDMA lets a network interface access registered remote memory without CPU copies on the data path. GPU-direct communication additionally depends on compatible GPU, NIC, software, and topology support. InfiniBand and RoCE are relevant network technologies; ordinary TCP/IP over Ethernet and RDMA over Ethernet should not be treated as the same data path. “Ethernet” alone is not a performance diagnosis.</p>
+<p>PyTorch’s <code>torch.distributed</code> provides the collective interface; NCCL is a common backend for CUDA GPUs, while Gloo supports CPU-oriented communication. NCCL selects implementations using the topology and message characteristics. The rendezvous address used to initialize a process group is not a central server through which every tensor must flow.</p>
+<p>Correctness comes before tuning: participants must use compatible operations, tensor sizes, dtypes, and ordering. A rank that skips a required collective can leave the others waiting indefinitely. Binding the process to the intended local GPU is also essential when several processes share a node.</p>
+</section>
+<section id="measure-completed-communication-then-interpret-the-units" class="level2">
+<h2 class="anchored" data-anchor-id="measure-completed-communication-then-interpret-the-units">Measure completed communication, then interpret the units</h2>
+<p>There are two sources of asynchrony: different processes advance independently, and GPU work can outlive the host call that enqueued it. A useful benchmark warms up the operation, establishes the intended starting boundary, runs repeated measurements, and ensures device work is complete before stopping its timer. State whether a barrier’s waiting time is inside the interval. Excess barriers can hide the overlap that a real training schedule is meant to achieve.</p>
+<p>For a tensor of <span class="math inline">\(S\)</span> bytes and measured collective time <span class="math inline">\(t\)</span>, the algorithm bandwidth is <span class="math inline">\(S/t\)</span>. NCCL tests also report a normalized <em>bus bandwidth</em>. For all-reduce over <span class="math inline">\(P\)</span> ranks,</p>
+<p><span class="math display">\[
+\mathrm{busbw}_{\rm AR}=\frac{S}{t}\frac{2(P-1)}{P}.
+\]</span></p>
+<p>One way to derive the factor is a ring: reduce-scatter has <span class="math inline">\(P-1\)</span> steps, each sending a shard of <span class="math inline">\(S/P\)</span> bytes per rank. All-gather has another <span class="math inline">\(P-1\)</span> such steps. The per-rank sent volume is therefore <span class="math inline">\(2(P-1)S/P\)</span>; each rank also receives the same volume. <strong>The factor two here counts the two phases, not an extra doubling for send plus receive.</strong></p>
+<p>For a constructed example with <span class="math inline">\(P=4\)</span>, a 400 MiB tensor, and <span class="math inline">\(t=2\)</span> ms, the normalized sent volume is 600 MiB per rank. The algorithm bandwidth is about 209.7 GB/s and bus bandwidth about 314.6 GB/s. These use decimal GB/s; the input size uses binary MiB. They are calculations for an assumed duration, not measurements of a GPU system.</p>
+<p>Reduce-scatter uses <span class="math inline">\((P-1)/P\)</span> rather than <span class="math inline">\(2(P-1)/P\)</span>, with <span class="math inline">\(S\)</span> defined as the full input tensor size per rank. All-gather uses the same factor when <span class="math inline">\(S\)</span> is the full assembled output size. Comparing the operations without fixing this size convention is misleading. See the <a href="https://github.com/NVIDIA/nccl-tests/blob/master/doc/PERFORMANCE.md">NCCL tests definitions</a>.</p>
+<p>The normalization does not make real performance independent of topology or rank count. Small messages can be latency-bound; larger messages encounter bandwidth and contention limits. It is a reporting convention, not a direct measurement of every physical link’s traffic.</p>
+</section>
+<section id="data-parallelism-works-because-gradients-add" class="level2">
+<h2 class="anchored" data-anchor-id="data-parallelism-works-because-gradients-add">Data parallelism works because gradients add</h2>
+<p>Suppose every rank starts with the same parameters <span class="math inline">\(\theta\)</span>, the same optimizer state, and an equal local batch size <span class="math inline">\(b\)</span>, so <span class="math inline">\(B=Pb\)</span>. For a loss that averages independent per-example terms, define</p>
+<p><span class="math display">\[
+L_r(\theta)=\frac{1}{b}\sum_{i\in\mathcal{B}_r}\ell_i(\theta).
+\]</span></p>
+<p>The full-batch objective and its gradient are</p>
+<p><span class="math display">\[
+\begin{aligned}
+L(\theta)&amp;=\frac{1}{P}\sum_{r=0}^{P-1}L_r(\theta),\\
+\nabla L(\theta)&amp;=\frac{1}{P}\sum_{r=0}^{P-1}\nabla L_r(\theta).
+\end{aligned}
+\]</span></p>
+<p>Each GPU can therefore run its own forward and backward passes. Averaging the gradients recovers the full-batch gradient in exact arithmetic. The replicas then apply the same update. The local losses need not match; the reduced gradients and synchronized update are what keep the parameters aligned.</p>
+<p>This is the core of the lecture’s data-parallel MLP. Within each iteration of a repeated training loop, its essential ordering can be written as the following fragment, assuming an initialized process group, identical model replicas, and equal local loss normalization:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>world_size <span class="op">=</span> dist.get_world_size()</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># local_mean_loss denotes the chosen mean loss for this task.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>optimizer.zero_grad(set_to_none<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> local_mean_loss(model(local_batch))</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>loss.backward()</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> param <span class="kw">in</span> model.parameters():</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Assumes every parameter has a dense gradient on every rank.</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    dist.all_reduce(param.grad, op<span class="op">=</span>dist.ReduceOp.SUM)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    param.grad.div_(world_size)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>optimizer.step()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This illustrates synchronization; it is not a replacement for production DDP’s handling of buckets, unused parameters, and communication overlap. Clearing gradients matters when moving beyond a one-step demonstration.</p>
+<section id="unequal-batches-need-unequal-weights" class="level3">
+<h3 class="anchored" data-anchor-id="unequal-batches-need-unequal-weights">Unequal batches need unequal weights</h3>
+<p>If rank <span class="math inline">\(r\)</span> averages <span class="math inline">\(n_r\)</span> examples, the correct combination is</p>
+<p><span class="math display">\[
+\nabla L=\sum_r\frac{n_r}{\sum_j n_j}\nabla L_r.
+\]</span></p>
+<p>As a constructed scalar example, suppose the per-example gradients are <span class="math inline">\([1,3,5,7]\)</span>. Rank 0 sees the first example and has local mean 1; rank 1 sees the other three and has local mean 5. Averaging the two local means gives 3. Weighting them by <span class="math inline">\(1/4\)</span> and <span class="math inline">\(3/4\)</span> gives 4, the full-batch mean.</p>
+<p>For a token-averaged language-model loss, the relevant weights may instead be counts of valid tokens. Padding contributes no examples or tokens only if the loss masks it correctly. Batch-dependent operations, such as unsynchronized BatchNorm, also mean that splitting a batch can change the forward computation itself. The simple equivalence above assumes that splitting does not change each loss term.</p>
+<p>DDP replicates model parameters, gradients, and optimizer state. It can reduce per-rank activation memory by dividing a fixed global batch, but it does not solve the problem of a full model replica being too large. Sharded data-parallel methods address that storage cost; they are the next lecture’s subject.</p>
+</section>
+</section>
+<section id="tensor-parallelism-splits-the-arithmetic-inside-a-layer" class="level2">
+<h2 class="anchored" data-anchor-id="tensor-parallelism-splits-the-arithmetic-inside-a-layer">Tensor parallelism splits the arithmetic inside a layer</h2>
+<p>Now retain the same <span class="math inline">\(B\times d\)</span> input on every rank, but split <span class="math inline">\(W\)</span> by output columns:</p>
+<p><span class="math display">\[
+\begin{aligned}
+W&amp;=[W_0\;W_1\;\cdots\;W_{P-1}],\\
+W_r&amp;\in\mathbb{R}^{d\times(d/P)}.
+\end{aligned}
+\]</span></p>
+<p>Assume <span class="math inline">\(d\)</span> is divisible by <span class="math inline">\(P\)</span>. Each rank computes</p>
+<p><span class="math display">\[
+H_r=\phi(XW_r)\in\mathbb{R}^{B\times(d/P)}.
+\]</span></p>
+<p>Because <span class="math inline">\(\phi\)</span> is elementwise, concatenating those blocks gives the same <span class="math inline">\(H\)</span> as the unsplit layer. The lecture’s simple implementation all-gathers <span class="math inline">\(H_r\)</span> after every layer so that each rank has the full input for the next column-sharded matrix multiplication.</p>
+<p>For <span class="math inline">\(B=128\)</span>, <span class="math inline">\(d=1024\)</span>, and <span class="math inline">\(P=4\)</span>, each rank owns a <span class="math inline">\(1024\times256\)</span> parameter block and produces <span class="math inline">\(128\times256\)</span> activation values. The assembled activation has shape <span class="math inline">\(128\times1024\)</span>. With four-byte elements, those are 128 KiB locally and 512 KiB assembled. A ring all-gather makes each rank receive the other three blocks, 384 KiB, and send 384 KiB. These are logical forward-pass volumes for this layout; buffers and backward communication add further costs.</p>
+<p>The key dependency is frequent: the next layer needs the gathered activation. Fast links are therefore especially valuable. More sophisticated paired column/row layouts can avoid this exact gather pattern; it is not a universal requirement that every tensor-parallel layer materialize a full activation on every GPU.</p>
+<p>Backward propagation needs an explicit distributed layout too. If <span class="math inline">\(D_r\)</span> denotes the gradient with respect to the preactivation <span class="math inline">\(XW_r\)</span>, then</p>
+<p><span class="math display">\[
+\nabla W_r=X^\top D_r,\qquad
+\nabla X=\sum_r D_rW_r^\top.
+\]</span></p>
+<p>Each rank can compute its parameter gradient locally, but its contribution to <span class="math inline">\(\nabla X\)</span> is only a partial sum. An all-reduce can produce replicated <span class="math inline">\(\nabla X\)</span>; a reduce-scatter can retain it sharded when the next backward operation accepts that layout. More generally, the backward counterpart of an all-gather accumulates contributions from its replicated consumers and returns the appropriate shards. Do not assume that inserting a raw communication call into a forward-only demonstration creates the required autograd behavior automatically.</p>
+</section>
+<section id="pipeline-parallelism-trades-layer-storage-for-a-schedule" class="level2">
+<h2 class="anchored" data-anchor-id="pipeline-parallelism-trades-layer-storage-for-a-schedule">Pipeline parallelism trades layer storage for a schedule</h2>
+<p>A pipeline assigns consecutive layers to stages. Stage 1 computes the first group and sends its output to stage 2; later stages continue the same example’s computation. In training, gradients travel back across those boundaries in reverse order.</p>
+<p>Sending one whole batch through all stages leaves most stages idle most of the time. Splitting the batch into microbatches lets one stage work on microbatch 2 while the next works on microbatch 1.</p>
+<p>Consider an idealized <strong>forward-only</strong> pipeline with <span class="math inline">\(K\)</span> equally fast stages, <span class="math inline">\(m\)</span> microbatches, stage time <span class="math inline">\(\tau\)</span> per microbatch, and negligible communication overhead. Filling, processing, and draining require</p>
+<p><span class="math display">\[
+T=(m+K-1)\tau.
+\]</span></p>
+<p>There are <span class="math inline">\(Km\)</span> useful stage-slots out of <span class="math inline">\(K(m+K-1)\)</span> available ones. The average utilization is</p>
+<p><span class="math display">\[
+\begin{aligned}
+U&amp;=\frac{m}{m+K-1},\\
+1-U&amp;=\frac{K-1}{m+K-1}.
+\end{aligned}
+\]</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="cs336-07-assets/pipeline-slots.png" class="img-fluid figure-img" alt="Ideal forward-only pipeline with four balanced stages and four microbatches. Microbatch one uses slots one through four across successive stages; the other microbatches follow diagonally. Sixteen of twenty-eight stage slots are occupied, giving utilization four sevenths, or 57.1 percent. Communication overhead and backward passes are excluded."></p>
+<figcaption>Microbatches fill the diagonal of a pipeline schedule.</figcaption>
+</figure>
+</div>
+<p>For <span class="math inline">\(K=4\)</span> and <span class="math inline">\(m=4\)</span>, utilization is <span class="math inline">\(4/7\approx57.1\%\)</span>. With <span class="math inline">\(m=16\)</span>, the same ideal model gives <span class="math inline">\(16/19\approx84.2\%\)</span>. This explains the filling and draining effect; it does not predict end-to-end training speed. At fixed global batch size, more microbatches are smaller, and <span class="math inline">\(\tau\)</span> need not scale linearly. Small matrix operations, communication, stage imbalance, activation storage, and the backward schedule can dominate.</p>
+<p>The lecture’s pipeline example establishes the forward dependency using blocking <code>send</code> and <code>recv</code>. A training implementation must add backward communication, retain or recompute needed activations, accumulate correctly normalized gradients, and choose an update schedule. An optimizer update per microbatch is not generally equivalent to one update after accumulating the full batch.</p>
+</section>
+<section id="choose-the-cut-that-removes-the-actual-constraint" class="level2">
+<h2 class="anchored" data-anchor-id="choose-the-cut-that-removes-the-actual-constraint">Choose the cut that removes the actual constraint</h2>
+<p>If a full training replica fits and batch parallelism is useful, data parallelism offers a simple starting point. If an individual layer must be partitioned, tensor parallelism moves communication into the layer’s critical path and benefits from a fast device group. If groups of layers can be distributed, a pipeline can cross fewer layer boundaries between groups, but its balance and schedule determine how much hardware sits idle. Communicating at stage boundaries can make a pipeline more tolerant of slower interconnects than frequent within-layer exchanges; this still depends on activation sizes and the work per stage.</p>
+<p>Useful overlap follows real independence. In DDP, a completed gradient bucket can begin communicating while backward computation continues for earlier layers. In a pipeline, transfers can overlap independent work on other microbatches. Setting an asynchronous flag does not remove a data dependency; completion must still be established before consuming the result.</p>
+<p>Finally, more data-parallel ranks can mean either smaller local batches at fixed global batch size or a larger global batch at fixed local batch size. The first can reduce per-device efficiency; the second can change optimization efficiency. Tokens per second and time to a target model quality answer different questions.</p>
+<p>The recurring choice is between <strong>replicating state, communicating it, and sometimes recomputing it</strong>. A good parallel layout makes that choice explicit at every expensive boundary. The next step—FSDP and ZeRO—is to apply the same reasoning to the state that DDP keeps duplicated.</p>
+</section>
+<section id="lecture-and-references" class="level2">
+<h2 class="anchored" data-anchor-id="lecture-and-references">Lecture and references</h2>
+<p><a href="https://www.youtube.com/watch?v=SzpOcwdIL0Y" class="btn btn-outline-primary">▶ Watch the official Stanford lecture on YouTube</a></p>
+<ul>
+<li><a href="https://cs336.stanford.edu/lectures/?trace=lecture_07">Stanford CS336 Spring 2026, Lecture 7: Parallelism</a>, Percy Liang.</li>
+<li><a href="https://github.com/stanford-cs336/lectures/blob/0be5c6121acb3ce2cef5ec1cad1a0b7ebc8d2012/lecture_07.py">Lecture implementation</a>: collective examples, data parallelism, column tensor parallelism, and the forward pipeline.</li>
+<li><a href="https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/usage/collectives.html">NCCL collective operations</a>.</li>
+<li><a href="https://github.com/NVIDIA/nccl-tests/blob/master/doc/PERFORMANCE.md">NCCL tests: bandwidth definitions</a>.</li>
+<li><a href="https://docs.pytorch.org/docs/stable/notes/ddp.html">PyTorch DDP design</a>.</li>
+</ul>
+
+
+<!-- -->
+
+<nav class="reader-links" aria-label="Stay connected with Chao">
+  <p class="reader-links-eyebrow">Beyond the blog</p>
+  <p class="reader-links-title">Stay connected with Chao</p>
+  <p class="reader-links-intro">Follow my ideas, say hello, or explore what I’m building.</p>
+  <div class="reader-links-items">
+    <a class="reader-card reader-card-x" href="https://x.com/ickma2311" target="_blank" rel="noopener noreferrer">
+      <span class="reader-card-icon" aria-hidden="true"><svg viewbox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3L12 14.6 5.5 22H2.3l8.2-9.4L.8 2h6.5l5.8 7.6L18.9 2Zm-1.1 18h1.7L6.4 3.9H4.6L17.8 20Z"></path></svg></span>
+      <span class="reader-card-arrow" aria-hidden="true">↗</span>
+      <span class="reader-card-name">X / Twitter</span>
+      <span class="reader-card-description">Notes, ideas &amp; things I’m learning.</span>
+      <span class="reader-card-action">Follow @ickma2311</span>
+    </a>
+    <a class="reader-card reader-card-linkedin" href="https://www.linkedin.com/in/chao-ma-929839241/" target="_blank" rel="noopener noreferrer">
+      <span class="reader-card-icon" aria-hidden="true"><svg viewbox="0 0 24 24" fill="currentColor"><path d="M20.45 2H3.55C2.69 2 2 2.68 2 3.52v16.96c0 .84.69 1.52 1.55 1.52h16.9c.86 0 1.55-.68 1.55-1.52V3.52c0-.84-.69-1.52-1.55-1.52ZM7.93 18.75H4.98V9.2h2.95v9.55ZM6.45 7.89a1.71 1.71 0 1 1 0-3.42 1.71 1.71 0 0 1 0 3.42Zm12.3 10.86H15.8V14.1c0-1.11-.02-2.54-1.55-2.54-1.55 0-1.79 1.21-1.79 2.46v4.73H9.51V9.2h2.83v1.3h.04c.39-.74 1.36-1.52 2.79-1.52 2.98 0 3.58 1.96 3.58 4.5v5.27Z"></path></svg></span>
+      <span class="reader-card-arrow" aria-hidden="true">↗</span>
+      <span class="reader-card-name">LinkedIn</span>
+      <span class="reader-card-description">Let’s connect over AI, learning &amp; work.</span>
+      <span class="reader-card-action">Connect with me</span>
+    </a>
+    <a class="reader-card reader-card-daily" href="https://dailychat.net/" target="_blank" rel="noopener">
+      <span class="reader-card-icon" aria-hidden="true"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"></path><path d="m13 7-4 5h4l-2 3 5-5h-4l1-3Z"></path></svg></span>
+      <span class="reader-card-arrow" aria-hidden="true">↗</span>
+      <span class="reader-card-name">DailyChat</span>
+      <span class="reader-card-description">Your quick read on AI &amp; tech.</span>
+      <span class="reader-card-action">Explore DailyChat</span>
+    </a>
+  </div>
+</nav>
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/ickma2311\.github\.io");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<input type="hidden" id="giscus-base-theme" value="light">
+<input type="hidden" id="giscus-alt-theme" value="light">
+<script>
+  function loadGiscus() {
+    // Function to get the theme based on body class
+    const getTheme = () => {
+      let baseTheme = document.getElementById('giscus-base-theme').value;
+      let altTheme = document.getElementById('giscus-alt-theme').value;
+      return document.body.classList.contains('quarto-dark') ? altTheme : baseTheme;
+    };
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.dataset.repo = "ickma2311/ickma2311.github.io";
+    script.dataset.repoId = "R_kgDOOzbaAg";
+    script.dataset.category = "Comments";
+    script.dataset.categoryId = "DIC_kwDOOzbaAs4CxPFj";
+    script.dataset.mapping = "pathname";
+    script.dataset.reactionsEnabled = "1";
+    script.dataset.emitMetadata = "0";
+    script.dataset.inputPosition = "top";
+    script.dataset.theme = getTheme();
+    script.dataset.lang = "en";
+    script.crossOrigin = "anonymous";
+    // Append the script to the desired div instead of at the end of the body
+    document.getElementById("quarto-content").appendChild(script);
+  }
+  loadGiscus();
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Parallel Training Starts with Deciding What Moves"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Stanford CS336 · Spring 2026 · Lecture 7: Parallelism"</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-10-19"</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [LLM, CS336, Distributed Training]</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "How collective operations turn batch, width, and depth partitions into distributed training—and where communication, memory, and pipeline bubbles change the tradeoff."</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="an">image:</span><span class="co"> cs336-07-assets/three-cuts.png</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">  enabled: false</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co">    include-in-header:</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">      text: |</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">        &lt;style&gt;main mjx-container[display="true"]{display:block;max-width:100%;overflow-x:auto;overflow-y:hidden;padding:4px 0}main img{max-width:100%;height:auto}&lt;/style&gt;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>A second GPU adds compute and memory. It also introduces a new place where the values needed for the next operation might be waiting.</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>The useful question is therefore more specific than “How do we split the model?” We need to decide **what each device owns, what it must receive, and when the next operation can proceed**. In Percy Liang's seventh CS336 lecture, three cuts through a multilayer perceptron make those choices visible: split the batch, split a layer's width, or split the network's depth.</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>The connection to <span class="co">[</span><span class="ot">kernel optimization in Lecture 6</span><span class="co">](lecture06-kernels-triton.html)</span> is direct. Fusion and tiling keep values near arithmetic within a GPU. Distributed training decides which values to replicate, which to shard, and how much communication those decisions create across GPUs.</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="fu">## Three cuts create three different dependencies</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>Let a batch be $X\in\mathbb{R}^{B\times d}$, with $B$ examples and hidden width $d$. A simple layer computes $H=\phi(XW)$ for $W\in\mathbb{R}^{d\times d}$ and an elementwise nonlinearity $\phi$. Let $P$ be the number of participating ranks. Here, each rank is one process assigned to one GPU; “rank” is the process identifier within a group, not a general synonym for a physical GPU.</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Strategy <span class="pp">|</span> What a rank owns <span class="pp">|</span> What crosses the boundary <span class="pp">|</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Data parallelism <span class="pp">|</span> A batch slice and a full model replica <span class="pp">|</span> Gradients that must agree before the update <span class="pp">|</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Tensor parallelism <span class="pp">|</span> A slice of the parameters within a layer <span class="pp">|</span> Activations or partial results needed by other slices <span class="pp">|</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Pipeline parallelism <span class="pp">|</span> A consecutive group of whole layers <span class="pp">|</span> Activations forward and their gradients backward <span class="pp">|</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="al">![Three ways to divide the same network.](cs336-07-assets/three-cuts.png)</span>{fig-alt="Three parallelism strategies. Data parallelism splits batch rows and keeps a full model on each rank, synchronizing gradients. Tensor parallelism splits each layer's output columns and exchanges activation slices. Pipeline parallelism assigns consecutive layers to different ranks and sends activations between stages."}</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>These are different axes, so a large training run can combine them. But each cut must preserve the original computation. Merely distributing tensors does not establish that the resulting optimizer step is correct.</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="fu">## Collectives describe where the result must end up</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>A collective operation specifies a communication pattern for a group of ranks. The backend chooses how to implement it on the available links. The four basic operations provide a useful vocabulary:</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Broadcast:** a designated root distributes a copy of its tensor to every rank.</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Scatter:** the root distributes different pieces to different ranks.</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Gather:** the root receives and assembles the pieces.</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Reduce:** the root receives a reduction, such as the elementwise sum of tensors from all ranks.</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>The three workhorses change who retains the result. **All-gather** assembles all pieces on every rank. **Reduce-scatter** reduces corresponding elements and leaves a different result shard on each rank. **All-reduce** leaves the complete reduction on every rank.</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>Consider four input vectors, one on each rank:</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>v_0&amp;=<span class="co">[</span><span class="ot">0,1,2,3</span><span class="co">]</span>,&amp;v_1&amp;=<span class="co">[</span><span class="ot">1,2,3,4</span><span class="co">]</span>,<span class="sc">\\</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>v_2&amp;=<span class="co">[</span><span class="ot">2,3,4,5</span><span class="co">]</span>,&amp;v_3&amp;=<span class="co">[</span><span class="ot">3,4,5,6</span><span class="co">]</span>.</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>Their elementwise sum is $<span class="co">[</span><span class="ot">6,10,14,18</span><span class="co">]</span>$. A sum reduce-scatter leaves rank 0 with $<span class="co">[</span><span class="ot">6</span><span class="co">]</span>$, rank 1 with $<span class="co">[</span><span class="ot">10</span><span class="co">]</span>$, and so on. An all-gather of those shards then gives every rank the full sum. Thus, at the level of the mathematical result,</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>&amp;\operatorname{AllReduce}_{\rm sum}<span class="sc">\\</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>&amp;\quad=\operatorname{AllGather}\circ\operatorname{ReduceScatter}_{\rm sum}.</span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>This identity does not require an implementation to expose two separate calls. Nor does it promise bitwise equality between different floating-point reduction orders. Its value is that it separates **combining contributions** from **replicating the combined result**.</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="al">![Reduction and replication are separate decisions.](cs336-07-assets/collective-flow.png)</span>{fig-alt="Four ranks start with vectors 0 1 2 3; 1 2 3 4; 2 3 4 5; and 3 4 5 6. Sum reduce-scatter leaves one value per rank: 6, 10, 14, and 18. All-gather then places the full vector 6 10 14 18 on every rank."}</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>**All-to-all** is different: each rank sends a designated piece to each destination. With equal pieces, viewing ranks as rows makes the routing resemble a transpose. With mixture-of-experts models, token routing can produce unequal pieces; load balance becomes part of the problem. The operation routes data rather than summing it.</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="fu">## The topology determines which dependencies are expensive</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>On one GPU, registers, shared memory, caches, and HBM form a hierarchy. Multiple GPUs add local interconnects such as PCIe or NVLink/NVSwitch, followed by network links between servers. A fast NVLink domain need not coincide with a single server: rack-scale systems can extend it across more GPUs.</span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>The practical distinction is the communication cost between the devices selected for a group. A model split that works well inside a fast domain may spend most of its time waiting when the same group spans a slower or oversubscribed network.</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>RDMA lets a network interface access registered remote memory without CPU copies on the data path. GPU-direct communication additionally depends on compatible GPU, NIC, software, and topology support. InfiniBand and RoCE are relevant network technologies; ordinary TCP/IP over Ethernet and RDMA over Ethernet should not be treated as the same data path. “Ethernet” alone is not a performance diagnosis.</span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>PyTorch's <span class="in">`torch.distributed`</span> provides the collective interface; NCCL is a common backend for CUDA GPUs, while Gloo supports CPU-oriented communication. NCCL selects implementations using the topology and message characteristics. The rendezvous address used to initialize a process group is not a central server through which every tensor must flow.</span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>Correctness comes before tuning: participants must use compatible operations, tensor sizes, dtypes, and ordering. A rank that skips a required collective can leave the others waiting indefinitely. Binding the process to the intended local GPU is also essential when several processes share a node.</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="fu">## Measure completed communication, then interpret the units</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>There are two sources of asynchrony: different processes advance independently, and GPU work can outlive the host call that enqueued it. A useful benchmark warms up the operation, establishes the intended starting boundary, runs repeated measurements, and ensures device work is complete before stopping its timer. State whether a barrier's waiting time is inside the interval. Excess barriers can hide the overlap that a real training schedule is meant to achieve.</span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a>For a tensor of $S$ bytes and measured collective time $t$, the algorithm bandwidth is $S/t$. NCCL tests also report a normalized *bus bandwidth*. For all-reduce over $P$ ranks,</span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>\mathrm{busbw}_{\rm AR}=\frac{S}{t}\frac{2(P-1)}{P}.</span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a>One way to derive the factor is a ring: reduce-scatter has $P-1$ steps, each sending a shard of $S/P$ bytes per rank. All-gather has another $P-1$ such steps. The per-rank sent volume is therefore $2(P-1)S/P$; each rank also receives the same volume. **The factor two here counts the two phases, not an extra doubling for send plus receive.**</span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>For a constructed example with $P=4$, a 400 MiB tensor, and $t=2$ ms, the normalized sent volume is 600 MiB per rank. The algorithm bandwidth is about 209.7 GB/s and bus bandwidth about 314.6 GB/s. These use decimal GB/s; the input size uses binary MiB. They are calculations for an assumed duration, not measurements of a GPU system.</span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>Reduce-scatter uses $(P-1)/P$ rather than $2(P-1)/P$, with $S$ defined as the full input tensor size per rank. All-gather uses the same factor when $S$ is the full assembled output size. Comparing the operations without fixing this size convention is misleading. See the <span class="co">[</span><span class="ot">NCCL tests definitions</span><span class="co">](https://github.com/NVIDIA/nccl-tests/blob/master/doc/PERFORMANCE.md)</span>.</span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>The normalization does not make real performance independent of topology or rank count. Small messages can be latency-bound; larger messages encounter bandwidth and contention limits. It is a reporting convention, not a direct measurement of every physical link's traffic.</span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data parallelism works because gradients add</span></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a>Suppose every rank starts with the same parameters $\theta$, the same optimizer state, and an equal local batch size $b$, so $B=Pb$. For a loss that averages independent per-example terms, define</span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>L_r(\theta)=\frac{1}{b}\sum_{i\in\mathcal{B}_r}\ell_i(\theta).</span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>The full-batch objective and its gradient are</span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>L(\theta)&amp;=\frac{1}{P}\sum_{r=0}^{P-1}L_r(\theta),<span class="sc">\\</span></span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a>\nabla L(\theta)&amp;=\frac{1}{P}\sum_{r=0}^{P-1}\nabla L_r(\theta).</span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a>Each GPU can therefore run its own forward and backward passes. Averaging the gradients recovers the full-batch gradient in exact arithmetic. The replicas then apply the same update. The local losses need not match; the reduced gradients and synchronized update are what keep the parameters aligned.</span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>This is the core of the lecture's data-parallel MLP. Within each iteration of a repeated training loop, its essential ordering can be written as the following fragment, assuming an initialized process group, identical model replicas, and equal local loss normalization:</span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>world_size <span class="op">=</span> dist.get_world_size()</span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a><span class="co"># local_mean_loss denotes the chosen mean loss for this task.</span></span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>optimizer.zero_grad(set_to_none<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> local_mean_loss(model(local_batch))</span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a>loss.backward()</span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> param <span class="kw">in</span> model.parameters():</span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Assumes every parameter has a dense gradient on every rank.</span></span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>    dist.all_reduce(param.grad, op<span class="op">=</span>dist.ReduceOp.SUM)</span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>    param.grad.div_(world_size)</span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a>optimizer.step()</span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a>This illustrates synchronization; it is not a replacement for production DDP's handling of buckets, unused parameters, and communication overlap. Clearing gradients matters when moving beyond a one-step demonstration.</span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a><span class="fu">### Unequal batches need unequal weights</span></span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a>If rank $r$ averages $n_r$ examples, the correct combination is</span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a>\nabla L=\sum_r\frac{n_r}{\sum_j n_j}\nabla L_r.</span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a>As a constructed scalar example, suppose the per-example gradients are $<span class="co">[</span><span class="ot">1,3,5,7</span><span class="co">]</span>$. Rank 0 sees the first example and has local mean 1; rank 1 sees the other three and has local mean 5. Averaging the two local means gives 3. Weighting them by $1/4$ and $3/4$ gives 4, the full-batch mean.</span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>For a token-averaged language-model loss, the relevant weights may instead be counts of valid tokens. Padding contributes no examples or tokens only if the loss masks it correctly. Batch-dependent operations, such as unsynchronized BatchNorm, also mean that splitting a batch can change the forward computation itself. The simple equivalence above assumes that splitting does not change each loss term.</span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a>DDP replicates model parameters, gradients, and optimizer state. It can reduce per-rank activation memory by dividing a fixed global batch, but it does not solve the problem of a full model replica being too large. Sharded data-parallel methods address that storage cost; they are the next lecture's subject.</span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a><span class="fu">## Tensor parallelism splits the arithmetic inside a layer</span></span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a>Now retain the same $B\times d$ input on every rank, but split $W$ by output columns:</span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
+<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a>W&amp;=<span class="co">[</span><span class="ot">W_0\;W_1\;\cdots\;W_{P-1}</span><span class="co">]</span>,<span class="sc">\\</span></span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a>W_r&amp;\in\mathbb{R}^{d\times(d/P)}.</span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a>Assume $d$ is divisible by $P$. Each rank computes</span>
+<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a>H_r=\phi(XW_r)\in\mathbb{R}^{B\times(d/P)}.</span>
+<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a>Because $\phi$ is elementwise, concatenating those blocks gives the same $H$ as the unsplit layer. The lecture's simple implementation all-gathers $H_r$ after every layer so that each rank has the full input for the next column-sharded matrix multiplication.</span>
+<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a>For $B=128$, $d=1024$, and $P=4$, each rank owns a $1024\times256$ parameter block and produces $128\times256$ activation values. The assembled activation has shape $128\times1024$. With four-byte elements, those are 128 KiB locally and 512 KiB assembled. A ring all-gather makes each rank receive the other three blocks, 384 KiB, and send 384 KiB. These are logical forward-pass volumes for this layout; buffers and backward communication add further costs.</span>
+<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a>The key dependency is frequent: the next layer needs the gathered activation. Fast links are therefore especially valuable. More sophisticated paired column/row layouts can avoid this exact gather pattern; it is not a universal requirement that every tensor-parallel layer materialize a full activation on every GPU.</span>
+<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a>Backward propagation needs an explicit distributed layout too. If $D_r$ denotes the gradient with respect to the preactivation $XW_r$, then</span>
+<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a>\nabla W_r=X^\top D_r,\qquad</span>
+<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a>\nabla X=\sum_r D_rW_r^\top.</span>
+<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a>Each rank can compute its parameter gradient locally, but its contribution to $\nabla X$ is only a partial sum. An all-reduce can produce replicated $\nabla X$; a reduce-scatter can retain it sharded when the next backward operation accepts that layout. More generally, the backward counterpart of an all-gather accumulates contributions from its replicated consumers and returns the appropriate shards. Do not assume that inserting a raw communication call into a forward-only demonstration creates the required autograd behavior automatically.</span>
+<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pipeline parallelism trades layer storage for a schedule</span></span>
+<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a>A pipeline assigns consecutive layers to stages. Stage 1 computes the first group and sends its output to stage 2; later stages continue the same example's computation. In training, gradients travel back across those boundaries in reverse order.</span>
+<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a>Sending one whole batch through all stages leaves most stages idle most of the time. Splitting the batch into microbatches lets one stage work on microbatch 2 while the next works on microbatch 1.</span>
+<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a>Consider an idealized **forward-only** pipeline with $K$ equally fast stages, $m$ microbatches, stage time $\tau$ per microbatch, and negligible communication overhead. Filling, processing, and draining require</span>
+<span id="cb2-193"><a href="#cb2-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-194"><a href="#cb2-194" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a>T=(m+K-1)\tau.</span>
+<span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a>There are $Km$ useful stage-slots out of $K(m+K-1)$ available ones. The average utilization is</span>
+<span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
+<span id="cb2-202"><a href="#cb2-202" aria-hidden="true" tabindex="-1"></a>U&amp;=\frac{m}{m+K-1},<span class="sc">\\</span></span>
+<span id="cb2-203"><a href="#cb2-203" aria-hidden="true" tabindex="-1"></a>1-U&amp;=\frac{K-1}{m+K-1}.</span>
+<span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
+<span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a><span class="al">![Microbatches fill the diagonal of a pipeline schedule.](cs336-07-assets/pipeline-slots.png)</span>{fig-alt="Ideal forward-only pipeline with four balanced stages and four microbatches. Microbatch one uses slots one through four across successive stages; the other microbatches follow diagonally. Sixteen of twenty-eight stage slots are occupied, giving utilization four sevenths, or 57.1 percent. Communication overhead and backward passes are excluded."}</span>
+<span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-209"><a href="#cb2-209" aria-hidden="true" tabindex="-1"></a>For $K=4$ and $m=4$, utilization is $4/7\approx57.1\%$. With $m=16$, the same ideal model gives $16/19\approx84.2\%$. This explains the filling and draining effect; it does not predict end-to-end training speed. At fixed global batch size, more microbatches are smaller, and $\tau$ need not scale linearly. Small matrix operations, communication, stage imbalance, activation storage, and the backward schedule can dominate.</span>
+<span id="cb2-210"><a href="#cb2-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-211"><a href="#cb2-211" aria-hidden="true" tabindex="-1"></a>The lecture's pipeline example establishes the forward dependency using blocking <span class="in">`send`</span> and <span class="in">`recv`</span>. A training implementation must add backward communication, retain or recompute needed activations, accumulate correctly normalized gradients, and choose an update schedule. An optimizer update per microbatch is not generally equivalent to one update after accumulating the full batch.</span>
+<span id="cb2-212"><a href="#cb2-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-213"><a href="#cb2-213" aria-hidden="true" tabindex="-1"></a><span class="fu">## Choose the cut that removes the actual constraint</span></span>
+<span id="cb2-214"><a href="#cb2-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-215"><a href="#cb2-215" aria-hidden="true" tabindex="-1"></a>If a full training replica fits and batch parallelism is useful, data parallelism offers a simple starting point. If an individual layer must be partitioned, tensor parallelism moves communication into the layer's critical path and benefits from a fast device group. If groups of layers can be distributed, a pipeline can cross fewer layer boundaries between groups, but its balance and schedule determine how much hardware sits idle. Communicating at stage boundaries can make a pipeline more tolerant of slower interconnects than frequent within-layer exchanges; this still depends on activation sizes and the work per stage.</span>
+<span id="cb2-216"><a href="#cb2-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-217"><a href="#cb2-217" aria-hidden="true" tabindex="-1"></a>Useful overlap follows real independence. In DDP, a completed gradient bucket can begin communicating while backward computation continues for earlier layers. In a pipeline, transfers can overlap independent work on other microbatches. Setting an asynchronous flag does not remove a data dependency; completion must still be established before consuming the result.</span>
+<span id="cb2-218"><a href="#cb2-218" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-219"><a href="#cb2-219" aria-hidden="true" tabindex="-1"></a>Finally, more data-parallel ranks can mean either smaller local batches at fixed global batch size or a larger global batch at fixed local batch size. The first can reduce per-device efficiency; the second can change optimization efficiency. Tokens per second and time to a target model quality answer different questions.</span>
+<span id="cb2-220"><a href="#cb2-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-221"><a href="#cb2-221" aria-hidden="true" tabindex="-1"></a>The recurring choice is between **replicating state, communicating it, and sometimes recomputing it**. A good parallel layout makes that choice explicit at every expensive boundary. The next step—FSDP and ZeRO—is to apply the same reasoning to the state that DDP keeps duplicated.</span>
+<span id="cb2-222"><a href="#cb2-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-223"><a href="#cb2-223" aria-hidden="true" tabindex="-1"></a><span class="fu">## Lecture and references</span></span>
+<span id="cb2-224"><a href="#cb2-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-225"><a href="#cb2-225" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">▶ Watch the official Stanford lecture on YouTube</span><span class="co">](https://www.youtube.com/watch?v=SzpOcwdIL0Y)</span>{.btn .btn-outline-primary}</span>
+<span id="cb2-226"><a href="#cb2-226" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-227"><a href="#cb2-227" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Stanford CS336 Spring 2026, Lecture 7: Parallelism</span><span class="co">](https://cs336.stanford.edu/lectures/?trace=lecture_07)</span>, Percy Liang.</span>
+<span id="cb2-228"><a href="#cb2-228" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Lecture implementation</span><span class="co">](https://github.com/stanford-cs336/lectures/blob/0be5c6121acb3ce2cef5ec1cad1a0b7ebc8d2012/lecture_07.py)</span>: collective examples, data parallelism, column tensor parallelism, and the forward pipeline.</span>
+<span id="cb2-229"><a href="#cb2-229" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">NCCL collective operations</span><span class="co">](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/usage/collectives.html)</span>.</span>
+<span id="cb2-230"><a href="#cb2-230" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">NCCL tests: bandwidth definitions</span><span class="co">](https://github.com/NVIDIA/nccl-tests/blob/master/doc/PERFORMANCE.md)</span>.</span>
+<span id="cb2-231"><a href="#cb2-231" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">PyTorch DDP design</span><span class="co">](https://docs.pytorch.org/docs/stable/notes/ddp.html)</span>.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
