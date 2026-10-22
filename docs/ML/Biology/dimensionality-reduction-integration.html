@@ -1,0 +1,2593 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Chao Ma">
+<meta name="dcterms.date" content="2026-10-21">
+<meta name="description" content="How PCA, t-SNE, autoencoders, and integrative NMF preserve different aspects of single-cell data—and what their maps cannot establish.">
+
+<title>A Cell Map Depends on What You Preserve – ∇ ickma.dev</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../favicon.svg" rel="icon" type="image/svg+xml">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-PK5N5KWZBF"></script>
+
+<script type="text/javascript">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-PK5N5KWZBF', { 'anonymize_ip': true});
+</script>
+<style>
+main mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: 0.2rem 0; }
+</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">∇ ickma.dev</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-chaolab" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">ChaoLab</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-chaolab">    
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html#research-notes">
+ <span class="dropdown-text">Research Notes</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html#reproductions">
+ <span class="dropdown-text">Reproductions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html#field-notes">
+ <span class="dropdown-text">Field Notes</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-deep-learning" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Deep Learning</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-deep-learning">    
+        <li class="dropdown-header">Deep Learning in the Life Sciences</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/dimensionality-reduction-integration.html">
+ <span class="dropdown-text">Lecture 11: Dimensionality Reduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/single-cell-counts-and-claims.html">
+ <span class="dropdown-text">Lecture 10: Single-Cell Genomics</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/gene-expression-and-splicing.html">
+ <span class="dropdown-text">Lecture 9: Gene Expression and Splicing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/sequence-labels-to-contact-maps.html">
+ <span class="dropdown-text">Lecture 8: Sequence Labels to Contact Maps</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/regulatory-genomics.html">
+ <span class="dropdown-text">Lecture 7: Regulatory Genomics</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Stanford CS336: Language Modeling from Scratch</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture01-overview-tokenization.html">
+ <span class="dropdown-text">Lecture 1: Overview and Tokenization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture09-scaling-laws-i.html">
+ <span class="dropdown-text">Lecture 9: Scaling Laws I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture08-parallelism-ii.html">
+ <span class="dropdown-text">Lecture 8: Parallelism II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture07-parallelism-i.html">
+ <span class="dropdown-text">Lecture 7: Parallelism</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture06-kernels-triton.html">
+ <span class="dropdown-text">Lecture 6: Kernels and Triton</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture05-gpus-tpus.html">
+ <span class="dropdown-text">Lecture 5: GPUs, TPUs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture04-attention-alternatives-moe.html">
+ <span class="dropdown-text">Lecture 4: Attention Alternatives and MoE</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture03-architectures-hyperparameters.html">
+ <span class="dropdown-text">Lecture 3: Architectures and Hyperparameters</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture02-pytorch-resource-accounting.html">
+ <span class="dropdown-text">Lecture 2: PyTorch and Resource Accounting</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Advanced Large Language Model Agents</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/safe-and-secure-agentic-ai.html">
+ <span class="dropdown-text">Lecture 12: Safe and Secure Agentic AI</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/abstraction-and-discovery.html">
+ <span class="dropdown-text">Lecture 11: Abstraction and Discovery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/advanced-topics-theorem-proving.html">
+ <span class="dropdown-text">Lecture 10: Advanced Topics in Theorem Proving</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/language-models-autoformalization-theorem-proving.html">
+ <span class="dropdown-text">Autoformalization and Theorem Proving</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/alphaproof-reinforcement-learning-formal-mathematics.html">
+ <span class="dropdown-text">AlphaProof: RL and Formal Mathematics</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/multimodal-agents-perception-to-action.html">
+ <span class="dropdown-text">Multimodal Agents: From Perception to Action</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/multimodal-autonomous-ai-agents.html">
+ <span class="dropdown-text">Multimodal Autonomous AI Agents</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/coding-agents-vulnerability-detection.html">
+ <span class="dropdown-text">Coding Agents and AI for Vulnerability Detection</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/open-training-recipes-llm-reasoning.html">
+ <span class="dropdown-text">Open Training Recipes: LLM Reasoning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/reasoning-memory-planning-language-agents.html">
+ <span class="dropdown-text">Reasoning, Memory, and Planning of Language Agents</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/learning-to-self-improve-and-reason-with-llms.html">
+ <span class="dropdown-text">Learning to Self-Improve and Reason with LLMs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/inference-time-techniques-for-llm-reasoning.html">
+ <span class="dropdown-text">Inference-Time Techniques for LLM Reasoning</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">CMU 10-414/714 Deep Learning Systems</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-13-hardware-acceleration-implementation.html">
+ <span class="dropdown-text">Lecture 13: Hardware Acceleration Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-12-gpu-acceleration.html">
+ <span class="dropdown-text">Lecture 12: GPU Acceleration</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-11-convolutional-networks.html">
+ <span class="dropdown-text">Lecture 11: Convolutional Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-10-hardware-acceleration.html">
+ <span class="dropdown-text">Lecture 10: Hardware Acceleration</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-9-neural-network-library-implementation.html">
+ <span class="dropdown-text">Lecture 9: Neural Network Library Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-8-normalization-dropout.html">
+ <span class="dropdown-text">Lecture 8: Normalization, Dropout, and Model State</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-7-neural-network-library-abstractions.html">
+ <span class="dropdown-text">Lecture 7: Neural Network Library Abstractions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-6-optimization-initialization.html">
+ <span class="dropdown-text">Lecture 6: Optimization and Initialization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-5-auto-differentiation-implementation.html">
+ <span class="dropdown-text">Lecture 5: Auto Differentiation Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-4-automatic-differentiation.html">
+ <span class="dropdown-text">Lecture 4: Automatic Differentiation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-3-part-2-manual-neural-networks.html">
+ <span class="dropdown-text">Lecture 3 Part II: Manual Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-3-manual-neural-networks.html">
+ <span class="dropdown-text">Lecture 3: Manual Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-2-ml-refresher-softmax-regression.html">
+ <span class="dropdown-text">Lecture 2: ML Refresher / Softmax Regression</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">ML HW-SW Codesign</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-01-introduction.html">
+ <span class="dropdown-text">Efficient AI Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-03-pruning-and-sparsity-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 3: Pruning and Sparsity (Part 1)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-04-pruning-and-sparsity-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 4: Pruning and Sparsity (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-05-quantization-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 5: Quantization (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-06-quantization-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 6: Quantization (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-07-neural-architecture-search-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 7: Neural Architecture Search (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-08-neural-architecture-search-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 8: Neural Architecture Search (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-09-knowledge-distillation.html">
+ <span class="dropdown-text">Efficient AI Lecture 9: Knowledge Distillation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-10-mcunet-and-tinyml.html">
+ <span class="dropdown-text">Efficient AI Lecture 10: MCUNet and TinyML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-11-tinyengine.html">
+ <span class="dropdown-text">Efficient AI Lecture 11: TinyEngine</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-12-transformer-and-llm.html">
+ <span class="dropdown-text">Efficient AI Lecture 12: Transformer and LLM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-13-llm-deployment-techniques.html">
+ <span class="dropdown-text">Efficient AI Lecture 13: LLM Deployment Techniques</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-14-llm-post-training.html">
+ <span class="dropdown-text">Efficient AI Lecture 14: LLM Post-Training</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-15-long-context-llm.html">
+ <span class="dropdown-text">Efficient AI Lecture 15: Long-Context LLM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-16-vision-transformer.html">
+ <span class="dropdown-text">Efficient AI Lecture 16: Vision Transformer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-17-gans-video-pointcloud.html">
+ <span class="dropdown-text">Efficient AI Lecture 17: GANs, Video, and Point Cloud</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-18-diffusion-models.html">
+ <span class="dropdown-text">Efficient AI Lecture 18: Diffusion Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-19-distributed-training-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 19: Distributed Training (Part 1)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-20-distributed-training-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 20: Distributed Training (Part 2)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-21-on-device-training-transfer-learning.html">
+ <span class="dropdown-text">Efficient AI Lecture 21: On-Device Training and Transfer Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-22-quantum-machine-learning-i.html">
+ <span class="dropdown-text">Efficient AI Lecture 22: Quantum Machine Learning I</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">JAX</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-numpy.html">
+ <span class="dropdown-text">JAX NumPy</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/introducing-flax-nnx.html">
+ <span class="dropdown-text">Introducing Flax NNX</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-ai-stack.html">
+ <span class="dropdown-text">JAX AI Stack</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/scaling-up.html">
+ <span class="dropdown-text">Scaling Up</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">NLP</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-21-mixture-of-experts.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 21: Mixture of Experts</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-16-reinforcement-learning-for-llms.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 16: Reinforcement Learning for LLMs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-9-decoding-algorithms.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 9: Decoding Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-2-learned-representation.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 2: Learned Representation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-1-introduction-fundamentals.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 1: Introduction and Fundamentals</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">RL</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-10-classic-games.html">
+ <span class="dropdown-text">David Silver Lecture 10: Classic Games</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-9-exploration-and-exploitation.html">
+ <span class="dropdown-text">David Silver Lecture 9: Exploration and Exploitation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-8-integrating-learning-and-planning.html">
+ <span class="dropdown-text">David Silver Lecture 8: Integrating Learning and Planning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-7-policy-gradient-methods.html">
+ <span class="dropdown-text">David Silver Lecture 7: Policy Gradient Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-6-value-function-approximation.html">
+ <span class="dropdown-text">David Silver Lecture 6: Value Function Approximation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-5-model-free-control.html">
+ <span class="dropdown-text">David Silver Lecture 5: Model-Free Control</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/cmu-advanced-nlp-reinforcement-learning.html">
+ <span class="dropdown-text">CMU Advanced NLP: Reinforcement Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-4-model-free-prediction.html">
+ <span class="dropdown-text">David Silver Lecture 4: Model-Free Prediction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-3-planning-by-dynamic-programming.html">
+ <span class="dropdown-text">David Silver Lecture 3: Planning by Dynamic Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-2-markov-decision-process.html">
+ <span class="dropdown-text">David Silver Lecture 2: Markov Decision Process</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-1-introduction-to-reinforcement-learning.html">
+ <span class="dropdown-text">David Silver Lecture 1: Introduction to RL</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Papers in Deep Learning</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/generative-adversarial-nets.html">
+ <span class="dropdown-text">Generative Adversarial Nets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/why-tpu-is-fast-for-dot-product.html">
+ <span class="dropdown-text">Why TPU Is Fast for Dot Product</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/transformer-attention-is-all-you-need.html">
+ <span class="dropdown-text">Transformer: Attention Is All You Need</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/attention-origin-transformer.html">
+ <span class="dropdown-text">Attention: The Origin of Transformer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/batch-normalization.html">
+ <span class="dropdown-text">Batch Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/lora.html">
+ <span class="dropdown-text">LoRA: Low-Rank Adaptation</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-learning-book.html">
+ <span class="dropdown-text">Goodfellow Deep Learning Book (Overview)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/xor-deep-learning.html">
+ <span class="dropdown-text">Chapter 6.1: XOR Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/likelihood-loss-functions.html">
+ <span class="dropdown-text">Chapter 6.2: Loss Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/activation-functions.html">
+ <span class="dropdown-text">Chapter 6.3: Activation Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/architecture-design.html">
+ <span class="dropdown-text">Chapter 6.4: Architecture Design</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/backpropagation.html">
+ <span class="dropdown-text">Chapter 6.5: Back-Propagation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/hessian-prerequisites.html">
+ <span class="dropdown-text">Chapter 7 Prerequisites: Hessian Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l2-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.1: L2 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l1-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.2: L1 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/constrained-optimization-regularization.html">
+ <span class="dropdown-text">Chapter 7.2: Constrained Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/regularization-underconstrained.html">
+ <span class="dropdown-text">Chapter 7.3: Under-Constrained Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dataset-augmentation.html">
+ <span class="dropdown-text">Chapter 7.4: Dataset Augmentation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/noise-robustness.html">
+ <span class="dropdown-text">Chapter 7.5: Noise Robustness</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/semi-supervised-learning.html">
+ <span class="dropdown-text">Chapter 7.6: Semi-Supervised Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/multi-task-learning.html">
+ <span class="dropdown-text">Chapter 7.7: Multi-Task Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/early-stopping.html">
+ <span class="dropdown-text">Chapter 7.8: Early Stopping</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-tying-sharing.html">
+ <span class="dropdown-text">Chapter 7.9: Parameter Tying &amp; Sharing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-sparsity.html">
+ <span class="dropdown-text">Chapter 7.10: Sparse Representations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/bagging-ensemble.html">
+ <span class="dropdown-text">Chapter 7.11: Bagging &amp; Ensemble Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dropout.html">
+ <span class="dropdown-text">Chapter 7.12: Dropout</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adversarial-training.html">
+ <span class="dropdown-text">Chapter 7.13: Adversarial Training</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/tangent-prop-manifold.html">
+ <span class="dropdown-text">Chapter 7.14: Tangent Prop &amp; Manifolds</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/learning-vs-optimization.html">
+ <span class="dropdown-text">Chapter 8.1: Learning vs Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-challenges.html">
+ <span class="dropdown-text">Chapter 8.2: Optimization Challenges</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/basic-optimization-algorithms.html">
+ <span class="dropdown-text">Chapter 8.3: Basic Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-initialization.html">
+ <span class="dropdown-text">Chapter 8.4: Parameter Initialization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adaptive-learning-rates.html">
+ <span class="dropdown-text">Chapter 8.5: Adaptive Learning Rates</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/second-order-methods.html">
+ <span class="dropdown-text">Chapter 8.6: Second-Order Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-strategies.html">
+ <span class="dropdown-text">Chapter 8.7: Optimization Strategies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolution-computation.html">
+ <span class="dropdown-text">Chapter 9.1: Convolution Computation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-motivation.html">
+ <span class="dropdown-text">Chapter 9.2: CNN Motivation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-pooling.html">
+ <span class="dropdown-text">Chapter 9.3: Pooling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-infinitely-strong-prior.html">
+ <span class="dropdown-text">Chapter 9.4: Infinitely Strong Prior</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolutional-functions.html">
+ <span class="dropdown-text">Chapter 9.5: Convolutional Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-structured-outputs.html">
+ <span class="dropdown-text">Chapter 9.6: Structured Outputs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-data-types.html">
+ <span class="dropdown-text">Chapter 9.7: Data Types</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-efficient-convolution.html">
+ <span class="dropdown-text">Chapter 9.8: Efficient Convolution</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-unsupervised-learning.html">
+ <span class="dropdown-text">Chapter 9.9: Unsupervised Feature Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-neuroscience.html">
+ <span class="dropdown-text">Chapter 9.10: Neuroscientific Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-unfold-computation-graph.html">
+ <span class="dropdown-text">Chapter 10.1: Unfold Computation Graph</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recurrent-neural-networks.html">
+ <span class="dropdown-text">Chapter 10.2: Recurrent Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-bidirectional.html">
+ <span class="dropdown-text">Chapter 10.3: Bidirectional RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-encoder-decoder.html">
+ <span class="dropdown-text">Chapter 10.4: Encoder-Decoder Seq2Seq</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-deep.html">
+ <span class="dropdown-text">Chapter 10.5: Deep RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recursive.html">
+ <span class="dropdown-text">Chapter 10.6: Recursive Neural Network</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-long-term-dependency.html">
+ <span class="dropdown-text">Chapter 10.7: Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-echo-state.html">
+ <span class="dropdown-text">Chapter 10.8: Echo State Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-leaky-unit.html">
+ <span class="dropdown-text">Chapter 10.9: Leaky Units</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-lstm-gru.html">
+ <span class="dropdown-text">Chapter 10.10: LSTM and GRU</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-optimize-long-term.html">
+ <span class="dropdown-text">Chapter 10.11: Optimizing Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-explicit-memory.html">
+ <span class="dropdown-text">Chapter 10.12: Explicit Memory</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/practical-methodology.html">
+ <span class="dropdown-text">Chapter 11: Practical Methodology</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/large-scale-deep-learning.html">
+ <span class="dropdown-text">Chapter 12.1: Large-Scale Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/image-preprocessing-normalization.html">
+ <span class="dropdown-text">Chapter 12.2: Image Preprocessing and Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/automatic-speech-recognition.html">
+ <span class="dropdown-text">Chapter 12.3: Automatic Speech Recognition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/nlp-applications.html">
+ <span class="dropdown-text">Chapter 12.4: NLP Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/other-applications.html">
+ <span class="dropdown-text">Chapter 12.5: Other Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/linear-factor-models.html">
+ <span class="dropdown-text">Chapter 13: Linear Factor Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/autoencoders.html">
+ <span class="dropdown-text">Chapter 14: Autoencoders</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-learning.html">
+ <span class="dropdown-text">Chapter 15: Representation Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/structured-probabilistic-models.html">
+ <span class="dropdown-text">Chapter 16: Structured Probabilistic Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/monte-carlo-methods.html">
+ <span class="dropdown-text">Chapter 17: Monte Carlo Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/confronting-partition-function.html">
+ <span class="dropdown-text">Chapter 18: Confronting the Partition Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/approximate-inference.html">
+ <span class="dropdown-text">Chapter 19: Approximate Inference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-generative-models.html">
+ <span class="dropdown-text">Chapter 20: Deep Generative Models</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-quantum-machine" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Quantum Machine</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-quantum-machine">    
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/your-first-quantum-experiment.html">
+ <span class="dropdown-text">Your First Quantum Experiment</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/the-math-behind-quantum-entanglement.html">
+ <span class="dropdown-text">The Math Behind Quantum Entanglement</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/from-zero-to-quantum.html">
+ <span class="dropdown-text">From Zero to Quantum</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/qiskit-lesson-1-classical-and-quantum-information.html">
+ <span class="dropdown-text">Qiskit Lesson 1: Classical and Quantum Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/qiskit-lesson-2-multiple-systems.html">
+ <span class="dropdown-text">Qiskit Lesson 2: Multiple Systems</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-math" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Math</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-math">    
+        <li>
+    <a class="dropdown-item" href="../../Math/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Probability</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/index.html">
+ <span class="dropdown-text">MIT 6.041 Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture25-classical-inference-iii.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 25: Classical Statistical Inference III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture24-classical-inference-ii.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 24: Classical Statistical Inference II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture23-classical-inference-i.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 23: Classical Statistical Inference I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture22-bayesian-inference-ii.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 22: Bayesian Statistical Inference II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture21-bayesian-inference-i.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 21: Bayesian Statistical Inference I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture20-central-limit-theorem.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 20: Central Limit Theorem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture19-weak-law.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 19: Weak Law of Large Numbers</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/markov-chains-iii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Markov Chains III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/markov-chains-ii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Markov Chains II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/markov-chains-i.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Markov Chains I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/poisson-process-ii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Poisson Process II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/poisson-process-i.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Poisson Process I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/bernoulli-process.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Bernoulli Process</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/iterated-expectations.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Iterated Expectations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/derived-distributions-covariance.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Derived Distributions and Covariance</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/continuous-bayes-rule-derived-distributions.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Continuous Bayes’ Rule and Derived Distributions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/multiple-continuous-random-variables.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Multiple Continuous Random Variables</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/continuous-random-variables.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Continuous Random Variables</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-3.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-2.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-1.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/counting.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Counting</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/independence.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Independence</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/conditioning-bayes-rule.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Conditioning and Bayes’ Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/probability-models-axioms.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Probability Models and Axioms</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Information Theory</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/index.html">
+ <span class="dropdown-text">Oxford Math Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-1-defining-entropy-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 1: Defining Entropy and Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-2-basic-properties-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 2: Basic Properties of Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-3-introducing-codes.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 3: Introducing Codes</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Calculus</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/six-functions-rules-theorems.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Six Functions, Six Rules, and Six Theorems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-growth.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Growth</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-motion.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Motion</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/power-series-eulers-great-formula.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Power Series and Euler’s Great Formula</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/linear-approximation-newtons-method.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Linear Approximation and Newton’s Method</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/growth-rates-log-graphs.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Growth Rates and Log Graphs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivatives-ln-arcsin.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivatives of ln y and arcsin(y)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/limits-continuous-functions.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Limits and Continuous Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivative-sin-cos.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivative of sin x and cos x</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/product-quotient-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Product Rule and Quotient Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/chain-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Chains and the Chain Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-integral.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture Integral</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/exponential-function.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: The Exponential Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/max-min-second-derivative.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Max, Min, and Second Derivative</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-derivatives.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture on Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/highlights-of-calculus.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Highlights</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Reflections &amp; Synthesis</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/mit1806-invertibility-connections.html">
+ <span class="dropdown-text">Invertibility Connections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/taylor-euler-fourier.html">
+ <span class="dropdown-text">Taylor, Euler, and Fourier</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.06SC Linear Algebra</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture1-geometry.html">
+ <span class="dropdown-text">Lecture 1: Geometry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture2-elimination.html">
+ <span class="dropdown-text">Lecture 2: Elimination</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture3-multiplication.html">
+ <span class="dropdown-text">Lecture 3: Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture4-lu-decomposition.html">
+ <span class="dropdown-text">Lecture 4: LU Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-permutations.html">
+ <span class="dropdown-text">Lecture 5.1: Permutations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-2-transpose.html">
+ <span class="dropdown-text">Lecture 5.2: Transpose</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-3-spaces.html">
+ <span class="dropdown-text">Lecture 5.3: Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture6-column-null-space.html">
+ <span class="dropdown-text">Lecture 6: Column &amp; Null Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture7-solving-ax-0.html">
+ <span class="dropdown-text">Lecture 7: Solving Ax=0</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture8-solving-ax-b.html">
+ <span class="dropdown-text">Lecture 8: Solving Ax=b</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture9-independence-basis-dimension.html">
+ <span class="dropdown-text">Lecture 9: Independence, Basis, Dimension</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture10-four-subspaces.html">
+ <span class="dropdown-text">Lecture 10: Four Fundamental Subspaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture11-matrix-spaces.html">
+ <span class="dropdown-text">Lecture 11: Matrix Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture12-graphs-networks.html">
+ <span class="dropdown-text">Lecture 12: Graphs and Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture13-quiz-review.html">
+ <span class="dropdown-text">Lecture 13: Quiz 1 Review</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture14-orthogonality.html">
+ <span class="dropdown-text">Lecture 14: Orthogonality</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture15-projections.html">
+ <span class="dropdown-text">Lecture 15: Projections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture16-least-squares.html">
+ <span class="dropdown-text">Lecture 16: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture17-gram-schmidt.html">
+ <span class="dropdown-text">Lecture 17: Gram-Schmidt</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture18-determinants.html">
+ <span class="dropdown-text">Lecture 18: Determinants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture19-determinant-formulas.html">
+ <span class="dropdown-text">Lecture 19: Determinant Formulas</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture20-cramers-rule.html">
+ <span class="dropdown-text">Lecture 20: Inverse &amp; Volume</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture21-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 21: Eigenvalues &amp; Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture22-diagonalization-powers.html">
+ <span class="dropdown-text">Lecture 22: Diagonalization &amp; Powers</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture23-differential-equations.html">
+ <span class="dropdown-text">Lecture 23: Differential Equations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture24-markov-fourier.html">
+ <span class="dropdown-text">Lecture 24: Markov &amp; Fourier</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture25-symmetric-positive-definite.html">
+ <span class="dropdown-text">Lecture 25: Symmetric &amp; Positive Definite</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture26-complex-matrices-fft.html">
+ <span class="dropdown-text">Lecture 26: Complex Matrices &amp; FFT</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture27-positive-definite-minima.html">
+ <span class="dropdown-text">Lecture 27: Positive Definite &amp; Minima</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture28-similar-matrices-jordan.html">
+ <span class="dropdown-text">Lecture 28: Similar Matrices &amp; Jordan Form</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture29-svd.html">
+ <span class="dropdown-text">Lecture 29: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture30-linear-transformations.html">
+ <span class="dropdown-text">Lecture 30: Linear Transformations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture31-change-of-basis.html">
+ <span class="dropdown-text">Lecture 31: Change of Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture33-left-right-inverse.html">
+ <span class="dropdown-text">Lecture 33: Left &amp; Right Inverse</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.065: Linear Algebra Applications</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture1-column-space.html">
+ <span class="dropdown-text">Lecture 1: Column Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture2-multiplying-factoring.html">
+ <span class="dropdown-text">Lecture 2: Multiplying and Factoring Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture3-orthonormal-columns.html">
+ <span class="dropdown-text">Lecture 3: Orthonormal Columns</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture4-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 4: Eigenvalues and Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture5-positive-definite.html">
+ <span class="dropdown-text">Lecture 5: Positive Definite Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture6-svd.html">
+ <span class="dropdown-text">Lecture 6: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture7-eckart-young.html">
+ <span class="dropdown-text">Lecture 7: Eckart-Young Theorem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture8-norms.html">
+ <span class="dropdown-text">Lecture 8: Norms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture9-least-squares.html">
+ <span class="dropdown-text">Lecture 9: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture10-axb-difficulties.html">
+ <span class="dropdown-text">Lecture 10: Survey of Ax=b Difficulties</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/lecture-11-minimize-norm-subject-to-constraint.html">
+ <span class="dropdown-text">Lecture 11: Minimize Norm subject to Constraint</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture12-eigenvalue-algorithms.html">
+ <span class="dropdown-text">Lecture 12: Computing Eigenvalues</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture13-randomized-matrix-multiplication.html">
+ <span class="dropdown-text">Lecture 13: Randomized Matrix Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture14-low-rank-changes-inverse.html">
+ <span class="dropdown-text">Lecture 14: Low Rank Changes</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture15-matrix-derivatives.html">
+ <span class="dropdown-text">Lecture 15: Matrix Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture16-derivative-inverse-singular-values.html">
+ <span class="dropdown-text">Lecture 16: Derivative of Inverse and Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture17-rapidly-decreasing-singular-values.html">
+ <span class="dropdown-text">Lecture 17: Rapidly Decreasing Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture18-counting-parameters-svd-lu-qr-saddle-points.html">
+ <span class="dropdown-text">Lecture 18: Counting Parameters in SVD, LU, QR, and Saddle Points</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture19-saddle-point-maxmin-principle.html">
+ <span class="dropdown-text">Lecture 19: Saddle Point and the Max–Min Principle</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture20-probability-definitions-inequalities.html">
+ <span class="dropdown-text">Lecture 20: Probability Definitions and Inequalities</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture21-minimizing-function.html">
+ <span class="dropdown-text">Lecture 21: Minimizing a Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture22-gradient-descent.html">
+ <span class="dropdown-text">Lecture 22: Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture23-accelerating-gradient-descent-momentum.html">
+ <span class="dropdown-text">Lecture 23: Accelerating Gradient Descent (Momentum)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture24-linear-programming-two-person-games.html">
+ <span class="dropdown-text">Lecture 24: Linear Programming and Two-Person Games</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture25-stochastic-gradient-descent.html">
+ <span class="dropdown-text">Lecture 25: Stochastic Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture26-structure-of-neural-nets.html">
+ <span class="dropdown-text">Lecture 26: Structure of Neural Nets for Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture27-backpropagation-partial-gradients.html">
+ <span class="dropdown-text">Lecture 27: Back Propagation and Partial Gradients</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture30-completing-rank1-circulants.html">
+ <span class="dropdown-text">Lecture 30: Completing a Rank-1 Matrix, Circulants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture31-fourier-matrix.html">
+ <span class="dropdown-text">Lecture 31: Eigenvectors of Circulant Matrices, Fourier Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture32-convolution-rule.html">
+ <span class="dropdown-text">Lecture 32: The Convolution Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture34-distance-matrices-procrustes.html">
+ <span class="dropdown-text">Lecture 34: Distance Matrices, Procrustes Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture35-find-clusters-graph.html">
+ <span class="dropdown-text">Lecture 35: Find Clusters in Graph</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Stanford EE 364A: Convex Optimization</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/lectures.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture1-intro.html">
+ <span class="dropdown-text">Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture2-math-foundations.html">
+ <span class="dropdown-text">Lecture 2: Convex Sets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture3-convex-functions.html">
+ <span class="dropdown-text">Lecture 3: Convex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part1-operations-preserving-convexity.html">
+ <span class="dropdown-text">Lecture 4.1: Operations Preserving Convexity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part2-conjugate-quasiconvex.html">
+ <span class="dropdown-text">Lecture 4.2: Conjugate &amp; Quasiconvex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part1-log-concave-convex.html">
+ <span class="dropdown-text">Lecture 5.1: Log-Concave &amp; Log-Convex</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part2-monotonicity.html">
+ <span class="dropdown-text">Lecture 5.2: Monotonicity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture6-optimization-problems.html">
+ <span class="dropdown-text">Chapter 4.1: Optimization Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture7-convex-optimization.html">
+ <span class="dropdown-text">Chapter 4.2: Convex Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture8-linear-optimization.html">
+ <span class="dropdown-text">Chapter 4.3: Linear Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture9-quadratic-optimization.html">
+ <span class="dropdown-text">Chapter 4.4: Quadratic Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-5-geometric-programming.html">
+ <span class="dropdown-text">Chapter 4.5: Geometric Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-6-generalized-inequality-constraints.html">
+ <span class="dropdown-text">Chapter 4.6: Generalized Inequality Constraints</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-7-vector-optimization.html">
+ <span class="dropdown-text">Chapter 4.7: Vector Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter5-1-lagrange-dual-function.html">
+ <span class="dropdown-text">Chapter 5.1: The Lagrange Dual Function</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-theory-to-repro" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Theory-to-Repro</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-theory-to-repro">    
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/linear-regression-three-ways.html">
+ <span class="dropdown-text">Linear Regression via Three Solvers</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/k_means_clustering.html">
+ <span class="dropdown-text">K-Means Clustering</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/logistic_regression.html">
+ <span class="dropdown-text">Logistic Regression</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/axis.html">
+ <span class="dropdown-text">Axis Operations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Algorithm/dp_regex.html">
+ <span class="dropdown-text">DP Regex</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-building-startups" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Building Startups</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-building-startups">    
+        <li>
+    <a class="dropdown-item" href="../../Startups/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Startups/getting-and-evaluating-startup-ideas.html">
+ <span class="dropdown-text">Getting and Evaluating Startup Ideas</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/ickma2311/ickma2311.github.io/discussions"> 
+<span class="menu-text">Feedback</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#decide-whether-the-question-is-about-groups-differences-or-geometry" id="toc-decide-whether-the-question-is-about-groups-differences-or-geometry" class="nav-link active" data-scroll-target="#decide-whether-the-question-is-about-groups-differences-or-geometry">1. Decide whether the question is about groups, differences, or geometry</a></li>
+  <li><a href="#pca-gives-a-precise-answer-to-a-linear-question" id="toc-pca-gives-a-precise-answer-to-a-linear-question" class="nav-link" data-scroll-target="#pca-gives-a-precise-answer-to-a-linear-question">2. PCA gives a precise answer to a linear question</a></li>
+  <li><a href="#t-sne-preserves-affinities-with-a-different-loss" id="toc-t-sne-preserves-affinities-with-a-different-loss" class="nav-link" data-scroll-target="#t-sne-preserves-affinities-with-a-different-loss">3. t-SNE preserves affinities, with a different loss</a></li>
+  <li><a href="#other-reductions-preserve-other-structures" id="toc-other-reductions-preserve-other-structures" class="nav-link" data-scroll-target="#other-reductions-preserve-other-structures">4. Other reductions preserve other structures</a></li>
+  <li><a href="#integration-needs-room-for-differences-as-well-as-common-structure" id="toc-integration-needs-room-for-differences-as-well-as-common-structure" class="nav-link" data-scroll-target="#integration-needs-room-for-differences-as-well-as-common-structure">5. Integration needs room for differences as well as common structure</a></li>
+  <li><a href="#larger-atlases-change-the-computation-not-the-validation-requirement" id="toc-larger-atlases-change-the-computation-not-the-validation-requirement" class="nav-link" data-scroll-target="#larger-atlases-change-the-computation-not-the-validation-requirement">6. Larger atlases change the computation, not the validation requirement</a></li>
+  <li><a href="#read-the-objective-before-reading-the-islands" id="toc-read-the-objective-before-reading-the-islands" class="nav-link" data-scroll-target="#read-the-objective-before-reading-the-islands">7. Read the objective before reading the islands</a></li>
+  <li><a href="#sources-and-lecture" id="toc-sources-and-lecture" class="nav-link" data-scroll-target="#sources-and-lecture">Sources and lecture</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">A Cell Map Depends on What You Preserve</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">MIT 6.874 Lecture 11: Dimensionality Reduction, Genetics, and Variation</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Deep Learning</div>
+    <div class="quarto-category">Biology</div>
+    <div class="quarto-category">Dimensionality Reduction</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    How PCA, t-SNE, autoencoders, and integrative NMF preserve different aspects of single-cell data—and what their maps cannot establish.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Chao Ma </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">October 21, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>A single-cell expression matrix may contain thousands of measurements for each cell. A two-dimensional picture makes that matrix easier to explore, but every reduction makes a choice about what to retain. PCA retains variation under a linear reconstruction criterion. t-SNE emphasizes neighborhood affinities. An autoencoder learns codes that support its reconstruction objective. Integrative nonnegative matrix factorization separates shared and dataset-specific contributions.</p>
+<p>Those choices determine what the picture can support. Two islands on a map may suggest a useful comparison; establishing distinct cell types takes evidence beyond the islands.</p>
+<p>In MIT 6.874’s Spring 2021 Lecture 11, Manolis Kellis develops the dimensionality-reduction foundations, and Joshua Welch connects them to integration across single-cell datasets. The course schedule calls the lecture <em>Dimensionality Reduction, Genetics, and Variation</em>. The central question here is how a representation preserves cellular variation when measurements also contain technical effects.</p>
+<section id="decide-whether-the-question-is-about-groups-differences-or-geometry" class="level2">
+<h2 class="anchored" data-anchor-id="decide-whether-the-question-is-about-groups-differences-or-geometry">1. Decide whether the question is about groups, differences, or geometry</h2>
+<p>Let a count matrix have cells in rows and genes in columns. Three questions use that same matrix differently:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Question</th>
+<th>Typical object</th>
+<th>Evidence still needed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Which cells resemble one another?</td>
+<td>A representation, neighbor graph, or clustering</td>
+<td>Stability and independent annotation</td>
+</tr>
+<tr class="even">
+<td>Which genes differ between conditions?</td>
+<td>An effect estimate and statistical test</td>
+<td>A suitable count model and biological replication</td>
+</tr>
+<tr class="odd">
+<td>Do corresponding cell states occur across datasets?</td>
+<td>A joint representation</td>
+<td>Preservation of real differences as well as alignment</td>
+</tr>
+</tbody>
+</table>
+<p>Differential expression is not itself a classifier. It tests associations with a condition or group; a classifier predicts labels for new observations. Clusters discovered from a dataset also do not automatically become valid independent groups for testing on that same dataset.</p>
+<p>The lecture introduces the negative binomial as a way to model overdispersed counts. Under a common parameterization,</p>
+<p><span class="math display">\[
+\mathbb E[C]=\mu,\qquad \operatorname{Var}(C)=\mu+\alpha\mu^2,
+\]</span></p>
+<p>where <span class="math inline">\(\alpha\geq0\)</span> is a dispersion parameter. The Poisson model has variance <span class="math inline">\(\mu\)</span>; the additional term accommodates variability beyond that. Library size, condition, and biological replicate belong in the model design. Thousands of cells from one donor do not create thousands of independent donors.</p>
+<p>After finding a gene set, enrichment asks a different question. Suppose a declared universe contains <span class="math inline">\(N=1000\)</span> eligible genes, a category contains <span class="math inline">\(K=20\)</span>, and a selected set contains <span class="math inline">\(n=30\)</span>. Under uniform sampling without replacement, its overlap <span class="math inline">\(T\)</span> has probability</p>
+<p><span class="math display">\[
+P(T=t)=\frac{\binom{K}{t}\binom{N-K}{n-t}}{\binom{N}{n}}.
+\]</span></p>
+<p>An observed overlap of three gives <span class="math inline">\(P(T=3)\approx0.0174\)</span>, while the enrichment tail is <span class="math inline">\(P(T\geq3)\approx0.0197\)</span>. The tail includes more extreme overlaps. A biased gene universe or selection process can invalidate the null model.</p>
+<p>Testing many categories requires a further correction. Bonferroni uses threshold <span class="math inline">\(\alpha_0/m\)</span> for <span class="math inline">\(m\)</span> valid tests and controls the probability of at least one false rejection <strong>without requiring independence</strong>. The union bound gives this directly:</p>
+<p><span class="math display">\[
+P(\text{at least one false rejection})
+\leq\sum_{j\in\mathcal H_0}P(p_j\leq\alpha_0/m)
+\leq\alpha_0.
+\]</span></p>
+<p>Benjamini–Hochberg instead targets the expected false-discovery proportion. It finds the largest rank <span class="math inline">\(r\)</span> with <span class="math inline">\(p_{(r)}\leq r q/m\)</span> and rejects through that rank. Its standard guarantee assumes independent tests or suitable positive dependence; it is not an unrestricted guarantee for arbitrary dependence.</p>
+</section>
+<section id="pca-gives-a-precise-answer-to-a-linear-question" class="level2">
+<h2 class="anchored" data-anchor-id="pca-gives-a-precise-answer-to-a-linear-question">2. PCA gives a precise answer to a linear question</h2>
+<p>For PCA, let <span class="math inline">\(X\in\mathbb R^{n\times g}\)</span> be the matrix after the chosen preprocessing and <strong>column centering</strong>. A one-dimensional projection chooses a unit vector <span class="math inline">\(v\)</span> to maximize</p>
+<p><span class="math display">\[
+\|Xv\|_2^2=v^\top X^\top Xv,\qquad \|v\|_2=1.
+\]</span></p>
+<p>The maximizer is a leading eigenvector of <span class="math inline">\(X^\top X\)</span>. With an economy-size singular value decomposition,</p>
+<p><span class="math display">\[
+X=U\Sigma V^\top,
+\qquad Z=XV_k=U_k\Sigma_k,
+\qquad X_k=ZV_k^\top.
+\]</span></p>
+<p>Here <span class="math inline">\(V_k\)</span> has shape <span class="math inline">\(g\times k\)</span>, the cell scores <span class="math inline">\(Z\)</span> have shape <span class="math inline">\(n\times k\)</span>, and <span class="math inline">\(X_k\)</span> reconstructs the original <span class="math inline">\(n\times g\)</span> matrix with rank at most <span class="math inline">\(k\)</span>.</p>
+<p>Why does maximizing variance minimize reconstruction error? Orthogonal projection splits the squared norm:</p>
+<p><span class="math display">\[
+\|X\|_F^2
+=\|XV_kV_k^\top\|_F^2
++\|X-XV_kV_k^\top\|_F^2.
+\]</span></p>
+<p>The total is fixed. Retaining more squared variation leaves less squared residual. Truncated SVD solves this rank-constrained least-squares problem, with</p>
+<p><span class="math display">\[
+\|X-X_k\|_F^2=\sum_{j&gt;k}\sigma_j^2,
+\qquad
+\|X-X_k\|_2=\sigma_{k+1}.
+\]</span></p>
+<p>The first expression sums all discarded squared singular values; the second is the spectral norm. These are different error measures.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="lifesci-11-assets/pca.png" class="img-fluid figure-img" alt="Four constructed points at plus or minus 3 horizontally and plus or minus 1 vertically project onto the horizontal axis. Singular values are 6 and 2; rank-one reconstruction retains 90 percent of squared variation and has squared Frobenius residual 4."></p>
+<figcaption>A constructed centered matrix projected onto its first principal component.</figcaption>
+</figure>
+</div>
+<p>For the four rows <span class="math inline">\((3,1),(3,-1),(-3,1),(-3,-1)\)</span>, we have <span class="math inline">\(X^\top X=\operatorname{diag}(36,4)\)</span>. The first component is horizontal, the singular values are <span class="math inline">\(6\)</span> and <span class="math inline">\(2\)</span>, and retaining one component preserves <span class="math inline">\(36/(36+4)=90\%\)</span> of squared variation. The four discarded vertical coordinates contribute squared error <span class="math inline">\(4\)</span>.</p>
+<p>This is a constructed geometry example, not measured expression data. In biological data, the largest direction might reflect a cell program, sequencing depth, or another technical effect. PCA does not know which interpretation matters. Feature selection and scaling change the geometry before PCA begins; a small-variance direction can still be important for a particular question. Singular-vector signs are arbitrary; repeated singular values also make the choice of basis within a tied subspace nonunique.</p>
+</section>
+<section id="t-sne-preserves-affinities-with-a-different-loss" class="level2">
+<h2 class="anchored" data-anchor-id="t-sne-preserves-affinities-with-a-different-loss">3. t-SNE preserves affinities, with a different loss</h2>
+<p>PCA has one global linear map. t-SNE assigns low-dimensional coordinates to the observed points by matching probability distributions over pairs.</p>
+<p>In the input space, define</p>
+<p><span class="math display">\[
+p_{j\mid i}
+=\frac{\exp[-\|x_i-x_j\|^2/(2s_i^2)]}
+{\sum_{\ell\ne i}\exp[-\|x_i-x_\ell\|^2/(2s_i^2)]},
+\qquad
+p_{ij}=\frac{p_{j\mid i}+p_{i\mid j}}{2n}.
+\]</span></p>
+<p>Set <span class="math inline">\(p_{ii}=0\)</span>. Each bandwidth <span class="math inline">\(s_i\)</span> is chosen to match a requested perplexity, <span class="math inline">\(2^{H(P_i)}\)</span> when entropy is measured in bits. Perplexity is an effective neighborhood size, not a hard cutoff that keeps exactly that many neighbors.</p>
+<p>For low-dimensional points <span class="math inline">\(y_i\)</span>, t-SNE uses</p>
+<p><span class="math display">\[
+q_{ij}=\frac{(1+\|y_i-y_j\|^2)^{-1}}
+{\sum_{a\ne b}(1+\|y_a-y_b\|^2)^{-1}},
+\qquad q_{ii}=0,
+\]</span></p>
+<p>and minimizes</p>
+<p><span class="math display">\[
+C=\operatorname{KL}(P\|Q)
+=\sum_{i\ne j}p_{ij}\log\frac{p_{ij}}{q_{ij}}.
+\]</span></p>
+<p><strong><span class="math inline">\(P\)</span> describes input-space affinities; <span class="math inline">\(Q\)</span> describes map-space affinities.</strong> A large <span class="math inline">\(p_{ij}\)</span> represented by a tiny <span class="math inline">\(q_{ij}\)</span> incurs a large positive contribution: an important input neighbor has been separated on the map. This asymmetry does not make other mistakes free, because all <span class="math inline">\(q_{ij}\)</span> share a normalization. Individual KL terms can be negative, although the complete divergence is nonnegative.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="lifesci-11-assets/affinity.png" class="img-fluid figure-img" alt="Three abstract pair categories have input probabilities 0.80, 0.15, and 0.05. A similar candidate distribution is 0.75, 0.20, and 0.05; a missed-neighbor candidate is 0.10, 0.45, and 0.45. The second has much larger KL divergence from the input distribution. These are probability illustrations, not fitted cell embeddings."></p>
+<figcaption>A constructed probability example illustrating the direction of KL divergence.</figcaption>
+</figure>
+</div>
+<p>The heavy-tailed low-dimensional kernel helps with crowding: moderate input-space separations need room in a small-dimensional map. It does not make every distance faithful. Optimization is nonconvex, so initialization and optimization settings also matter. The <a href="https://www.jmlr.org/papers/volume9/vandermaaten08a/vandermaaten08a.pdf">original t-SNE paper</a> gives the probability definitions and objective.</p>
+<p>A practical reading of a t-SNE map therefore separates three observations:</p>
+<ul>
+<li><strong>Nearby points:</strong> a candidate local relationship worth checking in the input representation.</li>
+<li><strong>Island area:</strong> not a direct estimate of the original cluster’s variance or population prevalence.</li>
+<li><strong>Distance between islands:</strong> not a calibrated measure of biological dissimilarity.</li>
+</ul>
+<p>The number of points reflects abundance in the analyzed sample, which may differ from tissue abundance because of sampling and filtering.</p>
+<p>Re-running with different reasonable settings is a sensitivity check, not proof that a surviving island is a new cell type. t-SNE itself is an embedding algorithm, not a clustering rule or a statistical test.</p>
+</section>
+<section id="other-reductions-preserve-other-structures" class="level2">
+<h2 class="anchored" data-anchor-id="other-reductions-preserve-other-structures">4. Other reductions preserve other structures</h2>
+<p>The lecture materials compare several ways of specifying the structure that a low-dimensional space should retain.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>What its construction emphasizes</th>
+<th>Main caveat</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Classical MDS</td>
+<td>A low-rank approximation to the centered Gram matrix recovered from squared distances</td>
+<td>With Euclidean distances it recovers PCA scores up to axis signs and basis choices within tied eigenspaces; this equivalence does not cover every MDS loss</td>
+</tr>
+<tr class="even">
+<td>Isomap</td>
+<td>Distances along shortest paths in a neighborhood graph</td>
+<td>A shortcut edge can distort estimated geodesic distances</td>
+</tr>
+<tr class="odd">
+<td>Locally linear embedding</td>
+<td>Weights reconstructing each point from its neighbors</td>
+<td>Neighborhood choice and graph connectivity matter</td>
+</tr>
+<tr class="even">
+<td>Diffusion-based methods</td>
+<td>Connectivity through a random walk</td>
+<td>The result depends on graph construction and normalization</td>
+</tr>
+<tr class="odd">
+<td>Autoencoder</td>
+<td>Reconstruction through a learned bottleneck</td>
+<td>Good reconstruction alone does not guarantee useful neighborhood geometry</td>
+</tr>
+</tbody>
+</table>
+<p>For LLE, weights <span class="math inline">\(w_{ij}\)</span> first reconstruct <span class="math inline">\(x_i\)</span> from selected neighbors, with <span class="math inline">\(\sum_j w_{ij}=1\)</span>. The same weights then define the embedding objective <span class="math inline">\(\sum_i\|y_i-\sum_jw_{ij}y_j\|^2\)</span>. Centering and scale constraints on <span class="math inline">\(Y\)</span> are needed; otherwise collapsing every point to zero would solve the objective trivially.</p>
+<p>A linear autoencoder with squared error, a suitable bottleneck, no extra constraints, and a global optimum can recover the PCA reconstruction subspace. Its internal coordinates need not equal the PCA scores. Nonlinear autoencoders are more flexible: they can reconstruct inputs while distorting distances between codes. Neighborhood regularization or label information changes what the code is asked to preserve.</p>
+<p>Single-cell count models such as scVI also model observation noise and covariates. A latent code and a count likelihood answer different parts of the problem. A zero count can reflect limited sampling or low expression; it is not automatically an observation that should be replaced with a positive value. Whether a zero-inflation component is useful depends on the assay and model.</p>
+<p>The lecture’s examples of archetypes, multiresolution graphs, pathway scores, trajectories, and imputation extend the same idea. A choice of resolution can conceal smaller groups. A pathway score summarizes a chosen gene set. Pseudotime is an ordering inferred from a model, not a direct clock or a demonstrated lineage. Graph smoothing can help reveal patterns while also introducing dependencies between estimates. Downstream uncertainty must reflect those transformations.</p>
+</section>
+<section id="integration-needs-room-for-differences-as-well-as-common-structure" class="level2">
+<h2 class="anchored" data-anchor-id="integration-needs-room-for-differences-as-well-as-common-structure">5. Integration needs room for differences as well as common structure</h2>
+<p>Welch’s guest lecture moves from representing one dataset to comparing several. Cells from different donors or technologies may share programs while also differing in important ways. Making every dataset overlap perfectly can erase the differences being studied.</p>
+<p>LIGER uses integrative nonnegative matrix factorization, or iNMF. To keep the shapes explicit, use <strong>genes in rows and cells in columns in this section</strong>:</p>
+<p><span class="math display">\[
+E_d\in\mathbb R_+^{g\times n_d},\qquad
+W,V_d\in\mathbb R_+^{g\times k},\qquad
+H_d\in\mathbb R_+^{k\times n_d}.
+\]</span></p>
+<p>The reconstruction is <span class="math inline">\(E_d\approx(W+V_d)H_d\)</span>. Here <span class="math inline">\(W\)</span> contains shared metagene weights, <span class="math inline">\(V_d\)</span> contains dataset-specific additions to those weights, and <span class="math inline">\(H_d\)</span> describes each cell’s factor loadings. Nonnegativity makes reconstruction additive; it does not prove that each factor is one biological pathway.</p>
+<p>The objective is</p>
+<p><span class="math display">\[
+\min_{W,V_d,H_d\geq0}
+\sum_d\left[
+\|E_d-(W+V_d)H_d\|_F^2
++\lambda\|V_dH_d\|_F^2
+\right].
+\]</span></p>
+<p>The first term fits each dataset. The second penalizes the contribution reconstructed through its specific component. Increasing <span class="math inline">\(\lambda\)</span> applies more pressure toward shared structure; it does not certify that the removed variation was technical. The <a href="https://welch-lab.github.io/liger/reference/runINMF.html">LIGER method documentation</a> states this objective.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="lifesci-11-assets/integration.png" class="img-fluid figure-img" alt="For a cell loading vector h equals 1,2, shared metagene matrix W produces 2,3,4. Dataset A adds 0,0,1 to produce 2,3,5; dataset B adds 2,0,0 to produce 4,3,4. All numbers are a constructed example. A dataset-specific contribution may contain biological or technical variation."></p>
+<figcaption>A constructed example of shared and dataset-specific contributions in iNMF.</figcaption>
+</figure>
+</div>
+<p>Consider the constructed matrices</p>
+<p><span class="math display">\[
+W=\begin{pmatrix}2&amp;0\\1&amp;1\\0&amp;2\end{pmatrix},\quad
+V_A=\begin{pmatrix}0&amp;0\\0&amp;0\\1&amp;0\end{pmatrix},\quad
+V_B=\begin{pmatrix}0&amp;1\\0&amp;0\\0&amp;0\end{pmatrix},\quad
+h=\begin{pmatrix}1\\2\end{pmatrix}.
+\]</span></p>
+<p>Both cells have shared contribution <span class="math inline">\(Wh=(2,3,4)^\top\)</span>. Dataset A adds <span class="math inline">\(V_Ah=(0,0,1)^\top\)</span>; dataset B adds <span class="math inline">\(V_Bh=(2,0,0)^\top\)</span>. Their reconstructed measurements differ even though they have the same factor loadings.</p>
+<p>This example shows what the model permits, not what an optimizer is guaranteed to recover. Factorization is not uniquely identifiable, and the joint objective is nonconvex. Alternating nonnegative least-squares updates optimize one matrix block while holding the others fixed; they do not establish a global optimum. Unlike centered PCA, this model requires nonnegative input, so preprocessing must preserve that constraint.</p>
+<p>The guest lecture also describes refinement and quantile normalization of cell factors before joint clustering. The factorization formula alone is not the entire integration pipeline. Matching cells across unpaired datasets is an inferred correspondence, not evidence that the same physical cell was measured twice.</p>
+<p>The reported examples span donors, spatial and dissociated measurements, and multiple modalities. They motivate a useful validation question: <strong>does the representation align corresponding states while preserving a difference known to be real?</strong> Mixing by dataset label alone cannot answer it. A donor-specific component may contain biology, a technical artifact, or both; metadata and independent evidence are needed to interpret it.</p>
+</section>
+<section id="larger-atlases-change-the-computation-not-the-validation-requirement" class="level2">
+<h2 class="anchored" data-anchor-id="larger-atlases-change-the-computation-not-the-validation-requirement">6. Larger atlases change the computation, not the validation requirement</h2>
+<p>Welch describes online iNMF for three settings: an already available dataset processed in minibatches, newly arriving datasets incorporated incrementally, and new observations projected into a fixed reference. These have different implications. Updating the reference changes the representation; projecting into a fixed reference assumes its learned factors remain adequate.</p>
+<p>The memory idea can be seen in ordinary dictionary learning. For data columns <span class="math inline">\(x_t\)</span> and codes <span class="math inline">\(h_t\)</span> with dictionary <span class="math inline">\(D\)</span>, expanding a squared reconstruction loss gives</p>
+<p><span class="math display">\[
+\sum_t\|x_t-Dh_t\|_2^2
+=\text{constant}-2\operatorname{tr}(D^\top B)
++\operatorname{tr}(D^\top D A),
+\]</span></p>
+<p>where <span class="math inline">\(A=\sum_t h_th_t^\top\)</span> and <span class="math inline">\(B=\sum_t x_th_t^\top\)</span>. Holding the codes fixed, these accumulated products summarize the dictionary-dependent part of the loss. The online iNMF algorithm uses a related surrogate with its shared and specific terms. This derivation explains the memory principle; it is not the complete iNMF update rule or a global convergence proof. Reporting all cell embeddings still requires storing or recomputing those outputs.</p>
+<p>The lecture then considers datasets with only partially shared features. Restricting everything to the intersection can discard useful information. An extended factorization can connect datasets through shared features while retaining separate feature blocks. It still needs enough meaningful overlap or other justified linkage to anchor the comparison; arbitrary disconnected measurements do not become aligned merely by choosing a larger model.</p>
+<p>Finally, the guest lecture introduces MichiGAN, combining a representation learned by a variational autoencoder with a conditional generative model. The architectural idea is to retain the encoder’s codes while training a generator conditioned on them. The reported representation-versus-generation tradeoff motivates that design; it is not a universal rule that all VAEs disentangle factors or all GANs lack interpretable latents. A realistic synthetic profile and a scientifically meaningful representation require separate evaluation.</p>
+</section>
+<section id="read-the-objective-before-reading-the-islands" class="level2">
+<h2 class="anchored" data-anchor-id="read-the-objective-before-reading-the-islands">7. Read the objective before reading the islands</h2>
+<p>A useful cell map begins with a question about the data. Linear reconstruction, neighborhood affinities, additive shared factors, and count-model likelihoods preserve different things. None automatically identifies the cause of the variation it preserves.</p>
+<p>For an analysis built on these methods, three checks keep the interpretation grounded: inspect which features drive the representation, test sensitivity to preprocessing and modeling choices, and compare the proposed interpretation with independent evidence. A compelling map helps formulate the next question. Its geometry alone cannot settle that question.</p>
+</section>
+<section id="sources-and-lecture" class="level2">
+<h2 class="anchored" data-anchor-id="sources-and-lecture">Sources and lecture</h2>
+<ul>
+<li><a href="https://mit6874.github.io/">MIT 6.874 Spring 2021 course schedule</a>, Lecture 11, March 30.</li>
+<li><a href="https://mit6874.github.io/assets/sp2021/slides/l11a.pdf">Lecture slides A</a>: differential expression, PCA/SVD, t-SNE, and single-cell analysis.</li>
+<li><a href="https://mit6874.github.io/assets/sp2021/slides/l11b.pdf">Lecture slides B</a>: integration methods including CCA and MNN, manifold methods, and autoencoders.</li>
+<li><a href="https://www.youtube.com/watch?v=0byf2OF6AT0">Lecture recording</a>: Welch’s guest lecture begins around 38:49; shared/specific factorization around 46:04; online integration around 1:03:52.</li>
+<li><a href="https://www.jmlr.org/papers/volume9/vandermaaten08a/vandermaaten08a.pdf">van der Maaten and Hinton, <em>Visualizing Data using t-SNE</em></a>, 2008, Sections 2–3.</li>
+<li><a href="https://welch-lab.github.io/liger/reference/runINMF.html">LIGER iNMF objective and matrix roles</a>.</li>
+</ul>
+<div class="quarto-video ratio ratio-16x9"><iframe data-external="1" src="https://www.youtube.com/embed/0byf2OF6AT0" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>
+
+
+<!-- -->
+
+<nav class="reader-links" aria-label="Stay connected with Chao">
+  <p class="reader-links-eyebrow">Beyond the blog</p>
+  <p class="reader-links-title">Stay connected with Chao</p>
+  <p class="reader-links-intro">Follow my ideas, say hello, or explore what I’m building.</p>
+  <div class="reader-links-items">
+    <a class="reader-card reader-card-x" href="https://x.com/ickma2311" target="_blank" rel="noopener noreferrer">
+      <span class="reader-card-icon" aria-hidden="true"><svg viewbox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3L12 14.6 5.5 22H2.3l8.2-9.4L.8 2h6.5l5.8 7.6L18.9 2Zm-1.1 18h1.7L6.4 3.9H4.6L17.8 20Z"></path></svg></span>
+      <span class="reader-card-arrow" aria-hidden="true">↗</span>
+      <span class="reader-card-name">X / Twitter</span>
+      <span class="reader-card-description">Notes, ideas &amp; things I’m learning.</span>
+      <span class="reader-card-action">Follow @ickma2311</span>
+    </a>
+    <a class="reader-card reader-card-linkedin" href="https://www.linkedin.com/in/chao-ma-929839241/" target="_blank" rel="noopener noreferrer">
+      <span class="reader-card-icon" aria-hidden="true"><svg viewbox="0 0 24 24" fill="currentColor"><path d="M20.45 2H3.55C2.69 2 2 2.68 2 3.52v16.96c0 .84.69 1.52 1.55 1.52h16.9c.86 0 1.55-.68 1.55-1.52V3.52c0-.84-.69-1.52-1.55-1.52ZM7.93 18.75H4.98V9.2h2.95v9.55ZM6.45 7.89a1.71 1.71 0 1 1 0-3.42 1.71 1.71 0 0 1 0 3.42Zm12.3 10.86H15.8V14.1c0-1.11-.02-2.54-1.55-2.54-1.55 0-1.79 1.21-1.79 2.46v4.73H9.51V9.2h2.83v1.3h.04c.39-.74 1.36-1.52 2.79-1.52 2.98 0 3.58 1.96 3.58 4.5v5.27Z"></path></svg></span>
+      <span class="reader-card-arrow" aria-hidden="true">↗</span>
+      <span class="reader-card-name">LinkedIn</span>
+      <span class="reader-card-description">Let’s connect over AI, learning &amp; work.</span>
+      <span class="reader-card-action">Connect with me</span>
+    </a>
+    <a class="reader-card reader-card-daily" href="https://dailychat.net/" target="_blank" rel="noopener">
+      <span class="reader-card-icon" aria-hidden="true"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"></path><path d="m13 7-4 5h4l-2 3 5-5h-4l1-3Z"></path></svg></span>
+      <span class="reader-card-arrow" aria-hidden="true">↗</span>
+      <span class="reader-card-name">DailyChat</span>
+      <span class="reader-card-description">Your quick read on AI &amp; tech.</span>
+      <span class="reader-card-action">Explore DailyChat</span>
+    </a>
+  </div>
+</nav>
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/ickma2311\.github\.io");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<input type="hidden" id="giscus-base-theme" value="light">
+<input type="hidden" id="giscus-alt-theme" value="light">
+<script>
+  function loadGiscus() {
+    // Function to get the theme based on body class
+    const getTheme = () => {
+      let baseTheme = document.getElementById('giscus-base-theme').value;
+      let altTheme = document.getElementById('giscus-alt-theme').value;
+      return document.body.classList.contains('quarto-dark') ? altTheme : baseTheme;
+    };
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.dataset.repo = "ickma2311/ickma2311.github.io";
+    script.dataset.repoId = "R_kgDOOzbaAg";
+    script.dataset.category = "Comments";
+    script.dataset.categoryId = "DIC_kwDOOzbaAs4CxPFj";
+    script.dataset.mapping = "pathname";
+    script.dataset.reactionsEnabled = "1";
+    script.dataset.emitMetadata = "0";
+    script.dataset.inputPosition = "top";
+    script.dataset.theme = getTheme();
+    script.dataset.lang = "en";
+    script.crossOrigin = "anonymous";
+    // Append the script to the desired div instead of at the end of the body
+    document.getElementById("quarto-content").appendChild(script);
+  }
+  loadGiscus();
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "A Cell Map Depends on What You Preserve"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "MIT 6.874 Lecture 11: Dimensionality Reduction, Genetics, and Variation"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-10-21"</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Deep Learning, Biology, Dimensionality Reduction]</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "How PCA, t-SNE, autoencoders, and integrative NMF preserve different aspects of single-cell data—and what their maps cannot establish."</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="an">image:</span><span class="co"> lifesci-11-assets/integration.png</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">    include-in-header:</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">      text: |</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">        &lt;style&gt;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">        main mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: 0.2rem 0; }</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">        &lt;/style&gt;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>A single-cell expression matrix may contain thousands of measurements for each cell. A two-dimensional picture makes that matrix easier to explore, but every reduction makes a choice about what to retain. PCA retains variation under a linear reconstruction criterion. t-SNE emphasizes neighborhood affinities. An autoencoder learns codes that support its reconstruction objective. Integrative nonnegative matrix factorization separates shared and dataset-specific contributions.</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>Those choices determine what the picture can support. Two islands on a map may suggest a useful comparison; establishing distinct cell types takes evidence beyond the islands.</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>In MIT 6.874's Spring 2021 Lecture 11, Manolis Kellis develops the dimensionality-reduction foundations, and Joshua Welch connects them to integration across single-cell datasets. The course schedule calls the lecture *Dimensionality Reduction, Genetics, and Variation*. The central question here is how a representation preserves cellular variation when measurements also contain technical effects.</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="fu">## 1. Decide whether the question is about groups, differences, or geometry</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>Let a count matrix have cells in rows and genes in columns. Three questions use that same matrix differently:</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Question <span class="pp">|</span> Typical object <span class="pp">|</span> Evidence still needed <span class="pp">|</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Which cells resemble one another? <span class="pp">|</span> A representation, neighbor graph, or clustering <span class="pp">|</span> Stability and independent annotation <span class="pp">|</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Which genes differ between conditions? <span class="pp">|</span> An effect estimate and statistical test <span class="pp">|</span> A suitable count model and biological replication <span class="pp">|</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Do corresponding cell states occur across datasets? <span class="pp">|</span> A joint representation <span class="pp">|</span> Preservation of real differences as well as alignment <span class="pp">|</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>Differential expression is not itself a classifier. It tests associations with a condition or group; a classifier predicts labels for new observations. Clusters discovered from a dataset also do not automatically become valid independent groups for testing on that same dataset.</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>The lecture introduces the negative binomial as a way to model overdispersed counts. Under a common parameterization,</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>\mathbb E<span class="co">[</span><span class="ot">C</span><span class="co">]</span>=\mu,\qquad \operatorname{Var}(C)=\mu+\alpha\mu^2,</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>where $\alpha\geq0$ is a dispersion parameter. The Poisson model has variance $\mu$; the additional term accommodates variability beyond that. Library size, condition, and biological replicate belong in the model design. Thousands of cells from one donor do not create thousands of independent donors.</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>After finding a gene set, enrichment asks a different question. Suppose a declared universe contains $N=1000$ eligible genes, a category contains $K=20$, and a selected set contains $n=30$. Under uniform sampling without replacement, its overlap $T$ has probability</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>P(T=t)=\frac{\binom{K}{t}\binom{N-K}{n-t}}{\binom{N}{n}}.</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>An observed overlap of three gives $P(T=3)\approx0.0174$, while the enrichment tail is $P(T\geq3)\approx0.0197$. The tail includes more extreme overlaps. A biased gene universe or selection process can invalidate the null model.</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>Testing many categories requires a further correction. Bonferroni uses threshold $\alpha_0/m$ for $m$ valid tests and controls the probability of at least one false rejection **without requiring independence**. The union bound gives this directly:</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>P(\text{at least one false rejection})</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>\leq\sum_{j\in\mathcal H_0}P(p_j\leq\alpha_0/m)</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>\leq\alpha_0.</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>Benjamini–Hochberg instead targets the expected false-discovery proportion. It finds the largest rank $r$ with $p_{(r)}\leq r q/m$ and rejects through that rank. Its standard guarantee assumes independent tests or suitable positive dependence; it is not an unrestricted guarantee for arbitrary dependence.</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2. PCA gives a precise answer to a linear question</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>For PCA, let $X\in\mathbb R^{n\times g}$ be the matrix after the chosen preprocessing and **column centering**. A one-dimensional projection chooses a unit vector $v$ to maximize</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>Xv<span class="sc">\|</span>_2^2=v^\top X^\top Xv,\qquad <span class="sc">\|</span>v<span class="sc">\|</span>_2=1.</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>The maximizer is a leading eigenvector of $X^\top X$. With an economy-size singular value decomposition,</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>X=U\Sigma V^\top,</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>\qquad Z=XV_k=U_k\Sigma_k,</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>\qquad X_k=ZV_k^\top.</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>Here $V_k$ has shape $g\times k$, the cell scores $Z$ have shape $n\times k$, and $X_k$ reconstructs the original $n\times g$ matrix with rank at most $k$.</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>Why does maximizing variance minimize reconstruction error? Orthogonal projection splits the squared norm:</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>X<span class="sc">\|</span>_F^2</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>=<span class="sc">\|</span>XV_kV_k^\top<span class="sc">\|</span>_F^2</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>+<span class="sc">\|</span>X-XV_kV_k^\top<span class="sc">\|</span>_F^2.</span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>The total is fixed. Retaining more squared variation leaves less squared residual. Truncated SVD solves this rank-constrained least-squares problem, with</span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>X-X_k<span class="sc">\|</span>_F^2=\sum_{j&gt;k}\sigma_j^2,</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>X-X_k<span class="sc">\|</span>_2=\sigma_{k+1}.</span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>The first expression sums all discarded squared singular values; the second is the spectral norm. These are different error measures.</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a><span class="al">![A constructed centered matrix projected onto its first principal component.](lifesci-11-assets/pca.png)</span>{fig-alt="Four constructed points at plus or minus 3 horizontally and plus or minus 1 vertically project onto the horizontal axis. Singular values are 6 and 2; rank-one reconstruction retains 90 percent of squared variation and has squared Frobenius residual 4."}</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>For the four rows $(3,1),(3,-1),(-3,1),(-3,-1)$, we have $X^\top X=\operatorname{diag}(36,4)$. The first component is horizontal, the singular values are $6$ and $2$, and retaining one component preserves $36/(36+4)=90\%$ of squared variation. The four discarded vertical coordinates contribute squared error $4$.</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>This is a constructed geometry example, not measured expression data. In biological data, the largest direction might reflect a cell program, sequencing depth, or another technical effect. PCA does not know which interpretation matters. Feature selection and scaling change the geometry before PCA begins; a small-variance direction can still be important for a particular question. Singular-vector signs are arbitrary; repeated singular values also make the choice of basis within a tied subspace nonunique.</span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. t-SNE preserves affinities, with a different loss</span></span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>PCA has one global linear map. t-SNE assigns low-dimensional coordinates to the observed points by matching probability distributions over pairs.</span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>In the input space, define</span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>p_{j\mid i}</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>=\frac{\exp<span class="co">[</span><span class="ot">-\|x_i-x_j\|^2/(2s_i^2)</span><span class="co">]</span>}</span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>{\sum_{\ell\ne i}\exp<span class="co">[</span><span class="ot">-\|x_i-x_\ell\|^2/(2s_i^2)</span><span class="co">]</span>},</span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>p_{ij}=\frac{p_{j\mid i}+p_{i\mid j}}{2n}.</span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a>Set $p_{ii}=0$. Each bandwidth $s_i$ is chosen to match a requested perplexity, $2^{H(P_i)}$ when entropy is measured in bits. Perplexity is an effective neighborhood size, not a hard cutoff that keeps exactly that many neighbors.</span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a>For low-dimensional points $y_i$, t-SNE uses</span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>q_{ij}=\frac{(1+<span class="sc">\|</span>y_i-y_j<span class="sc">\|</span>^2)^{-1}}</span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>{\sum_{a\ne b}(1+<span class="sc">\|</span>y_a-y_b<span class="sc">\|</span>^2)^{-1}},</span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>\qquad q_{ii}=0,</span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>and minimizes</span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>C=\operatorname{KL}(P<span class="sc">\|</span>Q)</span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>=\sum_{i\ne j}p_{ij}\log\frac{p_{ij}}{q_{ij}}.</span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>**$P$ describes input-space affinities; $Q$ describes map-space affinities.** A large $p_{ij}$ represented by a tiny $q_{ij}$ incurs a large positive contribution: an important input neighbor has been separated on the map. This asymmetry does not make other mistakes free, because all $q_{ij}$ share a normalization. Individual KL terms can be negative, although the complete divergence is nonnegative.</span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a><span class="al">![A constructed probability example illustrating the direction of KL divergence.](lifesci-11-assets/affinity.png)</span>{fig-alt="Three abstract pair categories have input probabilities 0.80, 0.15, and 0.05. A similar candidate distribution is 0.75, 0.20, and 0.05; a missed-neighbor candidate is 0.10, 0.45, and 0.45. The second has much larger KL divergence from the input distribution. These are probability illustrations, not fitted cell embeddings."}</span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>The heavy-tailed low-dimensional kernel helps with crowding: moderate input-space separations need room in a small-dimensional map. It does not make every distance faithful. Optimization is nonconvex, so initialization and optimization settings also matter. The <span class="co">[</span><span class="ot">original t-SNE paper</span><span class="co">](https://www.jmlr.org/papers/volume9/vandermaaten08a/vandermaaten08a.pdf)</span> gives the probability definitions and objective.</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>A practical reading of a t-SNE map therefore separates three observations:</span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Nearby points:** a candidate local relationship worth checking in the input representation.</span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Island area:** not a direct estimate of the original cluster's variance or population prevalence.</span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Distance between islands:** not a calibrated measure of biological dissimilarity.</span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>The number of points reflects abundance in the analyzed sample, which may differ from tissue abundance because of sampling and filtering.</span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>Re-running with different reasonable settings is a sensitivity check, not proof that a surviving island is a new cell type. t-SNE itself is an embedding algorithm, not a clustering rule or a statistical test.</span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a><span class="fu">## 4. Other reductions preserve other structures</span></span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>The lecture materials compare several ways of specifying the structure that a low-dimensional space should retain.</span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Method <span class="pp">|</span> What its construction emphasizes <span class="pp">|</span> Main caveat <span class="pp">|</span></span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Classical MDS <span class="pp">|</span> A low-rank approximation to the centered Gram matrix recovered from squared distances <span class="pp">|</span> With Euclidean distances it recovers PCA scores up to axis signs and basis choices within tied eigenspaces; this equivalence does not cover every MDS loss <span class="pp">|</span></span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Isomap <span class="pp">|</span> Distances along shortest paths in a neighborhood graph <span class="pp">|</span> A shortcut edge can distort estimated geodesic distances <span class="pp">|</span></span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Locally linear embedding <span class="pp">|</span> Weights reconstructing each point from its neighbors <span class="pp">|</span> Neighborhood choice and graph connectivity matter <span class="pp">|</span></span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Diffusion-based methods <span class="pp">|</span> Connectivity through a random walk <span class="pp">|</span> The result depends on graph construction and normalization <span class="pp">|</span></span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Autoencoder <span class="pp">|</span> Reconstruction through a learned bottleneck <span class="pp">|</span> Good reconstruction alone does not guarantee useful neighborhood geometry <span class="pp">|</span></span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>For LLE, weights $w_{ij}$ first reconstruct $x_i$ from selected neighbors, with $\sum_j w_{ij}=1$. The same weights then define the embedding objective $\sum_i<span class="sc">\|</span>y_i-\sum_jw_{ij}y_j<span class="sc">\|</span>^2$. Centering and scale constraints on $Y$ are needed; otherwise collapsing every point to zero would solve the objective trivially.</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>A linear autoencoder with squared error, a suitable bottleneck, no extra constraints, and a global optimum can recover the PCA reconstruction subspace. Its internal coordinates need not equal the PCA scores. Nonlinear autoencoders are more flexible: they can reconstruct inputs while distorting distances between codes. Neighborhood regularization or label information changes what the code is asked to preserve.</span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>Single-cell count models such as scVI also model observation noise and covariates. A latent code and a count likelihood answer different parts of the problem. A zero count can reflect limited sampling or low expression; it is not automatically an observation that should be replaced with a positive value. Whether a zero-inflation component is useful depends on the assay and model.</span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>The lecture's examples of archetypes, multiresolution graphs, pathway scores, trajectories, and imputation extend the same idea. A choice of resolution can conceal smaller groups. A pathway score summarizes a chosen gene set. Pseudotime is an ordering inferred from a model, not a direct clock or a demonstrated lineage. Graph smoothing can help reveal patterns while also introducing dependencies between estimates. Downstream uncertainty must reflect those transformations.</span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a><span class="fu">## 5. Integration needs room for differences as well as common structure</span></span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>Welch's guest lecture moves from representing one dataset to comparing several. Cells from different donors or technologies may share programs while also differing in important ways. Making every dataset overlap perfectly can erase the differences being studied.</span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>LIGER uses integrative nonnegative matrix factorization, or iNMF. To keep the shapes explicit, use **genes in rows and cells in columns in this section**:</span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a>E_d\in\mathbb R_+^{g\times n_d},\qquad</span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>W,V_d\in\mathbb R_+^{g\times k},\qquad</span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a>H_d\in\mathbb R_+^{k\times n_d}.</span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a>The reconstruction is $E_d\approx(W+V_d)H_d$. Here $W$ contains shared metagene weights, $V_d$ contains dataset-specific additions to those weights, and $H_d$ describes each cell's factor loadings. Nonnegativity makes reconstruction additive; it does not prove that each factor is one biological pathway.</span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a>The objective is</span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a>\min_{W,V_d,H_d\geq0}</span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a>\sum_d\left[</span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a><span class="sc">\|</span>E_d-(W+V_d)H_d<span class="sc">\|</span>_F^2</span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a>+\lambda<span class="sc">\|</span>V_dH_d<span class="sc">\|</span>_F^2</span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>\right].</span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a>The first term fits each dataset. The second penalizes the contribution reconstructed through its specific component. Increasing $\lambda$ applies more pressure toward shared structure; it does not certify that the removed variation was technical. The <span class="co">[</span><span class="ot">LIGER method documentation</span><span class="co">](https://welch-lab.github.io/liger/reference/runINMF.html)</span> states this objective.</span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a><span class="al">![A constructed example of shared and dataset-specific contributions in iNMF.](lifesci-11-assets/integration.png)</span>{fig-alt="For a cell loading vector h equals 1,2, shared metagene matrix W produces 2,3,4. Dataset A adds 0,0,1 to produce 2,3,5; dataset B adds 2,0,0 to produce 4,3,4. All numbers are a constructed example. A dataset-specific contribution may contain biological or technical variation."}</span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a>Consider the constructed matrices</span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a>W=\begin{pmatrix}2&amp;0<span class="sc">\\</span>1&amp;1<span class="sc">\\</span>0&amp;2\end{pmatrix},\quad</span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>V_A=\begin{pmatrix}0&amp;0<span class="sc">\\</span>0&amp;0<span class="sc">\\</span>1&amp;0\end{pmatrix},\quad</span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>V_B=\begin{pmatrix}0&amp;1<span class="sc">\\</span>0&amp;0<span class="sc">\\</span>0&amp;0\end{pmatrix},\quad</span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a>h=\begin{pmatrix}1<span class="sc">\\</span>2\end{pmatrix}.</span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a>Both cells have shared contribution $Wh=(2,3,4)^\top$. Dataset A adds $V_Ah=(0,0,1)^\top$; dataset B adds $V_Bh=(2,0,0)^\top$. Their reconstructed measurements differ even though they have the same factor loadings.</span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a>This example shows what the model permits, not what an optimizer is guaranteed to recover. Factorization is not uniquely identifiable, and the joint objective is nonconvex. Alternating nonnegative least-squares updates optimize one matrix block while holding the others fixed; they do not establish a global optimum. Unlike centered PCA, this model requires nonnegative input, so preprocessing must preserve that constraint.</span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>The guest lecture also describes refinement and quantile normalization of cell factors before joint clustering. The factorization formula alone is not the entire integration pipeline. Matching cells across unpaired datasets is an inferred correspondence, not evidence that the same physical cell was measured twice.</span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a>The reported examples span donors, spatial and dissociated measurements, and multiple modalities. They motivate a useful validation question: **does the representation align corresponding states while preserving a difference known to be real?** Mixing by dataset label alone cannot answer it. A donor-specific component may contain biology, a technical artifact, or both; metadata and independent evidence are needed to interpret it.</span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6. Larger atlases change the computation, not the validation requirement</span></span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a>Welch describes online iNMF for three settings: an already available dataset processed in minibatches, newly arriving datasets incorporated incrementally, and new observations projected into a fixed reference. These have different implications. Updating the reference changes the representation; projecting into a fixed reference assumes its learned factors remain adequate.</span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a>The memory idea can be seen in ordinary dictionary learning. For data columns $x_t$ and codes $h_t$ with dictionary $D$, expanding a squared reconstruction loss gives</span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a>\sum_t<span class="sc">\|</span>x_t-Dh_t<span class="sc">\|</span>_2^2</span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a>=\text{constant}-2\operatorname{tr}(D^\top B)</span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a>+\operatorname{tr}(D^\top D A),</span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a>where $A=\sum_t h_th_t^\top$ and $B=\sum_t x_th_t^\top$. Holding the codes fixed, these accumulated products summarize the dictionary-dependent part of the loss. The online iNMF algorithm uses a related surrogate with its shared and specific terms. This derivation explains the memory principle; it is not the complete iNMF update rule or a global convergence proof. Reporting all cell embeddings still requires storing or recomputing those outputs.</span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a>The lecture then considers datasets with only partially shared features. Restricting everything to the intersection can discard useful information. An extended factorization can connect datasets through shared features while retaining separate feature blocks. It still needs enough meaningful overlap or other justified linkage to anchor the comparison; arbitrary disconnected measurements do not become aligned merely by choosing a larger model.</span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a>Finally, the guest lecture introduces MichiGAN, combining a representation learned by a variational autoencoder with a conditional generative model. The architectural idea is to retain the encoder's codes while training a generator conditioned on them. The reported representation-versus-generation tradeoff motivates that design; it is not a universal rule that all VAEs disentangle factors or all GANs lack interpretable latents. A realistic synthetic profile and a scientifically meaningful representation require separate evaluation.</span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a><span class="fu">## 7. Read the objective before reading the islands</span></span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a>A useful cell map begins with a question about the data. Linear reconstruction, neighborhood affinities, additive shared factors, and count-model likelihoods preserve different things. None automatically identifies the cause of the variation it preserves.</span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a>For an analysis built on these methods, three checks keep the interpretation grounded: inspect which features drive the representation, test sensitivity to preprocessing and modeling choices, and compare the proposed interpretation with independent evidence. A compelling map helps formulate the next question. Its geometry alone cannot settle that question.</span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sources and lecture</span></span>
+<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">MIT 6.874 Spring 2021 course schedule</span><span class="co">](https://mit6874.github.io/)</span>, Lecture 11, March 30.</span>
+<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Lecture slides A</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l11a.pdf)</span>: differential expression, PCA/SVD, t-SNE, and single-cell analysis.</span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Lecture slides B</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l11b.pdf)</span>: integration methods including CCA and MNN, manifold methods, and autoencoders.</span>
+<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Lecture recording</span><span class="co">](https://www.youtube.com/watch?v=0byf2OF6AT0)</span>: Welch's guest lecture begins around 38:49; shared/specific factorization around 46:04; online integration around 1<span class="sc">:03:</span>52.</span>
+<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">van der Maaten and Hinton, *Visualizing Data using t-SNE*</span><span class="co">](https://www.jmlr.org/papers/volume9/vandermaaten08a/vandermaaten08a.pdf)</span>, 2008, Sections 2–3.</span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">LIGER iNMF objective and matrix roles</span><span class="co">](https://welch-lab.github.io/liger/reference/runINMF.html)</span>.</span>
+<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a>{{&lt; video https://www.youtube.com/watch?v=0byf2OF6AT0 &gt;}}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
