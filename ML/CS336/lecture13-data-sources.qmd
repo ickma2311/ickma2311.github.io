@@ -1,0 +1,176 @@
+---
+title: "The Same Web Can Produce Different Training Data"
+subtitle: "Stanford CS336 Spring 2026 · Lecture 13: Data (Sources, Datasets)"
+author: "Chao Ma"
+date: "2026-10-25"
+categories: [LLM, Data, CS336]
+description: "How acquisition, text extraction, filtering, provenance, and sampling turn available documents into a language model's training distribution."
+image: cs336-13-assets/selection.png
+toc: true
+format:
+  html:
+    include-in-header:
+      text: |
+        <style>
+        main mjx-container[display="true"]{display:block;max-width:100%;overflow-x:auto;overflow-y:hidden;padding:4px 0}
+        main img{max-width:100%;height:auto}
+        @media(max-width:640px){main table{display:block;max-width:100%;overflow-x:auto}}
+        </style>
+---
+
+Suppose two teams start with the same web crawl. One keeps mostly explanatory prose; the other preserves more code and informal discussion. They train the same architecture for the same number of tokens. Their models have still experienced different training distributions.
+
+The difference begins before optimization. A crawler chooses what it can reach. A text extractor chooses what counts as content. Filters retain some domains more often than others. Deduplication changes how frequently repeated material appears. Sampling determines how often the surviving material reaches the model.
+
+In Stanford CS336's Spring 2026 Lecture 13, Percy Liang surveys the sources and datasets behind these decisions. A useful way to connect them is to keep three questions separate: **What can be acquired? What is useful for the training objective? What basis supports the intended use?** A download URL answers only part of the first question.
+
+## 1. A training corpus has a chain of decisions behind it
+
+Pretraining, midtraining, and post-training use data differently. Broad pretraining establishes coverage; later training can emphasize particular domains or behaviors. Instruction examples and preference data are further transformations of the learning problem. A corpus that is useful for one stage is not automatically the right mixture for another.
+
+For pretraining, it helps to record the path from source to tokens:
+
+| Stage | What it establishes | What it does not establish |
+|---|---|---|
+| Source and version | Where material came from and when | Accuracy or permission for every use |
+| Acquisition | Which records were actually retrieved | Complete coverage of the source |
+| Extraction | Which content was represented as text | Preservation of every meaningful structure |
+| Filtering and deduplication | Which records or spans remain | An objective, universal definition of quality |
+| Sampling and tokenization | What the optimizer will encounter | How much distinct information it will learn |
+
+![Five stages connect source and version, acquisition, extraction, filtering and deduplication, and sampled training tokens. A provenance ledger follows the stages with source identifier, date and rights metadata; capture hash and retrieval policy; extractor version and retained structure; filter thresholds and deduplication policy; tokenizer and sampling weights. Traceability supports inspection but does not certify truth, privacy, or permission.](cs336-13-assets/provenance.png){fig-alt="Five stages connect source and version, acquisition, extraction, filtering and deduplication, and sampled training tokens. A provenance ledger follows the stages with source identifier, date and rights metadata; capture hash and retrieval policy; extractor version and retained structure; filter thresholds and deduplication policy; tokenizer and sampling weights. Traceability supports inspection but does not certify truth, privacy, or permission."}
+
+For example, consider an HTML page containing an explanation, a code block, navigation links, and comments. Removing navigation can improve its representation. Removing every brace-containing line can also erase the code that makes the explanation useful. A final text file does not reveal which of those choices occurred unless the processing history is retained.
+
+A practical provenance record therefore includes source identifiers, capture dates, versions or hashes, rights metadata, and processing versions. It is evidence for inspecting a dataset; it is not itself a certificate of accuracy, privacy, or lawful use.
+
+## 2. The accessible web is a selected part of the web
+
+A crawler maintains a queue of URLs, downloads reachable pages, extracts links, and decides what to visit next. The queue policy, crawl dates, geographic access, supported formats, and handling of duplicates all affect the result. Dynamic applications, authenticated content, and changing pages further separate a crawl from the live web.
+
+Access also has operational and permission boundaries. Robots directives, service terms, rate limits, and licensing are different kinds of constraints. The fact that a server returns a page does not settle the rights attached to its contents. A responsible collection process preserves these distinctions rather than treating technical reachability as permission.
+
+Common Crawl provides a large, reusable starting point. Its [April 2026 release](https://commoncrawl.org/blog/april-2026-crawl-archive-now-available) reports 2.19 billion web pages and 379.2 TiB of uncompressed content. Those are measurements of that crawl, not a count of usable training tokens. A compressed archive size, an extracted-text size, and a token count describe different objects.
+
+The [Common Crawl formats](https://commoncrawl.org/get-started) expose different stages:
+
+- **WARC** stores captured web records, including response content and associated protocol information.
+- **WAT** stores computed metadata, such as links and information extracted from the captured pages.
+- **WET** provides extracted plain text.
+
+WET is convenient, but plain text is already a processing decision. Starting from WARC allows a different extractor to preserve content that an existing extraction discarded. It also creates more work: parsing, boilerplate removal, malformed markup, and encoding problems must be handled. Comparisons in the lecture illustrate that extractor choice can affect downstream performance; they do not establish a universally best extractor for every language and domain.
+
+## 3. Structured sources offer useful content and their own selection effects
+
+Web crawls are only one source family. The lecture also considers encyclopedias, software, scientific writing, books, and discussion forums. Each contributes both content and a selection mechanism.
+
+**Wikipedia** offers organized, edited, linked material and downloadable snapshots. It is valuable for explanatory prose, but an encyclopedia has a particular style and topic distribution. Editorial oversight does not make every statement correct. Snapshot dates, revisions, and licensing still matter.
+
+**Code repositories** contain source files, documentation, tests, and configuration. **Software Heritage** archives software source, while **GH Archive** records public GitHub activity events. The latter is an [event archive](https://www.gharchive.org/), not a complete mirror of every repository's files. Issues, pull requests, and code review discussions also carry different information from a final source tree.
+
+This difference becomes a representation question. A pull request can be linearized with a diff, surrounding file context, and discussion, with some material subsampled. The sequence then contains context for a change, rather than only its final code. The Stack and The Stack v2 examples in the lecture illustrate why deciding *what a document is* belongs to dataset design. Neither public availability nor a code-oriented filter removes the need to inspect licensing and sensitive information.
+
+**arXiv** combines scientific text with equations and technical structure. A PDF extraction and a LaTeX-source conversion can produce different reading orders and representations. Hosting on arXiv does not by itself imply peer review. Its [licensing documentation](https://info.arxiv.org/help/license/index.html) also distinguishes CC0 metadata from article full text: the license for the particular article version must be checked. A license attached to metadata is not a blanket license for every paper.
+
+**Books and forums** provide other kinds of continuity: long narrative context, explanations, questions, and answers. They can also contain personal information, uncertain rights, errors, and distinctive demographic or stylistic biases. Historical inclusion in a famous dataset is evidence of what that project used, not a recommendation to reuse every component today.
+
+## 4. Availability, licensing, and fair use answer different questions
+
+It is easy to compress the legal part of data collection into a single label such as “open.” That loses distinctions the dataset needs to preserve.
+
+Public-domain material and licensed material are different categories. Creative Commons licenses also differ: attribution, share-alike, noncommercial, and no-derivatives conditions are not interchangeable. Their application depends on the license and use in question; an AI-specific conclusion cannot be inferred just from the letters “CC.” The [Creative Commons overview](https://creativecommons.org/cc-licenses/) provides the license distinctions.
+
+Copyright duration depends on jurisdiction and the category and date of the work. For many U.S. works created from 1978 onward, the general term is the author's life plus 70 years, with different rules for works made for hire and other categories. Older works require further analysis. The [U.S. Copyright Office's duration FAQ](https://www.copyright.gov/help/faq/faq-duration.html) explains these distinctions.
+
+U.S. fair use is a case-specific assessment involving purpose and character, the nature of the work, the amount and substantiality used, and market effects. Neither “research” nor “AI training” supplies an automatic answer. Acquisition, training, redistribution, and generated outputs can raise distinct questions. The [Copyright Office's fair-use guidance](https://www.copyright.gov/fair-use/) is a starting point; this article does not resolve the legal status of a particular training run.
+
+For a technical dataset record, the useful action is concrete: retain the source and version, relevant license or other stated basis for use, and any restrictions. A permissive label on a dataset wrapper cannot by itself grant rights that its publisher does not hold in the underlying works. Privacy and sensitive-data handling also need their own review; a quality score cannot substitute for them.
+
+## 5. Filtering changes the mixture before sampling begins
+
+“Keep the good documents” sounds like a cleanup operation. It is also a distribution change.
+
+Consider a **constructed example**, measured in millions of tokens under one fixed tokenizer. Define two disjoint groups: general web prose and code. The labels are bookkeeping categories, not claims that real-world domains never overlap.
+
+| Group | Input tokens | Token retention | Retained tokens |
+|---|---:|---:|---:|
+| Web prose | 80 M | 25% | 20 M |
+| Code | 20 M | 80% | 16 M |
+| Total | 100 M | 36% overall | 36 M |
+
+Before filtering, code accounts for 20% of tokens. After filtering, it accounts for $16/36\approx44.4\%$. Nothing was explicitly “upsampled,” yet its share more than doubled.
+
+Let $p_i$ be group $i$'s fraction of input tokens and $r_i$ its retained fraction of tokens. Assuming the groups partition the input and the total retained mass is positive, the resulting share is
+
+$$
+q_i=\frac{p_i r_i}{\sum_j p_j r_j}.
+$$
+
+The numerator is that group's surviving token mass relative to the original total. The denominator renormalizes across all survivors. For code,
+
+$$
+q_{\mathrm{code}}
+=\frac{0.20\times0.80}{0.80\times0.25+0.20\times0.80}
+=\frac{0.16}{0.36}\approx0.444.
+$$
+
+![Constructed token-retention example. Web prose starts with 80 million tokens and retains 25 percent, leaving 20 million. Code starts with 20 million and retains 80 percent, leaving 16 million. Code grows from 20 percent of input tokens to 44.4 percent of retained tokens. The chart compares input and retained token counts on a common zero-based scale.](cs336-13-assets/selection.png){fig-alt="Constructed token-retention example. Web prose starts with 80 million tokens and retains 25 percent, leaving 20 million. Code starts with 20 million and retains 80 percent, leaving 16 million. Code grows from 20 percent of input tokens to 44.4 percent of retained tokens. The chart compares input and retained token counts on a common zero-based scale."}
+
+The same reasoning applies to languages, domains, or styles if the groups are defined consistently. A filter trained to recognize a preferred reference collection can favor its distribution. Rules can do this too: requiring sentence punctuation, excluding certain words, or rejecting braces may discard legitimate material unevenly.
+
+This calculation does **not** show that either resulting mixture is better. That requires a training experiment with a declared evaluation protocol. It shows why retention should be reported by relevant subgroup, not only as one overall percentage.
+
+Document retention is another denominator. Retaining 10% of documents does not imply retaining 10% of tokens when document lengths differ. DCLM's filtering diagram labels its final 1.4% as a fraction of the original documents in DCLM-Pool. That is not a token-retention rate; the caption's denominator matters.
+
+## 6. Dataset history reveals different definitions of useful text
+
+The historical datasets are useful because they expose choices that a single total size hides.
+
+| Dataset or family | Selection idea emphasized in the lecture | What to ask when reusing the idea |
+|---|---|---|
+| BERT's sources | Books and encyclopedia documents | Does the material preserve useful document continuity? |
+| WebText | Web pages linked from positively received Reddit posts | Which communities and topics determine popularity? |
+| CCNet | Language identification, paragraph deduplication, and Wikipedia-based language-model filtering | How strongly does the reference distribution shape selection? |
+| C4 | Heuristic cleaning of Common Crawl text | Which legitimate styles or domains do the rules reject? |
+| GPT-3's mixture | Filtered crawl plus other text sources | How do source weights and repeat exposure differ from raw size? |
+| The Pile | A mixture of 22 sources | What are the provenance, rights, and repetition policy of each component? |
+| Gopher / MassiveText | Quality rules, deduplication, and evaluation-overlap removal | Are duplicates and benchmark overlap controlled at the relevant granularity? |
+| LLaMA | A multi-source mixture including web, code, books, and scientific writing | Which components have unresolved rights or provenance questions? |
+| RefinedWeb / FineWeb | Web text extraction, heuristic filtering, and deduplication | Which processing choices account for the usable corpus? |
+| Dolma | A documented mixture of web, code, and other domains | Are source proportions and processing decisions auditable? |
+
+These are descriptions of particular recipes, not endorsements of every source or a ranking of today's best dataset. A transparent recipe makes the selection process easier to inspect. It does not eliminate bias, copyright questions, or personal information.
+
+DCLM turns data curation into a more controlled experimental object. It provides a common starting pool, training recipes, and evaluations so different curation methods can be compared. The lecture discusses a fastText classifier with OpenHermes-2.5 instruction data and ELI5 explanations as positive examples, and RefinedWeb text as negative examples. This distinction helps explain the proxy: preferred reference material versus already filtered web text. Such a classifier learns a proxy for preferred text; it does not directly label truth or universal usefulness. The [DCLM paper](https://arxiv.org/abs/2406.11794) reports strong results for model-based filtering within its evaluated settings.
+
+Nemotron-CC addresses a quality–quantity tradeoff: aggressive filtering can leave too little distinct text for a long training run. It combines classifier ensembling and synthetic transformations with less reliance on heuristic filters. Rewriting noisy text or generating tasks can alter the useful training material, but it also imports the generator's behavior and errors. More generated tokens are not automatically more independent evidence. The relevant comparison is the resulting model under a stated budget and evaluation, rather than the visual fluency of a few rewritten samples. See the [Nemotron-CC paper](https://arxiv.org/abs/2412.02595).
+
+CommonPile investigates a different source constraint: public-domain and openly licensed text. Its authors describe an 8 TB collection from 30 sources and train 7B-parameter Comma models on 1T and 2T tokens. They report competitive performance with LLaMA 1 and 2 7B under similar compute budgets, comparing their openly licensed collection with models trained on text the paper describes as unlicensed. This is evidence for the usefulness of that source strategy under those comparisons, not a claim of parity with every newer frontier system or a legal guarantee for arbitrary reuse. See [CommonPile v0.1](https://arxiv.org/abs/2506.05209).
+
+## 7. Corpus size and training exposure are different quantities
+
+A dataset can be large in bytes but yield little usable text after extraction, or small in distinct tokens yet repeated many times during training. Reports need to distinguish bytes, documents, words, tokens, and tokens actually consumed. Even a token count depends on the tokenizer and preprocessing.
+
+Continue the constructed example with 20 M retained web tokens and 16 M retained code tokens. Use the same tokenizer and count corpus-token positions only, excluding added separators and padding. Suppose a training run consumes $T=72$ M tokens and allocates half its token budget to each group. The expected exposure is 36 M tokens from each group.
+
+If group $i$ has $N_i$ retained tokens and receives token-budget share $s_i$, its expected equivalent passes are
+
+$$
+e_i=\frac{T s_i}{N_i}.
+$$
+
+Thus web prose receives $36/20=1.8$ equivalent passes, while code receives $36/16=2.25$. This equal-share sampling explicitly reweights code from 44.4% of the retained corpus to 50% of training tokens. Sampling in proportion to retained size instead would give both groups exactly 2 equivalent passes in expectation. This accounting assumes the stated token shares and uniform exposure within each group in expectation. Actual packing, sampling, and ordering can change which individual sequences are revisited.
+
+![Constructed exposure accounting for a 72-million-token training budget with equal token shares. Web prose has 20 million retained tokens and 36 million expected training-token exposures, or 1.8 equivalent passes. Code has 16 million retained tokens and 36 million exposures, or 2.25 equivalent passes. Retained size and exposure use a common zero-based scale.](cs336-13-assets/exposure.png){fig-alt="Constructed exposure accounting for a 72-million-token training budget with equal token shares. Web prose has 20 million retained tokens and 36 million expected training-token exposures, or 1.8 equivalent passes. Code has 16 million retained tokens and 36 million exposures, or 2.25 equivalent passes. Retained size and exposure use a common zero-based scale."}
+
+The model consumes 72 M token positions, but this does not create 72 M distinct corpus tokens. Equivalent passes are an aggregate accounting measure, not a guarantee that every sequence was seen that many times. More exposure may help a useful source or overemphasize a narrow one; the arithmetic alone cannot decide.
+
+This is why dataset comparisons need both a **corpus specification** and a **training allocation**. The source list explains what was available. Extraction and filtering explain what survived. Sampling explains how strongly the survivors influenced optimization. Those details make a data recipe interpretable—and make the next controlled experiment possible.
+
+## Lecture and further reading
+
+- [Stanford CS336 Spring 2026 course](https://cs336.stanford.edu/), Lecture 13, Percy Liang.
+- [Official lecture material](https://cs336.stanford.edu/lectures/?trace=lecture_13) and [versioned source](https://github.com/stanford-cs336/lectures/blob/de53a9f979a6ee35f7d13a5e1aadee5ea1afc58e/lecture_13.py).
+- [Official Stanford Online lecture video](https://www.youtube.com/watch?v=-qm0ln33G24).
+
+[Watch the official Stanford lecture on YouTube](https://www.youtube.com/watch?v=-qm0ln33G24){.btn .btn-primary target="_blank" rel="noopener"}
