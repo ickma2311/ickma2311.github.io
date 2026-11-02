@@ -1,0 +1,2531 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Chao Ma">
+<meta name="dcterms.date" content="2026-11-01">
+<meta name="description" content="Follow a Transformer from packed projections and head reshaping to causal masking, post-norm blocks, and online softmax.">
+
+<title>A Transformer Needs the Right Axes—and the Right Memory Schedule – ∇ ickma.dev</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../favicon.svg" rel="icon" type="image/svg+xml">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-PK5N5KWZBF"></script>
+
+<script type="text/javascript">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-PK5N5KWZBF', { 'anonymize_ip': true});
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">∇ ickma.dev</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-chaolab" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">ChaoLab</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-chaolab">    
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html#research-notes">
+ <span class="dropdown-text">Research Notes</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html#reproductions">
+ <span class="dropdown-text">Reproductions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html#field-notes">
+ <span class="dropdown-text">Field Notes</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-deep-learning" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Deep Learning</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-deep-learning">    
+        <li class="dropdown-header">Deep Learning in the Life Sciences</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/graph-structure-message-passing.html">
+ <span class="dropdown-text">Lecture 15: Graph Analysis and GNNs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/biobank-heritability-and-prediction.html">
+ <span class="dropdown-text">Lecture 14: Systems Genetics and Biobanks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/eqtl-association-causal-evidence.html">
+ <span class="dropdown-text">Lecture 13: eQTLs and Causal Evidence</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/gwas-variants-and-mechanisms.html">
+ <span class="dropdown-text">Lecture 12: GWAS and Disease Circuitry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/dimensionality-reduction-integration.html">
+ <span class="dropdown-text">Lecture 11: Dimensionality Reduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/single-cell-counts-and-claims.html">
+ <span class="dropdown-text">Lecture 10: Single-Cell Genomics</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/gene-expression-and-splicing.html">
+ <span class="dropdown-text">Lecture 9: Gene Expression and Splicing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/sequence-labels-to-contact-maps.html">
+ <span class="dropdown-text">Lecture 8: Sequence Labels to Contact Maps</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/regulatory-genomics.html">
+ <span class="dropdown-text">Lecture 7: Regulatory Genomics</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Stanford CS336: Language Modeling from Scratch</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture01-overview-tokenization.html">
+ <span class="dropdown-text">Lecture 1: Overview and Tokenization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture17-multimodality.html">
+ <span class="dropdown-text">Lecture 17: Multimodality</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture16-rlvr.html">
+ <span class="dropdown-text">Lecture 16: RLVR</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture15-sft-rlhf.html">
+ <span class="dropdown-text">Lecture 15: SFT and RLHF</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture14-data-filtering-mixing.html">
+ <span class="dropdown-text">Lecture 14: Data Processing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture13-data-sources.html">
+ <span class="dropdown-text">Lecture 13: Data Sources</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture12-evaluation.html">
+ <span class="dropdown-text">Lecture 12: Evaluation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture11-scaling-laws-ii.html">
+ <span class="dropdown-text">Lecture 11: Scaling Laws II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture10-inference.html">
+ <span class="dropdown-text">Lecture 10: Inference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture09-scaling-laws-i.html">
+ <span class="dropdown-text">Lecture 9: Scaling Laws I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture08-parallelism-ii.html">
+ <span class="dropdown-text">Lecture 8: Parallelism II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture07-parallelism-i.html">
+ <span class="dropdown-text">Lecture 7: Parallelism</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture06-kernels-triton.html">
+ <span class="dropdown-text">Lecture 6: Kernels and Triton</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture05-gpus-tpus.html">
+ <span class="dropdown-text">Lecture 5: GPUs, TPUs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture04-attention-alternatives-moe.html">
+ <span class="dropdown-text">Lecture 4: Attention Alternatives and MoE</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture03-architectures-hyperparameters.html">
+ <span class="dropdown-text">Lecture 3: Architectures and Hyperparameters</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture02-pytorch-resource-accounting.html">
+ <span class="dropdown-text">Lecture 2: PyTorch and Resource Accounting</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Advanced Large Language Model Agents</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/safe-and-secure-agentic-ai.html">
+ <span class="dropdown-text">Lecture 12: Safe and Secure Agentic AI</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/abstraction-and-discovery.html">
+ <span class="dropdown-text">Lecture 11: Abstraction and Discovery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/advanced-topics-theorem-proving.html">
+ <span class="dropdown-text">Lecture 10: Advanced Topics in Theorem Proving</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/language-models-autoformalization-theorem-proving.html">
+ <span class="dropdown-text">Autoformalization and Theorem Proving</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/alphaproof-reinforcement-learning-formal-mathematics.html">
+ <span class="dropdown-text">AlphaProof: RL and Formal Mathematics</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/multimodal-agents-perception-to-action.html">
+ <span class="dropdown-text">Multimodal Agents: From Perception to Action</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/multimodal-autonomous-ai-agents.html">
+ <span class="dropdown-text">Multimodal Autonomous AI Agents</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/coding-agents-vulnerability-detection.html">
+ <span class="dropdown-text">Coding Agents and AI for Vulnerability Detection</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/open-training-recipes-llm-reasoning.html">
+ <span class="dropdown-text">Open Training Recipes: LLM Reasoning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/reasoning-memory-planning-language-agents.html">
+ <span class="dropdown-text">Reasoning, Memory, and Planning of Language Agents</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/learning-to-self-improve-and-reason-with-llms.html">
+ <span class="dropdown-text">Learning to Self-Improve and Reason with LLMs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/inference-time-techniques-for-llm-reasoning.html">
+ <span class="dropdown-text">Inference-Time Techniques for LLM Reasoning</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">CMU 10-414/714 Deep Learning Systems</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-18-transformer-implementation.html">
+ <span class="dropdown-text">Lecture 18: Transformer Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-17-transformers-attention.html">
+ <span class="dropdown-text">Lecture 17: Transformers and Attention</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-16-sequence-model-implementation.html">
+ <span class="dropdown-text">Lecture 16: Sequence Modeling Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-15-sequence-modeling-rnns.html">
+ <span class="dropdown-text">Lecture 15: Sequence Modeling and RNNs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-14-convolution-implementation.html">
+ <span class="dropdown-text">Lecture 14: Convolutional Network Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-13-hardware-acceleration-implementation.html">
+ <span class="dropdown-text">Lecture 13: Hardware Acceleration Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-12-gpu-acceleration.html">
+ <span class="dropdown-text">Lecture 12: GPU Acceleration</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-11-convolutional-networks.html">
+ <span class="dropdown-text">Lecture 11: Convolutional Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-10-hardware-acceleration.html">
+ <span class="dropdown-text">Lecture 10: Hardware Acceleration</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-9-neural-network-library-implementation.html">
+ <span class="dropdown-text">Lecture 9: Neural Network Library Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-8-normalization-dropout.html">
+ <span class="dropdown-text">Lecture 8: Normalization, Dropout, and Model State</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-7-neural-network-library-abstractions.html">
+ <span class="dropdown-text">Lecture 7: Neural Network Library Abstractions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-6-optimization-initialization.html">
+ <span class="dropdown-text">Lecture 6: Optimization and Initialization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-5-auto-differentiation-implementation.html">
+ <span class="dropdown-text">Lecture 5: Auto Differentiation Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-4-automatic-differentiation.html">
+ <span class="dropdown-text">Lecture 4: Automatic Differentiation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-3-part-2-manual-neural-networks.html">
+ <span class="dropdown-text">Lecture 3 Part II: Manual Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-3-manual-neural-networks.html">
+ <span class="dropdown-text">Lecture 3: Manual Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-2-ml-refresher-softmax-regression.html">
+ <span class="dropdown-text">Lecture 2: ML Refresher / Softmax Regression</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">ML HW-SW Codesign</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-01-introduction.html">
+ <span class="dropdown-text">Efficient AI Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-03-pruning-and-sparsity-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 3: Pruning and Sparsity (Part 1)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-04-pruning-and-sparsity-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 4: Pruning and Sparsity (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-05-quantization-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 5: Quantization (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-06-quantization-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 6: Quantization (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-07-neural-architecture-search-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 7: Neural Architecture Search (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-08-neural-architecture-search-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 8: Neural Architecture Search (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-09-knowledge-distillation.html">
+ <span class="dropdown-text">Efficient AI Lecture 9: Knowledge Distillation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-10-mcunet-and-tinyml.html">
+ <span class="dropdown-text">Efficient AI Lecture 10: MCUNet and TinyML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-11-tinyengine.html">
+ <span class="dropdown-text">Efficient AI Lecture 11: TinyEngine</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-12-transformer-and-llm.html">
+ <span class="dropdown-text">Efficient AI Lecture 12: Transformer and LLM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-13-llm-deployment-techniques.html">
+ <span class="dropdown-text">Efficient AI Lecture 13: LLM Deployment Techniques</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-14-llm-post-training.html">
+ <span class="dropdown-text">Efficient AI Lecture 14: LLM Post-Training</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-15-long-context-llm.html">
+ <span class="dropdown-text">Efficient AI Lecture 15: Long-Context LLM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-16-vision-transformer.html">
+ <span class="dropdown-text">Efficient AI Lecture 16: Vision Transformer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-17-gans-video-pointcloud.html">
+ <span class="dropdown-text">Efficient AI Lecture 17: GANs, Video, and Point Cloud</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-18-diffusion-models.html">
+ <span class="dropdown-text">Efficient AI Lecture 18: Diffusion Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-19-distributed-training-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 19: Distributed Training (Part 1)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-20-distributed-training-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 20: Distributed Training (Part 2)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-21-on-device-training-transfer-learning.html">
+ <span class="dropdown-text">Efficient AI Lecture 21: On-Device Training and Transfer Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-22-quantum-machine-learning-i.html">
+ <span class="dropdown-text">Efficient AI Lecture 22: Quantum Machine Learning I</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">JAX</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-numpy.html">
+ <span class="dropdown-text">JAX NumPy</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/introducing-flax-nnx.html">
+ <span class="dropdown-text">Introducing Flax NNX</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-ai-stack.html">
+ <span class="dropdown-text">JAX AI Stack</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/scaling-up.html">
+ <span class="dropdown-text">Scaling Up</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">NLP</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-3-language-modeling.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 3: Language Modeling Fundamentals</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-21-mixture-of-experts.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 21: Mixture of Experts</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-16-reinforcement-learning-for-llms.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 16: Reinforcement Learning for LLMs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-9-decoding-algorithms.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 9: Decoding Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-2-learned-representation.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 2: Learned Representation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-1-introduction-fundamentals.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 1: Introduction and Fundamentals</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">RL</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-10-classic-games.html">
+ <span class="dropdown-text">David Silver Lecture 10: Classic Games</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-9-exploration-and-exploitation.html">
+ <span class="dropdown-text">David Silver Lecture 9: Exploration and Exploitation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-8-integrating-learning-and-planning.html">
+ <span class="dropdown-text">David Silver Lecture 8: Integrating Learning and Planning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-7-policy-gradient-methods.html">
+ <span class="dropdown-text">David Silver Lecture 7: Policy Gradient Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-6-value-function-approximation.html">
+ <span class="dropdown-text">David Silver Lecture 6: Value Function Approximation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-5-model-free-control.html">
+ <span class="dropdown-text">David Silver Lecture 5: Model-Free Control</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/cmu-advanced-nlp-reinforcement-learning.html">
+ <span class="dropdown-text">CMU Advanced NLP: Reinforcement Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-4-model-free-prediction.html">
+ <span class="dropdown-text">David Silver Lecture 4: Model-Free Prediction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-3-planning-by-dynamic-programming.html">
+ <span class="dropdown-text">David Silver Lecture 3: Planning by Dynamic Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-2-markov-decision-process.html">
+ <span class="dropdown-text">David Silver Lecture 2: Markov Decision Process</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-1-introduction-to-reinforcement-learning.html">
+ <span class="dropdown-text">David Silver Lecture 1: Introduction to RL</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Papers in Deep Learning</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/generative-adversarial-nets.html">
+ <span class="dropdown-text">Generative Adversarial Nets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/why-tpu-is-fast-for-dot-product.html">
+ <span class="dropdown-text">Why TPU Is Fast for Dot Product</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/transformer-attention-is-all-you-need.html">
+ <span class="dropdown-text">Transformer: Attention Is All You Need</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/attention-origin-transformer.html">
+ <span class="dropdown-text">Attention: The Origin of Transformer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/batch-normalization.html">
+ <span class="dropdown-text">Batch Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/lora.html">
+ <span class="dropdown-text">LoRA: Low-Rank Adaptation</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-learning-book.html">
+ <span class="dropdown-text">Goodfellow Deep Learning Book (Overview)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/xor-deep-learning.html">
+ <span class="dropdown-text">Chapter 6.1: XOR Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/likelihood-loss-functions.html">
+ <span class="dropdown-text">Chapter 6.2: Loss Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/activation-functions.html">
+ <span class="dropdown-text">Chapter 6.3: Activation Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/architecture-design.html">
+ <span class="dropdown-text">Chapter 6.4: Architecture Design</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/backpropagation.html">
+ <span class="dropdown-text">Chapter 6.5: Back-Propagation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/hessian-prerequisites.html">
+ <span class="dropdown-text">Chapter 7 Prerequisites: Hessian Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l2-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.1: L2 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l1-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.2: L1 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/constrained-optimization-regularization.html">
+ <span class="dropdown-text">Chapter 7.2: Constrained Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/regularization-underconstrained.html">
+ <span class="dropdown-text">Chapter 7.3: Under-Constrained Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dataset-augmentation.html">
+ <span class="dropdown-text">Chapter 7.4: Dataset Augmentation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/noise-robustness.html">
+ <span class="dropdown-text">Chapter 7.5: Noise Robustness</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/semi-supervised-learning.html">
+ <span class="dropdown-text">Chapter 7.6: Semi-Supervised Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/multi-task-learning.html">
+ <span class="dropdown-text">Chapter 7.7: Multi-Task Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/early-stopping.html">
+ <span class="dropdown-text">Chapter 7.8: Early Stopping</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-tying-sharing.html">
+ <span class="dropdown-text">Chapter 7.9: Parameter Tying &amp; Sharing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-sparsity.html">
+ <span class="dropdown-text">Chapter 7.10: Sparse Representations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/bagging-ensemble.html">
+ <span class="dropdown-text">Chapter 7.11: Bagging &amp; Ensemble Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dropout.html">
+ <span class="dropdown-text">Chapter 7.12: Dropout</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adversarial-training.html">
+ <span class="dropdown-text">Chapter 7.13: Adversarial Training</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/tangent-prop-manifold.html">
+ <span class="dropdown-text">Chapter 7.14: Tangent Prop &amp; Manifolds</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/learning-vs-optimization.html">
+ <span class="dropdown-text">Chapter 8.1: Learning vs Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-challenges.html">
+ <span class="dropdown-text">Chapter 8.2: Optimization Challenges</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/basic-optimization-algorithms.html">
+ <span class="dropdown-text">Chapter 8.3: Basic Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-initialization.html">
+ <span class="dropdown-text">Chapter 8.4: Parameter Initialization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adaptive-learning-rates.html">
+ <span class="dropdown-text">Chapter 8.5: Adaptive Learning Rates</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/second-order-methods.html">
+ <span class="dropdown-text">Chapter 8.6: Second-Order Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-strategies.html">
+ <span class="dropdown-text">Chapter 8.7: Optimization Strategies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolution-computation.html">
+ <span class="dropdown-text">Chapter 9.1: Convolution Computation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-motivation.html">
+ <span class="dropdown-text">Chapter 9.2: CNN Motivation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-pooling.html">
+ <span class="dropdown-text">Chapter 9.3: Pooling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-infinitely-strong-prior.html">
+ <span class="dropdown-text">Chapter 9.4: Infinitely Strong Prior</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolutional-functions.html">
+ <span class="dropdown-text">Chapter 9.5: Convolutional Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-structured-outputs.html">
+ <span class="dropdown-text">Chapter 9.6: Structured Outputs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-data-types.html">
+ <span class="dropdown-text">Chapter 9.7: Data Types</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-efficient-convolution.html">
+ <span class="dropdown-text">Chapter 9.8: Efficient Convolution</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-unsupervised-learning.html">
+ <span class="dropdown-text">Chapter 9.9: Unsupervised Feature Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-neuroscience.html">
+ <span class="dropdown-text">Chapter 9.10: Neuroscientific Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-unfold-computation-graph.html">
+ <span class="dropdown-text">Chapter 10.1: Unfold Computation Graph</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recurrent-neural-networks.html">
+ <span class="dropdown-text">Chapter 10.2: Recurrent Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-bidirectional.html">
+ <span class="dropdown-text">Chapter 10.3: Bidirectional RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-encoder-decoder.html">
+ <span class="dropdown-text">Chapter 10.4: Encoder-Decoder Seq2Seq</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-deep.html">
+ <span class="dropdown-text">Chapter 10.5: Deep RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recursive.html">
+ <span class="dropdown-text">Chapter 10.6: Recursive Neural Network</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-long-term-dependency.html">
+ <span class="dropdown-text">Chapter 10.7: Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-echo-state.html">
+ <span class="dropdown-text">Chapter 10.8: Echo State Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-leaky-unit.html">
+ <span class="dropdown-text">Chapter 10.9: Leaky Units</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-lstm-gru.html">
+ <span class="dropdown-text">Chapter 10.10: LSTM and GRU</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-optimize-long-term.html">
+ <span class="dropdown-text">Chapter 10.11: Optimizing Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-explicit-memory.html">
+ <span class="dropdown-text">Chapter 10.12: Explicit Memory</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/practical-methodology.html">
+ <span class="dropdown-text">Chapter 11: Practical Methodology</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/large-scale-deep-learning.html">
+ <span class="dropdown-text">Chapter 12.1: Large-Scale Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/image-preprocessing-normalization.html">
+ <span class="dropdown-text">Chapter 12.2: Image Preprocessing and Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/automatic-speech-recognition.html">
+ <span class="dropdown-text">Chapter 12.3: Automatic Speech Recognition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/nlp-applications.html">
+ <span class="dropdown-text">Chapter 12.4: NLP Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/other-applications.html">
+ <span class="dropdown-text">Chapter 12.5: Other Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/linear-factor-models.html">
+ <span class="dropdown-text">Chapter 13: Linear Factor Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/autoencoders.html">
+ <span class="dropdown-text">Chapter 14: Autoencoders</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-learning.html">
+ <span class="dropdown-text">Chapter 15: Representation Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/structured-probabilistic-models.html">
+ <span class="dropdown-text">Chapter 16: Structured Probabilistic Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/monte-carlo-methods.html">
+ <span class="dropdown-text">Chapter 17: Monte Carlo Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/confronting-partition-function.html">
+ <span class="dropdown-text">Chapter 18: Confronting the Partition Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/approximate-inference.html">
+ <span class="dropdown-text">Chapter 19: Approximate Inference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-generative-models.html">
+ <span class="dropdown-text">Chapter 20: Deep Generative Models</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-quantum-machine" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Quantum Machine</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-quantum-machine">    
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/your-first-quantum-experiment.html">
+ <span class="dropdown-text">Your First Quantum Experiment</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/the-math-behind-quantum-entanglement.html">
+ <span class="dropdown-text">The Math Behind Quantum Entanglement</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/from-zero-to-quantum.html">
+ <span class="dropdown-text">From Zero to Quantum</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/qiskit-lesson-1-classical-and-quantum-information.html">
+ <span class="dropdown-text">Qiskit Lesson 1: Classical and Quantum Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/qiskit-lesson-2-multiple-systems.html">
+ <span class="dropdown-text">Qiskit Lesson 2: Multiple Systems</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-math" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Math</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-math">    
+        <li>
+    <a class="dropdown-item" href="../../Math/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Probability</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/index.html">
+ <span class="dropdown-text">MIT 6.041 Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture25-classical-inference-iii.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 25: Classical Statistical Inference III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture24-classical-inference-ii.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 24: Classical Statistical Inference II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture23-classical-inference-i.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 23: Classical Statistical Inference I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture22-bayesian-inference-ii.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 22: Bayesian Statistical Inference II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture21-bayesian-inference-i.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 21: Bayesian Statistical Inference I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture20-central-limit-theorem.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 20: Central Limit Theorem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture19-weak-law.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 19: Weak Law of Large Numbers</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/markov-chains-iii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Markov Chains III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/markov-chains-ii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Markov Chains II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/markov-chains-i.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Markov Chains I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/poisson-process-ii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Poisson Process II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/poisson-process-i.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Poisson Process I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/bernoulli-process.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Bernoulli Process</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/iterated-expectations.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Iterated Expectations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/derived-distributions-covariance.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Derived Distributions and Covariance</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/continuous-bayes-rule-derived-distributions.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Continuous Bayes’ Rule and Derived Distributions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/multiple-continuous-random-variables.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Multiple Continuous Random Variables</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/continuous-random-variables.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Continuous Random Variables</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-3.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-2.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-1.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/counting.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Counting</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/independence.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Independence</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/conditioning-bayes-rule.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Conditioning and Bayes’ Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/probability-models-axioms.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Probability Models and Axioms</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Information Theory</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/index.html">
+ <span class="dropdown-text">Oxford Math Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-1-defining-entropy-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 1: Defining Entropy and Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-2-basic-properties-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 2: Basic Properties of Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-3-introducing-codes.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 3: Introducing Codes</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Calculus</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/six-functions-rules-theorems.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Six Functions, Six Rules, and Six Theorems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-growth.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Growth</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-motion.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Motion</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/power-series-eulers-great-formula.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Power Series and Euler’s Great Formula</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/linear-approximation-newtons-method.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Linear Approximation and Newton’s Method</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/growth-rates-log-graphs.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Growth Rates and Log Graphs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivatives-ln-arcsin.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivatives of ln y and arcsin(y)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/limits-continuous-functions.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Limits and Continuous Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivative-sin-cos.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivative of sin x and cos x</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/product-quotient-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Product Rule and Quotient Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/chain-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Chains and the Chain Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-integral.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture Integral</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/exponential-function.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: The Exponential Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/max-min-second-derivative.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Max, Min, and Second Derivative</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-derivatives.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture on Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/highlights-of-calculus.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Highlights</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Reflections &amp; Synthesis</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/mit1806-invertibility-connections.html">
+ <span class="dropdown-text">Invertibility Connections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/taylor-euler-fourier.html">
+ <span class="dropdown-text">Taylor, Euler, and Fourier</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.06SC Linear Algebra</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture1-geometry.html">
+ <span class="dropdown-text">Lecture 1: Geometry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture2-elimination.html">
+ <span class="dropdown-text">Lecture 2: Elimination</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture3-multiplication.html">
+ <span class="dropdown-text">Lecture 3: Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture4-lu-decomposition.html">
+ <span class="dropdown-text">Lecture 4: LU Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-permutations.html">
+ <span class="dropdown-text">Lecture 5.1: Permutations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-2-transpose.html">
+ <span class="dropdown-text">Lecture 5.2: Transpose</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-3-spaces.html">
+ <span class="dropdown-text">Lecture 5.3: Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture6-column-null-space.html">
+ <span class="dropdown-text">Lecture 6: Column &amp; Null Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture7-solving-ax-0.html">
+ <span class="dropdown-text">Lecture 7: Solving Ax=0</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture8-solving-ax-b.html">
+ <span class="dropdown-text">Lecture 8: Solving Ax=b</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture9-independence-basis-dimension.html">
+ <span class="dropdown-text">Lecture 9: Independence, Basis, Dimension</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture10-four-subspaces.html">
+ <span class="dropdown-text">Lecture 10: Four Fundamental Subspaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture11-matrix-spaces.html">
+ <span class="dropdown-text">Lecture 11: Matrix Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture12-graphs-networks.html">
+ <span class="dropdown-text">Lecture 12: Graphs and Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture13-quiz-review.html">
+ <span class="dropdown-text">Lecture 13: Quiz 1 Review</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture14-orthogonality.html">
+ <span class="dropdown-text">Lecture 14: Orthogonality</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture15-projections.html">
+ <span class="dropdown-text">Lecture 15: Projections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture16-least-squares.html">
+ <span class="dropdown-text">Lecture 16: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture17-gram-schmidt.html">
+ <span class="dropdown-text">Lecture 17: Gram-Schmidt</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture18-determinants.html">
+ <span class="dropdown-text">Lecture 18: Determinants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture19-determinant-formulas.html">
+ <span class="dropdown-text">Lecture 19: Determinant Formulas</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture20-cramers-rule.html">
+ <span class="dropdown-text">Lecture 20: Inverse &amp; Volume</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture21-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 21: Eigenvalues &amp; Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture22-diagonalization-powers.html">
+ <span class="dropdown-text">Lecture 22: Diagonalization &amp; Powers</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture23-differential-equations.html">
+ <span class="dropdown-text">Lecture 23: Differential Equations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture24-markov-fourier.html">
+ <span class="dropdown-text">Lecture 24: Markov &amp; Fourier</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture25-symmetric-positive-definite.html">
+ <span class="dropdown-text">Lecture 25: Symmetric &amp; Positive Definite</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture26-complex-matrices-fft.html">
+ <span class="dropdown-text">Lecture 26: Complex Matrices &amp; FFT</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture27-positive-definite-minima.html">
+ <span class="dropdown-text">Lecture 27: Positive Definite &amp; Minima</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture28-similar-matrices-jordan.html">
+ <span class="dropdown-text">Lecture 28: Similar Matrices &amp; Jordan Form</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture29-svd.html">
+ <span class="dropdown-text">Lecture 29: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture30-linear-transformations.html">
+ <span class="dropdown-text">Lecture 30: Linear Transformations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture31-change-of-basis.html">
+ <span class="dropdown-text">Lecture 31: Change of Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture33-left-right-inverse.html">
+ <span class="dropdown-text">Lecture 33: Left &amp; Right Inverse</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.065: Linear Algebra Applications</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture1-column-space.html">
+ <span class="dropdown-text">Lecture 1: Column Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture2-multiplying-factoring.html">
+ <span class="dropdown-text">Lecture 2: Multiplying and Factoring Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture3-orthonormal-columns.html">
+ <span class="dropdown-text">Lecture 3: Orthonormal Columns</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture4-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 4: Eigenvalues and Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture5-positive-definite.html">
+ <span class="dropdown-text">Lecture 5: Positive Definite Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture6-svd.html">
+ <span class="dropdown-text">Lecture 6: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture7-eckart-young.html">
+ <span class="dropdown-text">Lecture 7: Eckart-Young Theorem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture8-norms.html">
+ <span class="dropdown-text">Lecture 8: Norms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture9-least-squares.html">
+ <span class="dropdown-text">Lecture 9: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture10-axb-difficulties.html">
+ <span class="dropdown-text">Lecture 10: Survey of Ax=b Difficulties</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/lecture-11-minimize-norm-subject-to-constraint.html">
+ <span class="dropdown-text">Lecture 11: Minimize Norm subject to Constraint</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture12-eigenvalue-algorithms.html">
+ <span class="dropdown-text">Lecture 12: Computing Eigenvalues</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture13-randomized-matrix-multiplication.html">
+ <span class="dropdown-text">Lecture 13: Randomized Matrix Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture14-low-rank-changes-inverse.html">
+ <span class="dropdown-text">Lecture 14: Low Rank Changes</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture15-matrix-derivatives.html">
+ <span class="dropdown-text">Lecture 15: Matrix Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture16-derivative-inverse-singular-values.html">
+ <span class="dropdown-text">Lecture 16: Derivative of Inverse and Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture17-rapidly-decreasing-singular-values.html">
+ <span class="dropdown-text">Lecture 17: Rapidly Decreasing Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture18-counting-parameters-svd-lu-qr-saddle-points.html">
+ <span class="dropdown-text">Lecture 18: Counting Parameters in SVD, LU, QR, and Saddle Points</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture19-saddle-point-maxmin-principle.html">
+ <span class="dropdown-text">Lecture 19: Saddle Point and the Max–Min Principle</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture20-probability-definitions-inequalities.html">
+ <span class="dropdown-text">Lecture 20: Probability Definitions and Inequalities</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture21-minimizing-function.html">
+ <span class="dropdown-text">Lecture 21: Minimizing a Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture22-gradient-descent.html">
+ <span class="dropdown-text">Lecture 22: Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture23-accelerating-gradient-descent-momentum.html">
+ <span class="dropdown-text">Lecture 23: Accelerating Gradient Descent (Momentum)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture24-linear-programming-two-person-games.html">
+ <span class="dropdown-text">Lecture 24: Linear Programming and Two-Person Games</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture25-stochastic-gradient-descent.html">
+ <span class="dropdown-text">Lecture 25: Stochastic Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture26-structure-of-neural-nets.html">
+ <span class="dropdown-text">Lecture 26: Structure of Neural Nets for Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture27-backpropagation-partial-gradients.html">
+ <span class="dropdown-text">Lecture 27: Back Propagation and Partial Gradients</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture30-completing-rank1-circulants.html">
+ <span class="dropdown-text">Lecture 30: Completing a Rank-1 Matrix, Circulants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture31-fourier-matrix.html">
+ <span class="dropdown-text">Lecture 31: Eigenvectors of Circulant Matrices, Fourier Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture32-convolution-rule.html">
+ <span class="dropdown-text">Lecture 32: The Convolution Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture34-distance-matrices-procrustes.html">
+ <span class="dropdown-text">Lecture 34: Distance Matrices, Procrustes Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture35-find-clusters-graph.html">
+ <span class="dropdown-text">Lecture 35: Find Clusters in Graph</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Stanford EE 364A: Convex Optimization</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/lectures.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture1-intro.html">
+ <span class="dropdown-text">Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture2-math-foundations.html">
+ <span class="dropdown-text">Lecture 2: Convex Sets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture3-convex-functions.html">
+ <span class="dropdown-text">Lecture 3: Convex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part1-operations-preserving-convexity.html">
+ <span class="dropdown-text">Lecture 4.1: Operations Preserving Convexity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part2-conjugate-quasiconvex.html">
+ <span class="dropdown-text">Lecture 4.2: Conjugate &amp; Quasiconvex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part1-log-concave-convex.html">
+ <span class="dropdown-text">Lecture 5.1: Log-Concave &amp; Log-Convex</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part2-monotonicity.html">
+ <span class="dropdown-text">Lecture 5.2: Monotonicity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture6-optimization-problems.html">
+ <span class="dropdown-text">Chapter 4.1: Optimization Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture7-convex-optimization.html">
+ <span class="dropdown-text">Chapter 4.2: Convex Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture8-linear-optimization.html">
+ <span class="dropdown-text">Chapter 4.3: Linear Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture9-quadratic-optimization.html">
+ <span class="dropdown-text">Chapter 4.4: Quadratic Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-5-geometric-programming.html">
+ <span class="dropdown-text">Chapter 4.5: Geometric Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-6-generalized-inequality-constraints.html">
+ <span class="dropdown-text">Chapter 4.6: Generalized Inequality Constraints</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-7-vector-optimization.html">
+ <span class="dropdown-text">Chapter 4.7: Vector Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter5-1-lagrange-dual-function.html">
+ <span class="dropdown-text">Chapter 5.1: The Lagrange Dual Function</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-theory-to-repro" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Theory-to-Repro</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-theory-to-repro">    
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/linear-regression-three-ways.html">
+ <span class="dropdown-text">Linear Regression via Three Solvers</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/k_means_clustering.html">
+ <span class="dropdown-text">K-Means Clustering</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/logistic_regression.html">
+ <span class="dropdown-text">Logistic Regression</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/axis.html">
+ <span class="dropdown-text">Axis Operations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Algorithm/dp_regex.html">
+ <span class="dropdown-text">DP Regex</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-building-startups" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Building Startups</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-building-startups">    
+        <li>
+    <a class="dropdown-item" href="../../Startups/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Startups/getting-and-evaluating-startup-ideas.html">
+ <span class="dropdown-text">Getting and Evaluating Startup Ideas</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/ickma2311/ickma2311.github.io/discussions"> 
+<span class="menu-text">Feedback</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#start-with-the-index-that-each-axis-represents" id="toc-start-with-the-index-that-each-axis-represents" class="nav-link active" data-scroll-target="#start-with-the-index-that-each-axis-represents">Start with the index that each axis represents</a>
+  <ul class="collapse">
+  <li><a href="#a-naming-trap-in-the-public-notebook" id="toc-a-naming-trap-in-the-public-notebook" class="nav-link" data-scroll-target="#a-naming-trap-in-the-public-notebook">A naming trap in the public notebook</a></li>
+  </ul></li>
+  <li><a href="#batch-multiplication-preserves-separate-attention-problems" id="toc-batch-multiplication-preserves-separate-attention-problems" class="nav-link" data-scroll-target="#batch-multiplication-preserves-separate-attention-problems">Batch multiplication preserves separate attention problems</a></li>
+  <li><a href="#mask-before-normalization-then-join-the-heads" id="toc-mask-before-normalization-then-join-the-heads" class="nav-link" data-scroll-target="#mask-before-normalization-then-join-the-heads">Mask before normalization, then join the heads</a></li>
+  <li><a href="#a-block-comparison-has-configuration-assumptions" id="toc-a-block-comparison-has-configuration-assumptions" class="nav-link" data-scroll-target="#a-block-comparison-has-configuration-assumptions">A block comparison has configuration assumptions</a></li>
+  <li><a href="#the-quadratic-intermediate-is-a-separate-systems-problem" id="toc-the-quadratic-intermediate-is-a-separate-systems-problem" class="nav-link" data-scroll-target="#the-quadratic-intermediate-is-a-separate-systems-problem">The quadratic intermediate is a separate systems problem</a></li>
+  <li><a href="#online-softmax-keeps-the-old-and-new-blocks-on-the-same-scale" id="toc-online-softmax-keeps-the-old-and-new-blocks-on-the-same-scale" class="nav-link" data-scroll-target="#online-softmax-keeps-the-old-and-new-blocks-on-the-same-scale">Online softmax keeps the old and new blocks on the same scale</a></li>
+  <li><a href="#lecture-and-implementation-references" id="toc-lecture-and-implementation-references" class="nav-link" data-scroll-target="#lecture-and-implementation-references">Lecture and implementation references</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">A Transformer Needs the Right Axes—and the Right Memory Schedule</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">CMU 10-414/714 Deep Learning Systems · Lecture 18: Transformer Implementation</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Deep Learning Systems</div>
+    <div class="quarto-category">Transformers</div>
+    <div class="quarto-category">Attention</div>
+    <div class="quarto-category">Implementation</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Follow a Transformer from packed projections and head reshaping to causal masking, post-norm blocks, and online softmax.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Chao Ma </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">November 1, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>An attention implementation can produce an array with the expected shape and still mix up tokens and heads. It can also compute the right answer while writing a large intermediate matrix to memory that the final result never needed to retain.</p>
+<p>These are two different implementation problems. The first is about <strong>which elements interact</strong>. The second is about <strong>where intermediate results live</strong>. CMU’s Transformer implementation materials make a useful bridge between them: a small NumPy implementation exposes the tensor operations, while the newer slides introduce the tiled computation behind FlashAttention.</p>
+<p>The <a href="https://dlsyscourse.org/lectures/">Fall 2026 course schedule</a> calls this Lecture 18. Its linked <a href="https://www.youtube.com/watch?v=OzFmKdAHJn0">2022 recording</a> is titled Lecture 21, and the <a href="https://github.com/dlsyscourse/public_notebooks/blob/1a2a7939e629d35b6e86962ea7dad7a324f7dbc4/transformer_implementation.ipynb">public notebook</a> contains the NumPy reference below. The <a href="https://dlsyscourse.org/slides/transformer_implementation.pdf">current slides</a> also cover named axes and FlashAttention. The block discussed here is a teaching implementation, not a complete language model or a GPU kernel.</p>
+<section id="start-with-the-index-that-each-axis-represents" class="level2">
+<h2 class="anchored" data-anchor-id="start-with-the-index-that-each-axis-represents">Start with the index that each axis represents</h2>
+<p>Let the input be <span class="math inline">\(X\in\mathbb{R}^{B\times T\times D}\)</span>: batch size <span class="math inline">\(B\)</span>, sequence length <span class="math inline">\(T\)</span>, and model width <span class="math inline">\(D\)</span>. With <span class="math inline">\(H\)</span> heads, assume <span class="math inline">\(D\)</span> is divisible by <span class="math inline">\(H\)</span> and write <span class="math inline">\(d_h=D/H\)</span>.</p>
+<p>Use the conventional query, key, value ordering:</p>
+<p><span class="math display">\[
+[Q\;K\;V]=XW_{QKV},\qquad W_{QKV}\in\mathbb{R}^{D\times3D}.
+\]</span></p>
+<p>This is one packed projection, followed by a split along the last axis. It is algebraically equivalent to three separate projections; packing does not imply any fixed speedup. Each projection initially has shape <span class="math inline">\((B,T,D)\)</span>.</p>
+<p>Each head must see the whole sequence but only its assigned slice of the projected features. The transformation is therefore</p>
+<p><span class="math display">\[
+(B,T,D)\longrightarrow(B,T,H,d_h)\longrightarrow(B,H,T,d_h).
+\]</span></p>
+<p>The first step splits features. The second moves the head index before the token index. A direct reshape from <span class="math inline">\((B,T,D)\)</span> to <span class="math inline">\((B,H,T,d_h)\)</span> generally changes that assignment.</p>
+<p>For example, take one batch, three tokens, width four, and two heads. Number the projected entries from 0 to 11. Head 0 should receive <span class="math inline">\([0,1]\)</span>, <span class="math inline">\([4,5]\)</span>, and <span class="math inline">\([8,9]\)</span> from the three tokens. A direct reshape instead gives it <span class="math inline">\([0,1]\)</span>, <span class="math inline">\([2,3]\)</span>, and <span class="math inline">\([4,5]\)</span>: the dimensions look right, but the grouping is wrong.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="dlsys18-assets/axes.png" class="img-fluid figure-img" alt="Constructed example with three tokens, width four, and two heads. Token rows are 0 1 2 3, 4 5 6 7, and 8 9 10 11. Correct reshape then transpose gives head zero rows 0 1, 4 5, 8 9 and head one rows 2 3, 6 7, 10 11. Direct reshape wrongly gives head zero rows 0 1, 2 3, 4 5."></p>
+<figcaption>Splitting features before moving the head axis preserves each token’s contribution.</figcaption>
+</figure>
+</div>
+<p>After reshaping, the scores for head <span class="math inline">\(h\)</span> in batch item <span class="math inline">\(b\)</span> are</p>
+<p><span class="math display">\[
+S_{bhij}=\frac{1}{\sqrt{d_h}}\sum_{r=1}^{d_h}Q_{bhir}K_{bhjr}+M_{ij}.
+\]</span></p>
+<p>Here <span class="math inline">\(i\)</span> is a query position and <span class="math inline">\(j\)</span> is a key position. The sum contracts the head feature dimension, producing scores of shape <span class="math inline">\((B,H,T,T)\)</span>. Softmax acts over <span class="math inline">\(j\)</span>, the last axis. The scale is <span class="math inline">\(\sqrt{d_h}\)</span>, not <span class="math inline">\(\sqrt D\)</span>, because each dot product has <span class="math inline">\(d_h\)</span> terms.</p>
+<p>The slide’s named-axis expression makes this contract visible: <code>b heads s d, b heads z d -&gt; b heads s z</code>. Both <code>b</code> and <code>heads</code> are preserved; only <code>d</code> is summed. The slide shows unmasked attention. A causal model must additionally exclude future key positions.</p>
+<section id="a-naming-trap-in-the-public-notebook" class="level3">
+<h3 class="anchored" data-anchor-id="a-naming-trap-in-the-public-notebook">A naming trap in the public notebook</h3>
+<p>The notebook names its first two projected arrays <code>K,Q</code> and computes <code>K @ Q.swapaxes(-1,-2)</code>. But its comparison imports PyTorch’s packed projection weights, whose order is <strong>query, key, value</strong>. In that comparison, the array named <code>K</code> is the conventional query and the array named <code>Q</code> is the conventional key. This is why the calculation can agree with PyTorch despite the names.</p>
+<p>To use PyTorch’s <code>(3D,D)</code> packed weights in the right-multiplication convention above, pass <code>in_proj_weight.T</code>. The code below uses <code>q,k,v</code> consistently. Swapping names consistently is harmless; swapping the operands while keeping their meanings fixed is not. Row-wise softmax does not make <span class="math inline">\(QK^\top\)</span> interchangeable with <span class="math inline">\(KQ^\top\)</span>. The packing order is explicit in <a href="https://github.com/pytorch/pytorch/blob/v2.9.0/torch/nn/functional.py">PyTorch’s projection source</a>.</p>
+</section>
+</section>
+<section id="batch-multiplication-preserves-separate-attention-problems" class="level2">
+<h2 class="anchored" data-anchor-id="batch-multiplication-preserves-separate-attention-problems">Batch multiplication preserves separate attention problems</h2>
+<p>A shared linear layer can flatten the batch and token axes:</p>
+<p><span class="math display">\[
+\operatorname{reshape}(X,(BT,D))W.
+\]</span></p>
+<p>Every row multiplies the same <span class="math inline">\(W\)</span>. Attention instead pairs each item’s queries with that same item’s keys:</p>
+<p><span class="math display">\[
+S_{bh}=Q_{bh}K_{bh}^{\top}/\sqrt{d_h}+M.
+\]</span></p>
+<p>Flattening all batches’ tokens into one matrix and multiplying it by all flattened keys would also produce cross-example scores. Those extra interactions do not belong to the attention problem. Batch matrix multiplication keeps the <span class="math inline">\((b,h)\)</span> pairs separate.</p>
+<p>NumPy’s <code>@</code> operates on the last two axes and broadcasts the leading axes. In this example the leading <span class="math inline">\((B,H)\)</span> dimensions match exactly. More generally, they need to be broadcast-compatible, not necessarily identical. This is the <a href="https://numpy.org/doc/stable/reference/generated/numpy.matmul.html">documented <code>matmul</code> behavior</a>; it does not promise how a particular backend schedules its kernels.</p>
+</section>
+<section id="mask-before-normalization-then-join-the-heads" class="level2">
+<h2 class="anchored" data-anchor-id="mask-before-normalization-then-join-the-heads">Mask before normalization, then join the heads</h2>
+<p>For causal self-attention, retain the current token and all earlier tokens:</p>
+<p><span class="math display">\[
+M_{ij}=\begin{cases}0,&amp;j\leq i,\\-\infty,&amp;j&gt;i.\end{cases}
+\]</span></p>
+<p>For a row with at least one allowed finite score and all other scores either finite or masked, compute stable softmax by subtracting its maximum:</p>
+<p><span class="math display">\[
+A_{bhij}=\frac{\exp(S_{bhij}-m_{bhi})}{\sum_k\exp(S_{bhik}-m_{bhi})},\qquad
+m_{bhi}=\max_j S_{bhij}.
+\]</span></p>
+<p>Masked entries contribute zero after exponentiation. Multiplying probabilities by a mask <em>after</em> softmax would leave an incorrectly normalized row unless it were normalized again. An entirely masked row needs explicit handling: subtracting <span class="math inline">\(-\infty\)</span> from itself in this simple implementation produces NaNs. The triangular mask with a valid diagonal avoids that case; combining causal and padding masks can reintroduce it.</p>
+<p>Here is a NumPy reference for the equal-width, bias-free, dropout-free case. <code>mask</code> is an additive floating-point array, for example a shared <span class="math inline">\((T,T)\)</span> mask. This is not a statement about every API’s Boolean-mask convention.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> attention(x, w_qkv, w_out, heads, mask):</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    b, t, width <span class="op">=</span> x.shape</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> heads <span class="op">&gt;</span> <span class="dv">0</span> <span class="kw">and</span> width <span class="op">%</span> heads <span class="op">==</span> <span class="dv">0</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    dh <span class="op">=</span> width <span class="op">//</span> heads</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    q, k, v <span class="op">=</span> np.split(x <span class="op">@</span> w_qkv, <span class="dv">3</span>, axis<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    q, k, v <span class="op">=</span> [a.reshape(b, t, heads, dh).swapaxes(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>               <span class="cf">for</span> a <span class="kw">in</span> (q, k, v)]</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    scores <span class="op">=</span> q <span class="op">@</span> k.swapaxes(<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">2</span>) <span class="op">/</span> np.sqrt(dh) <span class="op">+</span> mask</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> np.exp(scores <span class="op">-</span> scores.<span class="bu">max</span>(axis<span class="op">=-</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">/=</span> weights.<span class="bu">sum</span>(axis<span class="op">=-</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    joined <span class="op">=</span> (weights <span class="op">@</span> v).swapaxes(<span class="dv">1</span>, <span class="dv">2</span>).reshape(b, t, width)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> joined <span class="op">@</span> w_out, weights</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Multiplying <span class="math inline">\(A\)</span> by <span class="math inline">\(V\)</span> contracts the key-position axis and returns <span class="math inline">\((B,H,T,d_h)\)</span>. Transpose back to <span class="math inline">\((B,T,H,d_h)\)</span> before joining the feature dimensions. Finally, <span class="math inline">\(W_O\in\mathbb{R}^{D\times D}\)</span> mixes the concatenated head outputs. This output projection is not the operation that averages attention maps across heads.</p>
+<p>The notebook compares its output against <code>nn.MultiheadAttention</code>. With <code>need_weights=True</code> and the default <code>average_attn_weights=True</code>, PyTorch returns an averaged map of shape <span class="math inline">\((B,T,T)\)</span>, while this reference returns <span class="math inline">\((B,H,T,T)\)</span>. Compare the returned map to <code>weights.mean(axis=1)</code>, or request unaveraged maps explicitly. Compare the output tensors independently. The <a href="https://docs.pytorch.org/docs/2.15/generated/torch.nn.MultiheadAttention.html">API documentation</a> specifies both behaviors.</p>
+</section>
+<section id="a-block-comparison-has-configuration-assumptions" class="level2">
+<h2 class="anchored" data-anchor-id="a-block-comparison-has-configuration-assumptions">A block comparison has configuration assumptions</h2>
+<p>The notebook builds a <strong>post-norm</strong> block:</p>
+<p><span class="math display">\[
+Z=\operatorname{LN}(X+\operatorname{MHA}(X)),\qquad
+Y=\operatorname{LN}\!\left(Z+\operatorname{ReLU}(ZW_1)W_2\right).
+\]</span></p>
+<p>With feed-forward width <span class="math inline">\(F\)</span>, <span class="math inline">\(W_1\)</span> has shape <span class="math inline">\((D,F)\)</span> and <span class="math inline">\(W_2\)</span> has shape <span class="math inline">\((F,D)\)</span>. They act independently at each token position; attention is the part that mixes positions. Both residual additions require an output width of <span class="math inline">\(D\)</span>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="dlsys18-assets/block.png" class="img-fluid figure-img" alt="Post-norm Transformer block. X of shape B by T by D passes through multihead attention, adds the original X, and then applies layer normalization to form Z. Z passes through a D-to-F linear map, ReLU, and an F-to-D linear map, adds Z, and applies layer normalization. Layer normalization reduces only the D axis for each batch item and token. Dropout is off and omitted biases and affine normalization parameters must match the reference."></p>
+<figcaption>The teaching block normalizes after each residual addition.</figcaption>
+</figure>
+</div>
+<p>For one token vector <span class="math inline">\(z\in\mathbb{R}^D\)</span>, the notebook’s normalization is</p>
+<p><span class="math display">\[
+\mu=\frac1D\sum_r z_r,\qquad
+\sigma^2=\frac1D\sum_r(z_r-\mu)^2,\qquad
+\operatorname{LN}_0(z)_r=\frac{z_r-\mu}{\sqrt{\sigma^2+\epsilon}}.
+\]</span></p>
+<p>It omits learned scale and offset. A general LayerNorm instead applies <span class="math inline">\(\gamma_r\operatorname{LN}_0(z)_r+\beta_r\)</span>. Matching the teaching function therefore requires <span class="math inline">\(\gamma=1\)</span> and <span class="math inline">\(\beta=0\)</span>, as at the reference layer’s initialization. The notebook also sets dropout to zero and explicitly zeros the feed-forward biases; its attention biases are zero at initialization. Once those omitted parameters change during training, copying only the weight matrices no longer reproduces the full layer.</p>
+<p>The reference is named <code>TransformerEncoderLayer</code>, but the supplied mask determines which positions it can read. Passing a causal mask does not add a cross-attention module. Nor does this small block include token embeddings, positional information, a vocabulary output head, a training loop, or a KV-cache implementation.</p>
+<p>A forward comparison establishes agreement for the tested configuration and inputs. It does not establish a correct backward pass in a different autodiff framework. Batch-matmul gradients, broadcasting reductions, and parameter gradients still need their own checks.</p>
+</section>
+<section id="the-quadratic-intermediate-is-a-separate-systems-problem" class="level2">
+<h2 class="anchored" data-anchor-id="the-quadratic-intermediate-is-a-separate-systems-problem">The quadratic intermediate is a separate systems problem</h2>
+<p>For dense attention, <span class="math inline">\(QK^\top\)</span> and <span class="math inline">\(AV\)</span> together require order <span class="math inline">\(BT^2D\)</span> arithmetic. Materializing every head’s attention map requires <span class="math inline">\(BHT^2\)</span> elements. At fixed <span class="math inline">\(B,T,D\)</span>, more heads keep the leading matrix-product arithmetic in the same order but increase the number of attention-map elements; softmax work and execution overhead still matter.</p>
+<p>A constructed example shows the scale: <span class="math inline">\(B=2\)</span>, <span class="math inline">\(H=8\)</span>, and <span class="math inline">\(T=4096\)</span> give <span class="math inline">\(268{,}435{,}456\)</span> map entries. At two bytes per entry, <strong>one</strong> such tensor occupies 512 MiB. This is a logical tensor-size calculation, not a peak-memory measurement. Scores, probabilities, other activations, gradients, allocator behavior, and fusion choices can change the actual footprint.</p>
+<p>The notebook’s closing discussion considers sparse and low-rank attention. For unmasked attention, removing softmax permits the reassociation</p>
+<p><span class="math display">\[
+(QK^\top)V=Q(K^\top V),
+\]</span></p>
+<p>which can reduce arithmetic from <span class="math inline">\(O(T^2d_h)\)</span> to <span class="math inline">\(O(Td_h^2)\)</span> per head when <span class="math inline">\(T\gg d_h\)</span>. But it changes the operation: ordinary row-wise softmax cannot simply be moved through that product. A causal restriction also prevents this simple global reassociation; the no-softmax causal version would require prefix accumulations. A low-rank score matrix also does not guarantee low-rank probabilities after a nonlinear softmax. Approximate or sparse mechanisms need their own accuracy and runtime comparisons.</p>
+<p>The newer slides introduce a different route: compute dense softmax attention without retaining the full score or probability matrix in HBM. <a href="https://arxiv.org/abs/2205.14135">FlashAttention</a> tiles the computation and maintains normalization statistics. Its dense form preserves the attention operation, up to floating-point rounding, rather than relying on low-rank approximation. It does not turn dense attention’s quadratic arithmetic into linear arithmetic.</p>
+</section>
+<section id="online-softmax-keeps-the-old-and-new-blocks-on-the-same-scale" class="level2">
+<h2 class="anchored" data-anchor-id="online-softmax-keeps-the-old-and-new-blocks-on-the-same-scale">Online softmax keeps the old and new blocks on the same scale</h2>
+<p>For one query row, let <span class="math inline">\(s_j\)</span> be its allowed score for key <span class="math inline">\(j\)</span> and <span class="math inline">\(v_j\in\mathbb{R}^{d_h}\)</span> the corresponding value. Over keys processed so far, maintain</p>
+<p><span class="math display">\[
+m=\max_j s_j,\qquad
+\ell=\sum_j e^{s_j-m},\qquad
+u=\sum_j e^{s_j-m}v_j.
+\]</span></p>
+<p>The output is <span class="math inline">\(u/\ell\)</span>. For a new nonempty block of allowed keys <span class="math inline">\(\mathcal B\)</span>, set <span class="math inline">\(m'=\max(m,\max_{j\in\mathcal B}s_j)\)</span> and <span class="math inline">\(\alpha=e^{m-m'}\)</span>. Then</p>
+<p><span class="math display">\[
+\ell'=\alpha\ell+\sum_{j\in\mathcal B}e^{s_j-m'},\qquad
+u'=\alpha u+\sum_{j\in\mathcal B}e^{s_j-m'}v_j.
+\]</span></p>
+<p>Both the old denominator <strong>and</strong> the old weighted numerator need rescaling. Otherwise they refer to a different maximum from the new block. Initialize from the first nonempty allowed block; skip blocks with no allowed keys. A fully masked row requires a separately defined policy.</p>
+<p>Take scalar values to make the arithmetic visible. In a constructed two-block example, scores <span class="math inline">\([0,\log2]\)</span> with values <span class="math inline">\([1,3]\)</span> produce <span class="math inline">\(m=\log2\)</span>, <span class="math inline">\(\ell=1.5\)</span>, and <span class="math inline">\(u=3.5\)</span>. The next score is <span class="math inline">\(\log4\)</span> with value 5. The new maximum is <span class="math inline">\(\log4\)</span>, so <span class="math inline">\(\alpha=1/2\)</span>:</p>
+<p><span class="math display">\[
+\ell'=0.5(1.5)+1=1.75,\qquad
+u'=0.5(3.5)+5=6.75,\qquad
+y=\frac{6.75}{1.75}=\frac{27}{7}.
+\]</span></p>
+<p>Computing softmax over all three scores gives weights <span class="math inline">\([1,2,4]/7\)</span> and the same weighted result. Averaging each block’s separately normalized output would not preserve those weights.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="dlsys18-assets/online.png" class="img-fluid figure-img" alt="Constructed online-softmax example. First block scores zero and log two, values one and three: maximum log two, denominator 1.5, numerator 3.5. Next block score log four and value five raises the maximum, so both old accumulators are multiplied by one half. Updated denominator 1.75 and numerator 6.75 yield 27 divided by 7. Conceptual memory path loads Q, K and V tiles from HBM into on-chip working storage, maintains row accumulators, and writes the output without storing the full T by T attention matrix in HBM. This is an algorithm schematic, not a GPU placement or timing trace."></p>
+<figcaption>A running maximum lets attention merge blocks without storing the entire probability row.</figcaption>
+</figure>
+</div>
+<p>This recurrence explains how blocks can be combined. A fast kernel additionally needs a hardware-aware tile layout, data movement, reductions, and synchronization. The paper’s algorithm uses on-chip working storage and recomputes attention blocks during backward rather than saving the full matrix. In the 2022 paper’s Algorithm 1, row statistics and partial outputs are also read from and written to HBM between key/value blocks. Avoiding the full attention matrix does not mean keeping every accumulator permanently on-chip. A Python loop using this recurrence alone is not a FlashAttention performance result.</p>
+<p>The useful implementation boundary is now clear. Axis checks establish which queries read which keys. Masking and normalization establish the weights. A block comparison checks a particular forward contract. Tiling then changes how that same computation moves through memory. Each layer of the argument needs its own evidence.</p>
+</section>
+<section id="lecture-and-implementation-references" class="level2">
+<h2 class="anchored" data-anchor-id="lecture-and-implementation-references">Lecture and implementation references</h2>
+<ul>
+<li><a href="https://dlsyscourse.org/lectures/">CMU DLSys Lecture 18 schedule and materials</a>: current numbering and links to the 2022 recording.</li>
+<li><a href="https://github.com/dlsyscourse/public_notebooks/blob/1a2a7939e629d35b6e86962ea7dad7a324f7dbc4/transformer_implementation.ipynb">Transformer implementation notebook, fixed revision</a>: attention, batch matmul, multihead layout, and post-norm comparison.</li>
+<li><a href="https://dlsyscourse.org/slides/transformer_implementation.pdf">Current Transformer implementation slides</a>: named-axis implementation and online-softmax diagrams.</li>
+<li><a href="https://github.com/pytorch/pytorch/blob/v2.9.0/torch/nn/functional.py">PyTorch packed projections</a> and <a href="https://docs.pytorch.org/docs/2.15/generated/torch.nn.MultiheadAttention.html">MultiheadAttention API</a>: weight ordering and returned attention-map options.</li>
+<li><a href="https://arxiv.org/abs/2205.14135">Dao et al., FlashAttention (2022)</a>: exact tiled attention, online normalization, and recomputation.</li>
+</ul>
+<div class="quarto-video ratio ratio-16x9"><iframe data-external="1" src="https://www.youtube.com/embed/OzFmKdAHJn0" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>
+<style>.math.display{display:block;overflow-x:auto;max-width:100%;padding-bottom:.35rem}mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}pre{overflow-x:auto}figure img{max-width:100%;height:auto}</style>
+
+
+<!-- -->
+
+<nav class="reader-links" aria-label="Stay connected with Chao">
+  <p class="reader-links-eyebrow">Beyond the blog</p>
+  <p class="reader-links-title">Stay connected with Chao</p>
+  <p class="reader-links-intro">Follow my ideas, say hello, or explore what I’m building.</p>
+  <div class="reader-links-items">
+    <a class="reader-card reader-card-x" href="https://x.com/ickma2311" target="_blank" rel="noopener noreferrer">
+      <span class="reader-card-icon" aria-hidden="true"><svg viewbox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3L12 14.6 5.5 22H2.3l8.2-9.4L.8 2h6.5l5.8 7.6L18.9 2Zm-1.1 18h1.7L6.4 3.9H4.6L17.8 20Z"></path></svg></span>
+      <span class="reader-card-arrow" aria-hidden="true">↗</span>
+      <span class="reader-card-name">X / Twitter</span>
+      <span class="reader-card-description">Notes, ideas &amp; things I’m learning.</span>
+      <span class="reader-card-action">Follow @ickma2311</span>
+    </a>
+    <a class="reader-card reader-card-linkedin" href="https://www.linkedin.com/in/chao-ma-929839241/" target="_blank" rel="noopener noreferrer">
+      <span class="reader-card-icon" aria-hidden="true"><svg viewbox="0 0 24 24" fill="currentColor"><path d="M20.45 2H3.55C2.69 2 2 2.68 2 3.52v16.96c0 .84.69 1.52 1.55 1.52h16.9c.86 0 1.55-.68 1.55-1.52V3.52c0-.84-.69-1.52-1.55-1.52ZM7.93 18.75H4.98V9.2h2.95v9.55ZM6.45 7.89a1.71 1.71 0 1 1 0-3.42 1.71 1.71 0 0 1 0 3.42Zm12.3 10.86H15.8V14.1c0-1.11-.02-2.54-1.55-2.54-1.55 0-1.79 1.21-1.79 2.46v4.73H9.51V9.2h2.83v1.3h.04c.39-.74 1.36-1.52 2.79-1.52 2.98 0 3.58 1.96 3.58 4.5v5.27Z"></path></svg></span>
+      <span class="reader-card-arrow" aria-hidden="true">↗</span>
+      <span class="reader-card-name">LinkedIn</span>
+      <span class="reader-card-description">Let’s connect over AI, learning &amp; work.</span>
+      <span class="reader-card-action">Connect with me</span>
+    </a>
+    <a class="reader-card reader-card-daily" href="https://dailychat.net/" target="_blank" rel="noopener">
+      <span class="reader-card-icon" aria-hidden="true"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"></path><path d="m13 7-4 5h4l-2 3 5-5h-4l1-3Z"></path></svg></span>
+      <span class="reader-card-arrow" aria-hidden="true">↗</span>
+      <span class="reader-card-name">DailyChat</span>
+      <span class="reader-card-description">Your quick read on AI &amp; tech.</span>
+      <span class="reader-card-action">Explore DailyChat</span>
+    </a>
+  </div>
+</nav>
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/ickma2311\.github\.io");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<input type="hidden" id="giscus-base-theme" value="light">
+<input type="hidden" id="giscus-alt-theme" value="light">
+<script>
+  function loadGiscus() {
+    // Function to get the theme based on body class
+    const getTheme = () => {
+      let baseTheme = document.getElementById('giscus-base-theme').value;
+      let altTheme = document.getElementById('giscus-alt-theme').value;
+      return document.body.classList.contains('quarto-dark') ? altTheme : baseTheme;
+    };
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.dataset.repo = "ickma2311/ickma2311.github.io";
+    script.dataset.repoId = "R_kgDOOzbaAg";
+    script.dataset.category = "Comments";
+    script.dataset.categoryId = "DIC_kwDOOzbaAs4CxPFj";
+    script.dataset.mapping = "pathname";
+    script.dataset.reactionsEnabled = "1";
+    script.dataset.emitMetadata = "0";
+    script.dataset.inputPosition = "top";
+    script.dataset.theme = getTheme();
+    script.dataset.lang = "en";
+    script.crossOrigin = "anonymous";
+    // Append the script to the desired div instead of at the end of the body
+    document.getElementById("quarto-content").appendChild(script);
+  }
+  loadGiscus();
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "A Transformer Needs the Right Axes—and the Right Memory Schedule"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "CMU 10-414/714 Deep Learning Systems · Lecture 18: Transformer Implementation"</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-11-01"</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Deep Learning Systems, Transformers, Attention, Implementation]</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Follow a Transformer from packed projections and head reshaping to causal masking, post-norm blocks, and online softmax."</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="an">image:</span><span class="co"> "dlsys18-assets/axes.png"</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">  enabled: false</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>An attention implementation can produce an array with the expected shape and still mix up tokens and heads. It can also compute the right answer while writing a large intermediate matrix to memory that the final result never needed to retain.</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>These are two different implementation problems. The first is about **which elements interact**. The second is about **where intermediate results live**. CMU's Transformer implementation materials make a useful bridge between them: a small NumPy implementation exposes the tensor operations, while the newer slides introduce the tiled computation behind FlashAttention.</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>The <span class="co">[</span><span class="ot">Fall 2026 course schedule</span><span class="co">](https://dlsyscourse.org/lectures/)</span> calls this Lecture 18. Its linked <span class="co">[</span><span class="ot">2022 recording</span><span class="co">](https://www.youtube.com/watch?v=OzFmKdAHJn0)</span> is titled Lecture 21, and the <span class="co">[</span><span class="ot">public notebook</span><span class="co">](https://github.com/dlsyscourse/public_notebooks/blob/1a2a7939e629d35b6e86962ea7dad7a324f7dbc4/transformer_implementation.ipynb)</span> contains the NumPy reference below. The <span class="co">[</span><span class="ot">current slides</span><span class="co">](https://dlsyscourse.org/slides/transformer_implementation.pdf)</span> also cover named axes and FlashAttention. The block discussed here is a teaching implementation, not a complete language model or a GPU kernel.</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="fu">## Start with the index that each axis represents</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>Let the input be $X\in\mathbb{R}^{B\times T\times D}$: batch size $B$, sequence length $T$, and model width $D$. With $H$ heads, assume $D$ is divisible by $H$ and write $d_h=D/H$.</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>Use the conventional query, key, value ordering:</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Q\;K\;V</span><span class="co">]</span>=XW_{QKV},\qquad W_{QKV}\in\mathbb{R}^{D\times3D}.</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>This is one packed projection, followed by a split along the last axis. It is algebraically equivalent to three separate projections; packing does not imply any fixed speedup. Each projection initially has shape $(B,T,D)$.</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>Each head must see the whole sequence but only its assigned slice of the projected features. The transformation is therefore</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>(B,T,D)\longrightarrow(B,T,H,d_h)\longrightarrow(B,H,T,d_h).</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>The first step splits features. The second moves the head index before the token index. A direct reshape from $(B,T,D)$ to $(B,H,T,d_h)$ generally changes that assignment.</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>For example, take one batch, three tokens, width four, and two heads. Number the projected entries from 0 to 11. Head 0 should receive $<span class="co">[</span><span class="ot">0,1</span><span class="co">]</span>$, $<span class="co">[</span><span class="ot">4,5</span><span class="co">]</span>$, and $<span class="co">[</span><span class="ot">8,9</span><span class="co">]</span>$ from the three tokens. A direct reshape instead gives it $<span class="co">[</span><span class="ot">0,1</span><span class="co">]</span>$, $<span class="co">[</span><span class="ot">2,3</span><span class="co">]</span>$, and $<span class="co">[</span><span class="ot">4,5</span><span class="co">]</span>$: the dimensions look right, but the grouping is wrong.</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="al">![Splitting features before moving the head axis preserves each token's contribution.](dlsys18-assets/axes.png)</span>{fig-alt="Constructed example with three tokens, width four, and two heads. Token rows are 0 1 2 3, 4 5 6 7, and 8 9 10 11. Correct reshape then transpose gives head zero rows 0 1, 4 5, 8 9 and head one rows 2 3, 6 7, 10 11. Direct reshape wrongly gives head zero rows 0 1, 2 3, 4 5."}</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>After reshaping, the scores for head $h$ in batch item $b$ are</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>S_{bhij}=\frac{1}{\sqrt{d_h}}\sum_{r=1}^{d_h}Q_{bhir}K_{bhjr}+M_{ij}.</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>Here $i$ is a query position and $j$ is a key position. The sum contracts the head feature dimension, producing scores of shape $(B,H,T,T)$. Softmax acts over $j$, the last axis. The scale is $\sqrt{d_h}$, not $\sqrt D$, because each dot product has $d_h$ terms.</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>The slide's named-axis expression makes this contract visible: <span class="in">`b heads s d, b heads z d -&gt; b heads s z`</span>. Both <span class="in">`b`</span> and <span class="in">`heads`</span> are preserved; only <span class="in">`d`</span> is summed. The slide shows unmasked attention. A causal model must additionally exclude future key positions.</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="fu">### A naming trap in the public notebook</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>The notebook names its first two projected arrays <span class="in">`K,Q`</span> and computes <span class="in">`K @ Q.swapaxes(-1,-2)`</span>. But its comparison imports PyTorch's packed projection weights, whose order is **query, key, value**. In that comparison, the array named <span class="in">`K`</span> is the conventional query and the array named <span class="in">`Q`</span> is the conventional key. This is why the calculation can agree with PyTorch despite the names.</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>To use PyTorch's <span class="in">`(3D,D)`</span> packed weights in the right-multiplication convention above, pass <span class="in">`in_proj_weight.T`</span>. The code below uses <span class="in">`q,k,v`</span> consistently. Swapping names consistently is harmless; swapping the operands while keeping their meanings fixed is not. Row-wise softmax does not make $QK^\top$ interchangeable with $KQ^\top$. The packing order is explicit in <span class="co">[</span><span class="ot">PyTorch's projection source</span><span class="co">](https://github.com/pytorch/pytorch/blob/v2.9.0/torch/nn/functional.py)</span>.</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="fu">## Batch multiplication preserves separate attention problems</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>A shared linear layer can flatten the batch and token axes:</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>\operatorname{reshape}(X,(BT,D))W.</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>Every row multiplies the same $W$. Attention instead pairs each item's queries with that same item's keys:</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>S_{bh}=Q_{bh}K_{bh}^{\top}/\sqrt{d_h}+M.</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>Flattening all batches' tokens into one matrix and multiplying it by all flattened keys would also produce cross-example scores. Those extra interactions do not belong to the attention problem. Batch matrix multiplication keeps the $(b,h)$ pairs separate.</span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>NumPy's <span class="in">`@`</span> operates on the last two axes and broadcasts the leading axes. In this example the leading $(B,H)$ dimensions match exactly. More generally, they need to be broadcast-compatible, not necessarily identical. This is the <span class="co">[</span><span class="ot">documented `matmul` behavior</span><span class="co">](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html)</span>; it does not promise how a particular backend schedules its kernels.</span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mask before normalization, then join the heads</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>For causal self-attention, retain the current token and all earlier tokens:</span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>M_{ij}=\begin{cases}0,&amp;j\leq i,<span class="sc">\\</span>-\infty,&amp;j&gt;i.\end{cases}</span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>For a row with at least one allowed finite score and all other scores either finite or masked, compute stable softmax by subtracting its maximum:</span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>A_{bhij}=\frac{\exp(S_{bhij}-m_{bhi})}{\sum_k\exp(S_{bhik}-m_{bhi})},\qquad</span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a>m_{bhi}=\max_j S_{bhij}.</span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>Masked entries contribute zero after exponentiation. Multiplying probabilities by a mask *after* softmax would leave an incorrectly normalized row unless it were normalized again. An entirely masked row needs explicit handling: subtracting $-\infty$ from itself in this simple implementation produces NaNs. The triangular mask with a valid diagonal avoids that case; combining causal and padding masks can reintroduce it.</span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>Here is a NumPy reference for the equal-width, bias-free, dropout-free case. <span class="in">`mask`</span> is an additive floating-point array, for example a shared $(T,T)$ mask. This is not a statement about every API's Boolean-mask convention.</span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> attention(x, w_qkv, w_out, heads, mask):</span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>    b, t, width <span class="op">=</span> x.shape</span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> heads <span class="op">&gt;</span> <span class="dv">0</span> <span class="kw">and</span> width <span class="op">%</span> heads <span class="op">==</span> <span class="dv">0</span></span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>    dh <span class="op">=</span> width <span class="op">//</span> heads</span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a>    q, k, v <span class="op">=</span> np.split(x <span class="op">@</span> w_qkv, <span class="dv">3</span>, axis<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a>    q, k, v <span class="op">=</span> [a.reshape(b, t, heads, dh).swapaxes(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a>               <span class="cf">for</span> a <span class="kw">in</span> (q, k, v)]</span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a>    scores <span class="op">=</span> q <span class="op">@</span> k.swapaxes(<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">2</span>) <span class="op">/</span> np.sqrt(dh) <span class="op">+</span> mask</span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> np.exp(scores <span class="op">-</span> scores.<span class="bu">max</span>(axis<span class="op">=-</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">/=</span> weights.<span class="bu">sum</span>(axis<span class="op">=-</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a>    joined <span class="op">=</span> (weights <span class="op">@</span> v).swapaxes(<span class="dv">1</span>, <span class="dv">2</span>).reshape(b, t, width)</span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> joined <span class="op">@</span> w_out, weights</span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>Multiplying $A$ by $V$ contracts the key-position axis and returns $(B,H,T,d_h)$. Transpose back to $(B,T,H,d_h)$ before joining the feature dimensions. Finally, $W_O\in\mathbb{R}^{D\times D}$ mixes the concatenated head outputs. This output projection is not the operation that averages attention maps across heads.</span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>The notebook compares its output against <span class="in">`nn.MultiheadAttention`</span>. With <span class="in">`need_weights=True`</span> and the default <span class="in">`average_attn_weights=True`</span>, PyTorch returns an averaged map of shape $(B,T,T)$, while this reference returns $(B,H,T,T)$. Compare the returned map to <span class="in">`weights.mean(axis=1)`</span>, or request unaveraged maps explicitly. Compare the output tensors independently. The <span class="co">[</span><span class="ot">API documentation</span><span class="co">](https://docs.pytorch.org/docs/2.15/generated/torch.nn.MultiheadAttention.html)</span> specifies both behaviors.</span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a><span class="fu">## A block comparison has configuration assumptions</span></span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a>The notebook builds a **post-norm** block:</span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>Z=\operatorname{LN}(X+\operatorname{MHA}(X)),\qquad</span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a>Y=\operatorname{LN}<span class="sc">\!</span>\left(Z+\operatorname{ReLU}(ZW_1)W_2\right).</span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a>With feed-forward width $F$, $W_1$ has shape $(D,F)$ and $W_2$ has shape $(F,D)$. They act independently at each token position; attention is the part that mixes positions. Both residual additions require an output width of $D$.</span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a><span class="al">![The teaching block normalizes after each residual addition.](dlsys18-assets/block.png)</span>{fig-alt="Post-norm Transformer block. X of shape B by T by D passes through multihead attention, adds the original X, and then applies layer normalization to form Z. Z passes through a D-to-F linear map, ReLU, and an F-to-D linear map, adds Z, and applies layer normalization. Layer normalization reduces only the D axis for each batch item and token. Dropout is off and omitted biases and affine normalization parameters must match the reference."}</span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a>For one token vector $z\in\mathbb{R}^D$, the notebook's normalization is</span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>\mu=\frac1D\sum_r z_r,\qquad</span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a>\sigma^2=\frac1D\sum_r(z_r-\mu)^2,\qquad</span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a>\operatorname{LN}_0(z)_r=\frac{z_r-\mu}{\sqrt{\sigma^2+\epsilon}}.</span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>It omits learned scale and offset. A general LayerNorm instead applies $\gamma_r\operatorname{LN}_0(z)_r+\beta_r$. Matching the teaching function therefore requires $\gamma=1$ and $\beta=0$, as at the reference layer's initialization. The notebook also sets dropout to zero and explicitly zeros the feed-forward biases; its attention biases are zero at initialization. Once those omitted parameters change during training, copying only the weight matrices no longer reproduces the full layer.</span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a>The reference is named <span class="in">`TransformerEncoderLayer`</span>, but the supplied mask determines which positions it can read. Passing a causal mask does not add a cross-attention module. Nor does this small block include token embeddings, positional information, a vocabulary output head, a training loop, or a KV-cache implementation.</span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a>A forward comparison establishes agreement for the tested configuration and inputs. It does not establish a correct backward pass in a different autodiff framework. Batch-matmul gradients, broadcasting reductions, and parameter gradients still need their own checks.</span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a><span class="fu">## The quadratic intermediate is a separate systems problem</span></span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a>For dense attention, $QK^\top$ and $AV$ together require order $BT^2D$ arithmetic. Materializing every head's attention map requires $BHT^2$ elements. At fixed $B,T,D$, more heads keep the leading matrix-product arithmetic in the same order but increase the number of attention-map elements; softmax work and execution overhead still matter.</span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>A constructed example shows the scale: $B=2$, $H=8$, and $T=4096$ give $268{,}435{,}456$ map entries. At two bytes per entry, **one** such tensor occupies 512 MiB. This is a logical tensor-size calculation, not a peak-memory measurement. Scores, probabilities, other activations, gradients, allocator behavior, and fusion choices can change the actual footprint.</span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a>The notebook's closing discussion considers sparse and low-rank attention. For unmasked attention, removing softmax permits the reassociation</span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a>(QK^\top)V=Q(K^\top V),</span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a>which can reduce arithmetic from $O(T^2d_h)$ to $O(Td_h^2)$ per head when $T\gg d_h$. But it changes the operation: ordinary row-wise softmax cannot simply be moved through that product. A causal restriction also prevents this simple global reassociation; the no-softmax causal version would require prefix accumulations. A low-rank score matrix also does not guarantee low-rank probabilities after a nonlinear softmax. Approximate or sparse mechanisms need their own accuracy and runtime comparisons.</span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a>The newer slides introduce a different route: compute dense softmax attention without retaining the full score or probability matrix in HBM. <span class="co">[</span><span class="ot">FlashAttention</span><span class="co">](https://arxiv.org/abs/2205.14135)</span> tiles the computation and maintains normalization statistics. Its dense form preserves the attention operation, up to floating-point rounding, rather than relying on low-rank approximation. It does not turn dense attention's quadratic arithmetic into linear arithmetic.</span>
+<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a><span class="fu">## Online softmax keeps the old and new blocks on the same scale</span></span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a>For one query row, let $s_j$ be its allowed score for key $j$ and $v_j\in\mathbb{R}^{d_h}$ the corresponding value. Over keys processed so far, maintain</span>
+<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a>m=\max_j s_j,\qquad</span>
+<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a>\ell=\sum_j e^{s_j-m},\qquad</span>
+<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a>u=\sum_j e^{s_j-m}v_j.</span>
+<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a>The output is $u/\ell$. For a new nonempty block of allowed keys $\mathcal B$, set $m'=\max(m,\max_{j\in\mathcal B}s_j)$ and $\alpha=e^{m-m'}$. Then</span>
+<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a>\ell'=\alpha\ell+\sum_{j\in\mathcal B}e^{s_j-m'},\qquad</span>
+<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a>u'=\alpha u+\sum_{j\in\mathcal B}e^{s_j-m'}v_j.</span>
+<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a>Both the old denominator **and** the old weighted numerator need rescaling. Otherwise they refer to a different maximum from the new block. Initialize from the first nonempty allowed block; skip blocks with no allowed keys. A fully masked row requires a separately defined policy.</span>
+<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a>Take scalar values to make the arithmetic visible. In a constructed two-block example, scores $<span class="co">[</span><span class="ot">0,\log2</span><span class="co">]</span>$ with values $<span class="co">[</span><span class="ot">1,3</span><span class="co">]</span>$ produce $m=\log2$, $\ell=1.5$, and $u=3.5$. The next score is $\log4$ with value 5. The new maximum is $\log4$, so $\alpha=1/2$:</span>
+<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a>\ell'=0.5(1.5)+1=1.75,\qquad</span>
+<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a>u'=0.5(3.5)+5=6.75,\qquad</span>
+<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a>y=\frac{6.75}{1.75}=\frac{27}{7}.</span>
+<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a>Computing softmax over all three scores gives weights $<span class="co">[</span><span class="ot">1,2,4</span><span class="co">]</span>/7$ and the same weighted result. Averaging each block's separately normalized output would not preserve those weights.</span>
+<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a><span class="al">![A running maximum lets attention merge blocks without storing the entire probability row.](dlsys18-assets/online.png)</span>{fig-alt="Constructed online-softmax example. First block scores zero and log two, values one and three: maximum log two, denominator 1.5, numerator 3.5. Next block score log four and value five raises the maximum, so both old accumulators are multiplied by one half. Updated denominator 1.75 and numerator 6.75 yield 27 divided by 7. Conceptual memory path loads Q, K and V tiles from HBM into on-chip working storage, maintains row accumulators, and writes the output without storing the full T by T attention matrix in HBM. This is an algorithm schematic, not a GPU placement or timing trace."}</span>
+<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a>This recurrence explains how blocks can be combined. A fast kernel additionally needs a hardware-aware tile layout, data movement, reductions, and synchronization. The paper's algorithm uses on-chip working storage and recomputes attention blocks during backward rather than saving the full matrix. In the 2022 paper's Algorithm 1, row statistics and partial outputs are also read from and written to HBM between key/value blocks. Avoiding the full attention matrix does not mean keeping every accumulator permanently on-chip. A Python loop using this recurrence alone is not a FlashAttention performance result.</span>
+<span id="cb2-193"><a href="#cb2-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-194"><a href="#cb2-194" aria-hidden="true" tabindex="-1"></a>The useful implementation boundary is now clear. Axis checks establish which queries read which keys. Masking and normalization establish the weights. A block comparison checks a particular forward contract. Tiling then changes how that same computation moves through memory. Each layer of the argument needs its own evidence.</span>
+<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a><span class="fu">## Lecture and implementation references</span></span>
+<span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">CMU DLSys Lecture 18 schedule and materials</span><span class="co">](https://dlsyscourse.org/lectures/)</span>: current numbering and links to the 2022 recording.</span>
+<span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Transformer implementation notebook, fixed revision</span><span class="co">](https://github.com/dlsyscourse/public_notebooks/blob/1a2a7939e629d35b6e86962ea7dad7a324f7dbc4/transformer_implementation.ipynb)</span>: attention, batch matmul, multihead layout, and post-norm comparison.</span>
+<span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Current Transformer implementation slides</span><span class="co">](https://dlsyscourse.org/slides/transformer_implementation.pdf)</span>: named-axis implementation and online-softmax diagrams.</span>
+<span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">PyTorch packed projections</span><span class="co">](https://github.com/pytorch/pytorch/blob/v2.9.0/torch/nn/functional.py)</span> and <span class="co">[</span><span class="ot">MultiheadAttention API</span><span class="co">](https://docs.pytorch.org/docs/2.15/generated/torch.nn.MultiheadAttention.html)</span>: weight ordering and returned attention-map options.</span>
+<span id="cb2-202"><a href="#cb2-202" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Dao et al., FlashAttention (2022)</span><span class="co">](https://arxiv.org/abs/2205.14135)</span>: exact tiled attention, online normalization, and recomputation.</span>
+<span id="cb2-203"><a href="#cb2-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a>{{&lt; video https://www.youtube.com/watch?v=OzFmKdAHJn0 &gt;}}</span>
+<span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a><span class="in">```{=html}</span></span>
+<span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a><span class="in">&lt;style&gt;.math.display{display:block;overflow-x:auto;max-width:100%;padding-bottom:.35rem}mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}pre{overflow-x:auto}figure img{max-width:100%;height:auto}&lt;/style&gt;</span></span>
+<span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
