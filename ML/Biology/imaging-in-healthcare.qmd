@@ -1,0 +1,149 @@
+---
+title: "When End-to-End Deep Learning Breaks on Medical Images"
+subtitle: "MIT 6.874 · Lecture 20: Imaging Applications in Healthcare"
+description: "Why acquisition shift breaks pathology CNNs, how hybrid segmentation plus explicit features generalize, and how MorphEUS and DiaMOND handle tuberculosis heterogeneity."
+author: "Chao Ma"
+date: "2026-11-22"
+categories: [Biology, Deep Learning, Medical Imaging]
+image: "lifesci20-assets/hybrid-pathology-pipeline.png"
+resources:
+  - "lifesci20-assets/create_figures.py"
+  - "lifesci20-assets/manifest.json"
+toc: true
+format:
+  html:
+    include-in-header:
+      text: |
+        <style>
+        .math.display {display:block;max-width:100%;overflow-x:auto;overflow-y:hidden;padding:0.35rem 0;}
+        mjx-container[display="true"] {max-width:100%;overflow-x:auto;overflow-y:hidden;}
+        .table-scroll {overflow-x:auto;max-width:100%;}
+        .lecture-video {position:relative;width:100%;aspect-ratio:16/9;margin:1.5rem 0;}
+        .lecture-video iframe {position:absolute;width:100%;height:100%;border:0;}
+        </style>
+---
+
+A convolutional neural network trained on endomyocardial biopsies from the University of Pennsylvania (104 training patients, 105 independent test patients) reached a patient-level AUC of 0.97 ± 0.01 for detecting clinical heart failure, while two cardiac pathologists on the same validation set reached 0.75 and 0.73 (mean 0.74; [Part A, p. 12](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf), Nirschl et al., 2018). A few months later, a second cohort of biopsies arrived from the **same institution, the same lab, and the same slide scanner**. On that second cohort, the CNN's AUC fell by 0.22, from 0.97 to 0.75 (no Cohort 2 pathologist AUC is reported).
+
+According to the lecturer, the clinical question and underlying cardiac pathology had not changed. Between the two cohorts, the scanner received a remote software upgrade that subtly altered pixel-level image characteristics—imperceptible to a pathologist, decisive to a black-box classifier ([recording, 21:09–26:52](https://www.youtube.com/watch?v=dhMm5uGLzG4&t=1269s)).
+
+[MIT 6.874 Lecture 20](https://mit6874.github.io/) (Spring 2021; titled *Lecture 19: Machine Learning for Pathology* on YouTube because the syllabus reserves Lecture 18 for an exam and Lecture 19 for a non-lecture slot) pairs two practitioners who reached a remarkably similar conclusion from opposite domains. **Anant Madabhushi** examines gigabyte-scale human cancer pathology slides; **Bree Aldridge** examines fixed-cell microscopy and multi-drug combinations for *Mycobacterium tuberculosis*. In both settings, throwing an end-to-end neural network at raw images either broke under subtle measurement shift or lost to simpler statistical pipelines. The decisive choices were **what biological object to segment**, **how to normalize experimental variation**, and **what target actually predicts clinical or in vivo outcome**.
+
+## Diagnosis is not the hardest clinical bottleneck
+
+In the United States, estimated lifetime probability of developing invasive cancer is roughly 1 in 2 for men and 1 in 3 for women—about 40% of adults overall—while 2020 estimated annual US cancer mortality totals 606,520 deaths (321,160 men and 285,360 women; cited as roughly 600,000 deaths in the talk; [Part A, pp. 3–4](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf)). Screening, earlier detection, and better therapies explain part of the survival improvement, yet **overdiagnosis and overtreatment** of indolent tumors remain major clinical and financial burdens. In prostate cancer, for example, lifetime diagnosis risk is roughly 1 in 9 on the epidemiology table (cited as 1 in 7 in the recording), whereas lifetime prostate-cancer mortality is roughly 1 in 40 ([Part A, p. 3](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf); [recording, 5:41–6:30](https://www.youtube.com/watch?v=dhMm5uGLzG4&t=341s)), yet aggressive surgery or radiation carries both physical morbidity and financial toxicity.
+
+Madabhushi separates three distinct clinical questions ([Part A, p. 6](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf)):
+
+::: {.table-scroll}
+
+| Task | Clinical Question | Example Output |
+|---|---|---|
+| **Diagnostic** | Is disease present? | Cancer vs. benign; histologic grade |
+| **Prognostic** | How will the disease progress? | 10-year recurrence risk or disease-free survival |
+| **Predictive** | Will this patient benefit from a specific therapy? | Added benefit from adjuvant chemotherapy or immunotherapy |
+
+:::
+
+Molecular assays such as **Oncotype DX** (a 21-gene expression assay—referred to as 22 genes in the recording—for early-stage, lymph-node-negative ER+ breast cancer) already address prognosis and adjuvant chemotherapy benefit, but they cost several thousand dollars, destroy tissue during RNA extraction, and assay only the sampled tumor region—exposing them to **intra-tumoral heterogeneity** if an aggressive subclone lies elsewhere ([Part A, pp. 7–8](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf)). Digitizing routine H&E slides preserves the tissue section non-destructively for repeated computational and pathologist review (though a single biopsy core or slide section still samples only part of the tumor): a single prostate biopsy core yields several gigabytes of image data (20–30 GB across a typical 12-core biopsy), making whole-slide pathology far richer in pixels than MRI or CT scans. Madabhushi's lab packages these digitized slide measurements into **Image-based Risk Score (`IbRiS`)** models across prognostic recurrence and predictive treatment-benefit cohorts ([Part A, pp. 10, 22, 34, 36](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf)).
+
+## Why end-to-end pathology CNNs fail—and where deep learning actually helps
+
+Large pixel counts made digital pathology an early magnet for deep learning. Yet the Penn heart-failure biopsy experiment exposed a structural flaw: convolutional filters trained end-to-end on raw tissue patches readily absorb **pre-analytic and acquisition artifacts**—stain intensity, slide preparation, and scanner firmware—alongside or instead of biology ([recording, 21:09–26:52](https://www.youtube.com/watch?v=dhMm5uGLzG4&t=1269s)). Even without switching hospitals or hardware, the CNN's reported AUC fell by 0.22 on Cohort 2 (0.97 to 0.75)—a shift the lecturer attributed to a remote scanner software upgrade. Note that this cross-cohort drop of 0.22 is distinct from the ~0.23 gap between the CNN (0.97) and pathologists (0.74) on Cohort 1, and no Cohort 2 pathologist AUC is reported.
+
+Madabhushi's operational rule is to **confine deep learning to locating histologic primitives**—nuclei, lymphocytes, tubules, glands, and collagen fibers—and then compute explicit, domain-grounded geometric features from those segmented objects ([Part A, pp. 15–19](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf)). Because pathologist annotation time is scarce, interactive active-learning tools such as **Quick Annotator** let a user label a small seed set, train a segmentation network in the background, and iteratively correct missed or over-segmented cells ([recording, 33:43–35:15](https://www.youtube.com/watch?v=dhMm5uGLzG4&t=2023s)).
+
+![Panel A shows reported Penn heart-failure biopsy AUCs (Cohort 1: n = 105 test, 104 train; Cohort 2 CNN drop of 0.22 attributed to a remote scanner upgrade). Panel B shows the hybrid pathology pipeline alongside a constructed 4-bin axial orientation entropy check and reported ER+ breast cancer disease-free survival cohorts.](lifesci20-assets/hybrid-pathology-pipeline.png){fig-alt="Two-panel comparison. Panel A shows reported Penn heart-failure biopsy AUC bars: two cardiac pathologists on Cohort 1 (n = 105 test) at mean 0.74, an end-to-end CNN at 0.97 on Cohort 1, and the same CNN dropping by 0.22 to 0.75 on Cohort 2 after a remote scanner software upgrade. Panel B shows the hybrid pathology pipeline—deep segmentation of histologic primitives, explicit spatial graphs and orientation entropy H(p), and clinical risk scoring (IbRiS)—paired with a constructed four-bin axial fiber example over 0 to 180 degrees where aligned fibers give 0.00 bits and uniformly disordered fibers [5,5,5,5] give 2.00 bits, plus reported ER+ breast cancer DFS cohorts E2197 (n = 234) and TCGA (n = 171)."}
+
+Once structures are segmented, features become inspectable geometric measurements:
+
+- **Spatial cell graphs:** Connect segmented cancer nuclei and tumor-infiltrating lymphocytes (TILs) via Voronoi tessellations, Delaunay triangulations, and compartment-specific cluster graphs (epithelium vs. stroma). Across ovarian, endometrial, cervical, lung, and head-and-neck cohorts, TIL spatial dispersion relative to cancer cells was associated with survival and immunotherapy response ([Part A, pp. 18, 32–41](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf)).
+- **Collagen Fiber Orientation Disorder in Tumor-associated Stroma (`CFOD-TS`):** Segment tumor nests and stromal collagen fibers, assign an undirected axial orientation $\theta \in [0^\circ, 180^\circ)$ (modulo $180^\circ$, so reversing a segment does not change its angle) inside local tumor-associated stromal windows (e.g., the 10 × 10 tile grid on [Part A, p. 19](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf)). As a **simplified local-window schematic** of `CFOD-TS` (which in Li et al., 2021 computes pairwise orientation co-occurrence entropy across fiber segments inside each stromal window before aggregating across windows), consider the Shannon entropy of a binned orientation distribution over $K$ equal bins on $[0^\circ, 180^\circ)$ (using $0\log_2 0 := 0$):
+
+$$
+H(p) = -\sum_{k=1}^{K} p_k \log_2 p_k, \qquad \sum_{k=1}^{K} p_k = 1.
+$$
+
+In a constructed local-window check with $K=4$ equal $45^\circ$ bins, perfectly aligned fibers fall into one bin, $p=(1,0,0,0)$, giving $H=0.00$ bits. Uniformly disordered fibers split evenly across all four bins ($5$ of $20$ segments per bin), $p=(0.25,0.25,0.25,0.25)$, giving $H=-4\times(0.25\log_2 0.25)=2.00$ bits. Across two ER+ breast cancer cohorts (ECOG-ACRIN E2197, $n=234$, $p=0.0057$; TCGA, $n=171$, $p=0.0090$; [Part A, pp. 19–20](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf)), **higher** `CFOD-TS` was independently associated with **longer disease-free survival (DFS)** and lower recurrence risk. Biologically, aligned stromal collagen fibers can act as migration tracks aiding tumor invasion, whereas disordered collagen impedes cell migration—giving clinicians an interpretable morphological signal they can inspect directly on the slide.
+
+- **Low-cost clinical validation and population specificity:** In post-surgical prostate cancer ($n = 907$ diagnostic H&E slides from radical prostatectomy specimens across 6 sites, trained on 263 patients from one site using 216 gland lumen features and validated on over 600 patients), an image-based risk score (spanning roughly $[-0.5, 0.5]$ on [Part A, p. 25](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf)) independently predicted **biochemical recurrence (BCR)** alongside grade group and surgical margins ($p<0.01$, $\text{HR} = 1.33$ per $0.1$-unit risk-score increase) and performed comparably to a \$3,000 commercial molecular assay (Decipher) at a fraction of the cost ([Part A, pp. 25–26](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf)). Equally important, separate studies on prostate cancer (African-American vs. Caucasian-American cohorts) and ER+ breast cancer (South Asian vs. North American cohorts) found that **population-specific models outperformed pooled models** on underrepresented groups—a reminder that morphological risk signatures are not automatically invariant across demographics ([Part A, pp. 42–43](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf)).
+
+Even when an end-to-end CNN fails deployment, it can still serve as a **discovery compass**: saliency around cardiac myocytes in the failed Penn CNN pointed the group toward modeling cardiac myocyte spatial architecture explicitly across a larger multi-site cohort (2,300 patients across 5 sites), where the lecturer reported achieving an AUC around 0.95–0.96—comparable to the original 0.97—with strong resilience across sites and scanners ([recording, 28:23–29:43](https://www.youtube.com/watch?v=dhMm5uGLzG4&t=1703s)).
+
+## Tuberculosis imaging: when noise defeats standard profiling and CNNs
+
+Bree Aldridge turns to **tuberculosis (TB)**, caused by *Mycobacterium tuberculosis* (Mtb). Treating TB typically requires three to four antibiotics for six months because bacteria exhibit both innate cell-to-cell heterogeneity and lesion-level microenvironmental differences inside lung granulomas ([Part B, p. 2](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf)). With 20 candidate TB drugs, choosing three-drug regimens creates a space of
+
+$$
+\binom{20}{3} = \frac{20 \times 19 \times 18}{6} = 1{,}140
+$$
+
+combinations—far too large to screen exhaustively in animal models.
+
+To rapidly identify how new compounds act, the lab adapted bacterial cytological profiling (originally shown in *E. coli* by Nonejuie et al., 2013): fix drug-treated cells, stain nucleoids and membranes, and cluster morphological profiles by guilt-by-association. In *E. coli*, raw PCA cleanly separates drug classes. In Mtb, **raw PCA failed completely—and CNNs performed even worse** ([Part B, pp. 9–13](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf); [recording, 48:22–48:45](https://www.youtube.com/watch?v=dhMm5uGLzG4&t=2902s), [59:58–1:00:10](https://www.youtube.com/watch?v=dhMm5uGLzG4&t=3598s)). Mtb has a thick, waxy mycolic-acid cell envelope (described in the lecture as roughly 30 times thicker than *E. coli*'s; [recording, 59:30–59:34](https://www.youtube.com/watch?v=dhMm5uGLzG4&t=3570s)), and the resulting fixed-cell images exhibited uneven dye uptake, many unstained dark cells, severe batch-to-batch drift, and subtle morphological shifts.
+
+## MorphEUS: normalizing batches and averaging out fragility
+
+Making TB morphological profiling work required three statistical fixes in **MorphEUS** (*Morphological Evaluation and Understanding of Stress*; Smith et al., PNAS 2020; [Part B, pp. 14–18](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf)):
+
+1. **Explicit cell-to-cell heterogeneity features:** Segment ~10,000 cells per treatment, filter out-of-focus and misidentified cells, and summarize ~25 base morphological measurements with four distribution statistics—median, first quartile ($Q_1$), third quartile ($Q_3$), and interquartile range ($\text{IQR} = Q_3 - Q_1$)—expanding to ~100 features per dose (94 features in Smith et al., 2020) and concatenating paired low-dose and high-dose profiles into a replicate profile vector $x_i \in \mathbb{R}^d$ (~200 features before pruning). Because $\text{IQR} = Q_3 - Q_1$ introduces exact linear dependence, downstream normalization requires feature pruning or regularization.
+2. **Typical Variation Normalization (TVN):** Center each batch $b$ using its untreated-control mean $\mu_{0,b}$, then apply a shared regularized whitening transformation $\Sigma_0^{-1/2}$ learned across pooled untreated controls (paired with CORAL covariance alignment in Ando et al., 2017):
+
+$$
+\tilde{x}_i = \Sigma_0^{-1/2}(x_i - \mu_{0,b}).
+$$
+
+In the ideal unregularized case, pooled transformed controls align to zero mean and identity covariance ($\Sigma = I$); when $\Sigma_0$ is regularized in high dimensions, empirical controls need not literally attain exact identity covariance. To supply enough untreated reference wells per batch, the lab reported dedicating **25% of its imaging time to untreated controls** across every biological and technical replicate ([recording, 1:01:38–1:01:53](https://www.youtube.com/watch?v=dhMm5uGLzG4&t=3698s)).
+
+3. **70-trial stochastic consensus k-NN (`c-kNN`):** Because TVN proved sensitive to which untreated controls were sampled, MorphEUS runs **70 stochastic classification trials** matching the loop in [Part B, p. 16](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf): each trial draws a subset of untreated controls from the untreated pool, iteratively orders features via minimum Redundancy Maximum Relevance (mRMR), applies TVN, evaluates k-NN classification in PCA space, and runs backward elimination down to ~35–40 kept features before scoring the trial and tabulating consensus across all 70 trials.
+
+![Panel A is a constructed 2D unregularized ZCA whitening schematic illustrating Typical Variation Normalization across two batches containing both drug classes. Panel B diagrams the reported MorphEUS 70-trial c-kNN pipeline, accuracies, and bedaquiline interpretation from Part B pp. 14–22.](lifesci20-assets/morpheus-tvn-pipeline.png){fig-alt="Two-panel schematic. Panel A shows a constructed 2D illustration of Typical Variation Normalization centering Batch 1 and Batch 2 untreated controls and applying pooled unregularized ZCA whitening so controls align around zero mean and unit covariance while Drug A and Drug B samples from both batches separate by class, noting Mtb's thick cell envelope, the lab's 25 percent untreated-control imaging allocation, and ~100 quartile features per dose. Panel B diagrams the reported MorphEUS workflow: feature quantification, 70 stochastic trials resampling controls with iterative mRMR ranking, TVN, k-NN in PCA space, and backward pruning to 35 to 40 features, yielding 94 percent reference accuracy and 76 percent cross-validation accuracy across 34 TB drugs in 5 MoA classes, plus the bedaquiline interpretation."}
+
+Across 34 TB drugs spanning five broad mechanism-of-action categories (cell wall, DNA, respiration, protein, and RNA, alongside two controls), MorphEUS achieved **94% reference accuracy and 76% cross-validation accuracy** ([Part B, p. 18](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf)). More revealingly, an apparent misclassification uncovered new biology: **bedaquiline** (an $\text{F}_1\text{F}_\text{o}$ ATP synthase / oxidative phosphorylation inhibitor) clustered with cell-wall inhibitors in rich sugar media. When the lab grew Mtb on fatty acids instead of glycolytic sugar media, that resemblance vanished ([Part B, pp. 20–22](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf)). Because the clustering depended on carbon source, the investigators interpreted the sugar-media phenotype as ATP depletion triggering secondary failure of ATP-dependent cell-wall synthesis—meaning morphological profiling captured the condition-dependent **proximal cellular damage** rather than only the primary molecular binding target.
+
+## DiaMOND: geometry beats brute-force checkerboards—and potency beats synergy
+
+Identifying single-drug pathways still leaves the combinatorial problem of designing three- and four-drug regimens. Traditional **checkerboard assays** measure every dose grid point and explode exponentially: in the lecture's dose-grid example, a 2-way combination takes 1 × 384-well plate, a 3-way combination takes 3 × 384-well plates, and a 4-way combination takes **25 × 384-well plates per replicate**—impractical inside a BSL-3 lab ([Part B, p. 25](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf); [recording, 1:15:04–1:15:25](https://www.youtube.com/watch?v=dhMm5uGLzG4&t=4504s)).
+
+**DiaMOND** (*Diagonal Measurement of N-way Drug Interactions*; Cokol et al., 2017) replaces the full $N$-dimensional grid with the **$N$ single-drug dose-response axes plus the equal-normalized-fraction mixture ray** ($1:1$ in 2D, or $1:1:\dots:1$ in $N$ dimensions in units normalized to each drug's single-drug $IC_{90,i}$; [Part B, pp. 26–27](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf)). Defining dimensionless normalized doses $\tilde{d}_i = d_i / IC_{90,i}$ puts all drugs on a common unitless scale. Under Loewe additivity, the expected iso-effect surface for $90\%$ growth inhibition ($IC_{90}$) is the hyperplane connecting the unit single-drug intercepts:
+
+$$
+\sum_{i=1}^{N} \tilde{d}_i = \sum_{i=1}^{N} \frac{d_i}{IC_{90,i}} = 1.
+$$
+
+Intersecting this hyperplane with the equal-fraction ray $\tilde{d}_1 = \dots = \tilde{d}_N = 1/N$ yields an expected Euclidean distance $r_{\text{exp}} = \sqrt{N(1/N)^2} = 1/\sqrt{N}$ from the origin in normalized coordinates. Comparing the observed combination $IC_{90}$ distance $r_{\text{obs}}$ along that same ray defines the **Fractional Inhibitory Concentration Index (`FICI`, denoted $\text{FIC}$ or $\text{FIC}_{90}$ in DiaMOND)**:
+
+$$
+\text{FIC} = \frac{r_{\text{obs}}}{r_{\text{exp}}} = \sum_{i=1}^{N} \frac{d_{i,\text{obs}}}{IC_{90,i}}.
+$$
+
+Here $\text{FIC} < 1$ indicates **synergy** (the intersection lies below the additivity line, bowed inward toward the origin—conventionally termed *concave* in pharmacology isobolograms), $\text{FIC} = 1$ indicates **additivity**, and $\text{FIC} > 1$ indicates **antagonism** (above the additivity line, bowed outward from the origin—termed *convex* in pharmacology). Measuring a single equipotent ray trades full-contour coverage for throughput: it yields a quantitative interaction score at equal normalized fractions, but does not sample asymmetric off-diagonal drug ratios.
+
+For a constructed illustrative two-drug check normalized to $IC_{90,X} = IC_{90,Y} = 1.0$, the additivity line meets the $1:1$ ray at $(0.50, 0.50)$, giving $r_{\text{exp}} = \sqrt{0.5^2 + 0.5^2} = 1/\sqrt{2} \approx 0.707$ ($\text{FIC} = 1.00$). An observed $IC_{90}$ at $(0.25, 0.25)$ gives $r_{\text{obs}} = \sqrt{0.25^2 + 0.25^2} \approx 0.354$ and $\text{FIC} = r_{\text{obs}}/r_{\text{exp}} = 0.50$ (synergy), whereas $(0.75, 0.75)$ gives $r_{\text{obs}} = \sqrt{0.75^2 + 0.75^2} \approx 1.061$ and $\text{FIC} = r_{\text{obs}}/r_{\text{exp}} = 1.50$ (antagonism).
+
+Because each DiaMOND diagonal is a complete combination dose-response curve rather than a single cutoff, the team also extracted absolute **potency** metrics ([Part B, p. 32](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf)): asymptotic maximal effect ($E_{\inf}$, or growth-rate-normalized $GR_{\inf}$) and low-dose response area ($\text{AUC}_{25}$, integrated up to $IC_{25}$). Crucially, dividing each mixture dose by single-drug $IC_{90,i}$ makes $\text{FIC}$ dimensionless and cancels out absolute potency: two weak drugs can appear synergistic ($\text{FIC} < 1$) while failing to sterilize bacteria at achievable exposures, whereas potent regimens drive strong killing even without synergy.
+
+![Panel A is a constructed 2D IC90-normalized worked check of DiaMOND equipotent ray geometry (FIC = 0.50, 1.00, 1.50). Panel B shows the reported 384-well checkerboard plate scaling (1, 3, 25 plates) alongside the DiaMOND N-axes-plus-1-ray design and BALB/c mouse relapse findings.](lifesci20-assets/diamond-geometry.png){fig-alt="Two-panel scientific figure. Panel A shows constructed IC90-normalized Drug X and Drug Y dose space with single-drug intercepts at 1.0, the straight additivity line, the 1:1 mixture ray, a green synergy contour passing through (0.25, 0.25) with FIC 0.50 below the line, the additive point at (0.50, 0.50) with FIC 1.00, and a red antagonism contour through (0.75, 0.75) with FIC 1.50 above the line. Panel B plots the reported checkerboard 384-well plate counts per replicate—1 for 2-way, 3 for 3-way, 25 for 4-way—next to a DiaMOND design callout (N single-drug axes plus 1 mixture ray) and summarizes the 175-regimen, 8-condition TB dataset where potency metrics (Einf, GRinf, AUC25) in lipid-rich and acidic conditions drove BALB/c mouse relapse classification (test AUC 0.75 to 0.94)."}
+
+With DiaMOND, Aldridge's team measured 10 TB drugs across 175 regimens—10 single agents plus 165 multidrug combinations ($10 + \binom{10}{2} + \binom{10}{3} = 10 + 45 + 120 = 175$; referred to as "175 combinations" on the slides)—in **8 in vitro growth conditions** mimicking granuloma stresses, collecting dynamic multi-timepoint reads (days 7, 14, 21, and 28) across replicates for **over 50,000 dose-response curves** ([Part B, pp. 28–31](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf)). Two results overturned conventional assumptions:
+
+1. **No single combination was synergistic across all 8 growth environments.** Interaction sign depends heavily on the metabolic environment.
+2. **In this BALB/c relapsing mouse cohort, potency—not synergy—drove in vivo outcome classification.** Evaluating 27 training and 19 test regimens ($C_0$: standard-of-care `SOC` [`HRZE`: isoniazid, rifampicin, pyrazinamide, ethambutol] or worse vs. $C_1$: better than `SOC`), exploratory **unsupervised PCA** separated $C_0$ from $C_1$ along PC1, **18 of the top 20 predictive features were potency metrics** ($GR_{\inf}$, $E_{\inf}$, $\text{AUC}_{25}$) rather than $\text{FIC}_{50}$ ([Part B, pp. 34–35](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf)), and **Random Forest** classifiers trained on small subsets of simple conditions separated $C_1$ vs. $C_0$ well on the 19-regimen test set—for example, `acidic + cholesterol` reached test AUC 0.75 (F1 = 0.88), `acidic + cholesterol + standard + valerate` reached test AUC 0.83 (F1 = 0.85), and `butyrate + cholesterol + standard + valerate` reached test AUC 0.94 (F1 = 0.53)—allowing the team to drop non-predictive models like their intracellular assay ([Part B, pp. 33–36](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf)).
+
+## The shared lesson across both talks
+
+Put side by side, computational pathology and tuberculosis drug-combination profiling point to the same engineering discipline:
+
+- **Start with the measurement failure mode, not the largest neural network.** Scanner upgrades broke pixel-level pathology CNNs; cell-envelope stain variability and batch drift broke bacterial CNNs.
+- **Put deep learning where it has high leverage and low opacity.** Segmenting nuclei, glands, and collagen fibers scales human effort without turning the final clinical risk score into a black box.
+- **Validate the representation against the real biological endpoint.** Whether predicting post-surgical cancer recurrence or mouse TB relapse, the decisive win came from explicit geometric features, disciplined control normalization, and experimentally validated in vitro conditions rather than deeper end-to-end classifiers.
+
+## Lecture and sources
+
+<div class="lecture-video"><iframe src="https://www.youtube.com/embed/dhMm5uGLzG4" title="MIT 6.874 Spring 2021 Lecture 20 — Imaging Applications in Healthcare (YouTube: Lecture 19)" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>
+
+- [MIT 6.874 Spring 2021 official schedule](https://mit6874.github.io/) and [official lecture recording](https://www.youtube.com/watch?v=dhMm5uGLzG4) (1:26:03; listed as Lecture 20 on the syllabus and titled Lecture 19 on YouTube).
+- [Anant Madabhushi, *To Deep Learn or Not Deep Learning: Computational Pathology for Precision Medicine*, Part A slides (47 pp.)](https://mit6874.github.io/assets/sp2021/slides/l20a.pdf), especially pp. 3–8, 10, 12, 15–26, 32–43.
+- [Bree Aldridge, *Design of Combination Therapies for Tuberculosis*, Part B slides (38 pp.)](https://mit6874.github.io/assets/sp2021/slides/l20b.pdf), especially pp. 2–5, 9–22, 24–36.
+- Key cited studies: Janowczyk & Madabhushi, *J. Pathol. Inform.* (2016); Nirschl et al., *PLOS ONE* (2018) (Penn heart-failure CNN); Li et al., *npj Breast Cancer* (2021) (`CFOD-TS`); Leo et al., *npj Precis. Oncol.* (2021) (prostate gland lumen risk score vs. Decipher); Nonejuie et al., *PNAS* (2013) (*E. coli* cytological profiling); Smith et al., *PNAS* (2020) (MorphEUS); Ando et al., *bioRxiv* (2017) (TVN); Cokol et al., *Science Advances* (2017) & Katzir et al., *PLOS Comput. Biol.* (2019) (DiaMOND); Larkins-Ford et al., *Cell Systems* (2021) (cited as *bioRxiv* 2021 in the lecture).
+- Original explanatory figures: [create_figures.py](lifesci20-assets/create_figures.py) and [manifest.json](lifesci20-assets/manifest.json). Constructed worked checks (4-bin axial collagen entropy, 2D unregularized TVN illustration, normalized DiaMOND FIC contours) and reported clinical/experimental results are separated in each figure caption and in the prose.
