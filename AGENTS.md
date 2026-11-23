@@ -133,9 +133,18 @@ Before rendering/publishing a new blog post:
 4. **Transitions**: add a short introduction or transition when a section begins abruptly (especially for gradient/optimization sections).
 5. **Conciseness check**: if a section feels too terse, add 1–2 sentences of intuition or context without bloating the note.
 6. **Examples**: keep at least one small concrete example when the note includes one.
-7. **Images**: copy note images into `imgs/` or the local lecture folder and reference them with correct relative paths.
+7. **Images**: copy note images into `imgs/` or the local lecture folder, reference them with correct relative paths, and enforce the low-text diagram rules below.
 8. **Rendered verification**: confirm the HTML reflects the updated QMD (e.g., grep the rendered file for key new lines).
 9. **Homepage + navbar**: make sure list pages, `index.qmd`, and `_quarto.yml` are updated and re-rendered.
+
+### Programmatic Diagram Standards (Low-Text Rule)
+
+Keep every generated figure clean, visual, and legible on both desktop and mobile (matching `ML/Biology/lifesci17-assets/geometry.png`, `ML/NLP/anlp10-assets/pipeline.png`, and `ML/DLSys/dlsys21-assets/ellipses.png`):
+1. **One visual idea per figure**: focus each diagram on 1 plot, geometry, or simple 3-step flow rather than dense multi-panel text posters.
+2. **Hard word cap (<= 60 words per figure; target 20–50 words)**: count visible SVG `<text>` words programmatically in `create_figures.py` and fail/trim any figure over 60 words.
+3. **Zero prose callout boxes**: never embed bulleted summary cards, cohort paragraphs, caveats, or citation blocks inside the figure; place those details in the `.qmd` body prose and figure caption.
+4. **Large typography and whitespace**: use 1 short title, short 1-line axis/node labels, at most 1 short muted footer line, generous whitespace, and large readable type (`>= 18–22px` on a `1600x900` canvas).
+5. **Palette and vector hygiene**: use the warm scientific palette (`#FAF6EE`, `#356482`, `#B5493A`, `#4B6B46`, `#A87919`), explicit `<polygon>` arrowheads (never `<marker>`), XML validation, and headless Chrome `1600x900` PNG rasterization.
 
 ## Configuration Notes
 
