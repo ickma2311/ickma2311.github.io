@@ -143,7 +143,7 @@ Keep every generated figure clean, visual, and legible on both desktop and mobil
 1. **One visual idea per figure**: focus each diagram on 1 plot, geometry, or simple 3-step flow rather than dense multi-panel text posters.
 2. **Hard word cap (<= 60 words per figure; target 20–50 words)**: count visible SVG `<text>` words programmatically in `create_figures.py` and fail/trim any figure over 60 words.
 3. **Zero prose callout boxes**: never embed bulleted summary cards, cohort paragraphs, caveats, or citation blocks inside the figure; place those details in the `.qmd` body prose and figure caption.
-4. **Large typography and whitespace**: use 1 short title, short 1-line axis/node labels, at most 1 short muted footer line, generous whitespace, and large readable type (`>= 18–22px` on a `1600x900` canvas).
+4. **Large typography and whitespace**: use 1 short title, short 1-line axis/node labels, at most 1 short muted footer line, generous whitespace, and large readable type (`>= 18–22px` on a `1600x900` canvas). Every figure title must state the diagram's technical meaning or core insight, never a lecture number.
 5. **Palette and vector hygiene**: use the warm scientific palette (`#FAF6EE`, `#356482`, `#B5493A`, `#4B6B46`, `#A87919`), explicit `<polygon>` arrowheads (never `<marker>`), XML validation, and headless Chrome `1600x900` PNG rasterization.
 
 ## Configuration Notes
@@ -203,6 +203,14 @@ After successfully pushing changes to GitHub:
    Example: `mv ~/Downloads/seq2seq.png ~/Documents/banana/`
 
 2. **Verify deployment**: Check GitHub Pages to ensure the site deployed successfully and images load correctly
+
+### Social Publishing Handoff (Codex)
+
+Chao uses **Codex** (not Gemini) to publish X (`@ickma2311`) and standalone LinkedIn Feed posts. For every blog draft, include a ready-to-paste **Codex Publish Instruction** block in the Notion Social Drafts page and final handoff containing:
+- Exact absolute local path to the low-text `1600x900` lead cover PNG
+- Verbatim ALT text matching the cover image
+- Verbatim approved X post text (`@ickma2311`, `∇` header)
+- Verbatim approved standalone LinkedIn Feed text (emoji-free; Feed post only, no `/pulse/` Article unless requested)
 
 ## LinkedIn Post Guidelines
 
