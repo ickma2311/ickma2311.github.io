@@ -1,0 +1,2610 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Chao Ma">
+<meta name="dcterms.date" content="2026-11-25">
+<meta name="description" content="How generic cell segmentation (2018 Data Science Bowl), weakly supervised embeddings, and gradient reversal discourage batch-predictive features in cellular profiling.">
+
+<title>Segment First, Then Deconfound the Cellular Profile – ∇ ickma.dev</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../favicon.svg" rel="icon" type="image/svg+xml">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-5b4ad623e5705c0698d39aec6f10cf02.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-PK5N5KWZBF"></script>
+
+<script type="text/javascript">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-PK5N5KWZBF', { 'anonymize_ip': true});
+</script>
+<style>
+.math.display {display:block;max-width:100%;overflow-x:auto;overflow-y:hidden;padding:0.35rem 0;}
+mjx-container[display="true"] {max-width:100%;overflow-x:auto;overflow-y:hidden;}
+.table-scroll {overflow-x:auto;max-width:100%;}
+.lecture-video {position:relative;width:100%;aspect-ratio:16/9;margin:1.5rem 0;}
+.lecture-video iframe {position:absolute;width:100%;height:100%;border:0;}
+</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">∇ ickma.dev</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-chaolab" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">ChaoLab</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-chaolab">    
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html#research-notes">
+ <span class="dropdown-text">Research Notes</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html#reproductions">
+ <span class="dropdown-text">Reproductions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ChaoLab/index.html#field-notes">
+ <span class="dropdown-text">Field Notes</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-deep-learning" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Deep Learning</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-deep-learning">    
+        <li class="dropdown-header">Deep Learning in the Life Sciences</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/image-based-cell-phenotyping.html">
+ <span class="dropdown-text">Lecture 21: Image-Based Cell Phenotyping</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/imaging-in-healthcare.html">
+ <span class="dropdown-text">Lecture 20: Imaging in Healthcare</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/protein-predictions-and-geometry.html">
+ <span class="dropdown-text">Lecture 17: Protein Folding</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/molecular-models-drug-discovery.html">
+ <span class="dropdown-text">Lecture 16: Drug Discovery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/graph-structure-message-passing.html">
+ <span class="dropdown-text">Lecture 15: Graph Analysis and GNNs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/biobank-heritability-and-prediction.html">
+ <span class="dropdown-text">Lecture 14: Systems Genetics and Biobanks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/eqtl-association-causal-evidence.html">
+ <span class="dropdown-text">Lecture 13: eQTLs and Causal Evidence</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/gwas-variants-and-mechanisms.html">
+ <span class="dropdown-text">Lecture 12: GWAS and Disease Circuitry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/dimensionality-reduction-integration.html">
+ <span class="dropdown-text">Lecture 11: Dimensionality Reduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/single-cell-counts-and-claims.html">
+ <span class="dropdown-text">Lecture 10: Single-Cell Genomics</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/gene-expression-and-splicing.html">
+ <span class="dropdown-text">Lecture 9: Gene Expression and Splicing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/sequence-labels-to-contact-maps.html">
+ <span class="dropdown-text">Lecture 8: Sequence Labels to Contact Maps</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/Biology/regulatory-genomics.html">
+ <span class="dropdown-text">Lecture 7: Regulatory Genomics</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Stanford CS336: Language Modeling from Scratch</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture01-overview-tokenization.html">
+ <span class="dropdown-text">Lecture 1: Overview and Tokenization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture17-multimodality.html">
+ <span class="dropdown-text">Lecture 17: Multimodality</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture16-rlvr.html">
+ <span class="dropdown-text">Lecture 16: RLVR</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture15-sft-rlhf.html">
+ <span class="dropdown-text">Lecture 15: SFT and RLHF</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture14-data-filtering-mixing.html">
+ <span class="dropdown-text">Lecture 14: Data Processing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture13-data-sources.html">
+ <span class="dropdown-text">Lecture 13: Data Sources</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture12-evaluation.html">
+ <span class="dropdown-text">Lecture 12: Evaluation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture11-scaling-laws-ii.html">
+ <span class="dropdown-text">Lecture 11: Scaling Laws II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture10-inference.html">
+ <span class="dropdown-text">Lecture 10: Inference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture09-scaling-laws-i.html">
+ <span class="dropdown-text">Lecture 9: Scaling Laws I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture08-parallelism-ii.html">
+ <span class="dropdown-text">Lecture 8: Parallelism II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture07-parallelism-i.html">
+ <span class="dropdown-text">Lecture 7: Parallelism</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture06-kernels-triton.html">
+ <span class="dropdown-text">Lecture 6: Kernels and Triton</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture05-gpus-tpus.html">
+ <span class="dropdown-text">Lecture 5: GPUs, TPUs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture04-attention-alternatives-moe.html">
+ <span class="dropdown-text">Lecture 4: Attention Alternatives and MoE</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture03-architectures-hyperparameters.html">
+ <span class="dropdown-text">Lecture 3: Architectures and Hyperparameters</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/CS336/lecture02-pytorch-resource-accounting.html">
+ <span class="dropdown-text">Lecture 2: PyTorch and Resource Accounting</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Advanced Large Language Model Agents</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/safe-and-secure-agentic-ai.html">
+ <span class="dropdown-text">Lecture 12: Safe and Secure Agentic AI</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/abstraction-and-discovery.html">
+ <span class="dropdown-text">Lecture 11: Abstraction and Discovery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/advanced-topics-theorem-proving.html">
+ <span class="dropdown-text">Lecture 10: Advanced Topics in Theorem Proving</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/language-models-autoformalization-theorem-proving.html">
+ <span class="dropdown-text">Autoformalization and Theorem Proving</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/alphaproof-reinforcement-learning-formal-mathematics.html">
+ <span class="dropdown-text">AlphaProof: RL and Formal Mathematics</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/multimodal-agents-perception-to-action.html">
+ <span class="dropdown-text">Multimodal Agents: From Perception to Action</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/multimodal-autonomous-ai-agents.html">
+ <span class="dropdown-text">Multimodal Autonomous AI Agents</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/coding-agents-vulnerability-detection.html">
+ <span class="dropdown-text">Coding Agents and AI for Vulnerability Detection</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/open-training-recipes-llm-reasoning.html">
+ <span class="dropdown-text">Open Training Recipes: LLM Reasoning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/reasoning-memory-planning-language-agents.html">
+ <span class="dropdown-text">Reasoning, Memory, and Planning of Language Agents</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/learning-to-self-improve-and-reason-with-llms.html">
+ <span class="dropdown-text">Learning to Self-Improve and Reason with LLMs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/LLM-Agents/inference-time-techniques-for-llm-reasoning.html">
+ <span class="dropdown-text">Inference-Time Techniques for LLM Reasoning</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">CMU 10-414/714 Deep Learning Systems</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-22-customizing-pretrained-models.html">
+ <span class="dropdown-text">CMU DLSys Lecture 22: Customizing Pretrained Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-21-gan-implementation.html">
+ <span class="dropdown-text">CMU DLSys Lecture 21: GAN Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-20-generative-models.html">
+ <span class="dropdown-text">CMU DLSys Lecture 20: Generative Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-19-training-large-models.html">
+ <span class="dropdown-text">Lecture 19: Training Large Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-18-transformer-implementation.html">
+ <span class="dropdown-text">Lecture 18: Transformer Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-17-transformers-attention.html">
+ <span class="dropdown-text">Lecture 17: Transformers and Attention</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-16-sequence-model-implementation.html">
+ <span class="dropdown-text">Lecture 16: Sequence Modeling Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-15-sequence-modeling-rnns.html">
+ <span class="dropdown-text">Lecture 15: Sequence Modeling and RNNs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-14-convolution-implementation.html">
+ <span class="dropdown-text">Lecture 14: Convolutional Network Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-13-hardware-acceleration-implementation.html">
+ <span class="dropdown-text">Lecture 13: Hardware Acceleration Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-12-gpu-acceleration.html">
+ <span class="dropdown-text">Lecture 12: GPU Acceleration</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-11-convolutional-networks.html">
+ <span class="dropdown-text">Lecture 11: Convolutional Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-10-hardware-acceleration.html">
+ <span class="dropdown-text">Lecture 10: Hardware Acceleration</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-9-neural-network-library-implementation.html">
+ <span class="dropdown-text">Lecture 9: Neural Network Library Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-8-normalization-dropout.html">
+ <span class="dropdown-text">Lecture 8: Normalization, Dropout, and Model State</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-7-neural-network-library-abstractions.html">
+ <span class="dropdown-text">Lecture 7: Neural Network Library Abstractions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-6-optimization-initialization.html">
+ <span class="dropdown-text">Lecture 6: Optimization and Initialization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-5-auto-differentiation-implementation.html">
+ <span class="dropdown-text">Lecture 5: Auto Differentiation Implementation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-4-automatic-differentiation.html">
+ <span class="dropdown-text">Lecture 4: Automatic Differentiation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-3-part-2-manual-neural-networks.html">
+ <span class="dropdown-text">Lecture 3 Part II: Manual Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-3-manual-neural-networks.html">
+ <span class="dropdown-text">Lecture 3: Manual Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/DLSys/cmu-dlsys-lecture-2-ml-refresher-softmax-regression.html">
+ <span class="dropdown-text">Lecture 2: ML Refresher / Softmax Regression</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">ML HW-SW Codesign</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-01-introduction.html">
+ <span class="dropdown-text">Efficient AI Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-03-pruning-and-sparsity-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 3: Pruning and Sparsity (Part 1)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-04-pruning-and-sparsity-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 4: Pruning and Sparsity (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-05-quantization-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 5: Quantization (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-06-quantization-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 6: Quantization (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-07-neural-architecture-search-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 7: Neural Architecture Search (Part I)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-08-neural-architecture-search-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 8: Neural Architecture Search (Part II)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-09-knowledge-distillation.html">
+ <span class="dropdown-text">Efficient AI Lecture 9: Knowledge Distillation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-10-mcunet-and-tinyml.html">
+ <span class="dropdown-text">Efficient AI Lecture 10: MCUNet and TinyML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-11-tinyengine.html">
+ <span class="dropdown-text">Efficient AI Lecture 11: TinyEngine</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-12-transformer-and-llm.html">
+ <span class="dropdown-text">Efficient AI Lecture 12: Transformer and LLM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-13-llm-deployment-techniques.html">
+ <span class="dropdown-text">Efficient AI Lecture 13: LLM Deployment Techniques</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-14-llm-post-training.html">
+ <span class="dropdown-text">Efficient AI Lecture 14: LLM Post-Training</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-15-long-context-llm.html">
+ <span class="dropdown-text">Efficient AI Lecture 15: Long-Context LLM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-16-vision-transformer.html">
+ <span class="dropdown-text">Efficient AI Lecture 16: Vision Transformer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-17-gans-video-pointcloud.html">
+ <span class="dropdown-text">Efficient AI Lecture 17: GANs, Video, and Point Cloud</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-18-diffusion-models.html">
+ <span class="dropdown-text">Efficient AI Lecture 18: Diffusion Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-19-distributed-training-part-1.html">
+ <span class="dropdown-text">Efficient AI Lecture 19: Distributed Training (Part 1)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-20-distributed-training-part-2.html">
+ <span class="dropdown-text">Efficient AI Lecture 20: Distributed Training (Part 2)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-21-on-device-training-transfer-learning.html">
+ <span class="dropdown-text">Efficient AI Lecture 21: On-Device Training and Transfer Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/HW-SW-codesign/efficient-ai-lecture-22-quantum-machine-learning-i.html">
+ <span class="dropdown-text">Efficient AI Lecture 22: Quantum Machine Learning I</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">JAX</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-numpy.html">
+ <span class="dropdown-text">JAX NumPy</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/introducing-flax-nnx.html">
+ <span class="dropdown-text">Introducing Flax NNX</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/jax-ai-stack.html">
+ <span class="dropdown-text">JAX AI Stack</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/JAX/scaling-up.html">
+ <span class="dropdown-text">Scaling Up</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">NLP</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-11-multimodal-i.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 11: Multimodal Modeling I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-10-retrieval-rag.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 10: Retrieval and RAG</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-8-finetuning-distillation.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 8: Fine-Tuning and Distillation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-7-in-context-learning.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 7: In-Context Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-6-pretraining.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 6: Pretraining</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-5-transformers.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 5: Attention and Transformers</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-4-recurrent-neural-networks.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 4: Recurrent Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-3-language-modeling.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 3: Language Modeling Fundamentals</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-21-mixture-of-experts.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 21: Mixture of Experts</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-16-reinforcement-learning-for-llms.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 16: Reinforcement Learning for LLMs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-9-decoding-algorithms.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 9: Decoding Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-2-learned-representation.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 2: Learned Representation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/NLP/cmu-advanced-nlp-lecture-1-introduction-fundamentals.html">
+ <span class="dropdown-text">CMU Advanced NLP Lecture 1: Introduction and Fundamentals</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">RL</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-10-classic-games.html">
+ <span class="dropdown-text">David Silver Lecture 10: Classic Games</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-9-exploration-and-exploitation.html">
+ <span class="dropdown-text">David Silver Lecture 9: Exploration and Exploitation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-8-integrating-learning-and-planning.html">
+ <span class="dropdown-text">David Silver Lecture 8: Integrating Learning and Planning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-7-policy-gradient-methods.html">
+ <span class="dropdown-text">David Silver Lecture 7: Policy Gradient Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-6-value-function-approximation.html">
+ <span class="dropdown-text">David Silver Lecture 6: Value Function Approximation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-5-model-free-control.html">
+ <span class="dropdown-text">David Silver Lecture 5: Model-Free Control</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/cmu-advanced-nlp-reinforcement-learning.html">
+ <span class="dropdown-text">CMU Advanced NLP: Reinforcement Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-4-model-free-prediction.html">
+ <span class="dropdown-text">David Silver Lecture 4: Model-Free Prediction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-3-planning-by-dynamic-programming.html">
+ <span class="dropdown-text">David Silver Lecture 3: Planning by Dynamic Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-2-markov-decision-process.html">
+ <span class="dropdown-text">David Silver Lecture 2: Markov Decision Process</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/RL/david-silver-lecture-1-introduction-to-reinforcement-learning.html">
+ <span class="dropdown-text">David Silver Lecture 1: Introduction to RL</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Papers in Deep Learning</li>
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/generative-adversarial-nets.html">
+ <span class="dropdown-text">Generative Adversarial Nets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/why-tpu-is-fast-for-dot-product.html">
+ <span class="dropdown-text">Why TPU Is Fast for Dot Product</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/transformer-attention-is-all-you-need.html">
+ <span class="dropdown-text">Transformer: Attention Is All You Need</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/attention-origin-transformer.html">
+ <span class="dropdown-text">Attention: The Origin of Transformer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/batch-normalization.html">
+ <span class="dropdown-text">Batch Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/papers/lora.html">
+ <span class="dropdown-text">LoRA: Low-Rank Adaptation</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-learning-book.html">
+ <span class="dropdown-text">Goodfellow Deep Learning Book (Overview)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/xor-deep-learning.html">
+ <span class="dropdown-text">Chapter 6.1: XOR Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/likelihood-loss-functions.html">
+ <span class="dropdown-text">Chapter 6.2: Loss Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/activation-functions.html">
+ <span class="dropdown-text">Chapter 6.3: Activation Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/architecture-design.html">
+ <span class="dropdown-text">Chapter 6.4: Architecture Design</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/backpropagation.html">
+ <span class="dropdown-text">Chapter 6.5: Back-Propagation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/hessian-prerequisites.html">
+ <span class="dropdown-text">Chapter 7 Prerequisites: Hessian Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l2-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.1: L2 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/l1-regularization.html">
+ <span class="dropdown-text">Chapter 7.1.2: L1 Regularization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/constrained-optimization-regularization.html">
+ <span class="dropdown-text">Chapter 7.2: Constrained Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/regularization-underconstrained.html">
+ <span class="dropdown-text">Chapter 7.3: Under-Constrained Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dataset-augmentation.html">
+ <span class="dropdown-text">Chapter 7.4: Dataset Augmentation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/noise-robustness.html">
+ <span class="dropdown-text">Chapter 7.5: Noise Robustness</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/semi-supervised-learning.html">
+ <span class="dropdown-text">Chapter 7.6: Semi-Supervised Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/multi-task-learning.html">
+ <span class="dropdown-text">Chapter 7.7: Multi-Task Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/early-stopping.html">
+ <span class="dropdown-text">Chapter 7.8: Early Stopping</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-tying-sharing.html">
+ <span class="dropdown-text">Chapter 7.9: Parameter Tying &amp; Sharing</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-sparsity.html">
+ <span class="dropdown-text">Chapter 7.10: Sparse Representations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/bagging-ensemble.html">
+ <span class="dropdown-text">Chapter 7.11: Bagging &amp; Ensemble Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/dropout.html">
+ <span class="dropdown-text">Chapter 7.12: Dropout</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adversarial-training.html">
+ <span class="dropdown-text">Chapter 7.13: Adversarial Training</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/tangent-prop-manifold.html">
+ <span class="dropdown-text">Chapter 7.14: Tangent Prop &amp; Manifolds</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/learning-vs-optimization.html">
+ <span class="dropdown-text">Chapter 8.1: Learning vs Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-challenges.html">
+ <span class="dropdown-text">Chapter 8.2: Optimization Challenges</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/basic-optimization-algorithms.html">
+ <span class="dropdown-text">Chapter 8.3: Basic Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/parameter-initialization.html">
+ <span class="dropdown-text">Chapter 8.4: Parameter Initialization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/adaptive-learning-rates.html">
+ <span class="dropdown-text">Chapter 8.5: Adaptive Learning Rates</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/second-order-methods.html">
+ <span class="dropdown-text">Chapter 8.6: Second-Order Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/optimization-strategies.html">
+ <span class="dropdown-text">Chapter 8.7: Optimization Strategies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolution-computation.html">
+ <span class="dropdown-text">Chapter 9.1: Convolution Computation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-motivation.html">
+ <span class="dropdown-text">Chapter 9.2: CNN Motivation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-pooling.html">
+ <span class="dropdown-text">Chapter 9.3: Pooling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-infinitely-strong-prior.html">
+ <span class="dropdown-text">Chapter 9.4: Infinitely Strong Prior</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/convolutional-functions.html">
+ <span class="dropdown-text">Chapter 9.5: Convolutional Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-structured-outputs.html">
+ <span class="dropdown-text">Chapter 9.6: Structured Outputs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-data-types.html">
+ <span class="dropdown-text">Chapter 9.7: Data Types</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-efficient-convolution.html">
+ <span class="dropdown-text">Chapter 9.8: Efficient Convolution</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-unsupervised-learning.html">
+ <span class="dropdown-text">Chapter 9.9: Unsupervised Feature Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/cnn-neuroscience.html">
+ <span class="dropdown-text">Chapter 9.10: Neuroscientific Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-unfold-computation-graph.html">
+ <span class="dropdown-text">Chapter 10.1: Unfold Computation Graph</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recurrent-neural-networks.html">
+ <span class="dropdown-text">Chapter 10.2: Recurrent Neural Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-bidirectional.html">
+ <span class="dropdown-text">Chapter 10.3: Bidirectional RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-encoder-decoder.html">
+ <span class="dropdown-text">Chapter 10.4: Encoder-Decoder Seq2Seq</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-deep.html">
+ <span class="dropdown-text">Chapter 10.5: Deep RNN</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-recursive.html">
+ <span class="dropdown-text">Chapter 10.6: Recursive Neural Network</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-long-term-dependency.html">
+ <span class="dropdown-text">Chapter 10.7: Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-echo-state.html">
+ <span class="dropdown-text">Chapter 10.8: Echo State Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-leaky-unit.html">
+ <span class="dropdown-text">Chapter 10.9: Leaky Units</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-lstm-gru.html">
+ <span class="dropdown-text">Chapter 10.10: LSTM and GRU</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-optimize-long-term.html">
+ <span class="dropdown-text">Chapter 10.11: Optimizing Long-Term Dependencies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/rnn-explicit-memory.html">
+ <span class="dropdown-text">Chapter 10.12: Explicit Memory</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/practical-methodology.html">
+ <span class="dropdown-text">Chapter 11: Practical Methodology</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/large-scale-deep-learning.html">
+ <span class="dropdown-text">Chapter 12.1: Large-Scale Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/image-preprocessing-normalization.html">
+ <span class="dropdown-text">Chapter 12.2: Image Preprocessing and Normalization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/automatic-speech-recognition.html">
+ <span class="dropdown-text">Chapter 12.3: Automatic Speech Recognition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/nlp-applications.html">
+ <span class="dropdown-text">Chapter 12.4: NLP Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/other-applications.html">
+ <span class="dropdown-text">Chapter 12.5: Other Applications</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/linear-factor-models.html">
+ <span class="dropdown-text">Chapter 13: Linear Factor Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/autoencoders.html">
+ <span class="dropdown-text">Chapter 14: Autoencoders</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/representation-learning.html">
+ <span class="dropdown-text">Chapter 15: Representation Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/structured-probabilistic-models.html">
+ <span class="dropdown-text">Chapter 16: Structured Probabilistic Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/monte-carlo-methods.html">
+ <span class="dropdown-text">Chapter 17: Monte Carlo Methods</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/confronting-partition-function.html">
+ <span class="dropdown-text">Chapter 18: Confronting the Partition Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/approximate-inference.html">
+ <span class="dropdown-text">Chapter 19: Approximate Inference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/deep-generative-models.html">
+ <span class="dropdown-text">Chapter 20: Deep Generative Models</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-quantum-machine" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Quantum Machine</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-quantum-machine">    
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/your-first-quantum-experiment.html">
+ <span class="dropdown-text">Your First Quantum Experiment</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/the-math-behind-quantum-entanglement.html">
+ <span class="dropdown-text">The Math Behind Quantum Entanglement</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/from-zero-to-quantum.html">
+ <span class="dropdown-text">From Zero to Quantum</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/qiskit-lesson-1-classical-and-quantum-information.html">
+ <span class="dropdown-text">Qiskit Lesson 1: Classical and Quantum Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../QuantumMachine/qiskit-lesson-2-multiple-systems.html">
+ <span class="dropdown-text">Qiskit Lesson 2: Multiple Systems</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-math" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Math</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-math">    
+        <li>
+    <a class="dropdown-item" href="../../Math/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Probability</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/index.html">
+ <span class="dropdown-text">MIT 6.041 Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture25-classical-inference-iii.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 25: Classical Statistical Inference III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture24-classical-inference-ii.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 24: Classical Statistical Inference II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture23-classical-inference-i.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 23: Classical Statistical Inference I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture22-bayesian-inference-ii.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 22: Bayesian Statistical Inference II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture21-bayesian-inference-i.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 21: Bayesian Statistical Inference I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture20-central-limit-theorem.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 20: Central Limit Theorem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/mit-6041-lecture19-weak-law.html">
+ <span class="dropdown-text">MIT 6.041SC Lecture 19: Weak Law of Large Numbers</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/markov-chains-iii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Markov Chains III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/markov-chains-ii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Markov Chains II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/markov-chains-i.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Markov Chains I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/poisson-process-ii.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Poisson Process II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/poisson-process-i.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Poisson Process I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/bernoulli-process.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Bernoulli Process</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/iterated-expectations.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Iterated Expectations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/derived-distributions-covariance.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Derived Distributions and Covariance</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/continuous-bayes-rule-derived-distributions.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Continuous Bayes’ Rule and Derived Distributions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/multiple-continuous-random-variables.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Multiple Continuous Random Variables</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/continuous-random-variables.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Continuous Random Variables</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-3.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables III</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-2.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables II</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/discrete-random-variables-1.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Discrete Random Variables I</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/counting.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Counting</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/independence.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Independence</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/conditioning-bayes-rule.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Conditioning and Bayes’ Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Probability/probability-models-axioms.html">
+ <span class="dropdown-text">MIT 6.041 Probability: Probability Models and Axioms</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Information Theory</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/index.html">
+ <span class="dropdown-text">Oxford Math Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-1-defining-entropy-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 1: Defining Entropy and Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-2-basic-properties-information.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 2: Basic Properties of Information</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/InformationTheory/oxford-lecture-3-introducing-codes.html">
+ <span class="dropdown-text">Oxford Information Theory Lecture 3: Introducing Codes</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Calculus</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/six-functions-rules-theorems.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Six Functions, Six Rules, and Six Theorems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-growth.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Growth</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/differential-equations-of-motion.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Differential Equations of Motion</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/power-series-eulers-great-formula.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Power Series and Euler’s Great Formula</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/linear-approximation-newtons-method.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Linear Approximation and Newton’s Method</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/growth-rates-log-graphs.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Growth Rates and Log Graphs</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivatives-ln-arcsin.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivatives of ln y and arcsin(y)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/limits-continuous-functions.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Limits and Continuous Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/derivative-sin-cos.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Derivative of sin x and cos x</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/product-quotient-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Product Rule and Quotient Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/chain-rule.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Chains and the Chain Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-integral.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture Integral</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/exponential-function.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: The Exponential Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/max-min-second-derivative.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Max, Min, and Second Derivative</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/big-picture-derivatives.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Big Picture on Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/Calculus/highlights-of-calculus.html">
+ <span class="dropdown-text">Gilbert Strang’s Calculus: Highlights</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Reflections &amp; Synthesis</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/mit1806-invertibility-connections.html">
+ <span class="dropdown-text">Invertibility Connections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/reflections/taylor-euler-fourier.html">
+ <span class="dropdown-text">Taylor, Euler, and Fourier</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.06SC Linear Algebra</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture1-geometry.html">
+ <span class="dropdown-text">Lecture 1: Geometry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture2-elimination.html">
+ <span class="dropdown-text">Lecture 2: Elimination</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture3-multiplication.html">
+ <span class="dropdown-text">Lecture 3: Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture4-lu-decomposition.html">
+ <span class="dropdown-text">Lecture 4: LU Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-permutations.html">
+ <span class="dropdown-text">Lecture 5.1: Permutations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-2-transpose.html">
+ <span class="dropdown-text">Lecture 5.2: Transpose</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture5-3-spaces.html">
+ <span class="dropdown-text">Lecture 5.3: Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture6-column-null-space.html">
+ <span class="dropdown-text">Lecture 6: Column &amp; Null Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture7-solving-ax-0.html">
+ <span class="dropdown-text">Lecture 7: Solving Ax=0</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture8-solving-ax-b.html">
+ <span class="dropdown-text">Lecture 8: Solving Ax=b</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture9-independence-basis-dimension.html">
+ <span class="dropdown-text">Lecture 9: Independence, Basis, Dimension</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture10-four-subspaces.html">
+ <span class="dropdown-text">Lecture 10: Four Fundamental Subspaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture11-matrix-spaces.html">
+ <span class="dropdown-text">Lecture 11: Matrix Spaces</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture12-graphs-networks.html">
+ <span class="dropdown-text">Lecture 12: Graphs and Networks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture13-quiz-review.html">
+ <span class="dropdown-text">Lecture 13: Quiz 1 Review</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture14-orthogonality.html">
+ <span class="dropdown-text">Lecture 14: Orthogonality</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture15-projections.html">
+ <span class="dropdown-text">Lecture 15: Projections</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture16-least-squares.html">
+ <span class="dropdown-text">Lecture 16: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture17-gram-schmidt.html">
+ <span class="dropdown-text">Lecture 17: Gram-Schmidt</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture18-determinants.html">
+ <span class="dropdown-text">Lecture 18: Determinants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture19-determinant-formulas.html">
+ <span class="dropdown-text">Lecture 19: Determinant Formulas</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture20-cramers-rule.html">
+ <span class="dropdown-text">Lecture 20: Inverse &amp; Volume</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture21-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 21: Eigenvalues &amp; Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture22-diagonalization-powers.html">
+ <span class="dropdown-text">Lecture 22: Diagonalization &amp; Powers</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture23-differential-equations.html">
+ <span class="dropdown-text">Lecture 23: Differential Equations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture24-markov-fourier.html">
+ <span class="dropdown-text">Lecture 24: Markov &amp; Fourier</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture25-symmetric-positive-definite.html">
+ <span class="dropdown-text">Lecture 25: Symmetric &amp; Positive Definite</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture26-complex-matrices-fft.html">
+ <span class="dropdown-text">Lecture 26: Complex Matrices &amp; FFT</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture27-positive-definite-minima.html">
+ <span class="dropdown-text">Lecture 27: Positive Definite &amp; Minima</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture28-similar-matrices-jordan.html">
+ <span class="dropdown-text">Lecture 28: Similar Matrices &amp; Jordan Form</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture29-svd.html">
+ <span class="dropdown-text">Lecture 29: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture30-linear-transformations.html">
+ <span class="dropdown-text">Lecture 30: Linear Transformations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture31-change-of-basis.html">
+ <span class="dropdown-text">Lecture 31: Change of Basis</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.06/mit1806-lecture33-left-right-inverse.html">
+ <span class="dropdown-text">Lecture 33: Left &amp; Right Inverse</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">MIT 18.065: Linear Algebra Applications</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture1-column-space.html">
+ <span class="dropdown-text">Lecture 1: Column Space</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture2-multiplying-factoring.html">
+ <span class="dropdown-text">Lecture 2: Multiplying and Factoring Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture3-orthonormal-columns.html">
+ <span class="dropdown-text">Lecture 3: Orthonormal Columns</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture4-eigenvalues-eigenvectors.html">
+ <span class="dropdown-text">Lecture 4: Eigenvalues and Eigenvectors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture5-positive-definite.html">
+ <span class="dropdown-text">Lecture 5: Positive Definite Matrices</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture6-svd.html">
+ <span class="dropdown-text">Lecture 6: Singular Value Decomposition</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture7-eckart-young.html">
+ <span class="dropdown-text">Lecture 7: Eckart-Young Theorem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture8-norms.html">
+ <span class="dropdown-text">Lecture 8: Norms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture9-least-squares.html">
+ <span class="dropdown-text">Lecture 9: Least Squares</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture10-axb-difficulties.html">
+ <span class="dropdown-text">Lecture 10: Survey of Ax=b Difficulties</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/lecture-11-minimize-norm-subject-to-constraint.html">
+ <span class="dropdown-text">Lecture 11: Minimize Norm subject to Constraint</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture12-eigenvalue-algorithms.html">
+ <span class="dropdown-text">Lecture 12: Computing Eigenvalues</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture13-randomized-matrix-multiplication.html">
+ <span class="dropdown-text">Lecture 13: Randomized Matrix Multiplication</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture14-low-rank-changes-inverse.html">
+ <span class="dropdown-text">Lecture 14: Low Rank Changes</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture15-matrix-derivatives.html">
+ <span class="dropdown-text">Lecture 15: Matrix Derivatives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture16-derivative-inverse-singular-values.html">
+ <span class="dropdown-text">Lecture 16: Derivative of Inverse and Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture17-rapidly-decreasing-singular-values.html">
+ <span class="dropdown-text">Lecture 17: Rapidly Decreasing Singular Values</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture18-counting-parameters-svd-lu-qr-saddle-points.html">
+ <span class="dropdown-text">Lecture 18: Counting Parameters in SVD, LU, QR, and Saddle Points</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture19-saddle-point-maxmin-principle.html">
+ <span class="dropdown-text">Lecture 19: Saddle Point and the Max–Min Principle</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture20-probability-definitions-inequalities.html">
+ <span class="dropdown-text">Lecture 20: Probability Definitions and Inequalities</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture21-minimizing-function.html">
+ <span class="dropdown-text">Lecture 21: Minimizing a Function</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture22-gradient-descent.html">
+ <span class="dropdown-text">Lecture 22: Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture23-accelerating-gradient-descent-momentum.html">
+ <span class="dropdown-text">Lecture 23: Accelerating Gradient Descent (Momentum)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture24-linear-programming-two-person-games.html">
+ <span class="dropdown-text">Lecture 24: Linear Programming and Two-Person Games</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture25-stochastic-gradient-descent.html">
+ <span class="dropdown-text">Lecture 25: Stochastic Gradient Descent</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture26-structure-of-neural-nets.html">
+ <span class="dropdown-text">Lecture 26: Structure of Neural Nets for Deep Learning</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture27-backpropagation-partial-gradients.html">
+ <span class="dropdown-text">Lecture 27: Back Propagation and Partial Gradients</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture30-completing-rank1-circulants.html">
+ <span class="dropdown-text">Lecture 30: Completing a Rank-1 Matrix, Circulants</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture31-fourier-matrix.html">
+ <span class="dropdown-text">Lecture 31: Eigenvectors of Circulant Matrices, Fourier Matrix</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture32-convolution-rule.html">
+ <span class="dropdown-text">Lecture 32: The Convolution Rule</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture34-distance-matrices-procrustes.html">
+ <span class="dropdown-text">Lecture 34: Distance Matrices, Procrustes Problem</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/MIT18.065/mit18065-lecture35-find-clusters-graph.html">
+ <span class="dropdown-text">Lecture 35: Find Clusters in Graph</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Stanford EE 364A: Convex Optimization</li>
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/lectures.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture1-intro.html">
+ <span class="dropdown-text">Lecture 1: Introduction</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture2-math-foundations.html">
+ <span class="dropdown-text">Lecture 2: Convex Sets</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture3-convex-functions.html">
+ <span class="dropdown-text">Lecture 3: Convex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part1-operations-preserving-convexity.html">
+ <span class="dropdown-text">Lecture 4.1: Operations Preserving Convexity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture4-part2-conjugate-quasiconvex.html">
+ <span class="dropdown-text">Lecture 4.2: Conjugate &amp; Quasiconvex Functions</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part1-log-concave-convex.html">
+ <span class="dropdown-text">Lecture 5.1: Log-Concave &amp; Log-Convex</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture5-part2-monotonicity.html">
+ <span class="dropdown-text">Lecture 5.2: Monotonicity</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture6-optimization-problems.html">
+ <span class="dropdown-text">Chapter 4.1: Optimization Problems</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture7-convex-optimization.html">
+ <span class="dropdown-text">Chapter 4.2: Convex Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture8-linear-optimization.html">
+ <span class="dropdown-text">Chapter 4.3: Linear Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-lecture9-quadratic-optimization.html">
+ <span class="dropdown-text">Chapter 4.4: Quadratic Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-5-geometric-programming.html">
+ <span class="dropdown-text">Chapter 4.5: Geometric Programming</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-6-generalized-inequality-constraints.html">
+ <span class="dropdown-text">Chapter 4.6: Generalized Inequality Constraints</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter4-7-vector-optimization.html">
+ <span class="dropdown-text">Chapter 4.7: Vector Optimization</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Math/EE364A/ee364a-chapter5-1-lagrange-dual-function.html">
+ <span class="dropdown-text">Chapter 5.1: The Lagrange Dual Function</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-theory-to-repro" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Theory-to-Repro</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-theory-to-repro">    
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Theory-to-Repro/linear-regression-three-ways.html">
+ <span class="dropdown-text">Linear Regression via Three Solvers</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li>
+    <a class="dropdown-item" href="../../ML/k_means_clustering.html">
+ <span class="dropdown-text">K-Means Clustering</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/logistic_regression.html">
+ <span class="dropdown-text">Logistic Regression</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../ML/axis.html">
+ <span class="dropdown-text">Axis Operations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Algorithm/dp_regex.html">
+ <span class="dropdown-text">DP Regex</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-building-startups" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Building Startups</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-building-startups">    
+        <li>
+    <a class="dropdown-item" href="../../Startups/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Startups/getting-and-evaluating-startup-ideas.html">
+ <span class="dropdown-text">Getting and Evaluating Startup Ideas</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/ickma2311/ickma2311.github.io/discussions"> 
+<span class="menu-text">Feedback</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#stage-1-generic-cell-segmentation-across-microscopy-image-groups" id="toc-stage-1-generic-cell-segmentation-across-microscopy-image-groups" class="nav-link active" data-scroll-target="#stage-1-generic-cell-segmentation-across-microscopy-image-groups">Stage 1: Generic cell segmentation across microscopy image groups</a>
+  <ul class="collapse">
+  <li><a href="#how-object-overlap-and-f1-score-measure-segmentation" id="toc-how-object-overlap-and-f1-score-measure-segmentation" class="nav-link" data-scroll-target="#how-object-overlap-and-f1-score-measure-segmentation">How object overlap and F1-score measure segmentation</a></li>
+  <li><a href="#three-architecturesand-why-the-dsb-ensemble-outscored-group-specific-workflows" id="toc-three-architecturesand-why-the-dsb-ensemble-outscored-group-specific-workflows" class="nav-link" data-scroll-target="#three-architecturesand-why-the-dsb-ensemble-outscored-group-specific-workflows">Three architectures—and why the DSB ensemble outscored group-specific workflows</a></li>
+  </ul></li>
+  <li><a href="#stage-2-weakly-supervised-single-cell-representation-learning" id="toc-stage-2-weakly-supervised-single-cell-representation-learning" class="nav-link" data-scroll-target="#stage-2-weakly-supervised-single-cell-representation-learning">Stage 2: Weakly supervised single-cell representation learning</a>
+  <ul class="collapse">
+  <li><a href="#pairwise-graph-evaluation-and-benchmark-enrichment" id="toc-pairwise-graph-evaluation-and-benchmark-enrichment" class="nav-link" data-scroll-target="#pairwise-graph-evaluation-and-benchmark-enrichment">Pairwise graph evaluation and benchmark enrichment</a></li>
+  </ul></li>
+  <li><a href="#batch-confounders-and-gradient-reversal-grl" id="toc-batch-confounders-and-gradient-reversal-grl" class="nav-link" data-scroll-target="#batch-confounders-and-gradient-reversal-grl">Batch confounders and Gradient Reversal (GRL)</a></li>
+  <li><a href="#open-challenges" id="toc-open-challenges" class="nav-link" data-scroll-target="#open-challenges">Open challenges</a></li>
+  <li><a href="#lecture-and-sources" id="toc-lecture-and-sources" class="nav-link" data-scroll-target="#lecture-and-sources">Lecture and sources</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Segment First, Then Deconfound the Cellular Profile</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">MIT 6.874 · Lecture 21: Image-Based Cell Phenotyping with Deep Learning</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Biology</div>
+    <div class="quarto-category">Deep Learning</div>
+    <div class="quarto-category">Microscopy</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    How generic cell segmentation (2018 Data Science Bowl), weakly supervised embeddings, and gradient reversal discourage batch-predictive features in cellular profiling.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Chao Ma </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">November 25, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>In 2012, researchers screening compounds for acute megakaryoblastic leukemia (AMKL) did not train a deep neural network to classify microscopy images end to end. Instead, they segmented DNA-stained nuclei and measured total per-cell DNA content (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=3">p.&nbsp;3</a>; Wen et al., 2012). Comparing the assay’s positive-control compound <code>SU6656</code> against the neutral <code>DMSO</code> control showed a rightward shift in <span class="math inline">\(\log_2(\text{Per-cell DNA content})\)</span> from roughly <span class="math inline">\(6\text{–}8\)</span> to <span class="math inline">\(9\text{–}11\)</span>, confirming that image segmentation could track nuclear polyploidization (with visual cell enlargement noted in the talk); subsequent screen hits, target-identification experiments, and testing of <strong>Alisertib</strong> led to clinical trials in adult AMKL (<a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=175s">recording, 02:55–04:40</a>).</p>
+<p>Most biological screens lack a single pre-known morphological readout like cell size or DNA content. When comparing perturbed cell populations across thousands of candidate drugs or gene knockdowns, <strong>image-based profiling</strong> replaces hand-picked biomarkers with quantitative morphological representations extracted across multi-well plates (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=5">pp.&nbsp;5–6</a>; Caicedo et al., 2016).</p>
+<p><a href="https://mit6874.github.io/">MIT 6.874 Lecture 21</a> (Spring 2021; the syllabus row reads <em>Video processing, structure determination</em>, while the official linked slides and recording—titled <em>Lecture 20: Deep Learning for Cell Imaging Segmentation</em> on YouTube—present guest lecturer <strong>Juan C. Caicedo</strong> from the Broad Institute on <em>Image-based cell phenotyping with deep learning</em>) splits that profiling workflow into two distinct deep-learning problems (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=7">p.&nbsp;7</a>; <a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=460s">07:40–07:56</a>): <strong>cell segmentation</strong> (a supervised detection task) and <strong>single-cell representation learning</strong> (a weakly supervised embedding task with optional adversarial batch correction).</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="lifesci21-assets/cell-profiling-pipeline.png" class="img-fluid figure-img" alt="Four-stage synthesis on warm cream background. Panel 1 Raw Images shows a DSB fluorescence field. Panel 2 Cell Segmentation shows its manual reference masks (pretrained benchmark: 0.816 F1, 0 h). Panel 3 Single-Cell CNN feeds two separate EGFR cell crops (Control and Wild Type) into an encoder and embedding h, branching forward to y and GRL to d with backward -lambda. Panel 4 Profiles shows barcode vectors, a four-leaf dendrogram, and a similarity heatmap."></p>
+<figcaption>Conceptual synthesis of the two deep-learning stages across the MIT 6.874 Lecture 21 modules, pairing a real 2018 Data Science Bowl fluorescence nuclei image and its manual reference mask (p.&nbsp;12) with two separate EGFR multi-channel single-cell crops (p.&nbsp;25: Control and Wild Type), weakly supervised embeddings with optional GRL, and aggregated similarity profiles (Caicedo et al., 2017–2019). Note that the 2018 weakly supervised profiling study used Otsu DNA thresholding to crop cells, while the lecture pairs generic segmentation with learned embeddings.</figcaption>
+</figure>
+</div>
+<section id="stage-1-generic-cell-segmentation-across-microscopy-image-groups" class="level2">
+<h2 class="anchored" data-anchor-id="stage-1-generic-cell-segmentation-across-microscopy-image-groups">Stage 1: Generic cell segmentation across microscopy image groups</h2>
+<p>Historically, every time a biology lab changed a stain, microscope objective, or tissue preparation, its segmentation algorithm broke (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=8">pp.&nbsp;8–9</a>; <a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=480s">08:00–09:40</a>). Unlike face detectors in consumer photography—which work across indoor, outdoor, and crowded scenes without per-camera tuning—classical microscopy segmentation stayed brittle and protocol-specific (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=10">p.&nbsp;10</a>; <a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=580s">09:40–10:12</a>).</p>
+<p>To test whether one supervised deep model could segment nuclei across divergent microscopy protocols, Caicedo and collaborators organized the <strong>2018 Data Science Bowl</strong> ($100,000 prize; reported in the lecture as 3 months, 3,634 teams, 65,333 experiments, and roughly 32,000 manually annotated single cells across 30 experiments—while the published competition paper reports 3,891 first-stage teams, 68,017 submissions, and 37,333 annotated nuclei; <a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=11">p.&nbsp;11</a>). The dataset spanned five visual image groups across fluorescence and brightfield microscopy, split into a public training set, a feedback test set (Test 1), and a blind final evaluation set (Test 2) with an observed <strong>image-group distribution shift</strong> between training and held-out splits (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=12">p.&nbsp;12</a>; <a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=690s">11:30–14:55</a>):</p>
+<div class="table-scroll">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 26%">
+<col style="width: 26%">
+<col style="width: 26%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Visual Image Group</th>
+<th style="text-align: right;">Training Share</th>
+<th style="text-align: right;">Test Share</th>
+<th style="text-align: right;">Shift (Test − Train)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Small fluorescent</td>
+<td style="text-align: right;">80.6%</td>
+<td style="text-align: right;">67.9%</td>
+<td style="text-align: right;">−12.7 pp</td>
+</tr>
+<tr class="even">
+<td>Purple tissue</td>
+<td style="text-align: right;">15.5%</td>
+<td style="text-align: right;">15.1%</td>
+<td style="text-align: right;">−0.4 pp</td>
+</tr>
+<tr class="odd">
+<td>Grayscale tissue</td>
+<td style="text-align: right;">2.4%</td>
+<td style="text-align: right;">0.9%</td>
+<td style="text-align: right;">−1.5 pp</td>
+</tr>
+<tr class="even">
+<td>Large fluorescent</td>
+<td style="text-align: right;">0.9%</td>
+<td style="text-align: right;">11.3%</td>
+<td style="text-align: right;">+10.4 pp</td>
+</tr>
+<tr class="odd">
+<td>Pink and purple tissue</td>
+<td style="text-align: right;">0.6%</td>
+<td style="text-align: right;">4.7%</td>
+<td style="text-align: right;">+4.1 pp</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Note that the training shares sum to <span class="math inline">\(100.0\%\)</span>, whereas the test shares reported on <a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=12">p.&nbsp;12</a> sum to <span class="math inline">\(99.9\%\)</span> due to one-decimal rounding. Large fluorescent and pink-and-purple tissue images together made up only <span class="math inline">\(1.5\%\)</span> of training data yet <span class="math inline">\(16.0\%\)</span> of test data, forcing models to generalize across stain polarity, cell scale, and crowded tissue boundaries.</p>
+<section id="how-object-overlap-and-f1-score-measure-segmentation" class="level3">
+<h3 class="anchored" data-anchor-id="how-object-overlap-and-f1-score-measure-segmentation">How object overlap and F1-score measure segmentation</h3>
+<p>Each predicted nucleus mask <span class="math inline">\(A_{\text{pred}}\)</span> is matched against a ground-truth nucleus mask <span class="math inline">\(A_{\text{true}}\)</span> by <strong>Intersection over Union (<code>IoU</code>)</strong>:</p>
+<p><span class="math display">\[
+\text{IoU}(A_{\text{pred}}, A_{\text{true}}) = \frac{|A_{\text{pred}} \cap A_{\text{true}}|}{|A_{\text{pred}} \cup A_{\text{true}}|}.
+\]</span></p>
+<p>At a fixed threshold such as <span class="math inline">\(\tau = 0.7\)</span> (distinct from the competition’s multi-threshold ranking average across IoU cutoffs), matched pairs exceeding the strict cutoff (<span class="math inline">\(\text{IoU} &gt; \tau\)</span>) count as true positives (<span class="math inline">\(\text{TP}\)</span>), unmatched predictions count as false positives (<span class="math inline">\(\text{FP}\)</span>), and missed real nuclei count as false negatives (<span class="math inline">\(\text{FN}\)</span>), giving the image-level <span class="math inline">\(F_1\)</span> score (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=12">p.&nbsp;12</a>, <a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=15">p.&nbsp;15</a>):</p>
+<p><span class="math display">\[
+\text{Precision} = \frac{\text{TP}}{\text{TP} + \text{FP}}, \qquad
+\text{Recall} = \frac{\text{TP}}{\text{TP} + \text{FN}}, \qquad
+F_1 = \frac{2\,\text{TP}}{2\,\text{TP} + \text{FP} + \text{FN}}.
+\]</span></p>
+<p>As <strong>constructed numerical checks</strong> (not lecture data) to build intuition for those thresholds:</p>
+<ul>
+<li><strong>Concentric boundary tolerance:</strong> If a predicted circle sits entirely inside a ground-truth circle of radius <span class="math inline">\(R\)</span>, then <span class="math inline">\(\text{IoU} = \pi r^2 / (\pi R^2) = (r/R)^2\)</span>. Hitting the slide’s <span class="math inline">\(\text{IoU} = 0.7\)</span> boundary requires <span class="math inline">\(r/R = \sqrt{0.7} \approx 0.8367\)</span>, and passing the strict <span class="math inline">\(\text{IoU} &gt; 0.7\)</span> match rule requires <span class="math inline">\(r/R &gt; \sqrt{0.7}\)</span>—so even a concentric mask that looks visually close misses over <span class="math inline">\(16\%\)</span> of the radius at the cutoff.</li>
+<li><strong>Object-count F1 check:</strong> In an image with <span class="math inline">\(21\)</span> real nuclei where a model makes <span class="math inline">\(19\)</span> predictions—<span class="math inline">\(16\)</span> exceeding the <span class="math inline">\(\text{IoU} &gt; 0.7\)</span> cutoff (<span class="math inline">\(\text{TP}=16\)</span>), <span class="math inline">\(3\)</span> false splits or background hits (<span class="math inline">\(\text{FP}=3\)</span>), and <span class="math inline">\(5\)</span> missed nuclei (<span class="math inline">\(\text{FN}=5\)</span>)—precision is <span class="math inline">\(16/19 \approx 0.8421\)</span>, recall is <span class="math inline">\(16/21 \approx 0.7619\)</span>, and <span class="math inline">\(F_1 = 32/40 = 0.8000\)</span>.</li>
+</ul>
+</section>
+<section id="three-architecturesand-why-the-dsb-ensemble-outscored-group-specific-workflows" class="level3">
+<h3 class="anchored" data-anchor-id="three-architecturesand-why-the-dsb-ensemble-outscored-group-specific-workflows">Three architectures—and why the DSB ensemble outscored group-specific workflows</h3>
+<p>The top three Data Science Bowl entries spanned three distinct segmentation paradigms (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=14">p.&nbsp;14</a>; <a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=910s">15:10–32:10</a>):</p>
+<ol type="1">
+<li><strong>1st place (<code>[ods.ai] topcoders</code>) — U-Net &amp; FPN ensemble:</strong> An ensemble of 32 trained networks (8 U-Net and Feature Pyramid Network configurations across <code>DPN-92</code>, <code>ResNet34/101/152</code>, <code>InceptionResnetV2</code>, and <code>DenseNet121/169</code> trained over 4 cross-validation folds) evaluated with 8-way flip/rotation test-time augmentation (<a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1380s">23:00–25:30</a>; count of 32 at <a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1444s">24:04</a>). Caicedo noted that its accuracy margin over second and third place was small relative to its heavy compute cost (<a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1490s">24:50–25:25</a>).</li>
+<li><strong>2nd place (<code>jacobkie</code>) — Feature Pyramid Network with boundary-distance encoding:</strong> Rather than predicting binary foreground masks directly, the model predicted multi-scale per-pixel distances from cell interiors to boundaries along four fixed directions (described in the talk as distance/direction cues toward boundaries and centers), improving separation in crowded nuclei (<a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1160s">19:20–21:40</a>).</li>
+<li><strong>3rd place (<code>Deep Retina</code>) — Mask R-CNN:</strong> A Mask R-CNN architecture (illustrated with a COCO-pretrained <code>ResNet50-FPN</code> diagram on <a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=14">p.&nbsp;14</a>, while the <code>Deep Retina</code> team’s submitted implementation used a COCO-pretrained <code>ResNet101-FPN</code> backbone) with a Region Proposal Network (<code>RPN</code>), <code>RoIAlign</code>, and parallel box, class, and mask heads. Other teams ran the same public codebase without matching this score; Caicedo noted that the other teams’ exact configurations were unknown, making hyperparameter calibration and preprocessing a plausible explanation (<a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=920s">15:20–18:50</a>).</li>
+</ol>
+<p>To measure practical lab effort and accuracy, Caicedo et al.&nbsp;(2019, <em>Nature Methods</em>) compared four segmentation workflows by mean per-image <code>F1-score @ 0.7 IoU</code> across Stage 2 held-out images spanning all five image groups (106 scored images in the benchmark paper, introduced as a 100-image scenario in the talk at <a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1676s">27:56</a>; <a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=15">p.&nbsp;15</a>):</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="lifesci21-assets/dsb-modality-shift-accuracy.png" class="img-fluid figure-img" alt="Paired horizontal bar chart titled The DSB Ensemble Outscored Group-Specific Workflows comparing four cell segmentation workflows on the Stage 2 benchmark across five image groups (Caicedo et al., 2019). Top DSB model achieves 0.816 mean per-image F1-score at 0.7 IoU with 0 h configuration time for the pretrained model; CellProfiler Expert reaches 0.743 in 3 h; U-Net Data scientist reaches 0.620 in 20 h; CellProfiler Novice reaches 0.616 in 5 h."></p>
+<figcaption>Reported mean per-image F1-score at 0.7 IoU and estimated configuration hours across four segmentation workflows on the Stage 2 benchmark across five image groups (MIT 6.874 Lecture 21, p.&nbsp;15; Caicedo et al., 2019, 106 scored images, presented as a 100-image lab scenario in the recording).</figcaption>
+</figure>
+</div>
+<p>Training five separate per-group U-Nets (<code>0.620</code> <span class="math inline">\(F_1\)</span>, <code>20 hours</code> of estimated data-scientist tuning) trailed a <code>CellProfiler</code> expert (<code>0.743</code> <span class="math inline">\(F_1\)</span>, <code>3 hours</code>) and matched a <code>CellProfiler</code> novice (<code>0.616</code> <span class="math inline">\(F_1\)</span>, <code>5 hours</code>), with Caicedo noting that imbalanced training coverage across image groups—alongside intrinsic differences in boundary difficulty—likely contributed to lower accuracy on scarce tissue types (<a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1761s">29:21–30:10</a>). Using the single pretrained top-performing DSB model reached <strong><code>0.816</code> <span class="math inline">\(F_1\)</span> with zero per-lab configuration time</strong> (<code>0 h</code> for an already-trained model)—though because the benchmark changes training data, architecture, and ensembling together, it reflects the full generalist workflow rather than isolating image-group pooling alone. Follow-on community tools adopted all three competition architectures (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=16">p.&nbsp;16</a>): <strong><code>Cellpose</code></strong> (Stringer et al., 2020; U-Nets, supporting both nuclei and whole-cell cytoplasm segmentation), <strong><code>nucleAIzer</code></strong> (Hollandi et al., 2020; Mask R-CNN, targeting nuclei segmentation), and <strong><code>Mesmer</code></strong> (Greenwald et al., 2021; Feature Pyramid Networks, segmenting both nuclei and whole cells).</p>
+</section>
+</section>
+<section id="stage-2-weakly-supervised-single-cell-representation-learning" class="level2">
+<h2 class="anchored" data-anchor-id="stage-2-weakly-supervised-single-cell-representation-learning">Stage 2: Weakly supervised single-cell representation learning</h2>
+<p>Once cells are located, the profiling pipeline follows five steps (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=19">p.&nbsp;19</a>; Caicedo et al., 2017): raw images <span class="math inline">\(\to\)</span> segmented cells <span class="math inline">\(\to\)</span> single-cell feature matrix <span class="math inline">\(\to\)</span> population-level treatment profiles <span class="math inline">\(\to\)</span> downstream statistical comparisons. Classical profiling computes hand-engineered descriptors—area, shape, color distribution, and nuclear size (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=20">p.&nbsp;20</a>).</p>
+<p>Replacing hand-engineered descriptors with learned neural features runs into an immediate supervision problem: <strong>there are no ground-truth biological phenotype labels</strong> during drug discovery or functional genomics (<a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2195s">36:35–37:45</a>). We do not know beforehand which compounds work or which share a mechanism of action.</p>
+<p><strong>Weakly supervised profiling</strong> (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=22">p.&nbsp;22</a>; Caicedo et al., 2018, <em>CVPR</em>, which located cells via Otsu DNA thresholding; extended in <code>DeepProfiler</code>) solves this by pairing an <strong>auxiliary training task</strong> with a different <strong>main profiling goal</strong>:</p>
+<ul>
+<li><strong>Auxiliary task (single-cell treatment classification):</strong> Given a cropped single-cell image <span class="math inline">\(x_k\)</span> from a multi-well plate, we know the applied treatment label <span class="math inline">\(y_k \in \{1,\dots,T\}\)</span> from the plate map. A CNN extracts an embedding <span class="math inline">\(h_k = \phi_\theta(x_k) \in \mathbb{R}^d\)</span> and passes logits <span class="math inline">\(z_k = W h_k + b \in \mathbb{R}^T\)</span> through a softmax cross-entropy loss: <span class="math display">\[
+\mathcal{L}_{\text{CE}}(\theta, W, b) = -\frac{1}{K}\sum_{k=1}^{K} \log \frac{\exp(z_{k, y_k})}{\sum_{c=1}^{T}\exp(z_{k, c})}.
+\]</span></li>
+<li><strong>Main goal (treatment-level profiling):</strong> At inference time, we discard the classification head. For each treatment <span class="math inline">\(i\)</span> with single-cell set <span class="math inline">\(X_i\)</span>, we aggregate cell embeddings into a treatment profile <span class="math inline">\(\mu(X_i) = \frac{1}{|X_i|}\sum_{k \in X_i}\phi_\theta(x_k)\)</span> and compute pairwise similarity <span class="math inline">\(Z_{i,j}\)</span> (for example via Pearson correlation or cosine similarity) across treatments (<a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2265s">37:45–39:00</a>).</li>
+</ul>
+<section id="pairwise-graph-evaluation-and-benchmark-enrichment" class="level3">
+<h3 class="anchored" data-anchor-id="pairwise-graph-evaluation-and-benchmark-enrichment">Pairwise graph evaluation and benchmark enrichment</h3>
+<p>To test whether learned profiles recover real biology without peeking at labels during inference, Caicedo evaluates the <strong>all-pairs similarity graph</strong> over <span class="math inline">\(M\)</span> treatments, which contains <span class="math inline">\(\binom{M}{2} = \frac{M(M-1)}{2}\)</span> undirected connections—for instance, <span class="math inline">\(M = 13\)</span> points on <a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=23">p.&nbsp;23</a> yield <span class="math inline">\(\binom{13}{2} = 78\)</span> pairwise connections. Ranking all pairs by similarity <span class="math inline">\(Z_{i,j}\)</span> and checking how often the top <span class="math inline">\(q\%\)</span> of connections share a known Mechanism of Action (<code>MOA</code>) or pathway relative to the remaining <span class="math inline">\((100 - q)\%\)</span> yields a fold enrichment score (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=23">pp.&nbsp;23–24</a>).</p>
+<p>As a <strong>constructed arithmetic check</strong> on a <span class="math inline">\(13\)</span>-node, <span class="math inline">\(78\)</span>-pair graph (the slide reports <span class="math inline">\(13\)</span> nodes and <span class="math inline">\(78\)</span> pairs, while the hit counts below are constructed): if <span class="math inline">\(12\)</span> of the <span class="math inline">\(78\)</span> pairs truly share an MOA, and the top <span class="math inline">\(13\)</span> highest-similarity pairs (<span class="math inline">\(16.7\%\)</span>) contain <span class="math inline">\(6\)</span> same-MOA pairs (<span class="math inline">\(6/13 \approx 46.2\%\)</span>) while the remaining <span class="math inline">\(65\)</span> pairs contain the other <span class="math inline">\(6\)</span> (<span class="math inline">\(6/65 \approx 9.2\%\)</span>), the top connections show a <span class="math inline">\((6/13)/(6/65) = 5.00\times\)</span> hit-rate ratio and an odds ratio of <span class="math inline">\((6/7)/(6/59) \approx 8.43\)</span>. (Slide 24 does not specify whether its vertical axis uses odds ratios or hit-rate ratios, though later <code>DeepProfiler</code> publications use per-query odds ratios.)</p>
+<p>Across three five-channel Cell Painting benchmarks (<code>Nucleus</code>, <code>ER</code>, <code>Mitochondria</code>, <code>Actin/Golgi/Plasma membrane</code>, <code>Nucleoli/cyto RNA</code>) plotted from <code>0.4%</code> to <code>2.0%</code> top connections on <a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=24">p.&nbsp;24</a> (whose y-axis is labeled verbatim as <code>Folds of enrichment (%)</code>), weakly supervised <strong>deep learning (<code>DeepProfiler</code>) outperformed classical features across every threshold</strong>:</p>
+<div class="table-scroll">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Benchmark</th>
+<th>Perturbation Scope</th>
+<th>Reported Deep Learning vs.&nbsp;Classical at Top 0.4% Connections</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>BBBC037</code></td>
+<td>Gene over-expression (<code>200</code> genes / ORFs)</td>
+<td><span class="math inline">\(\approx 30\times\)</span> vs.&nbsp;<span class="math inline">\(\approx 9\times\)</span></td>
+</tr>
+<tr class="even">
+<td><code>BBBC022</code></td>
+<td>Compound screen (<code>1,600</code> drugs, <code>453</code> MOAs)</td>
+<td><span class="math inline">\(&gt;8\times\)</span> vs.&nbsp;<span class="math inline">\(&lt;3\times\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>BBBC036</code></td>
+<td>Compound screen (<code>2,240</code> drugs, <code>693</code> MOAs)</td>
+<td><span class="math inline">\(&gt;8\times\)</span> vs.&nbsp;<span class="math inline">\(\approx 6.6\times\)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Beyond compound screening, single-cell morphological similarity can quantify phenotypic differences when evaluating whether a sequenced tumor mutation acts as a <strong>driver</strong> or a <strong>passenger</strong> (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=25">pp.&nbsp;25–26</a>; <a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2420s">40:20–41:40</a>). Comparing <code>EGFR</code> wild-type cells (<span class="math inline">\(n = 8{,}457\)</span>), <code>EGFR_p.S645C</code> mutant cells (<span class="math inline">\(n = 9{,}903\)</span>), and control cells (<span class="math inline">\(n = 21{,}554\)</span>) showed shifted—though overlapping—single-cell distributions in the two-dimensional projection and a reported <strong>variant impact score of <code>66.9%</code></strong> (an assay separation metric rather than a calibrated probability of oncogenicity).</p>
+</section>
+</section>
+<section id="batch-confounders-and-gradient-reversal-grl" class="level2">
+<h2 class="anchored" data-anchor-id="batch-confounders-and-gradient-reversal-grl">Batch confounders and Gradient Reversal (GRL)</h2>
+<p>Weak supervision has an Achilles’ heel: <strong>batch effects (<code>BE</code>)</strong>. The causal diagram on <a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=21">p.&nbsp;21</a> shows why naive treatment classification leaks spurious cues. The desired biological path runs <strong><code>CS -&gt; MO -&gt; PH</code></strong>: compound structure (<code>CS</code>) induces a morphological signature (<code>MO</code>), which reveals the phenotype (<code>PH</code>). However, batch effects—plate identity, imaging time, reagent lot, or technician—act as a <strong>confounder</strong> along two red shortcut paths:</p>
+<ol type="1">
+<li><code>BE -&gt; MO</code>: technical artifacts directly distort cell morphology.</li>
+<li><code>BE -&gt; CS -&gt; PH</code>: multi-well plate layouts often organize compounds systematically across specific plates or batches, creating a shortcut from batch to compound identity and phenotype prediction.</li>
+</ol>
+<p>Because the CNN only needs to predict which treatment well a cell came from, it can memorize plate lighting or edge artifacts instead of biology. On <a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=27">p.&nbsp;27</a>, embeddings colored by platemap form tight batch islands; post-hoc batch correction collapses some global offset yet leaves visible plate-correlated structure behind (<a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2505s">41:45–42:15</a>).</p>
+<p>To discourage batch-predictive features during training, Caicedo introduces an adversarial <strong>Gradient Reversal Layer (<code>GRL</code>)</strong> (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=28">p.&nbsp;28</a>; Ganin &amp; Lempitsky, 2015; <a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2535s">42:15–43:40</a>):</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="lifesci21-assets/grl-batch-deconfounding.png" class="img-fluid figure-img" alt="Two-branch neural network diagram. Single-Cell Crop x feeds Encoder G_f with parameters theta_f to produce Embedding h. Upper branch sends h to Treatment Head G_y and Loss L_y, returning positive gradient +dL_y/dtheta_f to keep compound signal. Lower branch passes h through GRL (Backward x -lambda) to Batch Head G_d and Loss L_d, returning reversed gradient -lambda dL_d/dtheta_f to penalize batch."></p>
+<figcaption>Gradient Reversal Layer architecture for discouraging batch-predictive features during single-cell representation learning (MIT 6.874 Lecture 21, p.&nbsp;28).</figcaption>
+</figure>
+</div>
+<p>Let <span class="math inline">\(h = G_f(x; \theta_f)\)</span> be the shared encoder embedding (denoted <code>features f</code> on <a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=28">p.&nbsp;28</a>), <span class="math inline">\(\hat{y} = G_y(h; \theta_y)\)</span> the treatment head with loss <span class="math inline">\(L_y\)</span>, and <span class="math inline">\(\hat{d} = G_d(\mathcal{R}_\lambda(h); \theta_d)\)</span> the batch/domain classifier head with loss <span class="math inline">\(L_d\)</span>. In the forward pass, <span class="math inline">\(\mathcal{R}_\lambda(h) = h\)</span> acts as the identity map; in backpropagation, the custom <code>GRL</code> backward rule maps any incoming upstream gradient <span class="math inline">\(g\)</span> to <span class="math inline">\(-\lambda g\)</span> (<span class="math inline">\(\lambda &gt; 0\)</span>). Writing <span class="math inline">\(\frac{\partial L_d}{\partial \theta_f}\)</span> for the domain-loss gradient with respect to <span class="math inline">\(\theta_f\)</span> <strong>before</strong> reversal, one stochastic gradient descent step with learning rate <span class="math inline">\(\eta\)</span> updates the three parameter blocks as:</p>
+<p><span class="math display">\[
+\theta_y \leftarrow \theta_y - \eta \frac{\partial L_y}{\partial \theta_y}, \qquad
+\theta_d \leftarrow \theta_d - \eta \frac{\partial L_d}{\partial \theta_d}, \qquad
+\theta_f \leftarrow \theta_f - \eta \left(\frac{\partial L_y}{\partial \theta_f} - \lambda \frac{\partial L_d}{\partial \theta_f}\right).
+\]</span></p>
+<p>Notice the minimax tension: <span class="math inline">\(\theta_d\)</span> improves at predicting the plate/batch <span class="math inline">\(d\)</span>, while the <span class="math inline">\(-\lambda \frac{\partial L_d}{\partial \theta_f}\)</span> term pushes <span class="math inline">\(\theta_f\)</span> <strong>uphill</strong> on <span class="math inline">\(L_d\)</span> (discouraging batch-predictive features) while <span class="math inline">\(\frac{\partial L_y}{\partial \theta_f}\)</span> pulls <span class="math inline">\(\theta_f\)</span> <strong>downhill</strong> on <span class="math inline">\(L_y\)</span> (preserving treatment discrimination).</p>
+<p>As a <strong>constructed 1D gradient check</strong>, let <span class="math inline">\(h = \theta_f x\)</span> with <span class="math inline">\(x = 2.0\)</span>, <span class="math inline">\(\theta_f = 0.5\)</span> (<span class="math inline">\(h = 1.0\)</span>), linear heads <span class="math inline">\(G_y(h) = w_y h\)</span> and <span class="math inline">\(G_d(h) = w_d h\)</span> with <span class="math inline">\(w_y = w_d = 1.0\)</span>, squared-error losses <span class="math inline">\(L_y = \frac{1}{2}(\hat{y} - y)^2\)</span> and <span class="math inline">\(L_d = \frac{1}{2}(\hat{d} - d)^2\)</span>, targets <span class="math inline">\(y = 2.0\)</span>, <span class="math inline">\(d = 2.0\)</span>, and <span class="math inline">\(\lambda = 0.5\)</span>. Before reversal, both losses push <span class="math inline">\(\theta_f\)</span> in the same direction:</p>
+<p><span class="math display">\[
+\frac{\partial L_y}{\partial \theta_f} = (\hat{y} - y)\,w_y x = (1.0 - 2.0)(1.0)(2.0) = -2.0, \qquad
+\frac{\partial L_d}{\partial \theta_f} = (\hat{d} - d)\,w_d x = (1.0 - 2.0)(1.0)(2.0) = -2.0.
+\]</span></p>
+<p>With <code>GRL</code>, the effective encoder gradient becomes <span class="math inline">\(-2.0 - 0.5(-2.0) = -1.0\)</span>, subtracting half of the batch-aligned component. With the heads held fixed and a small positive step <span class="math inline">\(\eta\)</span>, this combined update still decreases both <span class="math inline">\(L_y\)</span> and <span class="math inline">\(L_d\)</span> (only the <span class="math inline">\(-\lambda \frac{\partial L_d}{\partial \theta_f} = +1.0\)</span> contribution opposes <span class="math inline">\(L_d\)</span>), whereas in this equal-gradient example increasing <span class="math inline">\(\lambda\)</span> above <span class="math inline">\(1.0\)</span> reverses the net sign (more generally, reversing aligned gradients requires <span class="math inline">\(\lambda \|g_d\| &gt; \|g_y\|\)</span>).</p>
+<p>On <a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=29">p.&nbsp;29</a>, training <code>ResNet18GRL</code> across 9 genetic perturbation/control classes (<code>0_CTRL</code>, <code>0_DGK</code>, <code>0_FIG4</code>, <code>0_GDAP1</code>, <code>0_GUK1</code>, <code>0_KIF1A</code>, <code>0_MFN2</code>, <code>0_RRM1</code>, <code>0_VCP</code>) and 9 dataset/batch sources (<code>1_DS1</code> through <code>1_DS9</code>) produced visible mixing of dataset colors (<code>1_DS1</code>–<code>1_DS9</code>) across both training and held-out validation projections while maintaining broad biological groupings (with visible overlap among some validation classes and no quantitative residual batch-accuracy metric reported).</p>
+</section>
+<section id="open-challenges" class="level2">
+<h2 class="anchored" data-anchor-id="open-challenges">Open challenges</h2>
+<p>Caicedo closes both parts of the lecture with four unsolved bottlenecks (<a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=17">p.&nbsp;17</a>, <a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=30">p.&nbsp;30</a>; <a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1995s">33:15–34:00</a>, <a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2630s">43:50–44:25</a>):</p>
+<ul>
+<li><strong>Segmentation scale and label efficiency:</strong> Public annotated microscopy datasets remain small compared with natural-image benchmarks, making active learning from a few corrected examples a promising way to reduce expert annotation effort (<a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2026s">33:46</a>).</li>
+<li><strong>Stronger domain adaptation and explainability:</strong> Adversarial batch correction remains an active research problem—Caicedo introduced <code>GRL</code> as an approach his group was currently testing (<a href="https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2537s">42:17</a>)—and deep single-cell embeddings remain difficult for biologists to interpret compared with classical morphology metrics.</li>
+</ul>
+</section>
+<section id="lecture-and-sources" class="level2">
+<h2 class="anchored" data-anchor-id="lecture-and-sources">Lecture and sources</h2>
+<div class="lecture-video">
+<iframe src="https://www.youtube.com/embed/MVDUnbVXMGM" title="MIT 6.874 Spring 2021 Lecture 21 — Image-Based Cell Phenotyping with Deep Learning (YouTube: Lecture 20)" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" loading="lazy">
+</iframe>
+</div>
+<ul>
+<li><a href="https://mit6874.github.io/">MIT 6.874 Spring 2021 official schedule</a> (Lecture 21, May 6, 2021; syllabus row text reads <em>Video processing, structure determination</em>, while the linked slides and recording cover Caicedo’s cell phenotyping lecture) and <a href="https://www.youtube.com/watch?v=MVDUnbVXMGM">official lecture recording</a> (45:19; titled <em>Lecture 20: Deep Learning for Cell Imaging Segmentation</em> on YouTube).</li>
+<li><a href="https://mit6874.github.io/assets/sp2021/slides/l21.pdf">Juan C. Caicedo, <em>Image-based cell phenotyping with deep learning</em>, Lecture 21 slides (32 pp.)</a>, especially pp.&nbsp;2–3, 6–17, 19–31.</li>
+<li>Key cited studies: Wen et al., <em>Cell</em> (2012) (AMKL leukemia screen / Alisertib); Caicedo et al., <em>Curr. Opin. Biotechnol.</em> (2016) (image-based profiling overview); Caicedo et al., <em>Nature Methods</em> (2017) (profiling pipeline); Caicedo et al., <em>CVPR</em> (2018) (weakly supervised single-cell CNN); Caicedo et al., <em>Nature Methods</em> (2019) (2018 Data Science Bowl evaluation); Stringer et al., <em>Nature Methods</em> (2020) (<code>Cellpose</code>); Hollandi et al., <em>Cell Systems</em> (2020) (<code>nucleAIzer</code>); Greenwald et al., <em>bioRxiv</em> (2021) (<code>Mesmer</code>); Ganin &amp; Lempitsky, <em>ICML</em> (2015) (Gradient Reversal Layer).</li>
+<li>Original explanatory figures: <a href="lifesci21-assets/create_figures.py">create_figures.py</a> and <a href="lifesci21-assets/manifest.json">manifest.json</a>. Constructed worked checks (concentric-circle <span class="math inline">\(\text{IoU}=0.7\)</span>, object-count <span class="math inline">\(F_1\)</span>, 78-pair enrichment ratio, and 1D <code>GRL</code> gradient step) are labeled explicitly and separated from lecture-reported measurements.</li>
+</ul>
+
+
+<!-- -->
+
+<nav class="reader-links" aria-label="Stay connected with Chao">
+  <p class="reader-links-eyebrow">Beyond the blog</p>
+  <p class="reader-links-title">Stay connected with Chao</p>
+  <p class="reader-links-intro">Follow my ideas, say hello, or explore what I’m building.</p>
+  <div class="reader-links-items">
+    <a class="reader-card reader-card-x" href="https://x.com/ickma2311" target="_blank" rel="noopener noreferrer">
+      <span class="reader-card-icon" aria-hidden="true"><svg viewbox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3L12 14.6 5.5 22H2.3l8.2-9.4L.8 2h6.5l5.8 7.6L18.9 2Zm-1.1 18h1.7L6.4 3.9H4.6L17.8 20Z"></path></svg></span>
+      <span class="reader-card-arrow" aria-hidden="true">↗</span>
+      <span class="reader-card-name">X / Twitter</span>
+      <span class="reader-card-description">Notes, ideas &amp; things I’m learning.</span>
+      <span class="reader-card-action">Follow @ickma2311</span>
+    </a>
+    <a class="reader-card reader-card-linkedin" href="https://www.linkedin.com/in/chao-ma-929839241/" target="_blank" rel="noopener noreferrer">
+      <span class="reader-card-icon" aria-hidden="true"><svg viewbox="0 0 24 24" fill="currentColor"><path d="M20.45 2H3.55C2.69 2 2 2.68 2 3.52v16.96c0 .84.69 1.52 1.55 1.52h16.9c.86 0 1.55-.68 1.55-1.52V3.52c0-.84-.69-1.52-1.55-1.52ZM7.93 18.75H4.98V9.2h2.95v9.55ZM6.45 7.89a1.71 1.71 0 1 1 0-3.42 1.71 1.71 0 0 1 0 3.42Zm12.3 10.86H15.8V14.1c0-1.11-.02-2.54-1.55-2.54-1.55 0-1.79 1.21-1.79 2.46v4.73H9.51V9.2h2.83v1.3h.04c.39-.74 1.36-1.52 2.79-1.52 2.98 0 3.58 1.96 3.58 4.5v5.27Z"></path></svg></span>
+      <span class="reader-card-arrow" aria-hidden="true">↗</span>
+      <span class="reader-card-name">LinkedIn</span>
+      <span class="reader-card-description">Let’s connect over AI, learning &amp; work.</span>
+      <span class="reader-card-action">Connect with me</span>
+    </a>
+    <a class="reader-card reader-card-daily" href="https://dailychat.net/" target="_blank" rel="noopener">
+      <span class="reader-card-icon" aria-hidden="true"><svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"></path><path d="m13 7-4 5h4l-2 3 5-5h-4l1-3Z"></path></svg></span>
+      <span class="reader-card-arrow" aria-hidden="true">↗</span>
+      <span class="reader-card-name">DailyChat</span>
+      <span class="reader-card-description">Your quick read on AI &amp; tech.</span>
+      <span class="reader-card-action">Explore DailyChat</span>
+    </a>
+  </div>
+</nav>
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/ickma2311\.github\.io");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<input type="hidden" id="giscus-base-theme" value="light">
+<input type="hidden" id="giscus-alt-theme" value="light">
+<script>
+  function loadGiscus() {
+    // Function to get the theme based on body class
+    const getTheme = () => {
+      let baseTheme = document.getElementById('giscus-base-theme').value;
+      let altTheme = document.getElementById('giscus-alt-theme').value;
+      return document.body.classList.contains('quarto-dark') ? altTheme : baseTheme;
+    };
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.dataset.repo = "ickma2311/ickma2311.github.io";
+    script.dataset.repoId = "R_kgDOOzbaAg";
+    script.dataset.category = "Comments";
+    script.dataset.categoryId = "DIC_kwDOOzbaAs4CxPFj";
+    script.dataset.mapping = "pathname";
+    script.dataset.reactionsEnabled = "1";
+    script.dataset.emitMetadata = "0";
+    script.dataset.inputPosition = "top";
+    script.dataset.theme = getTheme();
+    script.dataset.lang = "en";
+    script.crossOrigin = "anonymous";
+    // Append the script to the desired div instead of at the end of the body
+    document.getElementById("quarto-content").appendChild(script);
+  }
+  loadGiscus();
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Segment First, Then Deconfound the Cellular Profile"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "MIT 6.874 · Lecture 21: Image-Based Cell Phenotyping with Deep Learning"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "How generic cell segmentation (2018 Data Science Bowl), weakly supervised embeddings, and gradient reversal discourage batch-predictive features in cellular profiling."</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Chao Ma"</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-11-25"</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Biology, Deep Learning, Microscopy]</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="an">image:</span><span class="co"> "lifesci21-assets/cell-profiling-pipeline.png"</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="an">resources:</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">  - "lifesci21-assets/create_figures.py"</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">  - "lifesci21-assets/manifest.json"</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">    include-in-header:</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">      text: |</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co">        &lt;style&gt;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co">        .math.display {display:block;max-width:100%;overflow-x:auto;overflow-y:hidden;padding:0.35rem 0;}</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co">        mjx-container[display="true"] {max-width:100%;overflow-x:auto;overflow-y:hidden;}</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co">        .table-scroll {overflow-x:auto;max-width:100%;}</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">        .lecture-video {position:relative;width:100%;aspect-ratio:16/9;margin:1.5rem 0;}</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co">        .lecture-video iframe {position:absolute;width:100%;height:100%;border:0;}</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co">        &lt;/style&gt;</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>In 2012, researchers screening compounds for acute megakaryoblastic leukemia (AMKL) did not train a deep neural network to classify microscopy images end to end. Instead, they segmented DNA-stained nuclei and measured total per-cell DNA content (<span class="co">[</span><span class="ot">p. 3</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=3)</span>; Wen et al., 2012). Comparing the assay's positive-control compound <span class="in">`SU6656`</span> against the neutral <span class="in">`DMSO`</span> control showed a rightward shift in $\log_2(\text{Per-cell DNA content})$ from roughly $6\text{–}8$ to $9\text{–}11$, confirming that image segmentation could track nuclear polyploidization (with visual cell enlargement noted in the talk); subsequent screen hits, target-identification experiments, and testing of **Alisertib** led to clinical trials in adult AMKL (<span class="co">[</span><span class="ot">recording, 02:55–04:40</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=175s)</span>).</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>Most biological screens lack a single pre-known morphological readout like cell size or DNA content. When comparing perturbed cell populations across thousands of candidate drugs or gene knockdowns, **image-based profiling** replaces hand-picked biomarkers with quantitative morphological representations extracted across multi-well plates (<span class="co">[</span><span class="ot">pp. 5–6</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=5)</span>; Caicedo et al., 2016).</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">MIT 6.874 Lecture 21</span><span class="co">](https://mit6874.github.io/)</span> (Spring 2021; the syllabus row reads *Video processing, structure determination*, while the official linked slides and recording—titled *Lecture 20: Deep Learning for Cell Imaging Segmentation* on YouTube—present guest lecturer **Juan C. Caicedo** from the Broad Institute on *Image-based cell phenotyping with deep learning*) splits that profiling workflow into two distinct deep-learning problems ([p. 7](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=7); [07:40–07:56](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=460s)): **cell segmentation** (a supervised detection task) and **single-cell representation learning** (a weakly supervised embedding task with optional adversarial batch correction).</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="al">![Conceptual synthesis of the two deep-learning stages across the MIT 6.874 Lecture 21 modules, pairing a real 2018 Data Science Bowl fluorescence nuclei image and its manual reference mask (p. 12) with two separate EGFR multi-channel single-cell crops (p. 25: Control and Wild Type), weakly supervised embeddings with optional GRL, and aggregated similarity profiles (Caicedo et al., 2017–2019). Note that the 2018 weakly supervised profiling study used Otsu DNA thresholding to crop cells, while the lecture pairs generic segmentation with learned embeddings.](lifesci21-assets/cell-profiling-pipeline.png)</span>{fig-alt="Four-stage synthesis on warm cream background. Panel 1 Raw Images shows a DSB fluorescence field. Panel 2 Cell Segmentation shows its manual reference masks (pretrained benchmark: 0.816 F1, 0 h). Panel 3 Single-Cell CNN feeds two separate EGFR cell crops (Control and Wild Type) into an encoder and embedding h, branching forward to y and GRL to d with backward -lambda. Panel 4 Profiles shows barcode vectors, a four-leaf dendrogram, and a similarity heatmap."}</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="fu">## Stage 1: Generic cell segmentation across microscopy image groups</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>Historically, every time a biology lab changed a stain, microscope objective, or tissue preparation, its segmentation algorithm broke (<span class="co">[</span><span class="ot">pp. 8–9</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=8)</span>; <span class="co">[</span><span class="ot">08:00–09:40</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=480s)</span>). Unlike face detectors in consumer photography—which work across indoor, outdoor, and crowded scenes without per-camera tuning—classical microscopy segmentation stayed brittle and protocol-specific (<span class="co">[</span><span class="ot">p. 10</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=10)</span>; <span class="co">[</span><span class="ot">09:40–10:12</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=580s)</span>).</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>To test whether one supervised deep model could segment nuclei across divergent microscopy protocols, Caicedo and collaborators organized the **2018 Data Science Bowl** (\$100,000 prize; reported in the lecture as 3 months, 3,634 teams, 65,333 experiments, and roughly 32,000 manually annotated single cells across 30 experiments—while the published competition paper reports 3,891 first-stage teams, 68,017 submissions, and 37,333 annotated nuclei; [p. 11](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=11)). The dataset spanned five visual image groups across fluorescence and brightfield microscopy, split into a public training set, a feedback test set (Test 1), and a blind final evaluation set (Test 2) with an observed **image-group distribution shift** between training and held-out splits (<span class="co">[</span><span class="ot">p. 12</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=12)</span>; <span class="co">[</span><span class="ot">11:30–14:55</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=690s)</span>):</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>::: {.table-scroll}</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Visual Image Group <span class="pp">|</span> Training Share <span class="pp">|</span> Test Share <span class="pp">|</span> Shift (Test − Train) <span class="pp">|</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---:|---:|---:|</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Small fluorescent <span class="pp">|</span> 80.6% <span class="pp">|</span> 67.9% <span class="pp">|</span> −12.7 pp <span class="pp">|</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Purple tissue <span class="pp">|</span> 15.5% <span class="pp">|</span> 15.1% <span class="pp">|</span> −0.4 pp <span class="pp">|</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Grayscale tissue <span class="pp">|</span> 2.4% <span class="pp">|</span> 0.9% <span class="pp">|</span> −1.5 pp <span class="pp">|</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Large fluorescent <span class="pp">|</span> 0.9% <span class="pp">|</span> 11.3% <span class="pp">|</span> +10.4 pp <span class="pp">|</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Pink and purple tissue <span class="pp">|</span> 0.6% <span class="pp">|</span> 4.7% <span class="pp">|</span> +4.1 pp <span class="pp">|</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>Note that the training shares sum to $100.0\%$, whereas the test shares reported on <span class="co">[</span><span class="ot">p. 12</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=12)</span> sum to $99.9\%$ due to one-decimal rounding. Large fluorescent and pink-and-purple tissue images together made up only $1.5\%$ of training data yet $16.0\%$ of test data, forcing models to generalize across stain polarity, cell scale, and crowded tissue boundaries.</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="fu">### How object overlap and F1-score measure segmentation</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>Each predicted nucleus mask $A_{\text{pred}}$ is matched against a ground-truth nucleus mask $A_{\text{true}}$ by **Intersection over Union (`IoU`)**:</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>\text{IoU}(A_{\text{pred}}, A_{\text{true}}) = \frac{|A_{\text{pred}} \cap A_{\text{true}}|}{|A_{\text{pred}} \cup A_{\text{true}}|}.</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>At a fixed threshold such as $\tau = 0.7$ (distinct from the competition's multi-threshold ranking average across IoU cutoffs), matched pairs exceeding the strict cutoff ($\text{IoU} &gt; \tau$) count as true positives ($\text{TP}$), unmatched predictions count as false positives ($\text{FP}$), and missed real nuclei count as false negatives ($\text{FN}$), giving the image-level $F_1$ score (<span class="co">[</span><span class="ot">p. 12</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=12)</span>, <span class="co">[</span><span class="ot">p. 15</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=15)</span>):</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>\text{Precision} = \frac{\text{TP}}{\text{TP} + \text{FP}}, \qquad</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>\text{Recall} = \frac{\text{TP}}{\text{TP} + \text{FN}}, \qquad</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>F_1 = \frac{2\,\text{TP}}{2\,\text{TP} + \text{FP} + \text{FN}}.</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>As **constructed numerical checks** (not lecture data) to build intuition for those thresholds:</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Concentric boundary tolerance:** If a predicted circle sits entirely inside a ground-truth circle of radius $R$, then $\text{IoU} = \pi r^2 / (\pi R^2) = (r/R)^2$. Hitting the slide's $\text{IoU} = 0.7$ boundary requires $r/R = \sqrt{0.7} \approx 0.8367$, and passing the strict $\text{IoU} &gt; 0.7$ match rule requires $r/R &gt; \sqrt{0.7}$—so even a concentric mask that looks visually close misses over $16\%$ of the radius at the cutoff.</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Object-count F1 check:** In an image with $21$ real nuclei where a model makes $19$ predictions—$16$ exceeding the $\text{IoU} &gt; 0.7$ cutoff ($\text{TP}=16$), $3$ false splits or background hits ($\text{FP}=3$), and $5$ missed nuclei ($\text{FN}=5$)—precision is $16/19 \approx 0.8421$, recall is $16/21 \approx 0.7619$, and $F_1 = 32/40 = 0.8000$.</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="fu">### Three architectures—and why the DSB ensemble outscored group-specific workflows</span></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>The top three Data Science Bowl entries spanned three distinct segmentation paradigms (<span class="co">[</span><span class="ot">p. 14</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=14)</span>; <span class="co">[</span><span class="ot">15:10–32:10</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=910s)</span>):</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**1st place (`[ods.ai] topcoders`) — U-Net &amp; FPN ensemble:** An ensemble of 32 trained networks (8 U-Net and Feature Pyramid Network configurations across <span class="in">`DPN-92`</span>, <span class="in">`ResNet34/101/152`</span>, <span class="in">`InceptionResnetV2`</span>, and <span class="in">`DenseNet121/169`</span> trained over 4 cross-validation folds) evaluated with 8-way flip/rotation test-time augmentation (<span class="co">[</span><span class="ot">23:00–25:30</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1380s)</span>; count of 32 at <span class="co">[</span><span class="ot">24:04</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1444s)</span>). Caicedo noted that its accuracy margin over second and third place was small relative to its heavy compute cost (<span class="co">[</span><span class="ot">24:50–25:25</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1490s)</span>).</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**2nd place (`jacobkie`) — Feature Pyramid Network with boundary-distance encoding:** Rather than predicting binary foreground masks directly, the model predicted multi-scale per-pixel distances from cell interiors to boundaries along four fixed directions (described in the talk as distance/direction cues toward boundaries and centers), improving separation in crowded nuclei (<span class="co">[</span><span class="ot">19:20–21:40</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1160s)</span>).</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**3rd place (`Deep Retina`) — Mask R-CNN:** A Mask R-CNN architecture (illustrated with a COCO-pretrained <span class="in">`ResNet50-FPN`</span> diagram on <span class="co">[</span><span class="ot">p. 14</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=14)</span>, while the <span class="in">`Deep Retina`</span> team's submitted implementation used a COCO-pretrained <span class="in">`ResNet101-FPN`</span> backbone) with a Region Proposal Network (<span class="in">`RPN`</span>), <span class="in">`RoIAlign`</span>, and parallel box, class, and mask heads. Other teams ran the same public codebase without matching this score; Caicedo noted that the other teams' exact configurations were unknown, making hyperparameter calibration and preprocessing a plausible explanation (<span class="co">[</span><span class="ot">15:20–18:50</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=920s)</span>).</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>To measure practical lab effort and accuracy, Caicedo et al. (2019, *Nature Methods*) compared four segmentation workflows by mean per-image <span class="in">`F1-score @ 0.7 IoU`</span> across Stage 2 held-out images spanning all five image groups (106 scored images in the benchmark paper, introduced as a 100-image scenario in the talk at <span class="co">[</span><span class="ot">27:56</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1676s)</span>; <span class="co">[</span><span class="ot">p. 15</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=15)</span>):</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="al">![Reported mean per-image F1-score at 0.7 IoU and estimated configuration hours across four segmentation workflows on the Stage 2 benchmark across five image groups (MIT 6.874 Lecture 21, p. 15; Caicedo et al., 2019, 106 scored images, presented as a 100-image lab scenario in the recording).](lifesci21-assets/dsb-modality-shift-accuracy.png)</span>{fig-alt="Paired horizontal bar chart titled The DSB Ensemble Outscored Group-Specific Workflows comparing four cell segmentation workflows on the Stage 2 benchmark across five image groups (Caicedo et al., 2019). Top DSB model achieves 0.816 mean per-image F1-score at 0.7 IoU with 0 h configuration time for the pretrained model; CellProfiler Expert reaches 0.743 in 3 h; U-Net Data scientist reaches 0.620 in 20 h; CellProfiler Novice reaches 0.616 in 5 h."}</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>Training five separate per-group U-Nets (<span class="in">`0.620`</span> $F_1$, <span class="in">`20 hours`</span> of estimated data-scientist tuning) trailed a <span class="in">`CellProfiler`</span> expert (<span class="in">`0.743`</span> $F_1$, <span class="in">`3 hours`</span>) and matched a <span class="in">`CellProfiler`</span> novice (<span class="in">`0.616`</span> $F_1$, <span class="in">`5 hours`</span>), with Caicedo noting that imbalanced training coverage across image groups—alongside intrinsic differences in boundary difficulty—likely contributed to lower accuracy on scarce tissue types (<span class="co">[</span><span class="ot">29:21–30:10</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1761s)</span>). Using the single pretrained top-performing DSB model reached **`0.816` $F_1$ with zero per-lab configuration time** (`0 h` for an already-trained model)—though because the benchmark changes training data, architecture, and ensembling together, it reflects the full generalist workflow rather than isolating image-group pooling alone. Follow-on community tools adopted all three competition architectures ([p. 16](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=16)): **`Cellpose`** (Stringer et al., 2020; U-Nets, supporting both nuclei and whole-cell cytoplasm segmentation), **`nucleAIzer`** (Hollandi et al., 2020; Mask R-CNN, targeting nuclei segmentation), and **`Mesmer`** (Greenwald et al., 2021; Feature Pyramid Networks, segmenting both nuclei and whole cells).</span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a><span class="fu">## Stage 2: Weakly supervised single-cell representation learning</span></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>Once cells are located, the profiling pipeline follows five steps (<span class="co">[</span><span class="ot">p. 19</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=19)</span>; Caicedo et al., 2017): raw images $\to$ segmented cells $\to$ single-cell feature matrix $\to$ population-level treatment profiles $\to$ downstream statistical comparisons. Classical profiling computes hand-engineered descriptors—area, shape, color distribution, and nuclear size (<span class="co">[</span><span class="ot">p. 20</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=20)</span>).</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>Replacing hand-engineered descriptors with learned neural features runs into an immediate supervision problem: **there are no ground-truth biological phenotype labels** during drug discovery or functional genomics (<span class="co">[</span><span class="ot">36:35–37:45</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2195s)</span>). We do not know beforehand which compounds work or which share a mechanism of action.</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>**Weakly supervised profiling** ([p. 22](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=22); Caicedo et al., 2018, *CVPR*, which located cells via Otsu DNA thresholding; extended in `DeepProfiler`) solves this by pairing an **auxiliary training task** with a different **main profiling goal**:</span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Auxiliary task (single-cell treatment classification):** Given a cropped single-cell image $x_k$ from a multi-well plate, we know the applied treatment label $y_k \in \{1,\dots,T\}$ from the plate map. A CNN extracts an embedding $h_k = \phi_\theta(x_k) \in \mathbb{R}^d$ and passes logits $z_k = W h_k + b \in \mathbb{R}^T$ through a softmax cross-entropy loss:</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>  $$</span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>  \mathcal{L}_{\text{CE}}(\theta, W, b) = -\frac{1}{K}\sum_{k=1}^{K} \log \frac{\exp(z_{k, y_k})}{\sum_{c=1}^{T}\exp(z_{k, c})}.</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>  $$</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Main goal (treatment-level profiling):** At inference time, we discard the classification head. For each treatment $i$ with single-cell set $X_i$, we aggregate cell embeddings into a treatment profile $\mu(X_i) = \frac{1}{|X_i|}\sum_{k \in X_i}\phi_\theta(x_k)$ and compute pairwise similarity $Z_{i,j}$ (for example via Pearson correlation or cosine similarity) across treatments (<span class="co">[</span><span class="ot">37:45–39:00</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2265s)</span>).</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a><span class="fu">### Pairwise graph evaluation and benchmark enrichment</span></span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>To test whether learned profiles recover real biology without peeking at labels during inference, Caicedo evaluates the **all-pairs similarity graph** over $M$ treatments, which contains $\binom{M}{2} = \frac{M(M-1)}{2}$ undirected connections—for instance, $M = 13$ points on <span class="co">[</span><span class="ot">p. 23</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=23)</span> yield $\binom{13}{2} = 78$ pairwise connections. Ranking all pairs by similarity $Z_{i,j}$ and checking how often the top $q\%$ of connections share a known Mechanism of Action (<span class="in">`MOA`</span>) or pathway relative to the remaining $(100 - q)\%$ yields a fold enrichment score (<span class="co">[</span><span class="ot">pp. 23–24</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=23)</span>).</span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>As a **constructed arithmetic check** on a $13$-node, $78$-pair graph (the slide reports $13$ nodes and $78$ pairs, while the hit counts below are constructed): if $12$ of the $78$ pairs truly share an MOA, and the top $13$ highest-similarity pairs ($16.7\%$) contain $6$ same-MOA pairs ($6/13 \approx 46.2\%$) while the remaining $65$ pairs contain the other $6$ ($6/65 \approx 9.2\%$), the top connections show a $(6/13)/(6/65) = 5.00\times$ hit-rate ratio and an odds ratio of $(6/7)/(6/59) \approx 8.43$. (Slide 24 does not specify whether its vertical axis uses odds ratios or hit-rate ratios, though later <span class="in">`DeepProfiler`</span> publications use per-query odds ratios.)</span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>Across three five-channel Cell Painting benchmarks (<span class="in">`Nucleus`</span>, <span class="in">`ER`</span>, <span class="in">`Mitochondria`</span>, <span class="in">`Actin/Golgi/Plasma membrane`</span>, <span class="in">`Nucleoli/cyto RNA`</span>) plotted from <span class="in">`0.4%`</span> to <span class="in">`2.0%`</span> top connections on <span class="co">[</span><span class="ot">p. 24</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=24)</span> (whose y-axis is labeled verbatim as <span class="in">`Folds of enrichment (%)`</span>), weakly supervised **deep learning (`DeepProfiler`) outperformed classical features across every threshold**:</span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>::: {.table-scroll}</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Benchmark <span class="pp">|</span> Perturbation Scope <span class="pp">|</span> Reported Deep Learning vs. Classical at Top 0.4% Connections <span class="pp">|</span></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`BBBC037`</span> <span class="pp">|</span> Gene over-expression (<span class="in">`200`</span> genes / ORFs) <span class="pp">|</span> $\approx 30\times$ vs. $\approx 9\times$ <span class="pp">|</span></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`BBBC022`</span> <span class="pp">|</span> Compound screen (<span class="in">`1,600`</span> drugs, <span class="in">`453`</span> MOAs) <span class="pp">|</span> $&gt;8\times$ vs. $&lt;3\times$ <span class="pp">|</span></span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`BBBC036`</span> <span class="pp">|</span> Compound screen (<span class="in">`2,240`</span> drugs, <span class="in">`693`</span> MOAs) <span class="pp">|</span> $&gt;8\times$ vs. $\approx 6.6\times$ <span class="pp">|</span></span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a>Beyond compound screening, single-cell morphological similarity can quantify phenotypic differences when evaluating whether a sequenced tumor mutation acts as a **driver** or a **passenger** ([pp. 25–26](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=25); [40:20–41:40](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2420s)). Comparing `EGFR` wild-type cells ($n = 8{,}457$), `EGFR_p.S645C` mutant cells ($n = 9{,}903$), and control cells ($n = 21{,}554$) showed shifted—though overlapping—single-cell distributions in the two-dimensional projection and a reported **variant impact score of `66.9%`** (an assay separation metric rather than a calibrated probability of oncogenicity).</span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a><span class="fu">## Batch confounders and Gradient Reversal (GRL)</span></span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>Weak supervision has an Achilles' heel: **batch effects (`BE`)**. The causal diagram on [p. 21](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=21) shows why naive treatment classification leaks spurious cues. The desired biological path runs **`CS -&gt; MO -&gt; PH`**: compound structure (`CS`) induces a morphological signature (`MO`), which reveals the phenotype (`PH`). However, batch effects—plate identity, imaging time, reagent lot, or technician—act as a **confounder** along two red shortcut paths:</span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span><span class="in">`BE -&gt; MO`</span>: technical artifacts directly distort cell morphology.</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span><span class="in">`BE -&gt; CS -&gt; PH`</span>: multi-well plate layouts often organize compounds systematically across specific plates or batches, creating a shortcut from batch to compound identity and phenotype prediction.</span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>Because the CNN only needs to predict which treatment well a cell came from, it can memorize plate lighting or edge artifacts instead of biology. On <span class="co">[</span><span class="ot">p. 27</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=27)</span>, embeddings colored by platemap form tight batch islands; post-hoc batch correction collapses some global offset yet leaves visible plate-correlated structure behind (<span class="co">[</span><span class="ot">41:45–42:15</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2505s)</span>).</span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>To discourage batch-predictive features during training, Caicedo introduces an adversarial **Gradient Reversal Layer (`GRL`)** (<span class="co">[</span><span class="ot">p. 28</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=28)</span>; Ganin &amp; Lempitsky, 2015; <span class="co">[</span><span class="ot">42:15–43:40</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2535s)</span>):</span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a><span class="al">![Gradient Reversal Layer architecture for discouraging batch-predictive features during single-cell representation learning (MIT 6.874 Lecture 21, p. 28).](lifesci21-assets/grl-batch-deconfounding.png)</span>{fig-alt="Two-branch neural network diagram. Single-Cell Crop x feeds Encoder G_f with parameters theta_f to produce Embedding h. Upper branch sends h to Treatment Head G_y and Loss L_y, returning positive gradient +dL_y/dtheta_f to keep compound signal. Lower branch passes h through GRL (Backward x -lambda) to Batch Head G_d and Loss L_d, returning reversed gradient -lambda dL_d/dtheta_f to penalize batch."}</span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>Let $h = G_f(x; \theta_f)$ be the shared encoder embedding (denoted <span class="in">`features f`</span> on <span class="co">[</span><span class="ot">p. 28</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=28)</span>), $\hat{y} = G_y(h; \theta_y)$ the treatment head with loss $L_y$, and $\hat{d} = G_d(\mathcal{R}_\lambda(h); \theta_d)$ the batch/domain classifier head with loss $L_d$. In the forward pass, $\mathcal{R}_\lambda(h) = h$ acts as the identity map; in backpropagation, the custom <span class="in">`GRL`</span> backward rule maps any incoming upstream gradient $g$ to $-\lambda g$ ($\lambda &gt; 0$). Writing $\frac{\partial L_d}{\partial \theta_f}$ for the domain-loss gradient with respect to $\theta_f$ **before** reversal, one stochastic gradient descent step with learning rate $\eta$ updates the three parameter blocks as:</span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a>\theta_y \leftarrow \theta_y - \eta \frac{\partial L_y}{\partial \theta_y}, \qquad</span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>\theta_d \leftarrow \theta_d - \eta \frac{\partial L_d}{\partial \theta_d}, \qquad</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>\theta_f \leftarrow \theta_f - \eta \left(\frac{\partial L_y}{\partial \theta_f} - \lambda \frac{\partial L_d}{\partial \theta_f}\right).</span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>Notice the minimax tension: $\theta_d$ improves at predicting the plate/batch $d$, while the $-\lambda \frac{\partial L_d}{\partial \theta_f}$ term pushes $\theta_f$ **uphill** on $L_d$ (discouraging batch-predictive features) while $\frac{\partial L_y}{\partial \theta_f}$ pulls $\theta_f$ **downhill** on $L_y$ (preserving treatment discrimination).</span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a>As a **constructed 1D gradient check**, let $h = \theta_f x$ with $x = 2.0$, $\theta_f = 0.5$ ($h = 1.0$), linear heads $G_y(h) = w_y h$ and $G_d(h) = w_d h$ with $w_y = w_d = 1.0$, squared-error losses $L_y = \frac{1}{2}(\hat{y} - y)^2$ and $L_d = \frac{1}{2}(\hat{d} - d)^2$, targets $y = 2.0$, $d = 2.0$, and $\lambda = 0.5$. Before reversal, both losses push $\theta_f$ in the same direction:</span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>\frac{\partial L_y}{\partial \theta_f} = (\hat{y} - y)\,w_y x = (1.0 - 2.0)(1.0)(2.0) = -2.0, \qquad</span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>\frac{\partial L_d}{\partial \theta_f} = (\hat{d} - d)\,w_d x = (1.0 - 2.0)(1.0)(2.0) = -2.0.</span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>With <span class="in">`GRL`</span>, the effective encoder gradient becomes $-2.0 - 0.5(-2.0) = -1.0$, subtracting half of the batch-aligned component. With the heads held fixed and a small positive step $\eta$, this combined update still decreases both $L_y$ and $L_d$ (only the $-\lambda \frac{\partial L_d}{\partial \theta_f} = +1.0$ contribution opposes $L_d$), whereas in this equal-gradient example increasing $\lambda$ above $1.0$ reverses the net sign (more generally, reversing aligned gradients requires $\lambda <span class="sc">\|</span>g_d<span class="sc">\|</span> &gt; <span class="sc">\|</span>g_y<span class="sc">\|</span>$).</span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>On <span class="co">[</span><span class="ot">p. 29</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=29)</span>, training <span class="in">`ResNet18GRL`</span> across 9 genetic perturbation/control classes (<span class="in">`0_CTRL`</span>, <span class="in">`0_DGK`</span>, <span class="in">`0_FIG4`</span>, <span class="in">`0_GDAP1`</span>, <span class="in">`0_GUK1`</span>, <span class="in">`0_KIF1A`</span>, <span class="in">`0_MFN2`</span>, <span class="in">`0_RRM1`</span>, <span class="in">`0_VCP`</span>) and 9 dataset/batch sources (<span class="in">`1_DS1`</span> through <span class="in">`1_DS9`</span>) produced visible mixing of dataset colors (<span class="in">`1_DS1`</span>–<span class="in">`1_DS9`</span>) across both training and held-out validation projections while maintaining broad biological groupings (with visible overlap among some validation classes and no quantitative residual batch-accuracy metric reported).</span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a><span class="fu">## Open challenges</span></span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>Caicedo closes both parts of the lecture with four unsolved bottlenecks (<span class="co">[</span><span class="ot">p. 17</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=17)</span>, <span class="co">[</span><span class="ot">p. 30</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf#page=30)</span>; <span class="co">[</span><span class="ot">33:15–34:00</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=1995s)</span>, <span class="co">[</span><span class="ot">43:50–44:25</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2630s)</span>):</span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Segmentation scale and label efficiency:** Public annotated microscopy datasets remain small compared with natural-image benchmarks, making active learning from a few corrected examples a promising way to reduce expert annotation effort (<span class="co">[</span><span class="ot">33:46</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2026s)</span>).</span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Stronger domain adaptation and explainability:** Adversarial batch correction remains an active research problem—Caicedo introduced <span class="in">`GRL`</span> as an approach his group was currently testing (<span class="co">[</span><span class="ot">42:17</span><span class="co">](https://www.youtube.com/watch?v=MVDUnbVXMGM&amp;t=2537s)</span>)—and deep single-cell embeddings remain difficult for biologists to interpret compared with classical morphology metrics.</span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a><span class="fu">## Lecture and sources</span></span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">div</span><span class="ot"> class</span><span class="op">=</span><span class="st">"lecture-video"</span><span class="dt">&gt;&lt;</span><span class="kw">iframe</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://www.youtube.com/embed/MVDUnbVXMGM"</span><span class="ot"> title</span><span class="op">=</span><span class="st">"MIT 6.874 Spring 2021 Lecture 21 — Image-Based Cell Phenotyping with Deep Learning (YouTube: Lecture 20)"</span><span class="ot"> allow</span><span class="op">=</span><span class="st">"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"</span><span class="ot"> allowfullscreen loading</span><span class="op">=</span><span class="st">"lazy"</span><span class="dt">&gt;&lt;/</span><span class="kw">iframe</span><span class="dt">&gt;&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">MIT 6.874 Spring 2021 official schedule</span><span class="co">](https://mit6874.github.io/)</span> (Lecture 21, May 6, 2021; syllabus row text reads *Video processing, structure determination*, while the linked slides and recording cover Caicedo's cell phenotyping lecture) and [official lecture recording](https://www.youtube.com/watch?v=MVDUnbVXMGM) (45:19; titled *Lecture 20: Deep Learning for Cell Imaging Segmentation* on YouTube).</span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Juan C. Caicedo, *Image-based cell phenotyping with deep learning*, Lecture 21 slides (32 pp.)</span><span class="co">](https://mit6874.github.io/assets/sp2021/slides/l21.pdf)</span>, especially pp. 2–3, 6–17, 19–31.</span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Key cited studies: Wen et al., *Cell* (2012) (AMKL leukemia screen / Alisertib); Caicedo et al., *Curr. Opin. Biotechnol.* (2016) (image-based profiling overview); Caicedo et al., *Nature Methods* (2017) (profiling pipeline); Caicedo et al., *CVPR* (2018) (weakly supervised single-cell CNN); Caicedo et al., *Nature Methods* (2019) (2018 Data Science Bowl evaluation); Stringer et al., *Nature Methods* (2020) (`Cellpose`); Hollandi et al., *Cell Systems* (2020) (`nucleAIzer`); Greenwald et al., *bioRxiv* (2021) (`Mesmer`); Ganin &amp; Lempitsky, *ICML* (2015) (Gradient Reversal Layer).</span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Original explanatory figures: <span class="co">[</span><span class="ot">create_figures.py</span><span class="co">](lifesci21-assets/create_figures.py)</span> and <span class="co">[</span><span class="ot">manifest.json</span><span class="co">](lifesci21-assets/manifest.json)</span>. Constructed worked checks (concentric-circle $\text{IoU}=0.7$, object-count $F_1$, 78-pair enrichment ratio, and 1D <span class="in">`GRL`</span> gradient step) are labeled explicitly and separated from lecture-reported measurements.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
