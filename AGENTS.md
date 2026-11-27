@@ -204,6 +204,10 @@ After successfully pushing changes to GitHub:
 
 2. **Verify deployment**: Check GitHub Pages to ensure the site deployed successfully and images load correctly
 
+### Dual Review Policy (Updated 2026-11-27)
+
+Chao's Codex subscription is expired. For all blog draft dual reviews (`Reviewer 2`), use **Claude Code (`opus 5.5`)** in read-only mode (save to `output/<slug>/claude-opus-review.md`), never `codex exec` or `gpt-6.2-astra`.
+
 ### Social Publishing Handoff (Codex)
 
 Chao uses **Codex** (not Gemini) to publish X (`@ickma2311`) and standalone LinkedIn Feed posts. For every blog draft, include a ready-to-paste **Codex Publish Instruction** block in the Notion Social Drafts page and final handoff containing:
